@@ -1,0 +1,683 @@
+/* Contenedor principal */
+.socio-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(135deg, #dcdcdc 30%, #ff6e00 70%);
+    overflow: hidden;
+    flex-direction: column;
+}
+
+/* Caja principal */
+.socio-box {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 2.5rem;
+    border-radius: 25px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    width: 85%;
+    height: 75vh;
+    display: grid;
+    grid-template-rows: auto 2fr auto;
+    row-gap: 1rem;
+    position: relative;
+    overflow: hidden;
+}
+
+
+/* Contenedor principal en fila */
+.front-row-soc {
+    display: flex;
+    justify-content: space-between; /* Distribuir el espacio entre los elementos */
+    align-items: center;
+    width: 97%;
+    position: relative;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 10px;
+    gap: 20px;
+}
+
+/* Título */
+.socio-title {
+    font-size: 1.65rem;
+    font-weight: 550;
+    color: #4b4b4b;
+    margin: 0;
+    white-space: nowrap; /* Evita que se rompa en dos líneas */
+    width: 30%;
+}
+
+/* Fila de búsqueda y dropdown */
+.front-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* Distribuir los elementos entre las puntas */
+    flex-grow: 1;
+}
+
+/* Buscador */
+.search-bar {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    width: 50%;
+    margin-right: auto; /* Centra el buscador */
+}
+
+.search-input {
+    padding: 0.6rem 1rem;
+    font-size: 1rem;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    outline: none;
+    width: 100%;
+    box-sizing: border-box;
+    transition: border 0.3s ease;
+}
+
+.search-button {
+    background: #0288d1;
+    color: white;
+    padding: 0.78rem;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.search-button:hover {
+    background: #0277bd;
+}
+
+.icon-button {
+    transform: scale(1.4);
+}
+
+/* Dropdown */
+.alphabet-dropdown {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #f5f5f5;
+    border-radius: 8px;
+    padding: 5px;
+    transition: all 0.3s ease-in-out;
+}
+
+.alphabet-dropdown select {
+    width: 120px;
+    height: 45px;
+    padding: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    border-radius: 10px;
+    background: white;
+    color: #797070;
+    cursor: pointer;
+    outline: none;
+    transition: all 0.3s ease-in-out;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* Contenedor general */
+.socios-list {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 85%;
+    overflow: hidden;
+    position: relative;
+    margin-top: 30px;
+    border-radius: 10px;
+}
+
+/* Contenedor de la tabla */
+.box-table {
+    width: 100%;
+    height: auto;
+    display: flex;
+    flex-direction: column;
+    max-width: 100%;
+}
+
+/* Header de la tabla */
+.header {
+    display: flex;
+    flex-wrap: nowrap;
+    background-color: #0288d1;
+    color: #ffffff;
+    font-weight: bold;
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    min-height: 40px;
+    justify-content: space-between;
+    align-items: center;
+    overflow: hidden;
+    white-space: nowrap;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+}
+
+/* Columnas del header */
+.column-header {
+    flex: 1; /* Asegura que todas las columnas tengan el mismo ancho */
+    text-align: center;
+    padding: 10px;
+    font-size: 1rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Columnas de datos */
+.column {
+    flex: 1; /* Asegura que todas las columnas tengan el mismo ancho */
+    text-align: center;
+    padding: 8px 0px;
+    font-size: 1rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Nueva columna vacía para iconos en el header */
+.column-header.icons-column {
+    flex: 0.3; /* Ajusta el ancho de la columna de iconos */
+}
+
+/* Nueva columna vacía para iconos en las filas */
+.column.icons-column {
+    flex: 0.3; /* Ajusta el ancho de la columna de iconos */
+}
+
+/* Filas */
+.row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px;
+    position: relative;
+}
+
+/* Alternar colores de fondo */
+.even-row {
+    background-color: #ffffff;
+}
+
+.odd-row {
+    background-color: #f3f3f3;
+}
+
+.selected-row {
+    background-color: #e0e0e0;
+}
+
+/* Iconos */
+.icons-container {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    visibility: hidden;
+}
+
+.selected-row .icons-container {
+    visibility: visible;
+}
+
+.icon {
+    font-size: 1.6rem;
+    cursor: pointer;
+    color: #ff6e00;
+    transition: color 0.3s;
+}
+
+.not_socio{
+    width: 100%;
+    text-align: center;
+}
+
+
+/* Contenedor scrollable con el header fijo */
+.scrollable {
+    overflow-y: auto; /* Habilita el scroll vertical */
+    flex-grow: 1;
+    max-height: 37vh; /* Ajusta el máximo de altura al 50% de la altura de la ventana */
+}
+
+/* Estilo del scrollbar */
+.scrollable::-webkit-scrollbar {
+    width: 8px;
+}
+
+.scrollable::-webkit-scrollbar-thumb {
+    background: #aaa;
+    border-radius: 4px;
+}
+
+.scrollable::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.buttons-container-socios {
+    display: flex;
+    align-items: center; /* Alinea verticalmente los elementos */
+    gap: 10px; /* Espacio entre los elementos */
+    margin-top: 20px; /* Espacio superior */
+    width: 70%;
+    margin-bottom: -20px;
+}
+
+.buttons-container{
+    margin-bottom: 10px;
+}
+
+.socios-totales {
+    font-size: 16px;
+    font-weight: bold;
+    margin-right: auto; /* Empuja los botones hacia la derecha */
+    padding: 8px 12px;
+    background-color: #bff5bd; /* Fondo gris claro */
+    border-radius: 5px; /* Bordes redondeados */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Sombra suave */
+}
+
+
+/* Botón General */
+.socio-button, .socio-button-back {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 1rem; /* Texto más pequeño */
+    font-weight: normal;
+    padding: 0.8rem 1.2rem; /* Botón más pequeño */
+    border: none;
+    border-radius: 20px; /* Bordes menos redondeados */
+    cursor: pointer;
+    transition: background 0.2s ease-in-out;
+}
+
+
+/* Botón Agregar */
+.socio-button {
+    background: #007aff;
+    color: white;
+}
+
+.socio-button:hover {
+    background: #005ecb;
+}
+
+
+.btn-export {
+    background: #4caf50; 
+    color: white;
+}
+
+.btn-export:hover {
+    background-color: #45a049;
+}   
+
+.error-message-soc {
+    background-color: #f8d7da;
+    color: #721c24;
+    padding: 10px;
+    border: 1px solid #f5c6cb;
+    border-radius: 5px;
+    margin: 10px 0;
+    text-align: center;
+    position: fixed;
+    top: 200px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    animation: fadeOut 3s ease-in-out forwards;
+}
+  
+
+/* Botón Volver */
+.socio-button-back {
+    background: #ff7700;
+    color: white;
+}
+
+
+
+
+.socio-button-back:hover {
+    background: #ff8800;
+}
+
+/* Íconos */
+.socio-icon-button {
+    font-size: 0.9rem;
+}
+
+
+
+
+
+/* Modal */
+/* Fondo del modal */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5); /* Transparencia más sutil */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    padding: 1rem;
+    backdrop-filter: blur(5px); /* Desenfoque en el fondo */
+}
+
+/* Contenedor del modal */
+.modal-content {
+    background-color: #fff;
+    padding: 1.8rem;
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    width: 400px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    animation: fadeIn 0.25s ease-in-out;
+}
+
+/* Título del modal */
+.modal-title {
+    font-size: 1.5rem;
+    color: #d35400;
+    font-weight: bold;
+}
+
+/* Texto de confirmación */
+.modal-text {
+    font-size: 1rem;
+    margin-bottom: 60px;
+    color: #444;
+}
+
+/* Contenedor de botones */
+.modal-buttons {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    width: 100%;
+}
+
+/* Botones */
+.modal-button {
+    flex: 1;
+    padding: 0.7rem 1.5rem;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+/* Botón Aceptar */
+/* Botón Aceptar */
+.modal-button.accept-button {
+    background: #40c463; /* Verde medio */
+    color: white;
+}
+
+.modal-button.accept-button:hover {
+    background: #6ef885; /* Verde más claro */
+}
+
+/* Botón Cancelar */
+.modal-button.cancel-button {
+    background: #d9534f; /* Rojo medio */
+    color: white;
+}
+
+.modal-button.cancel-button:hover {
+    background: #fc8c8c; /* Rojo más claro */
+}
+
+
+
+
+@media screen and (max-width: 768px) {
+
+    /* Caja principal */
+    .socio-box {
+        height: 78vh;
+        padding: 2.2rem;
+    }
+
+    /* Contenedor principal en fila */
+    .front-row-soc {
+        flex-direction: column;
+        margin-top: -30px;
+        width: 100%;
+    }
+
+    .socio-title {
+        width: auto;
+        margin-top: 10px;
+    }
+
+    /* Buscador */
+    .search-bar {
+        width: 65%;
+        margin-left: 0; 
+    }
+
+    /* Dropdown */
+    .alphabet-dropdown {
+        padding: 0;
+        width: 30%;
+    }
+
+    .search-input::placeholder {
+        font-size: 0.85rem;  /* Cambia el tamaño de fuente del placeholder */
+        color: #888;       /* También puedes ajustar el color si lo deseas */
+    }
+      
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    /* Contenedor principal */
+    .socios-list {
+        overflow-x: auto; /* Activa el scroll horizontal */
+        justify-content: flex-start; /* Alinea la tabla a la izquierda */
+        width: 100%; /* Ocupa el 100% del ancho disponible */
+    }
+
+    /* Caja de la tabla */
+    .box-table {
+        width: auto; /* Permite que la tabla tenga un ancho mayor que el contenedor */
+        min-width: 768px; /* Ancho mínimo de la tabla (ajusta según sea necesario) */
+    }
+
+    .column-header{
+        flex: 0.85;
+        font-size: 0.8rem;
+    }
+
+
+    /* Contenedor scrollable */
+    .scrollable {
+        overflow-x: hidden; /* Desactiva el scroll horizontal interno */
+        overflow-y: auto; /* Mantén el scroll vertical si es necesario */
+    }
+
+    /* Asegura que el header se desplace junto con la tabla */
+    .header {
+        position: relative; /* Cambia a posición relativa para que se desplace con la tabla */
+        top: 5px;
+        z-index: auto;
+
+    }
+
+    /* Columnas de datos */
+    .column {
+        padding: 6px 0; /* Padding reducido */
+        font-size: 0.7rem; /* Tamaño de fuente reducido */
+        white-space: nowrap; /* Evita que el texto se divida en varias líneas */
+    }
+
+
+    /* Nueva columna vacía para iconos en las filas */
+    .column.icons-column {
+        flex: none; /* Evita que la columna de iconos se expanda */
+    }
+
+    /* Filas */
+    .row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px; /* Padding reducido */
+        position: relative;
+        height: auto; /* Altura automática */
+    }
+
+    /* Fila seleccionada */
+    .selected-row {
+        background-color: #6e6e6e;
+    }
+
+    .header-cat{
+        flex: 0.5;
+    }
+
+    .header-mp{
+        flex: 0.8;
+    }
+
+    .header-nom, .header-ape{
+        flex: 0.5;
+    }
+
+    .column-nom, .column-ape{
+        flex: 0.65;
+    }
+
+    .column-cat{
+        flex: 0.65;
+
+    }
+
+    .column-header.icons-column {
+        display: none; /* Oculta el header de los iconos */
+    }
+
+    .not_socio{
+        margin-top: 50px;
+    }
+    
+
+
+
+    .socios-totales{
+        margin-bottom: 47px;
+        margin-left: -20px;
+    }
+
+
+    /* Botón General */
+    .socio-button, .socio-button-back {
+        width: 45%;
+        border-radius: 15px; /* Bordes menos redondeados */
+    }
+
+}
+
+
