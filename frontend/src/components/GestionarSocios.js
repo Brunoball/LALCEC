@@ -20,6 +20,7 @@ const GestionarSocios = () => {
   const [mostrarModalEliminar, setMostrarModalEliminar] = useState(false); // Modal confirmación de eliminación
   const [medioPagoSeleccionado, setMedioPagoSeleccionado] = useState("");
   const [errorMessage, setErrorMessage] = useState(""); 
+  const [tipoEntidad, setTipoEntidad] = useState(""); // Estado para el tipo de entidad seleccionada
 
 
   // Llamamos a obtener los medios de pago cuando el componente se monta
@@ -46,7 +47,6 @@ const GestionarSocios = () => {
     obtenerMediosDePago();
   }, []);
 
-
   const handleAgregarSocio = () => {
     navigate("/Agregarsocio");
   };
@@ -68,7 +68,6 @@ const GestionarSocios = () => {
       handleFiltrarPorMedioPago(selectedValue); // Filtrar por medio de pago
     }
   };
-
 
   const handleFiltrarPorMedioPago = async (medioPago) => {
     console.log("Filtrando por medio de pago:", medioPago);
@@ -103,15 +102,7 @@ const GestionarSocios = () => {
       setError("Error al obtener los socios.");
     }
   };
-  
 
-
-
-
-
-
-
-  
   const handleFiltrarPorLetra = async (letra) => {
     try {
       let url = `http://localhost:3001/obtener_letra.php?action=obtener_socios&letra=${letra}`;
@@ -135,10 +126,6 @@ const GestionarSocios = () => {
     }
   };
 
-
-  
-  
-  // Función para mostrar todos los socios
   const handleMostrarTodos = async () => {
     try {
       let url = `http://localhost:3001/todos_socios.php`;
@@ -235,9 +222,6 @@ const GestionarSocios = () => {
     setMostrarModal(true); // Show the payment modal
   };
 
-
-
-
   const exportarAExcel = () => {
     if (sociosFiltrados.length === 0) {
       setErrorMessage("Datos incompletos: No hay socios para exportar");
@@ -268,60 +252,84 @@ const GestionarSocios = () => {
     // Limpiar el mensaje de error después de la exportación exitosa
     setErrorMessage("");
   };
+
+  const handleTipoEntidadChange = async (e) => {
+    const tipo = e.target.value;
+    setTipoEntidad(tipo);
+    console.log("Tipo de entidad seleccionado:", tipo); // Depuración
   
-
-
+    try {
+      const response = await fetch(`http://localhost:3001/obtener_entidad.php?tipo=${tipo}`);
+      if (response.ok) {
+        const data = await response.json();
+        console.log("Datos obtenidos del servidor:", data); // Depuración
+        setSocios(Array.isArray(data) ? data : []);
+        setSociosFiltrados(Array.isArray(data) ? data : []);
+        setError(null);
+      } else {
+        setSocios([]);
+        setSociosFiltrados([]);
+        setError("Error al obtener los datos.");
+      }
+    } catch (error) {
+      setSocios([]);
+      setSociosFiltrados([]);
+      setError("Error al obtener los datos.");
+      console.error("Error:", error);
+    }
+  };
+  
 
   return (
     <div className="socio-container">
       <div className="socio-box">
+        <div className="front-row-soc">
+          <h2 className="socio-title">Gestionar Socios</h2>
+          <div className="front-row">
+            <div className="search-bar">
+              <input
+                id="search"
+                type="text"
+                placeholder="Buscar por nombre o apellido"
+                className="search-input"
+                value={busqueda}
+                onChange={(e) => setBusqueda(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleBusqueda()} // Ejecutar búsqueda con Enter
+              />
+              <button className="search-button" onClick={handleBusqueda}>
+                <FontAwesomeIcon icon={faSearch} className="icon-button" />
+              </button>
+            </div>
 
-
-
-      <div className="front-row-soc">
-        <h2 className="socio-title">Gestionar Socios</h2>
-        <div className="front-row">
-          <div className="search-bar">
-            <input
-              id="search"
-              type="text"
-              placeholder="Buscar por nombre o apellido"
-              className="search-input"
-              value={busqueda}
-              onChange={(e) => setBusqueda(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleBusqueda()} // Ejecutar búsqueda con Enter
-            />
-
-            <button className="search-button" onClick={handleBusqueda}>
-              <FontAwesomeIcon icon={faSearch} className="icon-button" />
-            </button>
-          </div>
-
-          <div className="alphabet-dropdown">
-            <select id="alphabet" className="dropdown" onChange={handleSeleccion}>
-              <option value="">Seleccionar</option>
-              <option value="todos">Todos</option>
-              {["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"].map((letter, index) => (
-                <option key={index} value={letter}>
-                  {letter}
-                </option>
-              ))}
-              {mediosDePago.length > 0 ? (
-                mediosDePago.map((medio, index) => (
-                  <option key={index} value={medio.Medio_Pago}>
-                    {medio.Medio_Pago}
+            <div className="alphabet-dropdown">
+              <select id="alphabet" className="dropdown" onChange={handleSeleccion}>
+                <option value="">Seleccionar</option>
+                <option value="todos">Todos</option>
+                {["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"].map((letter, index) => (
+                  <option key={index} value={letter}>
+                    {letter}
                   </option>
-                ))
-              ) : (
-                <option>No hay medios de pago disponibles</option>
-              )}
+                ))}
+                {mediosDePago.length > 0 ? (
+                  mediosDePago.map((medio, index) => (
+                    <option key={index} value={medio.Medio_Pago}>
+                      {medio.Medio_Pago}
+                    </option>
+                  ))
+                ) : (
+                  <option>No hay medios de pago disponibles</option>
+                )}
+              </select>
+            </div>
 
-            </select>
+            <div className="entity-dropdown">
+              <select id="entity" className="dropdown" onChange={handleTipoEntidadChange}>
+                <option value="socios">Socios</option>
+                <option value="empresa">Empresas</option>
+              </select>
+            </div>
           </div>
         </div>
-      </div>
-
-
 
         {errorMessage && (
           <div className="error-message-soc">
@@ -403,7 +411,6 @@ const GestionarSocios = () => {
               </div>
           </div>
         </div>
-
   
         <div className="buttons-container-socios">
           {/* Contador de socios */}
@@ -431,7 +438,6 @@ const GestionarSocios = () => {
         </div>
       </div>
   
-
       {/* Modal de confirmación de eliminación */}
       {mostrarModalEliminar && (
         <div className="modal">

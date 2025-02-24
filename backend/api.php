@@ -75,11 +75,16 @@ try {
                 include(__DIR__ . '/editar_categoria.php');
             }
             break;
-            case 'eliminar_categoria':
-                if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
-                    include(__DIR__ . '/eliminar_categoria.php');
-                }
-                break;
+        case 'eliminar_categoria':
+            if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
+                include(__DIR__ . '/eliminar_categoria.php');
+            }
+            break;
+        case 'obtener_entidad':
+            if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+                include(__DIR__ . '/obtener_entidad.php');
+            }
+            break;
         default:
             // Acción no válida o método HTTP incorrecto
             http_response_code(404);
