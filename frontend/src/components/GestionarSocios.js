@@ -20,9 +20,8 @@ const GestionarSocios = () => {
   const [mostrarModalEliminar, setMostrarModalEliminar] = useState(false); // Modal confirmación de eliminación
   const [medioPagoSeleccionado, setMedioPagoSeleccionado] = useState("");
   const [errorMessage, setErrorMessage] = useState(""); 
-  const [tipoEntidad, setTipoEntidad] = useState(""); // Estado para el tipo de entidad seleccionada
+  const [tipoEntidad, setTipoEntidad] = useState("socios"); // Estado para el tipo de entidad seleccionada
   const [actualizar, setActualizar] = useState(false);
-
 
   // Llamamos a obtener los medios de pago cuando el componente se monta
   useEffect(() => {
@@ -72,36 +71,29 @@ const GestionarSocios = () => {
   
     obtenerDatos();
   }, [actualizar]); // Se ejecuta cuando 'actualizar' cambia
-  
-
-
 
   const handleBusqueda = async (busquedaParam) => {
-    // Verificamos si busquedaParam es un objeto y lo convertimos en cadena
     let query = busquedaParam || busqueda || "";
   
-    // Validación adicional para evitar pasar elementos del DOM (como botones o elementos SVG)
     if (typeof query === 'object' && query !== null) {
-      // Verificamos si es un objeto de tipo HTMLButtonElement o cualquier otro elemento del DOM
       if (query instanceof HTMLElement) {
         console.error("Error: Se pasó un elemento DOM a la búsqueda, lo que no es válido.");
-        query = ""; // Establecemos query vacío si es un elemento DOM
+        query = "";
       } else {
         try {
-          // Intentamos convertir a JSON, si falla es porque hay una estructura circular
           query = JSON.stringify(query);
         } catch (e) {
           console.error("Error al convertir a JSON:", e);
-          query = ""; // Establecemos query vacío si hay un error
+          query = "";
         }
       }
     } else {
-      query = String(query).trim(); // Convertimos en cadena si no es objeto
+      query = String(query).trim();
     }
   
-    console.log("Buscando con el término:", query); // Verifica qué valor tiene 'query'
+    console.log("Buscando con el término:", query);
   
-    if (!query) return; // Evita búsquedas vacías
+    if (!query) return;
   
     try {
       const response = await fetch(`http://localhost:3001/buscarSocio.php?busqueda=${encodeURIComponent(query)}`);
@@ -137,14 +129,7 @@ const GestionarSocios = () => {
       setSociosFiltrados([]);
     }
   };
-  
-  
-  
-  
-  
-  
 
-  
   const handleAgregarSocio = () => {
     navigate("/Agregarsocio");
   };
@@ -169,7 +154,6 @@ const GestionarSocios = () => {
       handleFiltrarPorMedioPago(selectedValue);
     }
   };
-  
 
   const handleFiltrarPorMedioPago = async (medioPago) => {
     console.log("Filtrando por medio de pago:", medioPago);
@@ -180,7 +164,7 @@ const GestionarSocios = () => {
   
       if (response.ok) {
         const data = await response.json();
-        console.log("Respuesta del servidor:", data); // Depuración
+        console.log("Respuesta del servidor:", data);
   
         if (Array.isArray(data) && data.length > 0) {
           setSocios(data);
@@ -212,7 +196,7 @@ const GestionarSocios = () => {
       
       if (response.ok) {
         const data = await response.json();
-        console.log("Respuesta del servidor:", data); // Agrega este console.log
+        console.log("Respuesta del servidor:", data);
         setSocios(Array.isArray(data) ? data : []);
         setSociosFiltrados(Array.isArray(data) ? data : []);
         setError(null);
@@ -235,7 +219,7 @@ const GestionarSocios = () => {
       
       if (response.ok) {
         const data = await response.json();
-        console.log(data);  // Agregar un log para ver la respuesta
+        console.log(data);
         setSocios(Array.isArray(data.socios) ? data.socios : []);
         setSociosFiltrados(Array.isArray(data.socios) ? data.socios : []);
         setError(null);
@@ -255,7 +239,6 @@ const GestionarSocios = () => {
     }
   };
 
-
   const handleFilaSeleccionada = (index, socio) => {
     setFilaSeleccionada(filaSeleccionada === index ? null : index);
     setSocioSeleccionado(socio);
@@ -272,7 +255,6 @@ const GestionarSocios = () => {
     navigate(`/editarSocio/${nombre}/${apellido}`);
     setActualizar(prev => !prev); // Fuerza actualización después de editar
   };
-  
 
   const handleEliminarSocio = async () => {
     if (socioSeleccionado) {
@@ -317,19 +299,6 @@ const GestionarSocios = () => {
     setMostrarModal(true); // Show the payment modal
   };
 
-
-
-
-
-
-
-
-
-
-
-
-
-
   const exportarAExcel = () => {
     if (sociosFiltrados.length === 0) {
       setErrorMessage("Datos incompletos: No hay socios para exportar");
@@ -364,30 +333,48 @@ const GestionarSocios = () => {
   const handleTipoEntidadChange = async (e) => {
     const tipo = e.target.value;
     setTipoEntidad(tipo);
-    console.log("Tipo de entidad seleccionado:", tipo); // Depuración
+    console.log("Tipo de entidad seleccionado:", tipo);
   
     try {
       const response = await fetch(`http://localhost:3001/obtener_entidad.php?tipo=${tipo}`);
-      if (response.ok) {
-        const data = await response.json();
-        console.log("Datos obtenidos del servidor:", data); // Depuración
-        setSocios(Array.isArray(data) ? data : []);
-        setSociosFiltrados(Array.isArray(data) ? data : []);
-        setError(null);
-      } else {
-        setSocios([]);
-        setSociosFiltrados([]);
-        setError("Error al obtener los datos.");
+      console.log("Estado de la respuesta:", response.status);
+  
+      if (!response.ok) {
+        console.error("Error en la solicitud, código de respuesta:", response.status);
+        setError("Error en la solicitud.");
+        return;
+      }
+  
+      const textResponse = await response.text();
+      console.log("Respuesta en bruto del servidor:", textResponse);
+  
+      try {
+        const data = JSON.parse(textResponse);
+        console.log("Datos obtenidos del servidor:", data);
+  
+        if (Array.isArray(data)) {
+          setSocios(data);
+          setSociosFiltrados(data); // Asegúrate de actualizar también los socios filtrados
+          setError(null);
+        } else {
+          console.error("Datos no son un array:", data);
+          setError("Respuesta del servidor no válida.");
+        }
+      } catch (jsonError) {
+        console.error("Error al parsear JSON:", jsonError);
+        setError("Error al procesar los datos.");
       }
     } catch (error) {
-      setSocios([]);
-      setSociosFiltrados([]);
+      console.error("Error en la solicitud:", error);
       setError("Error al obtener los datos.");
-      console.error("Error:", error);
     }
   };
 
+  useEffect(() => {
+    console.log("Socios actualizados:", socios);
+    console.log("Socios Filtrados en el Render:", sociosFiltrados);
 
+  }, [socios]);
 
   
   
@@ -465,63 +452,65 @@ const GestionarSocios = () => {
               </div>
 
               <div className="body">
-                  {sociosFiltrados.length > 0 ? (
-                      <div className="scrollable">
-                        {sociosFiltrados.map((socio, index) => (
-                            <div
-                                key={index}
-                                className={`row ${filaSeleccionada === index ? "selected-row" : index % 2 === 0 ? "even-row" : "odd-row"}`}
-                                onClick={() => handleFilaSeleccionada(index, socio)}
-                            >
-                                <div className="column column-ape">{socio.apellido}</div>
-                                <div className="column column-nom">{socio.nombre}</div>
-                                <div className="column column-cat">{socio.categoria} ${socio.precio_categoria}</div>
-                                <div className="column column-mp">{socio.medio_pago}</div>
-                                <div className="column column-dom">{socio.domicilio} {socio.numero}</div>
-                                <div className="column column-obs">{socio.observacion}</div>
-
-                                {/* Columna vacía para los iconos en la fila */}
-                                <div className="column icons-column">
-                                    {filaSeleccionada === index && (
-                                        <div className="icons-container">
-                                            <FontAwesomeIcon
-                                                icon={faEdit}
-                                                className="icon"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleEditarSocio(socio.nombre, socio.apellido);
-                                                }}
-                                            />
-                                            <FontAwesomeIcon
-                                                icon={faTrash}
-                                                className="icon"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleConfirmarEliminar(socio);
-                                                }}
-                                            />
-                                            <FontAwesomeIcon
-                                                icon={faDollar}
-                                                className="icon"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handlePagoSocio(socio);
-                                                }}
-                                            />
-                                        </div>
-                                    )}
+    {sociosFiltrados.length > 0 ? (
+        <div className="scrollable">
+            {sociosFiltrados.map((socio, index) => {
+                console.log(`Socio ${index}:`, socio); // Depuración
+                return (
+                    <div
+                        key={index}
+                        className={`row ${filaSeleccionada === index ? "selected-row" : index % 2 === 0 ? "even-row" : "odd-row"}`}
+                        onClick={() => handleFilaSeleccionada(index, socio)}
+                    >
+                        <div className="column column-ape">{socio.apellido || "No disponible"}</div>
+                        <div className="column column-nom">{socio.nombre || "No disponible"}</div>
+                        <div className="column column-cat">{socio.categoria || "No disponible"} ${socio.precio_categoria || "0"}</div>
+                        <div className="column column-mp">{socio.medio_pago || "No disponible"}</div>
+                        <div className="column column-dom">{socio.domicilio || "No disponible"} {socio.numero || ""}</div>
+                        <div className="column column-obs">{socio.observacion || "Sin observaciones"}</div>
+                        {/* Columna vacía para los iconos en la fila */}
+                        <div className="column icons-column">
+                            {filaSeleccionada === index && (
+                                <div className="icons-container">
+                                    <FontAwesomeIcon
+                                        icon={faEdit}
+                                        className="icon"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleEditarSocio(socio.nombre, socio.apellido);
+                                        }}
+                                    />
+                                    <FontAwesomeIcon
+                                        icon={faTrash}
+                                        className="icon"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleConfirmarEliminar(socio);
+                                        }}
+                                    />
+                                    <FontAwesomeIcon
+                                        icon={faDollar}
+                                        className="icon"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handlePagoSocio(socio);
+                                        }}
+                                    />
                                 </div>
-                            </div>
-                        ))}
-                      </div>
-                  ) : (
-                      <div className="row">
-                          <div className="not_socio" colSpan="5">
-                              No hay socios para esta letra o búsqueda.
-                          </div>
-                      </div>
-                  )}
-              </div>
+                            )}
+                        </div>
+                    </div>
+                );
+            })}
+        </div>
+    ) : (
+        <div className="row">
+            <div className="not_socio" colSpan="5">
+                No hay socios para esta letra o búsqueda.
+            </div>
+        </div>
+    )}
+</div>
           </div>
         </div>
   
