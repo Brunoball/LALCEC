@@ -42,7 +42,7 @@ $idMediosPago = $rowMedio['idMedios_Pago'];
 
 $stmtMedio->close();
 
-// Obtener los socios asociados a este idMedios_Pago, con la categoría y medio de pago
+// Obtener los socios asociados a este idMedios_Pago, con la categoría, precio de la categoría y medio de pago
 $querySocios = "
     SELECT 
         s.nombre, 
@@ -51,6 +51,7 @@ $querySocios = "
         s.numero,
         s.observacion,
         c.nombre_categoria AS categoria, 
+        c.precio_categoria AS precio_categoria,  -- Agregar el precio de la categoría
         m.medio_pago 
     FROM 
         socios s

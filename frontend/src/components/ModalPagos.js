@@ -123,14 +123,14 @@ const ModalPagos = ({ nombre, apellido, cerrarModal }) => {
                         align-items: center;
                     }
                     .contenedor {
-                        width: 210mm; /* Ancho del comprobante */
-                        height: 70mm; /* Alto del comprobante */
-                        position: absolute;
-                        top: 50%; /* Centra verticalmente */
-                        left: 50%; /* Centra horizontalmente */
-                        transform: translate(-50%, -50%) rotate(90deg); /* Centrado y rotación */
-                        transform-origin: center center; /* Punto de origen de la rotación */
-                        box-sizing: border-box;
+                      width: 210mm; /* Ancho del comprobante */
+                      height: 70mm; /* Alto del comprobante */
+                      position: absolute;
+                      top: 33%; /* Centra verticalmente */
+                      left: 50%; /* Centra horizontalmente */
+                      transform: translate(-50%, -50%) rotate(90deg); /* Centrado y rotación */
+                      transform-origin: center center; /* Punto de origen de la rotación */
+                      box-sizing: border-box;
                     }
                     .comprobante {
                         width: 100%;

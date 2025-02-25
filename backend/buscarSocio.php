@@ -25,6 +25,7 @@ if ($busqueda) {
             s.idCategoria, 
             s.idMedios_Pago,
             c.Nombre_categoria AS categoria,
+            c.Precio_Categoria AS precio_categoria,  -- Agregar el precio de la categoría
             m.Medio_Pago AS medio_pago
         FROM 
             socios s
@@ -55,6 +56,7 @@ if ($busqueda) {
             echo json_encode($socios);
         } else {
             http_response_code(404);
+            echo json_encode(["message" => "No se encontraron socios"]);
         }
 
         $stmt->close();

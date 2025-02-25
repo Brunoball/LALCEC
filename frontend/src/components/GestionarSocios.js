@@ -46,7 +46,10 @@ const GestionarSocios = () => {
         const ultimosResultados = localStorage.getItem("ultimosResultados");
         const ultimaSeleccion = localStorage.getItem("ultimaSeleccion");
   
-        if (ultimaBusqueda && ultimosResultados) {
+        if (ultimaBusqueda) {
+          setBusqueda(ultimaBusqueda);
+          await handleBusqueda(ultimaBusqueda); // Ejecuta la búsqueda con el último término
+        } else if (ultimosResultados) {
           setBusqueda(ultimaBusqueda);
           setSociosFiltrados(JSON.parse(ultimosResultados));
         } else if (ultimaSeleccion) {
@@ -68,7 +71,76 @@ const GestionarSocios = () => {
     };
   
     obtenerDatos();
-  }, [actualizar]);
+  }, [actualizar]); // Se ejecuta cuando 'actualizar' cambia
+  
+
+
+
+  const handleBusqueda = async (busquedaParam) => {
+    // Verificamos si busquedaParam es un objeto y lo convertimos en cadena
+    let query = busquedaParam || busqueda || "";
+  
+    // Validación adicional para evitar pasar elementos del DOM (como botones o elementos SVG)
+    if (typeof query === 'object' && query !== null) {
+      // Verificamos si es un objeto de tipo HTMLButtonElement o cualquier otro elemento del DOM
+      if (query instanceof HTMLElement) {
+        console.error("Error: Se pasó un elemento DOM a la búsqueda, lo que no es válido.");
+        query = ""; // Establecemos query vacío si es un elemento DOM
+      } else {
+        try {
+          // Intentamos convertir a JSON, si falla es porque hay una estructura circular
+          query = JSON.stringify(query);
+        } catch (e) {
+          console.error("Error al convertir a JSON:", e);
+          query = ""; // Establecemos query vacío si hay un error
+        }
+      }
+    } else {
+      query = String(query).trim(); // Convertimos en cadena si no es objeto
+    }
+  
+    console.log("Buscando con el término:", query); // Verifica qué valor tiene 'query'
+  
+    if (!query) return; // Evita búsquedas vacías
+  
+    try {
+      const response = await fetch(`http://localhost:3001/buscarSocio.php?busqueda=${encodeURIComponent(query)}`);
+  
+      if (response.ok) {
+        const socios = await response.json();
+  
+        if (Array.isArray(socios) && socios.length > 0) {
+          setSocios(socios);
+          setSociosFiltrados(socios);
+  
+          localStorage.setItem("ultimaBusqueda", query);
+          localStorage.setItem("ultimosResultados", JSON.stringify(socios));
+          localStorage.removeItem("ultimaSeleccion");
+  
+          setFilaSeleccionada(null);
+          setSocioSeleccionado(null);
+          setError(null);
+        } else {
+          setSocios([]);
+          setSociosFiltrados([]);
+          setError("No se encontraron resultados.");
+        }
+      } else {
+        setError("Error al buscar socios");
+        setSocios([]);
+        setSociosFiltrados([]);
+      }
+    } catch (err) {
+      console.error("Error en la búsqueda:", err);
+      setError("Error en la búsqueda");
+      setSocios([]);
+      setSociosFiltrados([]);
+    }
+  };
+  
+  
+  
+  
   
   
 
@@ -183,45 +255,6 @@ const GestionarSocios = () => {
     }
   };
 
-  const handleBusqueda = async () => {
-    if (!busqueda) return;
-  
-    try {
-      const response = await fetch(`http://localhost:3001/buscarSocio.php?busqueda=${busqueda}`);
-      if (response.ok) {
-        const socios = await response.json();
-        
-        if (Array.isArray(socios) && socios.length > 0) {
-          setSocios(socios);
-          setSociosFiltrados(socios);
-          
-          localStorage.setItem("ultimaBusqueda", busqueda);
-          localStorage.setItem("ultimosResultados", JSON.stringify(socios));
-          localStorage.removeItem("ultimaSeleccion");
-  
-          // **Restablecer selección como en la tabla**
-          setFilaSeleccionada(null);
-          setSocioSeleccionado(null);
-          setError(null);
-        } else {
-          setSocios([]);
-          setSociosFiltrados([]);
-          setError("No se encontraron resultados.");
-        }
-  
-      } else {
-        setError("Error al buscar socios");
-        setSocios([]);
-        setSociosFiltrados([]);
-      }
-    } catch (err) {
-      setError("Error en la búsqueda");
-      setSocios([]);
-      setSociosFiltrados([]);
-    }
-  };
-  
-  
 
   const handleFilaSeleccionada = (index, socio) => {
     setFilaSeleccionada(filaSeleccionada === index ? null : index);
@@ -373,12 +406,13 @@ const GestionarSocios = () => {
                 className="search-input"
                 value={busqueda}
                 onChange={(e) => setBusqueda(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleBusqueda()} // Ejecutar búsqueda con Enter
+                onKeyDown={(e) => e.key === "Enter" && handleBusqueda(busqueda)} // Ejecutar búsqueda con Enter
               />
-              <button className="search-button" onClick={handleBusqueda}>
+              <button className="search-button" onClick={() => handleBusqueda(busqueda)}>
                 <FontAwesomeIcon icon={faSearch} className="icon-button" />
               </button>
             </div>
+
 
             <div className="alphabet-dropdown">
               <select id="alphabet" className="dropdown" onChange={handleSeleccion}>
@@ -423,7 +457,7 @@ const GestionarSocios = () => {
               <div className="header">
                   <div className="column-header header-ape">Apellido</div>
                   <div className="column-header header-nom">Nombre</div>
-                  <div className="column-header header-cat">Categoría</div>
+                  <div className="column-header header-cat">Cat/precio</div>
                   <div className="column-header header-mp">Medio de Pago</div>
                   <div className="column-header header-dom">Domicilio</div>
                   <div className="column-header header-obs">Observacion</div>
@@ -441,7 +475,7 @@ const GestionarSocios = () => {
                             >
                                 <div className="column column-ape">{socio.apellido}</div>
                                 <div className="column column-nom">{socio.nombre}</div>
-                                <div className="column column-cat">{socio.categoria}</div>
+                                <div className="column column-cat">{socio.categoria} ${socio.precio_categoria}</div>
                                 <div className="column column-mp">{socio.medio_pago}</div>
                                 <div className="column column-dom">{socio.domicilio} {socio.numero}</div>
                                 <div className="column column-obs">{socio.observacion}</div>

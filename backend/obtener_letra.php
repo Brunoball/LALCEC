@@ -37,6 +37,7 @@ if (!empty($letra)) {
             s.idCategoria, 
             s.idMedios_Pago,
             c.Nombre_categoria AS categoria,
+            c.Precio_Categoria AS precio_categoria,  -- Agregar el precio de la categoría
             m.Medio_Pago AS medio_pago
         FROM 
             socios s
@@ -93,6 +94,7 @@ else if (!empty($nombre) && !empty($apellido)) {
             s.idCategoria, 
             s.idMedios_Pago,
             c.Nombre_categoria AS categoria,
+            c.Precio_Categoria AS precio_categoria,  -- Agregar el precio de la categoría
             m.Medio_Pago AS medio_pago
         FROM 
             socios s
@@ -121,7 +123,7 @@ else if (!empty($nombre) && !empty($apellido)) {
         $socio = $result->fetch_assoc();
 
         // Obtener todas las categorías disponibles
-        $categoriasQuery = "SELECT idCategorias, Nombre_categoria FROM categorias";
+        $categoriasQuery = "SELECT idCategorias, Nombre_categoria, Precio_Categoria FROM categorias";  // Incluir Precio_Categoria
         $categoriasResult = $conn->query($categoriasQuery);
         $categorias = [];
         while ($row = $categoriasResult->fetch_assoc()) {

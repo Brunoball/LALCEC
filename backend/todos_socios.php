@@ -21,8 +21,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 // Función para obtener categorías y medios de pago
 function obtenerCategoriasYMediosPago($conn) {
-    // Obtener todas las categorías disponibles
-    $categoriasQuery = "SELECT idCategorias, Nombre_categoria FROM categorias";
+    // Obtener todas las categorías disponibles con su precio
+    $categoriasQuery = "SELECT idCategorias, Nombre_categoria, Precio_Categoria FROM categorias";
     $categoriasResult = $conn->query($categoriasQuery);
     $categorias = [];
     while ($row = $categoriasResult->fetch_assoc()) {
@@ -60,6 +60,7 @@ $query = "
         s.idCategoria, 
         s.idMedios_Pago,
         c.Nombre_categoria AS categoria,
+        c.Precio_Categoria AS precio_categoria,  -- Aquí se obtiene el precio de la categoría
         m.Medio_Pago AS medio_pago
     FROM 
         socios s
@@ -70,7 +71,6 @@ $query = "
     ORDER BY 
         s.apellido ASC, s.nombre ASC
 ";
-
 
 $result = $conn->query($query);
 if ($result) {
