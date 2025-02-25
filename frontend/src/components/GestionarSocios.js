@@ -21,53 +21,83 @@ const GestionarSocios = () => {
   const [medioPagoSeleccionado, setMedioPagoSeleccionado] = useState("");
   const [errorMessage, setErrorMessage] = useState(""); 
   const [tipoEntidad, setTipoEntidad] = useState(""); // Estado para el tipo de entidad seleccionada
+  const [actualizar, setActualizar] = useState(false);
 
 
   // Llamamos a obtener los medios de pago cuando el componente se monta
   useEffect(() => {
-    const obtenerMediosDePago = async () => {
+    const obtenerDatos = async () => {
       try {
-        const response = await fetch("http://localhost:3001/obtener_datos.php");
-        if (response.ok) {
-          const data = await response.json();
-          if (Array.isArray(data.mediosPago)) { // Accedemos correctamente a 'mediosPago'
-            setMediosDePago(data.mediosPago); // Asignamos 'mediosPago' al estado
+        // Obtener medios de pago
+        const responseMediosPago = await fetch("http://localhost:3001/obtener_datos.php");
+        if (responseMediosPago.ok) {
+          const data = await responseMediosPago.json();
+          if (Array.isArray(data.mediosPago)) {
+            setMediosDePago(data.mediosPago);
           } else {
-            setError("Error: no se encontraron medios de pago.");
+            setError("Error: No se encontraron medios de pago.");
           }
         } else {
           setError("Error al obtener los medios de pago.");
+        }
+  
+        // Restaurar búsqueda o selección previa
+        const ultimaBusqueda = localStorage.getItem("ultimaBusqueda");
+        const ultimosResultados = localStorage.getItem("ultimosResultados");
+        const ultimaSeleccion = localStorage.getItem("ultimaSeleccion");
+  
+        if (ultimaBusqueda && ultimosResultados) {
+          setBusqueda(ultimaBusqueda);
+          setSociosFiltrados(JSON.parse(ultimosResultados));
+        } else if (ultimaSeleccion) {
+          if (ultimaSeleccion === "todos") {
+            await handleMostrarTodos();
+          } else if (/^[A-Z]$/.test(ultimaSeleccion)) {
+            await handleFiltrarPorLetra(ultimaSeleccion);
+          } else {
+            setMedioPagoSeleccionado(ultimaSeleccion);
+            await handleFiltrarPorMedioPago(ultimaSeleccion);
+          }
+        } else {
+          await handleMostrarTodos(); // Carga inicial si no hay datos previos
         }
       } catch (error) {
         setError("Hubo un problema al obtener los datos.");
         console.error("Error:", error);
       }
     };
+  
+    obtenerDatos();
+  }, [actualizar]);
+  
+  
 
-    obtenerMediosDePago();
-  }, []);
-
+  
   const handleAgregarSocio = () => {
     navigate("/Agregarsocio");
   };
 
   const handleVolverAtras = () => {
     navigate(-1);
+    setActualizar(prev => !prev); // Fuerza la recarga
   };
-
+  
   const handleSeleccion = async (e) => {
     const selectedValue = e.target.value;
-    console.log("Valor seleccionado:", selectedValue); // Verifica el valor seleccionado
+    localStorage.setItem("ultimaSeleccion", selectedValue);
+    localStorage.removeItem("ultimaBusqueda");
+    localStorage.removeItem("ultimosResultados");
   
     if (selectedValue === "todos") {
-      handleMostrarTodos(); // Mostrar todos los socios
-    } else if (["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"].includes(selectedValue)) {
-      handleFiltrarPorLetra(selectedValue); // Filtrar por letra
+      handleMostrarTodos();
+    } else if (/^[A-Z]$/.test(selectedValue)) {
+      handleFiltrarPorLetra(selectedValue);
     } else {
-      setMedioPagoSeleccionado(selectedValue); // Guardar el medio de pago seleccionado
-      handleFiltrarPorMedioPago(selectedValue); // Filtrar por medio de pago
+      setMedioPagoSeleccionado(selectedValue);
+      handleFiltrarPorMedioPago(selectedValue);
     }
   };
+  
 
   const handleFiltrarPorMedioPago = async (medioPago) => {
     console.log("Filtrando por medio de pago:", medioPago);
@@ -137,6 +167,10 @@ const GestionarSocios = () => {
         setSocios(Array.isArray(data.socios) ? data.socios : []);
         setSociosFiltrados(Array.isArray(data.socios) ? data.socios : []);
         setError(null);
+
+        // Limpiar la última búsqueda y los resultados del localStorage
+        localStorage.removeItem("ultimaBusqueda");
+        localStorage.removeItem("ultimosResultados");
       } else {
         setSocios([]);
         setSociosFiltrados([]);
@@ -150,34 +184,62 @@ const GestionarSocios = () => {
   };
 
   const handleBusqueda = async () => {
-    if (!busqueda) return; // No hacer nada si el campo de búsqueda está vacío
-
+    if (!busqueda) return;
+  
     try {
       const response = await fetch(`http://localhost:3001/buscarSocio.php?busqueda=${busqueda}`);
       if (response.ok) {
         const socios = await response.json();
-        setSocios(socios); // Actualiza el estado de socios
-        setSociosFiltrados(socios);
+        
+        if (Array.isArray(socios) && socios.length > 0) {
+          setSocios(socios);
+          setSociosFiltrados(socios);
+          
+          localStorage.setItem("ultimaBusqueda", busqueda);
+          localStorage.setItem("ultimosResultados", JSON.stringify(socios));
+          localStorage.removeItem("ultimaSeleccion");
+  
+          // **Restablecer selección como en la tabla**
+          setFilaSeleccionada(null);
+          setSocioSeleccionado(null);
+          setError(null);
+        } else {
+          setSocios([]);
+          setSociosFiltrados([]);
+          setError("No se encontraron resultados.");
+        }
+  
       } else {
-        const error = await response.json();
-        setError(error.message || "Error al buscar socios");
+        setError("Error al buscar socios");
         setSocios([]);
         setSociosFiltrados([]);
       }
     } catch (err) {
+      setError("Error en la búsqueda");
       setSocios([]);
       setSociosFiltrados([]);
     }
   };
+  
+  
 
   const handleFilaSeleccionada = (index, socio) => {
     setFilaSeleccionada(filaSeleccionada === index ? null : index);
     setSocioSeleccionado(socio);
+    
+    // **Guardar selección en localStorage para mantener la selección después de la búsqueda**
+    if (socio) {
+      localStorage.setItem("socioSeleccionado", JSON.stringify(socio));
+    } else {
+      localStorage.removeItem("socioSeleccionado");
+    }
   };
-
+  
   const handleEditarSocio = (nombre, apellido) => {
     navigate(`/editarSocio/${nombre}/${apellido}`);
+    setActualizar(prev => !prev); // Fuerza actualización después de editar
   };
+  
 
   const handleEliminarSocio = async () => {
     if (socioSeleccionado) {
@@ -221,6 +283,19 @@ const GestionarSocios = () => {
     setSocioSeleccionado(socio);
     setMostrarModal(true); // Show the payment modal
   };
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   const exportarAExcel = () => {
     if (sociosFiltrados.length === 0) {
@@ -278,6 +353,10 @@ const GestionarSocios = () => {
       console.error("Error:", error);
     }
   };
+
+
+
+  
   
 
   return (

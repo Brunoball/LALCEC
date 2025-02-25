@@ -1,5 +1,5 @@
 <?php
-header("Access-Control-Allow-Origin: http://localhost:3000");
+header("Access-Control-Allow-Origin: http://localhost:3002");
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
 
@@ -32,42 +32,47 @@ header('Content-Type: application/json');
 // Validar que exista un ID de socio
 if ($idSocios) {
     // Validaciones para campos de texto (nombre, apellido, localidad, domicilio, observacion)
-    if ($nombre !== '' && (!preg_match("/^[a-zA-Z\s]+$/", $nombre) || strlen($nombre) > 40)) {
-        echo json_encode(["message" => "El nombre solo puede contener letras y un máximo de 40 caracteres."]);
+    if ($nombre !== '' && (!preg_match("/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/", $nombre) || strlen($nombre) > 40)) {
+        echo json_encode(["message" => "El nombre solo puede contener letras (incluyendo acentos y ñ) y un máximo de 40 caracteres."]);
         exit();
     }
-
-    if ($apellido !== '' && (!preg_match("/^[a-zA-Z\s]+$/", $apellido) || strlen($apellido) > 40)) {
-        echo json_encode(["message" => "El apellido solo puede contener letras y un máximo de 40 caracteres."]);
+    
+    if ($apellido !== '' && (!preg_match("/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/", $apellido) || strlen($apellido) > 40)) {
+        echo json_encode(["message" => "El apellido solo puede contener letras (incluyendo acentos y ñ) y un máximo de 40 caracteres."]);
         exit();
     }
-
+    
     if ($localidad !== '' && (!preg_match("/^[a-zA-Z\s]+$/", $localidad) || strlen($localidad) > 40)) {
         echo json_encode(["message" => "La localidad solo puede contener letras y un máximo de 40 caracteres."]);
         exit();
     }
 
-    if ($domicilio !== '' && (!preg_match("/^[a-zA-Z\s]+$/", $domicilio) || strlen($domicilio) > 40)) {
-        echo json_encode(["message" => "El domicilio solo puede contener letras y un máximo de 40 caracteres."]);
+
+    if ($domicilio !== '' && (!preg_match("/^[a-zA-Z0-9\s]+$/", $domicilio) || strlen($domicilio) > 40)) {
+        echo json_encode(["message" => "El domicilio solo puede contener letras, números y un máximo de 40 caracteres."]);
         exit();
     }
+    
 
-    if ($observacion !== NULL && (!preg_match("/^[a-zA-Z0-9\s]+$/", $observacion) || strlen($observacion) > 40)) {
+    if ($observacion !== '' && (!preg_match("/^[a-zA-Z0-9\s]+$/", $observacion) || strlen($observacion) > 40)) {
         echo json_encode(["message" => "La observación solo puede contener letras, números y un máximo de 40 caracteres."]);
         exit();
-    }    
+    }
+    
 
-    // Validaciones para campos numéricos (dni, telefono, numero)
-    if ($dni !== '' && (!preg_match("/^[0-9]+$/", $dni) || strlen($dni) > 20)) {
-        echo json_encode(["message" => "El DNI solo puede contener números y un máximo de 20 caracteres."]);
+    // Validaciones para campos numéricos (dni, telefono, numero) que permitan puntos
+    if ($dni !== '' && (!preg_match("/^[0-9\.]+$/", $dni) || strlen($dni) > 20)) {
+        echo json_encode(["message" => "El DNI solo puede contener números y puntos, con un máximo de 20 caracteres."]);
         exit();
     }
 
-    // Permitir números y guiones en el teléfono
-    if ($telefono !== '' && (!preg_match("/^[0-9\-]+$/", $telefono) || strlen($telefono) > 20)) {
-        echo json_encode(["message" => "El teléfono solo puede contener números y guiones, con un máximo de 20 caracteres."]);
+
+    // Permitir números, guiones y espacios en el teléfono
+    if ($telefono !== '' && (!preg_match("/^[0-9\- ]+$/", $telefono) || strlen($telefono) > 20)) {
+        echo json_encode(["message" => "El teléfono solo puede contener números, guiones y espacios, con un máximo de 20 caracteres."]);
         exit();
     }
+
 
     if ($numero !== '' && (!preg_match("/^[0-9]+$/", $numero) || strlen($numero) > 20)) {
         echo json_encode(["message" => "El número solo puede contener números y un máximo de 20 caracteres."]);
@@ -80,12 +85,16 @@ if ($idSocios) {
         exit();
     }
 
+
+
+
     $email = trim(strtolower($email)); // Normaliza el email a minúsculas y elimina espacios
 
-    if ($email !== '' && !preg_match("/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.com$/i", $email)) {
-        echo json_encode(["message" => "El email ingresado debe ser válido y terminar en '.com'."]);
+    if ($email !== '' && !preg_match("/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(com|com\.ar)$/i", $email)) {
+        echo json_encode(["message" => "El email ingresado debe ser válido, sin espacios y terminar en '.com' o '.com.ar'."]);
         exit();
     }
+
 
     
 
