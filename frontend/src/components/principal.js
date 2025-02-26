@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUsers, faDollarSign, faTags, faSignOutAlt } from "@fortawesome/free-solid-svg-icons";
@@ -7,6 +7,18 @@ import logoLalcec from "./logo_lalcec.jpeg";
 const PaginaPrincipal = () => {
   const navigate = useNavigate();
   const [showModal, setShowModal] = useState(false);
+
+  useEffect(() => {
+    // Reiniciar todas las búsquedas y selecciones almacenadas
+    localStorage.removeItem("ultimaBusqueda");
+    localStorage.removeItem("ultimosResultados");
+    localStorage.removeItem("socioSeleccionado");
+    localStorage.removeItem("filtroSeleccionado");
+  
+    // Asegurar que la opción inicial sea "Seleccionar"
+    localStorage.setItem("ultimaSeleccion", "Seleccionar");
+  }, []);
+  
 
   const handleRedireccionarSocios = () => {
     navigate("/GestionarSocios");
@@ -36,7 +48,7 @@ const PaginaPrincipal = () => {
     // Redirige y recarga la página para limpiar datos
     window.location.href = "/";
   };
-  
+
 
   return (
     <div style={styles.container}>

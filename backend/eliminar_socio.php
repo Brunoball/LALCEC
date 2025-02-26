@@ -1,5 +1,5 @@
 <?php
-header("Access-Control-Allow-Origin: http://localhost:3002"); // Permitir solicitudes desde localhost:3000
+header("Access-Control-Allow-Origin: http://localhost:3000"); // Permitir solicitudes desde localhost:3000
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS"); // Métodos permitidos
 header("Access-Control-Allow-Headers: Content-Type, Authorization"); // Headers permitidos
 
