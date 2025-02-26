@@ -32,33 +32,29 @@ if ($busqueda) {
     // Consulta SQL para obtener socios o empresas según el tipo de búsqueda
     $query = "
         SELECT 
-            s.idSocios AS id,
-            s.nombre,
-            s.apellido,
-            s.DNI,
-            s.domicilio,
-            s.numero,
-            s.observacion,
-            s.localidad,
-            s.telefono,
-            s.email,
-            s.idCategoria, 
-            s.idMedios_Pago,
+            e.idEmpresas AS id,
+            e.nombre,
+            e.ruc,
+            e.domicilio,
+            e.telefono,
+            e.email,
+            e.idCategoria, 
+            e.idMedios_Pago,
             c.Nombre_categoria AS categoria,
             c.Precio_Categoria AS precio_categoria,
             m.Medio_Pago AS medio_pago,
-            s.flag
+            e.flag
         FROM 
-            socios s
+            empresas e
         LEFT JOIN 
-            categorias c ON s.idCategoria = c.idCategorias
+            categorias c ON e.idCategoria = c.idCategorias
         LEFT JOIN 
-            mediospago m ON s.idMedios_Pago = m.IdMedios_pago
+            mediospago m ON e.idMedios_Pago = m.IdMedios_pago
         WHERE 
-            (s.nombre LIKE ? OR s.apellido LIKE ?)
-            AND s.flag = ?
+            (e.nombre LIKE ? OR e.ruc LIKE ?)
+            AND e.flag = ?
         ORDER BY 
-            s.apellido ASC, s.nombre ASC
+            e.nombre ASC
     ";
 
     $stmt = $conn->prepare($query);

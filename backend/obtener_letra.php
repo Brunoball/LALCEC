@@ -1,158 +1,80 @@
 <?php
-header("Access-Control-Allow-Origin: *"); // Permitir todas las solicitudes de cualquier origen
-header("Access-Control-Allow-Methods: GET, POST, OPTIONS"); // Métodos permitidos
-header("Access-Control-Allow-Headers: Content-Type, Authorization"); // Headers permitidos
-
-include(__DIR__ . '/db.php');
-
-// Obtener los parámetros de la URL
-$nombre = trim($_GET['nombre'] ?? '');
-$apellido = trim($_GET['apellido'] ?? '');
-$letra = trim($_GET['letra'] ?? ''); // Nuevo parámetro para la letra
-
 header('Content-Type: application/json');
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type");
 
-// Verificar la conexión a la base de datos
+include 'db.php'; // Asegúrate de que este archivo contiene la conexión a la base de datos
+
+// Verificar conexión
 if ($conn->connect_error) {
-    http_response_code(500);
-    echo json_encode(["message" => "Error de conexión a la base de datos"]);
-    exit;
+    die(json_encode(["error" => "Connection failed: " . $conn->connect_error]));
 }
 
-// Lógica para buscar por letra
-if (!empty($letra)) {
-    // Consulta SQL para obtener socios cuyo apellido comience con la letra especificada, ordenados por apellido y nombre
-    $query = "
-        SELECT 
-            s.idSocios,
-            s.nombre,
-            s.apellido,
-            s.DNI,
-            s.domicilio,
-            s.numero,
-            s.observacion,
-            s.localidad,
-            s.telefono,
-            s.email,
-            s.idCategoria, 
-            s.idMedios_Pago,
-            c.Nombre_categoria AS categoria,
-            c.Precio_Categoria AS precio_categoria,  -- Agregar el precio de la categoría
-            m.Medio_Pago AS medio_pago
-        FROM 
-            socios s
-        LEFT JOIN 
-            categorias c ON s.idCategoria = c.idCategorias
-        LEFT JOIN 
-            mediospago m ON s.idMedios_Pago = m.IdMedios_pago
-        WHERE 
-            s.apellido LIKE ?
-        ORDER BY 
-            s.apellido ASC, s.nombre ASC
-    ";
+// Obtener parámetros de la URL
+$letra = isset($_GET['letra']) ? $_GET['letra'] : '';
+$tipo = isset($_GET['tipo']) ? $_GET['tipo'] : 'socios';
 
-    $letraLike = $letra . '%'; // Para buscar apellidos que comiencen con la letra
-    $stmt = $conn->prepare($query);
-    if (!$stmt) {
-        http_response_code(500);
-        echo json_encode(["message" => "Error al preparar la consulta: " . $conn->error]);
-        exit;
-    }
+// Validar la letra
+if (!preg_match('/^[A-Za-z]$/', $letra)) {
+    die(json_encode(["error" => "Letra no válida"]));
+}
 
-    $stmt->bind_param('s', $letraLike);
-    $stmt->execute();
-    $result = $stmt->get_result();
+// Determinar el valor de flag según el tipo de entidad
+$flag = ($tipo === 'empresa') ? 1 : 0;
 
-    $socios = [];
+// Consulta SQL para obtener los socios o empresas que comienzan con la letra especificada
+$sql = "
+    SELECT 
+        s.nombre, 
+        s.apellido, 
+        s.domicilio,
+        s.numero,
+        s.observacion,
+        c.nombre_categoria AS categoria, 
+        c.precio_categoria AS precio_categoria,  -- Agregar el precio de la categoría
+        m.medio_pago 
+    FROM 
+        socios s
+    LEFT JOIN 
+        categorias c ON s.idcategoria = c.idcategorias
+    LEFT JOIN 
+        mediospago m ON s.idmedios_pago = m.idmedios_pago
+    WHERE 
+        s.flag = ? AND s.apellido LIKE ?
+    ORDER BY 
+        s.apellido ASC, s.nombre ASC
+";
+$stmt = $conn->prepare($sql);
+
+if (!$stmt) {
+    die(json_encode(["error" => "Error en la preparación de la consulta: " . $conn->error]));
+}
+
+$likeLetra = $letra . '%';
+$stmt->bind_param("is", $flag, $likeLetra);
+$stmt->execute();
+$result = $stmt->get_result();
+
+$data = array();
+
+if ($result->num_rows > 0) {
     while ($row = $result->fetch_assoc()) {
-        $socios[] = $row;
+        $data[] = [
+            "nombre" => $row['nombre'],
+            "apellido" => $row['apellido'],
+            "domicilio" => $row['domicilio'],
+            "numero" => $row['numero'],
+            "observacion" => $row['observacion'],
+            "categoria" => $row['categoria'],
+            "precio_categoria" => $row['precio_categoria'],
+            "medio_pago" => $row['medio_pago']
+        ];
     }
-
-    if (count($socios) > 0) {
-        echo json_encode($socios);
-    } else {
-        http_response_code(404);
-        echo json_encode(["message" => "No se encontraron socios para la letra especificada"]);
-    }
-
-    $stmt->close();
-}
-// Lógica para buscar por nombre y apellido (existente)
-else if (!empty($nombre) && !empty($apellido)) {
-    $query = "
-        SELECT 
-            s.idSocios,
-            s.nombre,
-            s.apellido,
-            s.DNI,
-            s.domicilio,
-            s.numero,
-            s.observacion,
-            s.localidad,
-            s.telefono,
-            s.email,
-            s.idCategoria, 
-            s.idMedios_Pago,
-            c.Nombre_categoria AS categoria,
-            c.Precio_Categoria AS precio_categoria,  -- Agregar el precio de la categoría
-            m.Medio_Pago AS medio_pago
-        FROM 
-            socios s
-        LEFT JOIN 
-            categorias c ON s.idCategoria = c.idCategorias
-        LEFT JOIN 
-            mediospago m ON s.idMedios_Pago = m.IdMedios_pago
-        WHERE 
-            s.nombre = ? AND s.apellido = ?
-        ORDER BY
-            s.apellido ASC, s.nombre ASC
-    ";
-
-    $stmt = $conn->prepare($query);
-    if (!$stmt) {
-        http_response_code(500);
-        echo json_encode(["message" => "Error al preparar la consulta: " . $conn->error]);
-        exit;
-    }
-
-    $stmt->bind_param('ss', $nombre, $apellido);
-    $stmt->execute();
-    $result = $stmt->get_result();
-
-    if ($result->num_rows > 0) {
-        $socio = $result->fetch_assoc();
-
-        // Obtener todas las categorías disponibles
-        $categoriasQuery = "SELECT idCategorias, Nombre_categoria, Precio_Categoria FROM categorias";  // Incluir Precio_Categoria
-        $categoriasResult = $conn->query($categoriasQuery);
-        $categorias = [];
-        while ($row = $categoriasResult->fetch_assoc()) {
-            $categorias[] = $row;
-        }
-
-        // Obtener todos los medios de pago disponibles
-        $mediosPagoQuery = "SELECT IdMedios_pago, Medio_Pago FROM mediospago";
-        $mediosPagoResult = $conn->query($mediosPagoQuery);
-        $mediosPago = [];
-        while ($row = $mediosPagoResult->fetch_assoc()) {
-            $mediosPago[] = $row;
-        }
-
-        // Agregar las listas de categorías y medios de pago al resultado
-        $socio['categorias'] = $categorias;
-        $socio['mediosPago'] = $mediosPago;
-
-        echo json_encode($socio);
-    } else {
-        http_response_code(404);
-        echo json_encode(["message" => "Socio no encontrado"]);
-    }
-
-    $stmt->close();
-} else {
-    http_response_code(400);
-    echo json_encode(["message" => "Faltan parámetros válidos (nombre y apellido, o letra)"]);
 }
 
+echo json_encode($data);
+
+$stmt->close();
 $conn->close();
 ?>

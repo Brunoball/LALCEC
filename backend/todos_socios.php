@@ -19,32 +19,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-// Función para obtener categorías y medios de pago
-function obtenerCategoriasYMediosPago($conn) {
-    // Obtener todas las categorías disponibles con su precio
-    $categoriasQuery = "SELECT idCategorias, Nombre_categoria, Precio_Categoria FROM categorias";
-    $categoriasResult = $conn->query($categoriasQuery);
-    $categorias = [];
-    while ($row = $categoriasResult->fetch_assoc()) {
-        $categorias[] = $row;
-    }
+// Obtener el tipo de entidad desde la URL (socios o empresas)
+$tipo = $_GET['tipo'] ?? 'socios'; // Default a 'socios'
 
-    // Obtener todos los medios de pago disponibles
-    $mediosPagoQuery = "SELECT IdMedios_pago, Medio_Pago FROM mediospago";
-    $mediosPagoResult = $conn->query($mediosPagoQuery);
-    $mediosPago = [];
-    while ($row = $mediosPagoResult->fetch_assoc()) {
-        $mediosPago[] = $row;
-    }
+// Determinar el valor de flag según el tipo de entidad
+$flag = ($tipo === 'empresa') ? 1 : 0;
 
-    return [
-        "categorias" => $categorias,
-        "mediosPago" => $mediosPago
-    ];
-}
-
-// Obtener todos los socios
-// Obtener todos los socios ordenados por apellido y luego por nombre
+// Obtener todos los socios o empresas según el tipo de entidad
 $query = "
     SELECT 
         s.idSocios,
@@ -68,32 +49,65 @@ $query = "
         categorias c ON s.idCategoria = c.idCategorias
     LEFT JOIN 
         mediospago m ON s.idMedios_Pago = m.IdMedios_pago
+    WHERE 
+        s.flag = ?
     ORDER BY 
         s.apellido ASC, s.nombre ASC
 ";
 
-$result = $conn->query($query);
-if ($result) {
-    $socios = [];
-    while ($row = $result->fetch_assoc()) {
-        $socios[] = $row;
-    }
+$stmt = $conn->prepare($query);
 
-    $extraData = obtenerCategoriasYMediosPago($conn);
-
-    echo json_encode([
-        "socios" => $socios,
-        "categorias" => $extraData["categorias"],
-        "mediosPago" => $extraData["mediosPago"]
-    ]);
-} else {
+if (!$stmt) {
     http_response_code(500);
     echo json_encode([
-        "message" => "Error al obtener los socios",
-        "categorias" => [],
-        "mediosPago" => []
+        "message" => "Error en la preparación de la consulta: " . $conn->error,
+        "socios" => []
     ]);
+    exit;
 }
+
+$stmt->bind_param('i', $flag);
+$stmt->execute();
+$result = $stmt->get_result();
+
+$socios = [];
+while ($row = $result->fetch_assoc()) {
+    $socios[] = $row;
+}
+
+$stmt->close();
+
+// Obtener todas las categorías y medios de pago disponibles
+function obtenerCategoriasYMediosPago($conn) {
+    // Obtener todas las categorías disponibles con su precio
+    $categoriasQuery = "SELECT idCategorias, Nombre_categoria, Precio_Categoria FROM categorias";
+    $categoriasResult = $conn->query($categoriasQuery);
+    $categorias = [];
+    while ($row = $categoriasResult->fetch_assoc()) {
+        $categorias[] = $row;
+    }
+
+    // Obtener todos los medios de pago disponibles
+    $mediosPagoQuery = "SELECT IdMedios_pago, Medio_Pago FROM mediospago";
+    $mediosPagoResult = $conn->query($mediosPagoQuery);
+    $mediosPago = [];
+    while ($row = $mediosPagoResult->fetch_assoc()) {
+        $mediosPago[] = $row;
+    }
+
+    return [
+        "categorias" => $categorias,
+        "mediosPago" => $mediosPago
+    ];
+}
+
+$extraData = obtenerCategoriasYMediosPago($conn);
+
+echo json_encode([
+    "socios" => $socios,
+    "categorias" => $extraData["categorias"],
+    "mediosPago" => $extraData["mediosPago"]
+]);
 
 $conn->close();
 ?>

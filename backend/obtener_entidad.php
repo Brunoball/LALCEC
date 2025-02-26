@@ -4,22 +4,25 @@ header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
 
-// El resto de tu código
+// Incluir la conexión a la base de datos
 include(__DIR__ . '/db.php');
 header('Content-Type: application/json');
 
 $tipo = isset($_GET['tipo']) ? $_GET['tipo'] : '';
 
-if ($tipo !== 'socios' && $tipo !== 'empresa') {
+// Determinar el valor de flag según el tipo de entidad solicitado
+$flag = ($tipo === 'socios') ? 0 : (($tipo === 'empresa') ? 1 : null);
+
+if ($flag === null) {
     http_response_code(400);
     echo json_encode(["error" => "Tipo de entidad no válido"]);
     exit;
 }
 
-$data = obtenerEntidades($tipo);
+$data = obtenerEntidades($flag);
 echo json_encode($data);
 
-function obtenerEntidades($tipoEntidad) {
+function obtenerEntidades($flag) {
     global $conn;
 
     if (!$conn) {
@@ -28,14 +31,15 @@ function obtenerEntidades($tipoEntidad) {
         exit;
     }
 
-    $stmt = $conn->prepare("SELECT * FROM socios WHERE Tipo_Entidad = ?");
+    // Seleccionar solo las columnas relevantes para empresas
+    $stmt = $conn->prepare("SELECT nombre, apellido, idcategoria, idmedios_pago, domicilio, observacion FROM socios WHERE flag = ?");
     if (!$stmt) {
         http_response_code(500);
         echo json_encode(["error" => "Error en la preparación de la consulta: " . $conn->error]);
         exit;
     }
 
-    $stmt->bind_param("s", $tipoEntidad);
+    $stmt->bind_param("i", $flag);
     $stmt->execute();
     $result = $stmt->get_result();
 
@@ -48,6 +52,6 @@ function obtenerEntidades($tipoEntidad) {
     $entidades = $result->fetch_all(MYSQLI_ASSOC);
     $stmt->close();
     
-    return $entidades; 
+    return $entidades;
 }
 ?>
