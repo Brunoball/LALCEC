@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlus, faArrowLeft, faEdit, faTrash, faSearch, faDollar, faFileExcel } from "@fortawesome/free-solid-svg-icons";
+import { faPlus, faArrowLeft, faEdit, faTrash, faSearch, faDollar, faFileExcel, faPrint } from "@fortawesome/free-solid-svg-icons";
 import ModalPagos from "./ModalPagos"; // Asegúrate de importar el ModalPagos
 import "./GestionarSocios.css";
 
@@ -386,6 +386,85 @@ const GestionarSocios = () => {
   };
 
 
+
+
+
+
+
+
+
+
+
+const handleImprimirTodosComprobantes = async () => {
+    try {
+        // 1. Obtener todos los socios desde el servidor
+        const response = await fetch("http://localhost:3001/listar_socios.php");
+        const result = await response.json();
+
+        if (!result.success || !Array.isArray(result.socios) || result.socios.length === 0) {
+            alert("No se encontraron socios.");
+            return;
+        }
+
+        const socios = result.socios;
+
+        // 2. Generar e imprimir un comprobante por cada socio
+        socios.forEach((socio, index) => {
+            setTimeout(() => {
+                const { nombre, apellido, domicilio, numero, categoria, precioCategoria, cobrador } = socio;
+                const mesesPagados = "Marzo"; // Mes fijo
+                const totalPagar = precioCategoria; // Ajusta si es necesario
+
+                const comprobanteHTML = `
+                    <html>
+                    <head>
+                        <title>Comprobante de Pago</title>
+                        <style>
+                            @page { size: A4 portrait; margin: 0; }
+                            body { width: 210mm; height: 297mm; margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 12px; display: flex; justify-content: center; align-items: center; }
+                            .contenedor { width: 210mm; height: 70mm; position: absolute; top: 33%; left: 50%; transform: translate(-50%, -50%) rotate(90deg); transform-origin: center center; box-sizing: border-box; }
+                            .comprobante { width: 100%; height: 100%; display: flex; box-sizing: border-box; }
+                            .talon-socio { width: 60%; padding-left: 20mm; padding-top: 13mm; }
+                            .talon-cobrador { width: 60mm; padding-left: 10mm; padding-top: 16mm; }
+                            p { margin-top: 5px; font-size: 13px; }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="contenedor">
+                            <div class="comprobante">
+                                <div class="talon-socio">
+                                    <p><strong>Afiliado:</strong> ${nombre} ${apellido}</p>
+                                    <p><strong>Domicilio:</strong> ${domicilio} ${numero}</p>
+                                    <p><strong>Categoría / Monto:</strong> ${categoria} / $${totalPagar}</p>
+                                    <p><strong>Período:</strong> ${mesesPagados}</p>
+                                    <p><strong>Cobrador:</strong> ${cobrador}</p>
+                                    <p>Por consultas comunicarse al 03564-15205778</p>
+                                </div>
+                                <div class="talon-cobrador">
+                                    <p><strong>Nombre y Apellido:</strong> ${nombre} ${apellido}</p>
+                                    <p><strong>Categoría / Monto:</strong> ${categoria} / $${totalPagar}</p>
+                                    <p><strong>Período:</strong> ${mesesPagados}</p>
+                                    <p><strong>Cobrador:</strong> ${cobrador}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </body>
+                    </html>
+                `;
+
+                const ventana = window.open('', '', 'width=600,height=400');
+                ventana.document.write(comprobanteHTML);
+                ventana.document.close();
+                ventana.print();
+            }, index * 1000); // Retraso para evitar bloquear el navegador
+        });
+
+    } catch (error) {
+        alert("Ocurrió un error al obtener los datos de los socios.");
+    }
+  };
+
+
   return (
     <div className="socio-container">
       <div className="socio-box">
@@ -557,6 +636,11 @@ const GestionarSocios = () => {
               <FontAwesomeIcon icon={faArrowLeft} className="socio-icon-button" />
               Volver Atrás
             </button>
+            <button className="socio-button btn-print" onClick={handleImprimirTodosComprobantes}>
+              <FontAwesomeIcon icon={faPrint} className="socio-icon-button" />
+               Imprimir Comprobante
+            </button>
+
           </div>
         </div>
       </div>
