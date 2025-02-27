@@ -7,6 +7,12 @@ header("Content-Type: application/json");
 // Incluir el archivo de conexión a la base de datos
 include('db.php'); // Asegúrate de que la ruta sea correcta
 
+// Establecer manejo de errores más explícitos
+if ($conn->connect_error) {
+    echo json_encode(["success" => false, "message" => "Conexión fallida: " . $conn->connect_error]);
+    exit();
+}
+
 // Consulta para obtener todos los socios junto con la información adicional
 $query = "
     SELECT 
@@ -31,7 +37,7 @@ if ($result) {
 
         // Recorrer todos los socios y agregar los datos en un array
         while ($row = $result->fetch_assoc()) {
-            // Asignar valores en blanco si son null
+            // Asignar valores en blanco si son null (o no existen)
             $nombre = $row["nombre"] ?? "";
             $apellido = $row["apellido"] ?? "";
             $domicilio = $row["domicilio"] ?? "";
@@ -55,7 +61,7 @@ if ($result) {
             $socios[] = $comprobante;
         }
 
-        // Devolver todos los socios como respuesta
+        // Devolver todos los socios como respuesta en una sola "impresión"
         echo json_encode([
             "success" => true,
             "socios" => $socios
