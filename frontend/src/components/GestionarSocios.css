@@ -154,6 +154,29 @@
     outline: none;
     transition: all 0.3s ease-in-out;
 }
+.entity-dropdown {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #f5f5f5;
+    border-radius: 8px;
+    padding: 5px;
+    transition: all 0.3s ease-in-out;
+}
+
+.entity-dropdown select {
+    width: 120px;
+    height: 45px;
+    padding: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    border-radius: 10px;
+    background: white;
+    color: #797070;
+    cursor: pointer;
+    outline: none;
+    transition: all 0.3s ease-in-out;
+}
 
 
 

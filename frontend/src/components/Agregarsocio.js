@@ -21,6 +21,8 @@ const AgregarSocio = () => {
   const [categorias, setCategorias] = useState([]);
   const [mediosPago, setMediosPago] = useState([]);
   const [mensaje, setMensaje] = useState({ text: "", type: "" });
+  const [tipoEntidad, setTipoEntidad] = useState("");
+
 
   useEffect(() => {
     const fetchDatos = async () => {
@@ -54,11 +56,11 @@ const AgregarSocio = () => {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(socio),
+          body: JSON.stringify({ ...socio, tipoEntidad }), // Incluir tipoEntidad
         }
       );
       const data = await response.json();
-
+  
       if (data.success_message) {
         setMensaje({ text: data.success_message, type: "success" });
         setSocio({
@@ -75,10 +77,11 @@ const AgregarSocio = () => {
           idCategoria: "",
           idMedios_Pago: "",
         });
+        setTipoEntidad("socio"); // Resetear el tipo de entidad
       } else {
         setMensaje({ text: data.error_message, type: "error" });
       }
-
+  
       setTimeout(() => setMensaje({ text: "", type: "" }), 5000);
     } catch (error) {
       setMensaje({ text: "Error al agregar socio: " + error.message, type: "error" });
@@ -89,6 +92,11 @@ const AgregarSocio = () => {
   const handleGoBack = () => {
     window.history.back();
   };
+
+  const handleTipoEntidadChange = (e) => {
+    setTipoEntidad(e.target.value); // Aquí se establece el valor de "socio" o "empresa"
+  };
+  
 
 
 
@@ -332,6 +340,20 @@ const AgregarSocio = () => {
 
 
           <div style={styles.inputRow}>
+
+            <select
+              name="tipoEntidad"
+              value={tipoEntidad}
+              onChange={handleTipoEntidadChange}
+              style={styles.select}
+            >
+              <option value="">Seleccione Entidad</option>
+              <option value="socio">Socio</option>
+              <option value="empresa">Empresa</option>
+            </select>
+
+
+
             <select
               name="idMedios_Pago"
               value={socio.idMedios_Pago}

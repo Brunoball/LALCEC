@@ -32,6 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $idCategoria = limpiarDato($data['idCategoria']);
     $idMedios_Pago = limpiarDato($data['idMedios_Pago']);
     $observacion = limpiarDato($data['observacion']);
+    $tipoEntidad = limpiarDato($data['tipoEntidad']); // Nuevo campo
 
     // Validaciones de los datos
     function validarCampoTexto($valor, $campo) {
@@ -76,13 +77,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit();
     }
 
+    // Determinar el valor de flag según el tipo de entidad
+    $tipoEntidad = strtoupper(trim($data['tipoEntidad'])); // Asegúrate de que 'empresa' siempre se maneje en mayúsculas
+    $flag = ($tipoEntidad === 'EMPRESA') ? 1 : 0;
+    
+    
+
     // Consulta para insertar el nuevo socio
-    $query = "INSERT INTO socios (nombre, apellido, dni, email, telefono, domicilio, domicilio_2, localidad, numero, idCategoria, idMedios_Pago, observacion) 
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    $query = "INSERT INTO socios (nombre, apellido, dni, email, telefono, domicilio, domicilio_2, localidad, numero, idCategoria, idMedios_Pago, observacion, flag) 
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
     $stmt = $conn->prepare($query);
     $stmt->bind_param(
-        "ssssssssssss", 
+        "ssssssssssssi", 
         $nombre, 
         $apellido, 
         $dni, 
@@ -94,7 +101,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $numero, 
         $idCategoria, 
         $idMedios_Pago, 
-        $observacion
+        $observacion,
+        $flag // Usar el valor de flag determinado arriba
     );
 
     if ($stmt->execute()) {

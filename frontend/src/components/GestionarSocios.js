@@ -20,14 +20,27 @@ const GestionarSocios = () => {
   const [mostrarModalEliminar, setMostrarModalEliminar] = useState(false);
   const [medioPagoSeleccionado, setMedioPagoSeleccionado] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
-  const [tipoEntidad, setTipoEntidad] = useState(localStorage.getItem("ultimaEntidad") || "socios"); // Estado para el tipo de entidad (socios o empresas)
+  const [tipoEntidad, setTipoEntidad] = useState(localStorage.getItem("ultimaEntidad") || "socios");
   const [actualizar, setActualizar] = useState(false);
   const [primeraCarga, setPrimeraCarga] = useState(true);
+  const [cargando, setCargando] = useState(false);
 
+  // Ejecutar la búsqueda automáticamente cuando cambia `busqueda` o `tipoEntidad`
+  useEffect(() => {
+    const ejecutarBusqueda = async () => {
+      if (busqueda) {
+        await handleBusqueda(busqueda);
+      } else {
+        await handleMostrarTodos();
+      }
+    };
 
+    ejecutarBusqueda();
+  }, [busqueda, tipoEntidad]);
 
   useEffect(() => {
     const obtenerDatos = async () => {
+      setCargando(true);
       try {
         const responseMediosPago = await fetch("http://localhost:3001/obtener_datos.php");
         if (responseMediosPago.ok) {
@@ -40,13 +53,13 @@ const GestionarSocios = () => {
         } else {
           setError("Error al obtener los medios de pago.");
         }
-  
+
         const ultimaBusqueda = localStorage.getItem("ultimaBusqueda");
         const ultimosResultados = localStorage.getItem("ultimosResultados");
         const ultimaSeleccion = localStorage.getItem("ultimaSeleccion");
         const ultimaLetraSeleccionada = localStorage.getItem("ultimaLetraSeleccionada");
         const ultimoMedioPagoSeleccionado = localStorage.getItem("ultimoMedioPagoSeleccionado");
-  
+
         if (ultimaBusqueda) {
           setBusqueda(ultimaBusqueda);
           await handleBusqueda(ultimaBusqueda);
@@ -76,16 +89,21 @@ const GestionarSocios = () => {
       } catch (error) {
         setError("Hubo un problema al obtener los datos.");
         console.error("Error:", error);
+      } finally {
+        setCargando(false);
       }
     };
-  
+
     obtenerDatos();
   }, [actualizar, tipoEntidad]);
 
   const handleBusqueda = async (busquedaParam) => {
     let query = busquedaParam || busqueda || "";
 
-    if (!query) return;
+    if (!query) {
+      await handleMostrarTodos();
+      return;
+    }
 
     try {
       const url = tipoEntidad === "socios"
@@ -119,7 +137,7 @@ const GestionarSocios = () => {
 
   const handleAgregarSocio = () => {
     navigate("/Agregarsocio");
-    setActualizar(prev => !prev); // Forzar actualización
+    setActualizar(prev => !prev);
   };
 
   const handleVolverAtras = async () => {
@@ -163,22 +181,17 @@ const GestionarSocios = () => {
     }
   };
 
-
-
   const handleSeleccion = async (e) => {
     const selectedValue = e.target.value;
-  
-    // Guarda la selección en localStorage
+
     localStorage.setItem("ultimaSeleccion", selectedValue);
     localStorage.setItem("ultimaEntidad", tipoEntidad);
-    
-    // Limpia búsquedas previas
+
     localStorage.removeItem("ultimaBusqueda");
     localStorage.removeItem("ultimosResultados");
-  
-    // Después de la primera selección, ocultar "Seleccionar"
+
     setPrimeraCarga(false);
-  
+
     if (selectedValue === "todos") {
       await handleMostrarTodos();
       setLetraSeleccionada("");
@@ -202,9 +215,6 @@ const GestionarSocios = () => {
       await handleFiltrarPorMedioPago(selectedValue);
     }
   };
-  
-  
-  
 
   const handleFiltrarPorMedioPago = async (medioPago) => {
     try {
@@ -235,19 +245,18 @@ const GestionarSocios = () => {
     }
   };
 
-
   const handleMostrarTodos = async () => {
     try {
-      const entidad = localStorage.getItem("ultimaEntidad") || "socios"; // Recuperar la última entidad usada
+      const entidad = localStorage.getItem("ultimaEntidad") || "socios";
       const url = `http://localhost:3001/todos_socios.php?tipo=${entidad}`;
       const response = await fetch(url);
-  
+
       if (response.ok) {
         const data = await response.json();
         setSocios(Array.isArray(data.socios) ? data.socios : []);
         setSociosFiltrados(Array.isArray(data.socios) ? data.socios : []);
         setError(null);
-  
+
         localStorage.removeItem("ultimaBusqueda");
         localStorage.removeItem("ultimosResultados");
       } else {
@@ -260,7 +269,6 @@ const GestionarSocios = () => {
       setError("Error al obtener los datos.");
     }
   };
-  
 
   const handleFilaSeleccionada = (index, socio) => {
     setFilaSeleccionada(filaSeleccionada === index ? null : index);
@@ -275,7 +283,7 @@ const GestionarSocios = () => {
 
   const handleEditarSocio = (nombre, apellido) => {
     navigate(`/editarSocio/${nombre}/${apellido}`);
-    setActualizar(prev => !prev); // Forzar actualización
+    setActualizar(prev => !prev);
   };
 
   const handleEliminarSocio = async () => {
@@ -323,83 +331,29 @@ const GestionarSocios = () => {
 
   const handleTipoEntidadChange = async (e) => {
     const tipo = e.target.value;
-    setTipoEntidad(tipo); // Actualizar el estado
-    localStorage.setItem("ultimaEntidad", tipo); // Guardar la selección en localStorage
+    setTipoEntidad(tipo);
+    localStorage.setItem("ultimaEntidad", tipo);
   
-    // Limpiar el estado de la selección anterior (letras o medios de pago)
-    setLetraSeleccionada("");
-    setMedioPagoSeleccionado("");
-    localStorage.removeItem("ultimaLetraSeleccionada");
-    localStorage.removeItem("ultimoMedioPagoSeleccionado");
+    // Guardar selección previa antes de resetear
+    const ultimaLetra = localStorage.getItem("ultimaLetraSeleccionada");
+    const ultimoMedio = localStorage.getItem("ultimoMedioPagoSeleccionado");
   
-    // Limpiar la tabla al cambiar el tipo de entidad
+    if (!busqueda) { // Solo resetear si no hay búsqueda activa
+      setLetraSeleccionada("");
+      setMedioPagoSeleccionado("");
+      localStorage.removeItem("ultimaLetraSeleccionada");
+      localStorage.removeItem("ultimoMedioPagoSeleccionado");
+    } else {
+      // Restaurar la última selección
+      setLetraSeleccionada(ultimaLetra || "");
+      setMedioPagoSeleccionado(ultimoMedio || "");
+    }
+  
     setSocios([]);
     setSociosFiltrados([]);
   
-    // Recargar los datos según el nuevo tipo de entidad
-    if (tipo === "socios") {
-      await handleMostrarTodos();
-    } else if (tipo === "empresa") {
-      await handleMostrarTodos();
-    }
+    await handleMostrarTodos();
   };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   
 
   const exportarAExcel = () => {
@@ -413,6 +367,8 @@ const GestionarSocios = () => {
       return;
     }
 
+    const nombreArchivo = tipoEntidad === "socios" ? "Socios.xlsx" : "Empresas.xlsx";
+
     const datosReordenados = sociosFiltrados.map(({ idSocios, nombre, apellido, ...resto }) => ({
       idSocios,
       apellido,
@@ -422,13 +378,12 @@ const GestionarSocios = () => {
 
     const ws = XLSX.utils.json_to_sheet(datosReordenados);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Socios");
+    XLSX.utils.book_append_sheet(wb, ws, tipoEntidad === "socios" ? "Socios" : "Empresas");
 
-    XLSX.writeFile(wb, "Socios.xlsx");
+    XLSX.writeFile(wb, nombreArchivo);
 
     setErrorMessage("");
   };
-
 
 
   return (
@@ -478,13 +433,11 @@ const GestionarSocios = () => {
               </select>
             </div>
 
-
-
             <div className="entity-dropdown">
               <select
                 id="entity"
                 className="dropdown"
-                value={tipoEntidad} // Controla el valor del select con el estado
+                value={tipoEntidad}
                 onChange={handleTipoEntidadChange}
               >
                 <option value="socios">Socios</option>
@@ -517,7 +470,13 @@ const GestionarSocios = () => {
             </div>
 
             <div className="body">
-              {sociosFiltrados.length > 0 ? (
+              {cargando ? (
+                <div className="row">
+                  <div className="not_socio" colSpan="5">
+                    Cargando...
+                  </div>
+                </div>
+              ) : sociosFiltrados.length > 0 ? (
                 <div className="scrollable">
                   {sociosFiltrados.map((socio, index) => {
                     console.log(`Socio ${index}:`, socio);
@@ -527,11 +486,11 @@ const GestionarSocios = () => {
                         className={`row ${filaSeleccionada === index ? "selected-row" : index % 2 === 0 ? "even-row" : "odd-row"}`}
                         onClick={() => handleFilaSeleccionada(index, socio)}
                       >
-                        <div className="column column-ape">{socio.apellido || "No disponible"}</div>
-                        <div className="column column-nom">{socio.nombre || "No disponible"}</div>
-                        <div className="column column-cat">{socio.categoria || "No disponible"} ${socio.precio_categoria || "0"}</div>
-                        <div className="column column-mp">{socio.medio_pago || "No disponible"}</div>
-                        <div className="column column-dom">{socio.domicilio || "No disponible"} {socio.numero || ""}</div>
+                        <div className="column column-ape">{socio.apellido}</div>
+                        <div className="column column-nom">{socio.nombre}</div>
+                        <div className="column column-cat">{socio.categoria} ${socio.precio_categoria || "0"}</div>
+                        <div className="column column-mp">{socio.medio_pago}</div>
+                        <div className="column column-dom">{socio.domicilio} {socio.numero || ""}</div>
                         <div className="column column-obs">{socio.observacion}</div>
                         <div className="column icons-column">
                           {filaSeleccionada === index && (
