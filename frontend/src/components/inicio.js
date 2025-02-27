@@ -12,6 +12,8 @@ const Login = () => {
   const [mensaje, setMensaje] = useState("");
   const [mensajeTipo, setMensajeTipo] = useState(""); // "exito" o "error"
   const navigate = useNavigate();
+  const socket = new WebSocket("ws://localhost:3000/ws");
+
 
   const togglePasswordVisibility = () => setShowPassword((prev) => !prev);
 
