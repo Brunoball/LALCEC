@@ -20,7 +20,7 @@ const GestionarSocios = () => {
   const [mostrarModalEliminar, setMostrarModalEliminar] = useState(false);
   const [medioPagoSeleccionado, setMedioPagoSeleccionado] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
-  const [tipoEntidad, setTipoEntidad] = useState("socios");
+  const [tipoEntidad, setTipoEntidad] = useState("socios"); // Estado para el tipo de entidad (socios o empresas)
   const [actualizar, setActualizar] = useState(false);
 
   useEffect(() => {
@@ -52,7 +52,7 @@ const GestionarSocios = () => {
           if (ultimaSeleccion === "todos") {
             await handleMostrarTodos();
           } else if (/^[A-Z]$/.test(ultimaSeleccion)) {
-            await handleFiltrarPorLetra(ultimaSeleccion);
+            await handleFiltrarPorLetra(ultimaSeleccion, tipoEntidad);
           } else {
             setMedioPagoSeleccionado(ultimaSeleccion);
             await handleFiltrarPorMedioPago(ultimaSeleccion);
@@ -69,7 +69,7 @@ const GestionarSocios = () => {
     };
 
     obtenerDatos();
-  }, [actualizar]);
+  }, [actualizar, tipoEntidad]); // Dependencia de tipoEntidad para actualizar la lista cuando cambie
 
   const handleBusqueda = async (busquedaParam) => {
     let query = busquedaParam || busqueda || "";
@@ -108,11 +108,12 @@ const GestionarSocios = () => {
 
   const handleAgregarSocio = () => {
     navigate("/Agregarsocio");
+    setActualizar(prev => !prev); // Forzar actualización
   };
 
   const handleVolverAtras = () => {
     navigate(-1);
-    setActualizar(prev => !prev);
+    setActualizar(prev => !prev); // Forzar actualización
   };
 
   const handleFiltrarPorLetra = async (letra, tipo) => {
@@ -240,7 +241,7 @@ const GestionarSocios = () => {
 
   const handleEditarSocio = (nombre, apellido) => {
     navigate(`/editarSocio/${nombre}/${apellido}`);
-    setActualizar(prev => !prev);
+    setActualizar(prev => !prev); // Forzar actualización
   };
 
   const handleEliminarSocio = async () => {
@@ -288,7 +289,7 @@ const GestionarSocios = () => {
 
   const handleTipoEntidadChange = async (e) => {
     const tipo = e.target.value;
-    setTipoEntidad(tipo);
+    setTipoEntidad(tipo); // Actualizar el tipo de entidad
     console.log("Tipo de entidad seleccionado:", tipo);
 
     // Limpiar la tabla al cambiar el tipo de entidad
