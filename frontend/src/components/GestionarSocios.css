@@ -11,6 +11,38 @@
     flex-direction: column;
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* Estilo para la opción "Seleccionar" */
+.default-option {
+    color: #999; /* Gris */
+    font-style: italic;
+}
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
 /* Caja principal */
 .socio-box {
     background: rgba(255, 255, 255, 0.95);

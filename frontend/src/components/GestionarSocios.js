@@ -20,8 +20,11 @@ const GestionarSocios = () => {
   const [mostrarModalEliminar, setMostrarModalEliminar] = useState(false);
   const [medioPagoSeleccionado, setMedioPagoSeleccionado] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
-  const [tipoEntidad, setTipoEntidad] = useState("socios");
+  const [tipoEntidad, setTipoEntidad] = useState(localStorage.getItem("ultimaEntidad") || "socios"); // Estado para el tipo de entidad (socios o empresas)
   const [actualizar, setActualizar] = useState(false);
+  const [primeraCarga, setPrimeraCarga] = useState(true);
+
+
 
   useEffect(() => {
     const obtenerDatos = async () => {
@@ -37,11 +40,13 @@ const GestionarSocios = () => {
         } else {
           setError("Error al obtener los medios de pago.");
         }
-
+  
         const ultimaBusqueda = localStorage.getItem("ultimaBusqueda");
         const ultimosResultados = localStorage.getItem("ultimosResultados");
         const ultimaSeleccion = localStorage.getItem("ultimaSeleccion");
-
+        const ultimaLetraSeleccionada = localStorage.getItem("ultimaLetraSeleccionada");
+        const ultimoMedioPagoSeleccionado = localStorage.getItem("ultimoMedioPagoSeleccionado");
+  
         if (ultimaBusqueda) {
           setBusqueda(ultimaBusqueda);
           await handleBusqueda(ultimaBusqueda);
@@ -52,13 +57,19 @@ const GestionarSocios = () => {
           if (ultimaSeleccion === "todos") {
             await handleMostrarTodos();
           } else if (/^[A-Z]$/.test(ultimaSeleccion)) {
-            await handleFiltrarPorLetra(ultimaSeleccion);
+            setLetraSeleccionada(ultimaSeleccion);
+            await handleFiltrarPorLetra(ultimaSeleccion, tipoEntidad);
           } else {
             setMedioPagoSeleccionado(ultimaSeleccion);
             await handleFiltrarPorMedioPago(ultimaSeleccion);
           }
+        } else if (ultimaLetraSeleccionada) {
+          setLetraSeleccionada(ultimaLetraSeleccionada);
+          await handleFiltrarPorLetra(ultimaLetraSeleccionada, tipoEntidad);
+        } else if (ultimoMedioPagoSeleccionado) {
+          setMedioPagoSeleccionado(ultimoMedioPagoSeleccionado);
+          await handleFiltrarPorMedioPago(ultimoMedioPagoSeleccionado);
         } else {
-          // No cargar datos automáticamente si no hay selección o búsqueda
           setSocios([]);
           setSociosFiltrados([]);
         }
@@ -67,9 +78,9 @@ const GestionarSocios = () => {
         console.error("Error:", error);
       }
     };
-
+  
     obtenerDatos();
-  }, [actualizar]);
+  }, [actualizar, tipoEntidad]);
 
   const handleBusqueda = async (busquedaParam) => {
     let query = busquedaParam || busqueda || "";
@@ -108,11 +119,25 @@ const GestionarSocios = () => {
 
   const handleAgregarSocio = () => {
     navigate("/Agregarsocio");
+    setActualizar(prev => !prev); // Forzar actualización
   };
 
-  const handleVolverAtras = () => {
+  const handleVolverAtras = async () => {
+    const ultimaSeleccion = localStorage.getItem("ultimaSeleccion");
+    const ultimaEntidad = localStorage.getItem("ultimaEntidad") || "socios";
+
+    setTipoEntidad(ultimaEntidad);
+
+    if (ultimaSeleccion === "todos") {
+      await handleMostrarTodos();
+    } else if (/^[A-Z]$/.test(ultimaSeleccion)) {
+      await handleFiltrarPorLetra(ultimaSeleccion, ultimaEntidad);
+    } else if (ultimaSeleccion) {
+      setMedioPagoSeleccionado(ultimaSeleccion);
+      await handleFiltrarPorMedioPago(ultimaSeleccion);
+    }
+
     navigate(-1);
-    setActualizar(prev => !prev);
   };
 
   const handleFiltrarPorLetra = async (letra, tipo) => {
@@ -138,81 +163,91 @@ const GestionarSocios = () => {
     }
   };
 
+
+
   const handleSeleccion = async (e) => {
     const selectedValue = e.target.value;
+  
+    // Guarda la selección en localStorage
     localStorage.setItem("ultimaSeleccion", selectedValue);
+    localStorage.setItem("ultimaEntidad", tipoEntidad);
+    
+    // Limpia búsquedas previas
     localStorage.removeItem("ultimaBusqueda");
     localStorage.removeItem("ultimosResultados");
-
-    const tipoSeleccionadoElement = document.getElementById("entity");
-    const tipoSeleccionado = tipoSeleccionadoElement ? tipoSeleccionadoElement.value : "socios"; // Default a "socios"
-
+  
+    // Después de la primera selección, ocultar "Seleccionar"
+    setPrimeraCarga(false);
+  
     if (selectedValue === "todos") {
-      handleMostrarTodos();
-    } else if (/^[A-Z]$/.test(selectedValue)) {
-      handleFiltrarPorLetra(selectedValue, tipoSeleccionado);
+      await handleMostrarTodos();
+      setLetraSeleccionada("");
+      setMedioPagoSeleccionado("");
+      setBusqueda("");
     } else if (selectedValue === "") {
-      // Si no se selecciona nada, limpiar la tabla
       setSocios([]);
       setSociosFiltrados([]);
+      setLetraSeleccionada("");
+      setMedioPagoSeleccionado("");
+      setBusqueda("");
+    } else if (/^[A-Z]$/.test(selectedValue)) {
+      setLetraSeleccionada(selectedValue);
+      setMedioPagoSeleccionado("");
+      localStorage.setItem("ultimaLetraSeleccionada", selectedValue);
+      await handleFiltrarPorLetra(selectedValue, tipoEntidad);
     } else {
       setMedioPagoSeleccionado(selectedValue);
-      handleFiltrarPorMedioPago(selectedValue);
+      setLetraSeleccionada("");
+      localStorage.setItem("ultimoMedioPagoSeleccionado", selectedValue);
+      await handleFiltrarPorMedioPago(selectedValue);
     }
   };
+  
+  
+  
 
   const handleFiltrarPorMedioPago = async (medioPago) => {
-    console.log("Filtrando por medio de pago:", medioPago);
-
     try {
-      const tipoSeleccionadoElement = document.getElementById("entity");
-      const tipoSeleccionado = tipoSeleccionadoElement ? tipoSeleccionadoElement.value : "socios"; // Obtener el tipo de entidad seleccionado
-
-      const url = `http://localhost:3001/filtro_mp.php?medio=${encodeURIComponent(medioPago)}&tipo=${tipoSeleccionado}`;
+      const url = `http://localhost:3001/filtro_mp.php?medio=${encodeURIComponent(medioPago)}&tipo=${tipoEntidad}`;
       const response = await fetch(url);
 
       if (response.ok) {
         const data = await response.json();
-        console.log("Respuesta del servidor:", data);
 
         if (Array.isArray(data) && data.length > 0) {
           setSocios(data);
           setSociosFiltrados(data);
+          localStorage.setItem("ultimaSeleccion", medioPago);
         } else {
-          console.warn("No se encontraron socios para este medio de pago.");
           setSocios([]);
           setSociosFiltrados([]);
         }
         setError(null);
       } else {
-        console.error("Error en la respuesta del servidor:", response.status);
         setSocios([]);
         setSociosFiltrados([]);
         setError("Error al obtener los socios.");
       }
     } catch (error) {
-      console.error("Error al obtener socios por medio de pago:", error);
       setSocios([]);
       setSociosFiltrados([]);
       setError("Error al obtener los socios.");
     }
   };
 
+
   const handleMostrarTodos = async () => {
     try {
-      const tipoSeleccionadoElement = document.getElementById("entity");
-      const tipoSeleccionado = tipoSeleccionadoElement ? tipoSeleccionadoElement.value : "socios";
-
-      const url = `http://localhost:3001/todos_socios.php?tipo=${tipoSeleccionado}`;
+      const entidad = localStorage.getItem("ultimaEntidad") || "socios"; // Recuperar la última entidad usada
+      const url = `http://localhost:3001/todos_socios.php?tipo=${entidad}`;
       const response = await fetch(url);
-
+  
       if (response.ok) {
         const data = await response.json();
-        console.log(data);
         setSocios(Array.isArray(data.socios) ? data.socios : []);
         setSociosFiltrados(Array.isArray(data.socios) ? data.socios : []);
         setError(null);
-
+  
         localStorage.removeItem("ultimaBusqueda");
         localStorage.removeItem("ultimosResultados");
       } else {
@@ -222,10 +257,10 @@ const GestionarSocios = () => {
     } catch (error) {
       setSocios([]);
       setSociosFiltrados([]);
-      setError("Error al obtener los socios.");
-      console.error("Error al obtener socios:", error);
+      setError("Error al obtener los datos.");
     }
   };
+  
 
   const handleFilaSeleccionada = (index, socio) => {
     setFilaSeleccionada(filaSeleccionada === index ? null : index);
@@ -240,7 +275,7 @@ const GestionarSocios = () => {
 
   const handleEditarSocio = (nombre, apellido) => {
     navigate(`/editarSocio/${nombre}/${apellido}`);
-    setActualizar(prev => !prev);
+    setActualizar(prev => !prev); // Forzar actualización
   };
 
   const handleEliminarSocio = async () => {
@@ -288,13 +323,84 @@ const GestionarSocios = () => {
 
   const handleTipoEntidadChange = async (e) => {
     const tipo = e.target.value;
-    setTipoEntidad(tipo);
-    console.log("Tipo de entidad seleccionado:", tipo);
-
+    setTipoEntidad(tipo); // Actualizar el estado
+    localStorage.setItem("ultimaEntidad", tipo); // Guardar la selección en localStorage
+  
+    // Limpiar el estado de la selección anterior (letras o medios de pago)
+    setLetraSeleccionada("");
+    setMedioPagoSeleccionado("");
+    localStorage.removeItem("ultimaLetraSeleccionada");
+    localStorage.removeItem("ultimoMedioPagoSeleccionado");
+  
     // Limpiar la tabla al cambiar el tipo de entidad
     setSocios([]);
     setSociosFiltrados([]);
+  
+    // Recargar los datos según el nuevo tipo de entidad
+    if (tipo === "socios") {
+      await handleMostrarTodos();
+    } else if (tipo === "empresa") {
+      await handleMostrarTodos();
+    }
   };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
 
   const exportarAExcel = () => {
     if (sociosFiltrados.length === 0) {
@@ -323,6 +429,8 @@ const GestionarSocios = () => {
     setErrorMessage("");
   };
 
+
+
   return (
     <div className="socio-container">
       <div className="socio-box">
@@ -345,28 +453,40 @@ const GestionarSocios = () => {
             </div>
 
             <div className="alphabet-dropdown">
-              <select id="alphabet" className="dropdown" onChange={handleSeleccion}>
-                <option value="">Seleccionar</option>
+              <select
+                id="alphabet"
+                className="dropdown"
+                value={letraSeleccionada || medioPagoSeleccionado || (primeraCarga ? "" : "todos")}
+                onChange={handleSeleccion}
+              >
+                {primeraCarga && <option value="Seleccionar" disabled>Seleccionar</option>}
                 <option value="todos">Todos</option>
+
                 {["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"].map((letter, index) => (
-                  <option key={index} value={letter}>
-                    {letter}
-                  </option>
+                  <option key={index} value={letter}>{letter}</option>
                 ))}
+
                 {mediosDePago.length > 0 ? (
                   mediosDePago.map((medio, index) => (
-                    <option key={index} value={medio.Medio_Pago}>
+                    <option key={`medio-${index}`} value={medio.Medio_Pago}>
                       {medio.Medio_Pago}
                     </option>
                   ))
                 ) : (
-                  <option>No hay medios de pago disponibles</option>
+                  <option disabled>No hay medios de pago disponibles</option>
                 )}
               </select>
             </div>
 
+
+
             <div className="entity-dropdown">
-              <select id="entity" className="dropdown" onChange={handleTipoEntidadChange}>
+              <select
+                id="entity"
+                className="dropdown"
+                value={tipoEntidad} // Controla el valor del select con el estado
+                onChange={handleTipoEntidadChange}
+              >
                 <option value="socios">Socios</option>
                 <option value="empresa">Empresas</option>
               </select>
