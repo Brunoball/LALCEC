@@ -394,7 +394,6 @@ const GestionarSocios = () => {
 
 
 
-
   const handleImprimirTodosComprobantes = async () => {
     try {
         // 1. Obtener todos los socios desde el servidor
@@ -414,13 +413,53 @@ const GestionarSocios = () => {
             <head>
                 <title>Comprobantes de Pago</title>
                 <style>
-                    @page { size: A4 portrait; margin: 0; }
-                    body { width: 210mm; height: 297mm; margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 12px; }
-                    .contenedor { width: 210mm; margin: 10mm; page-break-after: always; }
-                    .comprobante { display: flex; box-sizing: border-box; margin-bottom: 10mm; }
-                    .talon-socio { width: 60%; padding-left: 20mm; padding-top: 13mm; }
-                    .talon-cobrador { width: 60mm; padding-left: 10mm; padding-top: 16mm; }
-                    p { margin-top: 5px; font-size: 13px; }
+                    @page {
+                        size: A4 portrait; /* Hoja A4 en vertical */
+                        margin: 0;
+                    }
+                    body {
+                      width: 210mm; /* Ancho de la hoja A4 */
+                      height: 297mm; /* Alto de la hoja A4 */
+                      margin: 0;
+                      padding: 0;
+                      font-family: Arial, sans-serif;
+                      font-size: 12px;
+                      display: flex;
+                      flex-direction: column;
+                      justify-content: flex-start;
+                      align-items: center;
+                      position: relative;
+                      transform: rotate(90deg); /* Rota el contenido 90 grados */
+                      transform-origin: top left;
+                      left: 70%; /* Ajusta la posición del contenido para que quede dentro de la página */
+                      top: 0;
+                    }
+                    .contenedor {
+                        width: 210mm; /* Ancho de la hoja A4 */
+                        margin: 5mm 0; /* Margen superior e inferior para separar los comprobantes */
+                        page-break-after: always; /* Para asegurarse de que cada comprobante se imprima en una nueva página */
+                        box-sizing: border-box;
+                    }
+                    .comprobante {
+                        width: 100%;
+                        height: 100%; /* Alto del comprobante */
+                        display: flex;
+                        box-sizing: border-box;
+                    }
+                    .talon-socio {
+                        width: 60%;
+                        padding-left: 10mm;
+                        padding-top: 13mm;
+                    }
+                    .talon-cobrador {
+                        width: 60mm;
+                        padding-left: 13mm;
+                        padding-top: 16mm;
+                    }
+                    p {
+                        margin-top: 5px;
+                        font-size: 13px;
+                    }
                 </style>
             </head>
             <body>
@@ -470,7 +509,7 @@ const GestionarSocios = () => {
     } catch (error) {
         alert("Ocurrió un error al obtener los datos de los socios.");
     }
-};
+  };
 
 
 
