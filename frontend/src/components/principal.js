@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faUsers, faDollarSign, faTags, faSignOutAlt } from "@fortawesome/free-solid-svg-icons";
+import { faUsers, faDollarSign, faTags, faSignOutAlt, faBuilding } from "@fortawesome/free-solid-svg-icons";
 import logoLalcec from "./logo_lalcec.jpeg";
 
 const PaginaPrincipal = () => {
@@ -24,6 +24,10 @@ const PaginaPrincipal = () => {
     navigate("/GestionarSocios");
   };
 
+  const handleRedireccionarEmpresas = () => {
+    navigate("/GestionarEmpresas");
+  };
+
   const handleRedireccionarCuotas = () => {
     navigate("/GestionarCuotas");
   };
@@ -31,6 +35,7 @@ const PaginaPrincipal = () => {
   const handleRedireccionarCategorias = () => {
     navigate("/GestionarCategorias");
   };
+  
 
   const handleCerrarSesion = () => {
     setShowModal(true);
@@ -63,6 +68,12 @@ const PaginaPrincipal = () => {
           <span style={styles.buttonText}>Gestionar Socios</span>
         </button>
 
+        
+        <button style={styles.button} onClick={handleRedireccionarEmpresas}>
+          <FontAwesomeIcon icon={faBuilding} style={styles.iconButton} />
+          <span style={styles.buttonText}>Gestionar Empresas</span>
+        </button>
+
         <button style={styles.button} onClick={handleRedireccionarCuotas}>
           <FontAwesomeIcon icon={faDollarSign} style={styles.iconButton} />
           <span style={styles.buttonText}>Gestionar Cuotas</span>
@@ -72,6 +83,7 @@ const PaginaPrincipal = () => {
           <FontAwesomeIcon icon={faTags} style={styles.iconButton} />
           <span style={styles.buttonText}>Gestionar Categorías</span>
         </button>
+
 
         <button style={styles.logoutButton} onClick={handleCerrarSesion}>
           <FontAwesomeIcon icon={faSignOutAlt} style={styles.iconButton} />

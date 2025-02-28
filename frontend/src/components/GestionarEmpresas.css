@@ -1,0 +1,575 @@
+/* Contenedor principal */
+.empresa-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(135deg, #dcdcdc 30%, #ff6e00 70%);
+    overflow: hidden;
+    flex-direction: column;
+}
+
+/* Botón de imprimir comprobantes */
+.imprimir-comprobantes-btn {
+    padding: 10px 20px;
+    font-size: 16px;
+    color: white;
+    background-color: #007bff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin-top: 20px;
+}
+
+.imprimir-comprobantes-btn:hover {
+    background-color: #0056b3;
+}
+
+/* Estilo para la opción "Seleccionar" */
+.default-option {
+    color: #999; /* Gris */
+    font-style: italic;
+}
+
+/* Caja principal */
+.empresa-box {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 2.5rem;
+    border-radius: 25px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    width: 85%;
+    height: 75vh;
+    display: grid;
+    grid-template-rows: auto 2fr auto;
+    row-gap: 1rem;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Contenedor principal en fila */
+.front-row-emp {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 97%;
+    position: relative;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 10px;
+    gap: 20px;
+}
+
+/* Título */
+.empresa-title {
+    font-size: 1.65rem;
+    font-weight: 550;
+    color: #4b4b4b;
+    margin: 0;
+    white-space: nowrap;
+    width: 30%;
+}
+
+/* Fila de búsqueda y dropdown */
+.front-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-grow: 1;
+}
+
+/* Buscador */
+.search-bar {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    width: 50%;
+    margin-right: auto;
+}
+
+.search-input {
+    padding: 0.6rem 1rem;
+    font-size: 1rem;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    outline: none;
+    width: 100%;
+    box-sizing: border-box;
+    transition: border 0.3s ease;
+}
+
+.search-button {
+    background: #0288d1;
+    color: white;
+    padding: 0.78rem;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.search-button:hover {
+    background: #0277bd;
+}
+
+.icon-button {
+    transform: scale(1.4);
+}
+
+/* Dropdown */
+.alphabet-dropdown {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #f5f5f5;
+    border-radius: 8px;
+    padding: 5px;
+    transition: all 0.3s ease-in-out;
+}
+
+.alphabet-dropdown select {
+    width: 120px;
+    height: 45px;
+    padding: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    border-radius: 10px;
+    background: white;
+    color: #797070;
+    cursor: pointer;
+    outline: none;
+    transition: all 0.3s ease-in-out;
+}
+
+
+/* Contenedor general */
+.empresas-list {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 85%;
+    overflow: hidden;
+    position: relative;
+    margin-top: 30px;
+    border-radius: 10px;
+}
+
+/* Contenedor de la tabla */
+.box-table {
+    width: 100%;
+    height: auto;
+    display: flex;
+    flex-direction: column;
+    max-width: 100%;
+}
+
+/* Header de la tabla */
+.header {
+    display: flex;
+    flex-wrap: nowrap;
+    background-color: #0288d1;
+    color: #ffffff;
+    font-weight: bold;
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    min-height: 40px;
+    justify-content: space-between;
+    align-items: center;
+    overflow: hidden;
+    white-space: nowrap;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+}
+
+/* Columnas del header */
+.column-header {
+    flex: 1;
+    text-align: center;
+    padding: 10px;
+    font-size: 1rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Columnas de datos */
+.column {
+    flex: 1;
+    text-align: center;
+    padding: 8px 0px;
+    font-size: 1rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Nueva columna vacía para iconos en el header */
+.column-header.icons-column {
+    flex: 0.3;
+}
+
+/* Nueva columna vacía para iconos en las filas */
+.column.icons-column {
+    flex: 0.3;
+}
+
+/* Filas */
+.row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px;
+    position: relative;
+}
+
+/* Alternar colores de fondo */
+.even-row {
+    background-color: #ffffff;
+}
+
+.odd-row {
+    background-color: #f3f3f3;
+}
+
+.selected-row {
+    background-color: #e0e0e0;
+}
+
+/* Iconos */
+.icons-container {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    visibility: hidden;
+}
+
+.selected-row .icons-container {
+    visibility: visible;
+}
+
+.icon {
+    font-size: 1.6rem;
+    cursor: pointer;
+    color: #ff6e00;
+    transition: color 0.3s;
+}
+
+.not_empresa {
+    width: 100%;
+    text-align: center;
+}
+
+/* Contenedor scrollable con el header fijo */
+.scrollable {
+    overflow-y: auto;
+    flex-grow: 1;
+    max-height: 37vh;
+}
+
+/* Estilo del scrollbar */
+.scrollable::-webkit-scrollbar {
+    width: 8px;
+}
+
+.scrollable::-webkit-scrollbar-thumb {
+    background: #aaa;
+    border-radius: 4px;
+}
+
+.scrollable::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+/* Contenedor de botones */
+.buttons-container-empresas {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 20px;
+    width: 70%;
+    margin-bottom: -20px;
+}
+
+.buttons-container {
+    margin-bottom: 10px;
+}
+
+.empresas-totales {
+    font-size: 16px;
+    font-weight: bold;
+    margin-right: auto;
+    padding: 8px 12px;
+    background-color: #bff5bd;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Botón General */
+.empresa-button, .empresa-button-back {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 1rem;
+    font-weight: normal;
+    padding: 0.8rem 1.2rem;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: background 0.2s ease-in-out;
+}
+
+/* Botón Agregar */
+.empresa-button {
+    background: #007aff;
+    color: white;
+}
+
+.empresa-button:hover {
+    background: #005ecb;
+}
+
+.btn-export {
+    background: #4caf50;
+    color: white;
+}
+
+.btn-export:hover {
+    background-color: #45a049;
+}
+
+.error-message-emp {
+    background-color: #f8d7da;
+    color: #721c24;
+    padding: 10px;
+    border: 1px solid #f5c6cb;
+    border-radius: 5px;
+    margin: 10px 0;
+    text-align: center;
+    position: fixed;
+    top: 200px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    animation: fadeOut 3s ease-in-out forwards;
+}
+
+/* Botón Volver */
+.empresa-button-back {
+    background: #ff7700;
+    color: white;
+}
+
+.empresa-button-back:hover {
+    background: #ff8800;
+}
+
+/* Íconos */
+.empresa-icon-button {
+    font-size: 0.9rem;
+}
+
+/* Modal */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    padding: 1rem;
+    backdrop-filter: blur(5px);
+}
+
+.modal-content {
+    background-color: #fff;
+    padding: 1.8rem;
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    width: 400px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    animation: fadeIn 0.25s ease-in-out;
+}
+
+.modal-title {
+    font-size: 1.5rem;
+    color: #d35400;
+    font-weight: bold;
+}
+
+.modal-text {
+    font-size: 1rem;
+    margin-bottom: 60px;
+    color: #444;
+}
+
+.modal-buttons {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    width: 100%;
+}
+
+.modal-button {
+    flex: 1;
+    padding: 0.7rem 1.5rem;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.modal-button.accept-button {
+    background: #40c463;
+    color: white;
+}
+
+.modal-button.accept-button:hover {
+    background: #6ef885;
+}
+
+.modal-button.cancel-button {
+    background: #d9534f;
+    color: white;
+}
+
+.modal-button.cancel-button:hover {
+    background: #fc8c8c;
+}
+
+/* Media queries para responsividad */
+@media screen and (max-width: 768px) {
+    .empresa-box {
+        height: 78vh;
+        padding: 2.2rem;
+    }
+
+    .front-row-emp {
+        flex-direction: column;
+        margin-top: -30px;
+        width: 100%;
+    }
+
+    .empresa-title {
+        width: auto;
+        margin-top: 10px;
+    }
+
+    .search-bar {
+        width: 65%;
+        margin-left: 0;
+    }
+
+    .alphabet-dropdown {
+        padding: 0;
+        width: 30%;
+    }
+
+    .search-input::placeholder {
+        font-size: 0.85rem;
+        color: #888;
+    }
+
+    .empresas-list {
+        overflow-x: auto;
+        justify-content: flex-start;
+        width: 100%;
+    }
+
+    .box-table {
+        width: auto;
+        min-width: 768px;
+    }
+
+    .column-header {
+        flex: 0.85;
+        font-size: 0.8rem;
+    }
+
+    .scrollable {
+        overflow-x: hidden;
+        overflow-y: auto;
+    }
+
+    .header {
+        position: relative;
+        top: 5px;
+        z-index: auto;
+    }
+
+    .column {
+        padding: 6px 0;
+        font-size: 0.7rem;
+        white-space: nowrap;
+    }
+
+    .column.icons-column {
+        flex: none;
+    }
+
+    .row {
+        padding: 8px;
+        height: auto;
+    }
+
+    .selected-row {
+        background-color: #6e6e6e;
+    }
+
+    .header-cat {
+        flex: 0.5;
+    }
+
+    .header-mp {
+        flex: 0.8;
+    }
+
+    .header-nom, .header-ape {
+        flex: 0.5;
+    }
+
+    .column-nom, .column-ape {
+        flex: 0.65;
+    }
+
+    .column-cat {
+        flex: 0.65;
+    }
+
+    .column-header.icons-column {
+        display: none;
+    }
+
+    .not_empresa {
+        margin-top: 50px;
+    }
+
+    .empresas-totales {
+        margin-bottom: 47px;
+        margin-left: -20px;
+    }
+
+    .empresa-button, .empresa-button-back {
+        width: 45%;
+        border-radius: 15px;
+    }
+}

@@ -372,12 +372,6 @@ const EditarSocio = () => {
           </div>
   
 
-
-
-
-
-  
-  
           <div style={styles.inputGroup}>
             <select
               value={medioPago || ""}
@@ -399,24 +393,16 @@ const EditarSocio = () => {
               onChange={(e) => setCategoria(e.target.value)}
               style={styles.input}
             >
-              {categoria === "" ? (  // Solo muestra la opción predeterminada si no hay valor seleccionado
+              {categoria === "" ? (
                 <option value="" disabled>Seleccione una categoría</option>
               ) : null}
               {categorias.map((cat) => (
                 <option key={cat.idCategorias} value={cat.idCategorias}>
-                  {cat.Nombre_categoria}
+                  {cat.Nombre_categoria} - ${cat.Precio_Categoria} {/* Mostrar nombre y precio */}
                 </option>
               ))}
             </select>
           </div>
-
-
-
-
-
-
-
-
 
           <div style={styles.buttonsContainer}>
             <button type="button" onClick={guardarSocio} style={styles.button}>

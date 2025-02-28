@@ -13,7 +13,7 @@ if ($conn->connect_error) {
     exit();
 }
 
-// Consulta para obtener todos los socios junto con la información adicional
+// Consulta para obtener todos los socios junto con la información adicional, ordenados alfabéticamente
 $query = "
     SELECT 
         socios.nombre, 
@@ -26,6 +26,7 @@ $query = "
     FROM socios
     LEFT JOIN categorias ON socios.idCategoria = categorias.idCategorias
     LEFT JOIN mediospago ON socios.idMedios_Pago = mediospago.idMedios_Pago
+    ORDER BY socios.apellido ASC, socios.nombre ASC
 ";
 
 $result = $conn->query($query);
@@ -37,41 +38,23 @@ if ($result) {
 
         // Recorrer todos los socios y agregar los datos en un array
         while ($row = $result->fetch_assoc()) {
-            // Asignar valores en blanco si son null (o no existen)
-            $nombre = $row["nombre"] ?? "";
-            $apellido = $row["apellido"] ?? "";
-            $domicilio = $row["domicilio"] ?? "";
-            $numero = $row["numero"] ?? "";
-            $categoria = $row["Nombre_Categoria"] ?? "";
-            $precioCategoria = $row["Precio_Categoria"] ?? "";
-            $cobrador = $row["Medio_Pago"] ?? "";
-
-            // Crear un comprobante para cada socio
-            $comprobante = [
-                "nombre" => $nombre,
-                "apellido" => $apellido,
-                "domicilio" => $domicilio, 
-                "numero" => $numero, 
-                "categoria" => $categoria,
-                "precioCategoria" => $precioCategoria,
-                "cobrador" => $cobrador
+            $socios[] = [
+                "nombre" => $row["nombre"] ?? "",
+                "apellido" => $row["apellido"] ?? "",
+                "domicilio" => $row["domicilio"] ?? "",
+                "numero" => $row["numero"] ?? "",
+                "categoria" => $row["Nombre_Categoria"] ?? "",
+                "precioCategoria" => $row["Precio_Categoria"] ?? "",
+                "cobrador" => $row["Medio_Pago"] ?? ""
             ];
-
-            // Agregar el comprobante al array de socios
-            $socios[] = $comprobante;
         }
 
-        // Devolver todos los socios como respuesta en una sola "impresión"
-        echo json_encode([
-            "success" => true,
-            "socios" => $socios
-        ]);
+        // Devolver todos los socios ordenados como respuesta en una sola "impresión"
+        echo json_encode(["success" => true, "socios" => $socios]);
     } else {
-        // Si no se encontraron socios
         echo json_encode(["success" => false, "message" => "No se encontraron socios"]);
     }
 } else {
-    // Si ocurre un error en la consulta
     echo json_encode(["success" => false, "message" => "Error en la consulta: " . $conn->error]);
 }
 

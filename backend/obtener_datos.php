@@ -7,8 +7,8 @@ include(__DIR__ . '/db.php'); // Asegúrate de que tu conexión a la base de dat
 
 header('Content-Type: application/json');
 
-// Obtener todas las categorías disponibles
-$categoriasQuery = "SELECT idCategorias, Nombre_categoria FROM categorias";
+// Obtener todas las categorías disponibles, incluyendo el precio
+$categoriasQuery = "SELECT idCategorias, Nombre_categoria, Precio_Categoria FROM categorias";
 $categoriasResult = $conn->query($categoriasQuery);
 $categorias = [];
 while ($row = $categoriasResult->fetch_assoc()) {

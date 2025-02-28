@@ -377,7 +377,7 @@ const AgregarSocio = () => {
               <option value="">Seleccione Categoría</option>
               {categorias.map((categoria) => (
                 <option key={categoria.idCategorias} value={categoria.idCategorias}>
-                  {categoria.Nombre_categoria}
+                  {categoria.Nombre_categoria} - ${categoria.Precio_Categoria} {/* Mostrar nombre y precio */}
                 </option>
               ))}
             </select>

@@ -1,92 +1,46 @@
 <?php
-header("Access-Control-Allow-Origin: *"); // Permitir todas las solicitudes de cualquier origen
-header("Access-Control-Allow-Methods: GET, POST, OPTIONS"); // Métodos permitidos
-header("Access-Control-Allow-Headers: Content-Type, Authorization"); // Headers permitidos
+header("Content-Type: application/json");
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: GET");
 
 include(__DIR__ . '/db.php');
 
-// Obtener los parámetros
-$busqueda = $_GET['busqueda'] ?? null; // Buscar por nombre o apellido
-$tipoEntidad = $_GET['tipoEntidad'] ?? null; // El tipo de entidad: 'socios' o 'empresas'
-
-header('Content-Type: application/json');
-
-// Validar si existe el parámetro de búsqueda
-if ($busqueda) {
-    // Establecer el valor de flag según el tipo de entidad
-    $flagCondition = '';
-    if ($tipoEntidad === 'empresas') {
-        $flagValue = 1; // Empresas
-    } else if ($tipoEntidad === 'socios') {
-        $flagValue = 0; // Socios
-    } else {
-        // Si el tipo de entidad no es válido, se responde con error
-        http_response_code(400);
-        echo json_encode(["message" => "Tipo de entidad inválido. Use 'socios' o 'empresas'."]);
-        exit;
-    }
-
-    // Depuración: Verificar los valores recibidos
-    // echo json_encode(['busqueda' => $busqueda, 'tipoEntidad' => $tipoEntidad]);
-
-    // Consulta SQL para obtener socios o empresas según el tipo de búsqueda
-    $query = "
-        SELECT 
-            e.idEmpresas AS id,
-            e.nombre,
-            e.ruc,
-            e.domicilio,
-            e.telefono,
-            e.email,
-            e.idCategoria, 
-            e.idMedios_Pago,
-            c.Nombre_categoria AS categoria,
-            c.Precio_Categoria AS precio_categoria,
-            m.Medio_Pago AS medio_pago,
-            e.flag
-        FROM 
-            empresas e
-        LEFT JOIN 
-            categorias c ON e.idCategoria = c.idCategorias
-        LEFT JOIN 
-            mediospago m ON e.idMedios_Pago = m.IdMedios_pago
-        WHERE 
-            (e.nombre LIKE ? OR e.ruc LIKE ?)
-            AND e.flag = ?
-        ORDER BY 
-            e.nombre ASC
-    ";
-
-    $stmt = $conn->prepare($query);
-    if ($stmt) {
-        // Agregar comodines "%" para búsqueda parcial
-        $param = '%' . $busqueda . '%';
-        $stmt->bind_param('ssi', $param, $param, $flagValue); // Pasar flag directamente
-        $stmt->execute();
-        $result = $stmt->get_result();
-
-        if ($result->num_rows > 0) {
-            $resultados = [];
-            while ($row = $result->fetch_assoc()) {
-                $resultados[] = $row;
-            }
-
-            echo json_encode($resultados);
-        } else {
-            http_response_code(404);
-            echo json_encode(["message" => "No se encontraron resultados"]);
-        }
-
-        $stmt->close();
-    } else {
-        // Depuración: Verificar el error en la consulta
-        http_response_code(500);
-        echo json_encode(["message" => "Error al preparar la consulta", "error" => $conn->error]);
-    }
-} else {
-    http_response_code(400);
-    echo json_encode(["message" => "Falta el parámetro de búsqueda"]);
+// Verificar conexión
+if ($conn->connect_error) {
+    die(json_encode(["error" => "Conexión fallida: " . $conn->connect_error]));
 }
 
+// Verificar si se ha recibido el parámetro 'busqueda'
+$busqueda = isset($_GET["busqueda"]) ? $conn->real_escape_string($_GET["busqueda"]) : "";
+
+// Verificar si se ha recibido el parámetro 'tipoEntidad'
+$tipoEntidad = isset($_GET["tipoEntidad"]) ? $conn->real_escape_string($_GET["tipoEntidad"]) : "empresas";
+
+// Si la búsqueda está vacía, retornar un array vacío
+if (empty($busqueda)) {
+    echo json_encode([]);
+    exit();
+}
+
+// Consulta SQL para buscar en la tabla 'empresas'
+$sql = "SELECT * FROM empresas WHERE razon_social LIKE '%$busqueda%' 
+        OR cuit LIKE '%$busqueda%' 
+        OR domicilio LIKE '%$busqueda%' 
+        OR telefono LIKE '%$busqueda%' 
+        OR email LIKE '%$busqueda%'";
+
+$result = $conn->query($sql);
+
+$empresas = [];
+
+if ($result->num_rows > 0) {
+    while ($row = $result->fetch_assoc()) {
+        $empresas[] = $row;
+    }
+}
+
+// Cerrar conexión
 $conn->close();
-?>
+
+// Devolver los resultados en formato JSON
+echo json_encode($empresas);

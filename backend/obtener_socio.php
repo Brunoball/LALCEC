@@ -47,8 +47,8 @@ if ($nombre && $apellido) {
         if ($result->num_rows > 0) {
             $socio = $result->fetch_assoc();
 
-            // Obtener todas las categorías disponibles
-            $categoriasQuery = "SELECT idCategorias, Nombre_categoria FROM categorias";
+            // Obtener todas las categorías disponibles con el precio
+            $categoriasQuery = "SELECT idCategorias, Nombre_categoria, Precio_Categoria FROM categorias";
             $categoriasResult = $conn->query($categoriasQuery);
             $categorias = [];
             while ($row = $categoriasResult->fetch_assoc()) {
