@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus, faArrowLeft, faEdit, faTrash, faSearch, faDollar, faFileExcel, faPrint } from "@fortawesome/free-solid-svg-icons";
-import ModalPagos from "./ModalPagos"; // Asegúrate de importar el ModalPagos
+import ModalPagosEmpresas from './ModalPagosEmpresas';
 import "./GestionarEmpresas.css";
 
 const GestionarEmpresas = () => {
@@ -695,8 +695,8 @@ const GestionarEmpresas = () => {
       )}
 
       {mostrarModal && (
-        <ModalPagos
-          nombre={empresaSeleccionada.razon_social}
+        <ModalPagosEmpresas
+          razonSocial={empresaSeleccionada.razon_social}
           cerrarModal={cerrarModal}
         />
       )}

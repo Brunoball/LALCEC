@@ -12,6 +12,7 @@ import AgregarEmpresa from "./components/AgregarEmpresa"; // Asegúrate de crear
 import EditarSocio from "./components/EditarSocio"; // Página para editar un socio
 import EditarEmpresa from "./components/EditarEmpresa"; // Página para editar un socio
 import ModalPagos from "./components/ModalPagos"; // Asegúrate de importar ModalPagos
+import ModalPagosEmpresas from "./components/ModalPagosEmpresas";
 import AgregarCategoria from "./components/agregar_categoria"; 
 import EditarCategoria from "./components/editar_categoria"; 
 
@@ -31,7 +32,8 @@ const App = () => {
         <Route path="/GestionarCategorias" element={<GestionarCategorias />} />
         <Route path="/editarSocio/:nombre/:apellido" element={<EditarSocio />} />
         <Route path="/editarEmpresa/:razon_social" element={<EditarEmpresa />} />
-        <Route path="/modalPagos/:nombre/:apellido" element={<ModalPagos />} /> {/* Ruta para el modal de pagos */}
+        <Route path="/modalPagos/:nombre/:apellido" element={<ModalPagos />} /> 
+        <Route path="/ModalPagosEmpresas/:razon_social" element={<ModalPagosEmpresas />} />
         <Route path="/agregar_categoria" element={<AgregarCategoria />} />
         <Route path="/editar_categoria/:nombre_categoria" element={<EditarCategoria />} />
 

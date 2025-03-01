@@ -4,7 +4,7 @@ header('Access-Control-Allow-Origin: http://localhost:3000'); // Permite solicit
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS'); // Permite métodos específicos
 header('Access-Control-Allow-Headers: Content-Type'); // Permite encabezados específicos
 
-include(__DIR__ . '/db.php');
+include(__DIR__ . '/db.php'); // Incluir la conexión a la base de datos
 
 // Verificar la conexión
 if ($conn->connect_error) {
@@ -15,6 +15,16 @@ if ($conn->connect_error) {
 if (isset($_GET['idEmp']) && isset($_GET['razon_social'])) {
     $idEmp = $_GET['idEmp']; // Obtener el ID de la empresa/socio a eliminar
     $razon_social = $_GET['razon_social']; // Obtener la razón social de la empresa/socio a eliminar
+
+    // Eliminar los registros dependientes en la tabla 'pagos_empresas'
+    $deletePagosQuery = "DELETE FROM pagos_empresas WHERE idEmp = ?";
+    $stmtDeletePagos = $conn->prepare($deletePagosQuery);
+
+    if ($stmtDeletePagos) {
+        $stmtDeletePagos->bind_param("i", $idEmp); // Vincular el parámetro
+        $stmtDeletePagos->execute(); // Ejecutar la consulta
+        $stmtDeletePagos->close(); // Cerrar la declaración
+    }
 
     // Preparar la consulta SQL para eliminar la empresa/socio
     $sql = "DELETE FROM empresas WHERE idEmp = ? AND razon_social = ?";
