@@ -293,31 +293,62 @@ const GestionarEmpresas = () => {
     }
   };
 
+
+
+
+
+
+
+
+
+
+
+
+
+
   // Función para eliminar una empresa
   const handleEliminarEmpresa = async () => {
-    if (empresaSeleccionada) {
-      try {
-        const response = await fetch(
-          `http://localhost:3001/eliminar_empresa.php?nombre=${empresaSeleccionada.nombre}`,
-          { method: 'GET' }
-        );
-
-        if (response.ok) {
-          const data = await response.json();
-          if (data.message === "Empresa eliminada correctamente") {
-            setEmpresas(empresas.filter(empresa => empresa.nombre !== empresaSeleccionada.nombre));
-            setEmpresasFiltradas(empresasFiltradas.filter(empresa => empresa.nombre !== empresaSeleccionada.nombre));
-            setMostrarModalEliminar(false);
-          } else {
-            alert("Error al eliminar la empresa.");
-          }
-        }
-      } catch (error) {
-        console.error("Error al eliminar empresa:", error);
-        alert("Hubo un problema al eliminar la empresa.");
+    if (!empresaSeleccionada || !empresaSeleccionada.idEmp || !empresaSeleccionada.razon_social) {
+      console.error("Error: No se ha seleccionado una empresa/socio válido.");
+      return;
+    }
+  
+    try {
+      const response = await fetch(
+        `http://localhost:3001/eliminar_empresa.php?idEmp=${empresaSeleccionada.idEmp}&razon_social=${encodeURIComponent(empresaSeleccionada.razon_social)}`
+      );
+  
+      if (!response.ok) {
+        throw new Error("Error en la solicitud");
       }
+  
+      const data = await response.json();
+  
+      if (data.success) {
+        // Actualizar la lista de empresas/socios después de eliminar
+        setEmpresasFiltradas(empresasFiltradas.filter(empresa => empresa.idEmp !== empresaSeleccionada.idEmp));
+        
+        // Cerrar el modal de eliminación
+        setMostrarModalEliminar(false);
+      } else {
+        console.error("Error: " + data.message);
+      }
+    } catch (error) {
+      console.error("Error al eliminar empresa/socio:", error);
     }
   };
+
+
+
+
+
+
+
+
+
+
+
+
 
   // Función para confirmar la eliminación de una empresa
   const handleConfirmarEliminar = (empresa) => {
@@ -649,7 +680,7 @@ const GestionarEmpresas = () => {
         <div className="modal">
           <div className="modal-content">
             <h3 className="modal-title">¿Deseas eliminar esta empresa?</h3>
-            <p className="modal-text">{`${empresaSeleccionada.nombre}`}</p>
+            <p className="modal-text">{`${empresaSeleccionada.razon_social}`}</p>
 
             <div className="modal-buttons">
               <button className="modal-button cancel-button" onClick={handleCancelarEliminar}>
@@ -665,7 +696,7 @@ const GestionarEmpresas = () => {
 
       {mostrarModal && (
         <ModalPagos
-          nombre={empresaSeleccionada.nombre}
+          nombre={empresaSeleccionada.razon_social}
           cerrarModal={cerrarModal}
         />
       )}
