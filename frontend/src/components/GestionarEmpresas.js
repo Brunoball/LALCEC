@@ -42,7 +42,6 @@ const GestionarEmpresas = () => {
     const obtenerDatos = async () => {
       setCargando(true);
       try {
-        // Obtener los datos de medios de pago
         const responseMediosPago = await fetch("http://localhost:3001/obtener_datos.php");
         if (responseMediosPago.ok) {
           const data = await responseMediosPago.json();
@@ -55,26 +54,19 @@ const GestionarEmpresas = () => {
           setError("Error al obtener los medios de pago.");
         }
   
-        // Obtener la información guardada en localStorage
         const ultimaBusqueda = localStorage.getItem("ultimaBusqueda");
         const ultimosResultados = localStorage.getItem("ultimosResultados");
         const ultimaSeleccion = localStorage.getItem("ultimaSeleccion");
         const ultimaLetraSeleccionada = localStorage.getItem("ultimaLetraSeleccionada");
         const ultimoMedioPagoSeleccionado = localStorage.getItem("ultimoMedioPagoSeleccionado");
   
-        // Primero, manejar la búsqueda si existe
         if (ultimaBusqueda) {
           setBusqueda(ultimaBusqueda);
-          await handleBusqueda(ultimaBusqueda); // Realizar la búsqueda con el valor guardado
-          setEmpresasFiltradas([]); // Limpiar resultados filtrados ya que estamos en modo de búsqueda
-        } 
-        // Si no hay búsqueda pero hay resultados previos guardados, usarlos
-        else if (ultimosResultados) {
-          setBusqueda(""); // Vaciar el estado de búsqueda para que no se muestre si no hay búsqueda guardada
-          setEmpresasFiltradas(JSON.parse(ultimosResultados)); // Usar los resultados guardados
-        } 
-        // Si no hay búsqueda ni resultados previos, aplicar los filtros
-        else if (ultimaSeleccion) {
+          await handleBusqueda(ultimaBusqueda);
+        } else if (ultimosResultados) {
+          setBusqueda(ultimaBusqueda);
+          setEmpresasFiltradas(JSON.parse(ultimosResultados));
+        } else if (ultimaSeleccion) {
           if (ultimaSeleccion === "todos") {
             await handleMostrarTodos();
           } else if (/^[A-Z]$/.test(ultimaSeleccion)) {
@@ -91,8 +83,8 @@ const GestionarEmpresas = () => {
           setMedioPagoSeleccionado(ultimoMedioPagoSeleccionado);
           await handleFiltrarPorMedioPago(ultimoMedioPagoSeleccionado);
         } else {
-          setEmpresas([]); // Limpiar las empresas si no hay filtro ni búsqueda activa
-          setEmpresasFiltradas([]); // Limpiar las empresas filtradas
+          setEmpresas([]);
+          setEmpresasFiltradas([]);
         }
       } catch (error) {
         setError("Hubo un problema al obtener los datos.");
@@ -104,8 +96,6 @@ const GestionarEmpresas = () => {
   
     obtenerDatos();
   }, [actualizar, tipoEntidad]);
-  
-  
 
 
 
