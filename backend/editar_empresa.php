@@ -17,8 +17,8 @@ $data = json_decode(file_get_contents("php://input"), true);
 // Verificar si los datos están presentes
 if ($data) {
     // Convertir todos los campos a mayúsculas antes de procesarlos
-    $idEmp = isset($data['idEmp']) ? $data['idEmp'] : null;
     $razon_social = isset($data['razon_social']) ? strtoupper($data['razon_social']) : null;
+    $idEmp = isset($data['idEmp']) ? $data['idEmp'] : null;
     $domicilio = isset($data['domicilio']) ? strtoupper($data['domicilio']) : null;
     $telefono = isset($data['telefono']) ? strtoupper($data['telefono']) : null;
     $email = isset($data['email']) ? strtoupper($data['email']) : null;
@@ -28,8 +28,8 @@ if ($data) {
     $cuit = isset($data['cuit']) ? strtoupper($data['cuit']) : null;
     $cond_iva = isset($data['cond_iva']) ? strtoupper($data['cond_iva']) : null;
 
-    // Validar que los campos obligatorios estén presentes
-    if ($idEmp && $razon_social && $domicilio && $telefono && $email) {
+    // Validar que el campo obligatorio razon_social esté presente
+    if ($razon_social) {
         // Construir la consulta SQL dinámicamente
         $query = "
             UPDATE empresas
@@ -48,14 +48,19 @@ if ($data) {
             $query .= ", idCategorias = ?";
         }
 
+        // Si medioPago se recibe, incluirlo en la consulta
+        if ($medioPago) {
+            $query .= ", idMedios_Pago = ?";
+        }
+
         $query .= " WHERE idEmp = ?";
 
         // Preparar la consulta
         if ($stmt = $conn->prepare($query)) {
             // Vincular parámetros según los campos que se recibieron
-            if ($idCategoria) {
+            if ($idCategoria && $medioPago) {
                 $stmt->bind_param(
-                    'sssssssii',
+                    'ssssssssii',
                     $razon_social,
                     $domicilio,
                     $telefono,
@@ -64,6 +69,33 @@ if ($data) {
                     $cuit,
                     $cond_iva,
                     $idCategoria,
+                    $medioPago,
+                    $idEmp
+                );
+            } elseif ($idCategoria) {
+                $stmt->bind_param(
+                    'sssssssi',
+                    $razon_social,
+                    $domicilio,
+                    $telefono,
+                    $email,
+                    $observacion,
+                    $cuit,
+                    $cond_iva,
+                    $idCategoria,
+                    $idEmp
+                );
+            } elseif ($medioPago) {
+                $stmt->bind_param(
+                    'sssssssi',
+                    $razon_social,
+                    $domicilio,
+                    $telefono,
+                    $email,
+                    $observacion,
+                    $cuit,
+                    $cond_iva,
+                    $medioPago,
                     $idEmp
                 );
             } else {
@@ -95,7 +127,7 @@ if ($data) {
         }
     } else {
         http_response_code(400);
-        echo json_encode(["message" => "Faltan datos obligatorios"]);
+        echo json_encode(["message" => "Falta el dato obligatorio: razon_social"]);
     }
 } else {
     http_response_code(400);
@@ -104,4 +136,5 @@ if ($data) {
 
 // Cerrar la conexión
 $conn->close();
+
 ?>

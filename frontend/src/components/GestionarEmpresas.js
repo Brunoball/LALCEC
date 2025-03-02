@@ -42,6 +42,7 @@ const GestionarEmpresas = () => {
     const obtenerDatos = async () => {
       setCargando(true);
       try {
+        // Obtener los datos de medios de pago
         const responseMediosPago = await fetch("http://localhost:3001/obtener_datos.php");
         if (responseMediosPago.ok) {
           const data = await responseMediosPago.json();
@@ -53,20 +54,27 @@ const GestionarEmpresas = () => {
         } else {
           setError("Error al obtener los medios de pago.");
         }
-
+  
+        // Obtener la información guardada en localStorage
         const ultimaBusqueda = localStorage.getItem("ultimaBusqueda");
         const ultimosResultados = localStorage.getItem("ultimosResultados");
         const ultimaSeleccion = localStorage.getItem("ultimaSeleccion");
         const ultimaLetraSeleccionada = localStorage.getItem("ultimaLetraSeleccionada");
         const ultimoMedioPagoSeleccionado = localStorage.getItem("ultimoMedioPagoSeleccionado");
-
+  
+        // Primero, manejar la búsqueda si existe
         if (ultimaBusqueda) {
           setBusqueda(ultimaBusqueda);
-          await handleBusqueda(ultimaBusqueda);
-        } else if (ultimosResultados) {
-          setBusqueda(ultimaBusqueda);
-          setEmpresasFiltradas(JSON.parse(ultimosResultados));
-        } else if (ultimaSeleccion) {
+          await handleBusqueda(ultimaBusqueda); // Realizar la búsqueda con el valor guardado
+          setEmpresasFiltradas([]); // Limpiar resultados filtrados ya que estamos en modo de búsqueda
+        } 
+        // Si no hay búsqueda pero hay resultados previos guardados, usarlos
+        else if (ultimosResultados) {
+          setBusqueda(""); // Vaciar el estado de búsqueda para que no se muestre si no hay búsqueda guardada
+          setEmpresasFiltradas(JSON.parse(ultimosResultados)); // Usar los resultados guardados
+        } 
+        // Si no hay búsqueda ni resultados previos, aplicar los filtros
+        else if (ultimaSeleccion) {
           if (ultimaSeleccion === "todos") {
             await handleMostrarTodos();
           } else if (/^[A-Z]$/.test(ultimaSeleccion)) {
@@ -83,8 +91,8 @@ const GestionarEmpresas = () => {
           setMedioPagoSeleccionado(ultimoMedioPagoSeleccionado);
           await handleFiltrarPorMedioPago(ultimoMedioPagoSeleccionado);
         } else {
-          setEmpresas([]);
-          setEmpresasFiltradas([]);
+          setEmpresas([]); // Limpiar las empresas si no hay filtro ni búsqueda activa
+          setEmpresasFiltradas([]); // Limpiar las empresas filtradas
         }
       } catch (error) {
         setError("Hubo un problema al obtener los datos.");
@@ -93,9 +101,23 @@ const GestionarEmpresas = () => {
         setCargando(false);
       }
     };
-
+  
     obtenerDatos();
   }, [actualizar, tipoEntidad]);
+  
+  
+
+
+
+
+
+
+
+
+
+
+
+
 
   // Función para editar una empresa
   const handleEditarEmpresa = (razonSocial) => {
@@ -103,42 +125,73 @@ const GestionarEmpresas = () => {
     setActualizar(prev => !prev);
   };
 
-  // Función para buscar empresas
+
+
+
+
+
+
+
+
+
+
   const handleBusqueda = async (busquedaParam) => {
     let query = busquedaParam || busqueda || "";
-
+  
     if (!query) {
       setEmpresas([]);
       setEmpresasFiltradas([]);
+      localStorage.removeItem("ultimaBusqueda"); // Limpiar la última búsqueda
+      localStorage.removeItem("ultimosResultados"); // Limpiar los últimos resultados
       return;
     }
-
+  
     try {
       const url = `http://localhost:3001/buscarEmpresa.php?busqueda=${encodeURIComponent(query)}&tipoEntidad=empresas`;
       const response = await fetch(url);
-
+  
       if (response.ok) {
         const data = await response.json();
-
+  
         if (Array.isArray(data) && data.length > 0) {
           setEmpresas(data);
           setEmpresasFiltradas(data);
-          localStorage.setItem("ultimaBusqueda", query);
-          localStorage.setItem("ultimosResultados", JSON.stringify(data));
+          localStorage.setItem("ultimaBusqueda", query); // Guardar la última búsqueda
+          localStorage.setItem("ultimosResultados", JSON.stringify(data)); // Guardar los últimos resultados
         } else {
           setEmpresas([]);
           setEmpresasFiltradas([]);
+          localStorage.removeItem("ultimaBusqueda"); // Limpiar la última búsqueda
+          localStorage.removeItem("ultimosResultados"); // Limpiar los últimos resultados
         }
       } else {
         setEmpresas([]);
         setEmpresasFiltradas([]);
+        localStorage.removeItem("ultimaBusqueda"); // Limpiar la última búsqueda
+        localStorage.removeItem("ultimosResultados"); // Limpiar los últimos resultados
       }
     } catch (err) {
       console.error("Error en la búsqueda:", err);
       setEmpresas([]);
       setEmpresasFiltradas([]);
+      localStorage.removeItem("ultimaBusqueda"); // Limpiar la última búsqueda
+      localStorage.removeItem("ultimosResultados"); // Limpiar los últimos resultados
     }
   };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   // Función para agregar una nueva empresa
   const handleAgregarEmpresa = () => {
@@ -225,33 +278,32 @@ const GestionarEmpresas = () => {
     }
   };
 
-  // Función para filtrar empresas por medio de pago
   const handleFiltrarPorMedioPago = async (medioPago) => {
     try {
-      const url = `http://localhost:3001/filtro_mp.php?medio=${encodeURIComponent(medioPago)}&tipo=${tipoEntidad}`;
-      const response = await fetch(url);
+        const url = `http://localhost:3001/filtro_empresas_mp.php?medio=${encodeURIComponent(medioPago)}&tipo=${tipoEntidad}`;
+        const response = await fetch(url);
 
-      if (response.ok) {
-        const data = await response.json();
+        if (response.ok) {
+            const data = await response.json();
 
-        if (Array.isArray(data) && data.length > 0) {
-          setEmpresas(data);
-          setEmpresasFiltradas(data);
-          localStorage.setItem("ultimaSeleccion", medioPago);
+            if (Array.isArray(data) && data.length > 0) {
+                setEmpresas(data);
+                setEmpresasFiltradas(data);
+                localStorage.setItem("ultimaSeleccion", medioPago);
+            } else {
+                setEmpresas([]);
+                setEmpresasFiltradas([]);
+            }
+            setError(null);
         } else {
-          setEmpresas([]);
-          setEmpresasFiltradas([]);
+            setEmpresas([]);
+            setEmpresasFiltradas([]);
+            setError("Error al obtener las empresas.");
         }
-        setError(null);
-      } else {
+    } catch (error) {
         setEmpresas([]);
         setEmpresasFiltradas([]);
         setError("Error al obtener las empresas.");
-      }
-    } catch (error) {
-      setEmpresas([]);
-      setEmpresasFiltradas([]);
-      setError("Error al obtener las empresas.");
     }
   };
 
@@ -277,9 +329,15 @@ const GestionarEmpresas = () => {
     } catch (error) {
       setEmpresas([]);
       setEmpresasFiltradas([]);
-      setError("Error al obtener los datos.");
+      setError("Error al obtener las empresas.");
+      console.error("Error al obtener empresas:", error);
     }
   };
+
+
+
+
+
 
   // Función para seleccionar una fila
   const handleFilaSeleccionada = (index, empresa) => {
@@ -292,19 +350,6 @@ const GestionarEmpresas = () => {
       localStorage.removeItem("empresaSeleccionada");
     }
   };
-
-
-
-
-
-
-
-
-
-
-
-
-
 
   // Función para eliminar una empresa
   const handleEliminarEmpresa = async () => {
@@ -337,16 +382,6 @@ const GestionarEmpresas = () => {
       console.error("Error al eliminar empresa/socio:", error);
     }
   };
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -386,11 +421,8 @@ const GestionarEmpresas = () => {
 
     const nombreArchivo = tipoEntidad === "empresas" ? "Empresas.xlsx" : "Empresas.xlsx";
 
-    const datosReordenados = empresasFiltradas.map(({ idEmpresas, nombre, ...resto }) => ({
-      idEmpresas,
-      nombre,
-      ...resto,
-    }));
+    // Eliminar las columnas idEmpresas y nombre antes de crear el archivo Excel
+    const datosReordenados = empresasFiltradas.map(({ idEmpresas, nombre, ...resto }) => resto);
 
     const ws = XLSX.utils.json_to_sheet(datosReordenados);
     const wb = XLSX.utils.book_new();
@@ -400,6 +432,26 @@ const GestionarEmpresas = () => {
 
     setErrorMessage("");
   };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   // Función para imprimir todos los comprobantes
   const handleImprimirTodosComprobantes = async () => {
@@ -472,7 +524,7 @@ const GestionarEmpresas = () => {
       `;
 
       empresas.forEach((empresa) => {
-        const { nombre, domicilio, numero, categoria, precioCategoria, cobrador } = empresa;
+        const { nombre, domicilio, categoria, precioCategoria, cobrador } = empresa;
         const mesesPagados = "Marzo";
         const totalPagar = precioCategoria;
 
@@ -481,7 +533,7 @@ const GestionarEmpresas = () => {
               <div class="comprobante">
                   <div class="talon-empresa">
                       <p><strong>Empresa:</strong> ${nombre}</p>
-                      <p><strong>Domicilio:</strong> ${domicilio} ${numero}</p>
+                      <p><strong>Domicilio:</strong> ${domicilio}</p>
                       <p><strong>Categoría / Monto:</strong> ${categoria} / $${totalPagar}</p>
                       <p><strong>Período:</strong> ${mesesPagados}</p>
                       <p><strong>Cobrador:</strong> ${cobrador}</p>
@@ -511,6 +563,13 @@ const GestionarEmpresas = () => {
       alert("Ocurrió un error al obtener los datos de las empresas.");
     }
   };
+
+
+
+
+
+
+
 
   return (
     <div className="empresa-container">

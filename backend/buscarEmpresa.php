@@ -13,21 +13,14 @@ if ($conn->connect_error) {
 // Verificar si se ha recibido el parámetro 'busqueda'
 $busqueda = isset($_GET["busqueda"]) ? $conn->real_escape_string($_GET["busqueda"]) : "";
 
-// Verificar si se ha recibido el parámetro 'tipoEntidad'
-$tipoEntidad = isset($_GET["tipoEntidad"]) ? $conn->real_escape_string($_GET["tipoEntidad"]) : "empresas";
-
 // Si la búsqueda está vacía, retornar un array vacío
 if (empty($busqueda)) {
     echo json_encode([]);
     exit();
 }
 
-// Consulta SQL para buscar en la tabla 'empresas'
-$sql = "SELECT * FROM empresas WHERE razon_social LIKE '%$busqueda%' 
-        OR cuit LIKE '%$busqueda%' 
-        OR domicilio LIKE '%$busqueda%' 
-        OR telefono LIKE '%$busqueda%' 
-        OR email LIKE '%$busqueda%'";
+// Consulta SQL para buscar en la tabla 'empresas' solo por 'razon_social'
+$sql = "SELECT * FROM empresas WHERE razon_social LIKE '%$busqueda%'";
 
 $result = $conn->query($sql);
 
@@ -44,3 +37,4 @@ $conn->close();
 
 // Devolver los resultados en formato JSON
 echo json_encode($empresas);
+?>
