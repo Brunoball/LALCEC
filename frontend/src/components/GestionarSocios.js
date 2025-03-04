@@ -368,6 +368,7 @@ const GestionarSocios = () => {
 
 
 
+
   const handleImprimirTodosComprobantes = async () => {
     try {
         // 1. Obtener todos los socios desde el servidor
@@ -410,7 +411,7 @@ const GestionarSocios = () => {
                     }
                     .contenedor {
                         width: 210mm; /* Ancho de la hoja A4 */
-                        margin: 5mm 0; /* Margen superior e inferior para separar los comprobantes */
+                        margin: 10mm 0; /* Margen superior e inferior para separar los comprobantes */
                         page-break-after: always; /* Para asegurarse de que cada comprobante se imprima en una nueva página */
                         box-sizing: border-box;
                     }
@@ -422,12 +423,12 @@ const GestionarSocios = () => {
                     }
                     .talon-socio {
                         width: 60%;
-                        padding-left: 10mm;
+                        padding-left: 20mm;
                         padding-top: 13mm;
                     }
                     .talon-cobrador {
                         width: 60mm;
-                        padding-left: 13mm;
+                        padding-left: 10mm;
                         padding-top: 16mm;
                     }
                     p {
@@ -483,7 +484,7 @@ const GestionarSocios = () => {
     } catch (error) {
         alert("Ocurrió un error al obtener los datos de los socios.");
     }
-  };
+};
 
 
 

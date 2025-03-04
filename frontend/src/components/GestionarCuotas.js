@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPrint, faFileExcel, faArrowLeft } from '@fortawesome/free-solid-svg-icons';
+import { faPrint, faFileExcel, faArrowLeft, faSearch } from '@fortawesome/free-solid-svg-icons';
 import "./GestionarCuotas.css";
 
 const GestionarCuotas = () => {
@@ -12,8 +12,10 @@ const GestionarCuotas = () => {
   const [sociosDeudores, setSociosDeudores] = useState([]);
   const [meses, setMeses] = useState([]);
   const [selectedMonth, setSelectedMonth] = useState("");
-  const [errorMessage, setErrorMessage] = useState(""); // Estado para el mensaje de error
-
+  const [errorMessage, setErrorMessage] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterType, setFilterType] = useState("socio"); // "socio" o "empresa"
+  const [empresas, setEmpresas] = useState([]);
 
   useEffect(() => {
     const fetchMeses = async () => {
@@ -55,56 +57,55 @@ const GestionarCuotas = () => {
     fetchSocios();
   }, [selectedMonth]);
 
+  useEffect(() => {
+    const fetchEmpresas = async () => {
+      try {
+        const response = await fetch("http://localhost:3001/buscar_empresas.php");
+        const data = await response.json();
+        setEmpresas(data);
+      } catch (error) {
+        console.error("Error al obtener las empresas:", error);
+      }
+    };
+
+    fetchEmpresas();
+  }, []);
+
   const handleVolverAtras = () => navigate(-1);
 
   const handleMonthChange = (e) => {
     setSelectedMonth(e.target.value);
   };
 
-
-
-
-
-
   const handleExportExcel = () => {
     let socios = activeTab === "pagado" ? sociosPagados : sociosDeudores;
-  
-    // Si no hay socios, mostramos un mensaje de error en el estado
+
     if (socios.length === 0) {
       setErrorMessage("Datos incompletos: No hay socios para exportar.");
-  
-      // Ocultar el mensaje después de 3 segundos
+
       setTimeout(() => {
         setErrorMessage("");
       }, 3000);
-      
+
       return;
     }
-  
+
     const sociosExport = socios.map(({ idSocios, nombre, apellido, ...resto }) => ({
-      idSocios, // Primera columna (A)
-      apellido, // Segunda columna (B)
-      nombre,   // Tercera columna (C)
-      ...resto,  // Mantiene las demás propiedades en su orden original
+      idSocios,
+      apellido,
+      nombre,
+      ...resto,
       Mes: selectedMonth,
       Tipo: activeTab === "pagado" ? "Pagados" : "Deudores",
     }));
-  
+
     const ws = XLSX.utils.json_to_sheet(sociosExport);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Socios");
     XLSX.writeFile(wb, `socios_${selectedMonth}_${activeTab}.xlsx`);
-  
-    // Limpiar el mensaje de error después de la exportación exitosa
+
     setErrorMessage("");
   };
-  
-  
-
-
-
-
-
 
   const handleImprimirRegsitro = () => {
     let socios = activeTab === "pagado" ? sociosPagados : sociosDeudores;
@@ -143,32 +144,55 @@ const GestionarCuotas = () => {
     printWindow.print();
   };
 
-  const renderTabla = (socios) => (
-    <div className="table-container">
-      <table className="table">
-        <thead>
-          <tr>
-            <th>Apellido</th>
-            <th>Nombre</th>
-            <th className="domicilio-column">Dirección</th>
-            <th className="categoria-column">Categoría</th> {/* Clase especial para Categoría */}
-          </tr>
-        </thead>
-        <tbody>
-          {socios.map((socio, index) => (
-            <tr key={index}>
-              <td>{socio.apellido}</td>
-              <td>{socio.nombre}</td>
-              <td className="domicilio-column">{`${socio.domicilio} ${socio.numero}`}</td>
-              <td className="categoria-column">{socio.categoria}</td> {/* Clase especial para Categoría */}
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+  };
+
+  const filterSocios = (socios) => {
+    if (filterType === "socio") {
+      return socios.filter(
+        (socio) =>
+          socio.apellido.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          socio.nombre.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    } else if (filterType === "empresa") {
+      return socios.filter((socio) =>
+        socio.empresa?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+    return socios;
+  };
+
+  const renderTabla = (socios) => {
+    const filteredSocios = filterSocios(socios);
+
+    return (
+      <div className="table-container">
+        <table className="table">
+          <thead>
+            <tr>
+              <th>Apellido</th>
+              <th>Nombre</th>
+              <th className="domicilio-column">Dirección</th>
+              <th className="categoria-column">Categoría</th>
+              {filterType === "empresa" && <th>Empresa</th>}
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-  
-  
+          </thead>
+          <tbody>
+            {filteredSocios.map((socio, index) => (
+              <tr key={index}>
+                <td>{socio.apellido}</td>
+                <td>{socio.nombre}</td>
+                <td className="domicilio-column">{`${socio.domicilio} ${socio.numero}`}</td>
+                <td className="categoria-column">{socio.categoria}</td>
+                {filterType === "empresa" && <td>{socio.empresa}</td>}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  };
 
   return (
     <div className="container">
@@ -182,6 +206,41 @@ const GestionarCuotas = () => {
                 <option key={index} value={mes.mes}>{mes.mes}</option>
               ))}
             </select>
+          </div>
+          <div className="filter-type-container">
+            <select
+              value={filterType}
+              onChange={(e) => setFilterType(e.target.value)}
+              className="select"
+            >
+              <option value="socio">Filtrar por Socio</option>
+              <option value="empresa">Filtrar por Empresa</option>
+            </select>
+          </div>
+          <div className="search-container">
+            {filterType === "empresa" ? (
+              <select
+                className="select"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              >
+                <option value="">Todas las Empresas</option>
+                {empresas.map((empresa, index) => (
+                  <option key={index} value={empresa.nombre}>
+                    {empresa.nombre}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <input
+                type="text"
+                placeholder="Buscar por socio..."
+                value={searchTerm}
+                onChange={handleSearchChange}
+                className="search-input"
+              />
+            )}
+            <FontAwesomeIcon icon={faSearch} className="search-icon" />
           </div>
           <div className="tab-container">
             <button className={activeTab === "pagado" ? "active-tab" : "inactive-tab"} onClick={() => setActiveTab("pagado")}>
