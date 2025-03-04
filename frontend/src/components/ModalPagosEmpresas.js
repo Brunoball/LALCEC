@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 
 const ModalPagosEmpresas = ({ razonSocial, cerrarModal }) => {
   const [mesesSeleccionados, setMesesSeleccionados] = useState([]);
@@ -6,10 +6,10 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal }) => {
   const [pagoExitoso, setPagoExitoso] = useState(false);
   const [precioMensual, setPrecioMensual] = useState(0);
   const [modalVisible, setModalVisible] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
+  const [mesesPagados, setMesesPagados] = useState([]); // Estado para los meses pagados
 
   useEffect(() => {
-    console.log("Razón social recibida:", razonSocial); // Verificar que razonSocial tiene un valor
     const obtenerMontoMensual = async () => {
       try {
         const response = await fetch("http://localhost:3001/Monto_pago_empresas.php", {
@@ -18,7 +18,6 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal }) => {
           body: JSON.stringify({ razonSocial, tipoEntidad: "empresa" }),
         });
         const result = await response.json();
-        console.log("Respuesta del backend:", result); // Verificar la respuesta del backend
         if (result.success) {
           setPrecioMensual(result.precioMes);
         } else {
@@ -30,25 +29,52 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal }) => {
         setTimeout(() => setError(""), 3000);
       }
     };
+
     obtenerMontoMensual();
   }, [razonSocial]);
 
-  // Calcular el total a pagar basado en los meses seleccionados
-  const totalPagar = mesesSeleccionados.length * precioMensual;
+  // Obtener los meses pagados por la empresa
+  useEffect(() => {
+    const obtenerMesesPagados = async () => {
+      try {
+        const response = await fetch("http://localhost:3001/obtener_meses_pagos_empresas.php", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ razonSocial, tipoEntidad: "empresa" })
+        });
+        const result = await response.json();
+        if (result.success) {
+          setMesesPagados(result.mesesPagados); // Guardar los meses pagados
+        } else {
+          setError(result.message);
+          setTimeout(() => setError(''), 3000);
+        }
+      } catch (error) {
+        setError("Ocurrió un error al obtener los meses pagados.");
+        setTimeout(() => setError(''), 3000);
+      }
+    };
+    obtenerMesesPagados();
+  }, [razonSocial]);
 
+  // Lista de meses
   const meses = [...Array(12)].map((_, i) => ({
     id: i + 1,
-    nombre: new Date(0, i).toLocaleString('es', { month: 'long' }).toUpperCase()
+    nombre: new Date(0, i).toLocaleString("es", { month: "long" }).toUpperCase(),
   }));
 
+  // Calcular total a pagar
+  const totalPagar = mesesSeleccionados.length * precioMensual;
+
   const handleSeleccionarMes = (mes) => {
-    setMesesSeleccionados(prev =>
-      prev.includes(mes) ? prev.filter(m => m !== mes) : [...prev, mes]
+    if (mesesPagados.includes(mes)) return; // No permitir seleccionar meses ya pagados
+    setMesesSeleccionados((prev) =>
+      prev.includes(mes) ? prev.filter((m) => m !== mes) : [...prev, mes]
     );
   };
 
   const handleSeleccionarTodos = () => {
-    setMesesSeleccionados(todosSeleccionados ? [] : meses.map(mes => mes.id));
+    setMesesSeleccionados(todosSeleccionados ? [] : meses.filter(m => !mesesPagados.includes(m.id)).map(m => m.id));
     setTodosSeleccionados(!todosSeleccionados);
   };
 
@@ -198,7 +224,14 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal }) => {
               </thead>
               <tbody>
                 {meses.map((mes) => (
-                  <tr key={mes.id}>
+                  <tr
+                    key={mes.id}
+                    style={
+                      mesesPagados.includes(mes.id)
+                        ? { backgroundColor: '#d3d3d3' } // Gris claro para los meses ya pagados
+                        : null
+                    }
+                  >
                     <td style={styles.td}>{mes.nombre}</td>
                     <td style={styles.td}>
                       <input
@@ -206,6 +239,7 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal }) => {
                         checked={mesesSeleccionados.includes(mes.id)}
                         onChange={() => handleSeleccionarMes(mes.id)}
                         style={styles.checkboxInput}
+                        disabled={mesesPagados.includes(mes.id)} // Deshabilitar meses ya pagados
                       />
                     </td>
                   </tr>
@@ -213,16 +247,19 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal }) => {
               </tbody>
             </table>
           </div>
+
           <div style={styles.selectAllContainer}>
             <input
               type="checkbox"
               checked={todosSeleccionados}
               onChange={handleSeleccionarTodos}
               style={styles.checkboxInput}
+              disabled={mesesPagados.length === 12} // Desactivar "Seleccionar todos" si todos los meses ya fueron pagados
             />
             <label style={styles.selectAllLabel}>Todos los meses</label>
             <h2 style={styles.totalAmount}>Total a pagar: ${totalPagar}</h2>
           </div>
+
           <div style={styles.buttonsContainer}>
             <button style={styles.cancelButton} onClick={cerrarModal}>Cancelar</button>
             <button style={styles.payButton} onClick={handleRealizarPago}>Realizar Pago</button>
@@ -240,6 +277,35 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal }) => {
     </div>
   );
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // Estilos (igual que en el ModalPagos original)
 const styles = {

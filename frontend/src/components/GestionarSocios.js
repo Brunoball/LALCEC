@@ -329,32 +329,6 @@ const GestionarSocios = () => {
     setMostrarModal(true);
   };
 
-  const handleTipoEntidadChange = async (e) => {
-    const tipo = e.target.value;
-    setTipoEntidad(tipo);
-    localStorage.setItem("ultimaEntidad", tipo);
-  
-    // Guardar selección previa antes de resetear
-    const ultimaLetra = localStorage.getItem("ultimaLetraSeleccionada");
-    const ultimoMedio = localStorage.getItem("ultimoMedioPagoSeleccionado");
-  
-    if (!busqueda) { // Solo resetear si no hay búsqueda activa
-      setLetraSeleccionada("");
-      setMedioPagoSeleccionado("");
-      localStorage.removeItem("ultimaLetraSeleccionada");
-      localStorage.removeItem("ultimoMedioPagoSeleccionado");
-    } else {
-      // Restaurar la última selección
-      setLetraSeleccionada(ultimaLetra || "");
-      setMedioPagoSeleccionado(ultimoMedio || "");
-    }
-  
-    setSocios([]);
-    setSociosFiltrados([]);
-  
-    await handleMostrarTodos();
-  };
-  
 
   const exportarAExcel = () => {
     if (sociosFiltrados.length === 0) {
@@ -557,18 +531,6 @@ const GestionarSocios = () => {
                 ) : (
                   <option disabled>No hay medios de pago disponibles</option>
                 )}
-              </select>
-            </div>
-
-            <div className="entity-dropdown">
-              <select
-                id="entity"
-                className="dropdown"
-                value={tipoEntidad}
-                onChange={handleTipoEntidadChange}
-              >
-                <option value="socios">Socios</option>
-                <option value="empresa">Empresas</option>
               </select>
             </div>
 

@@ -4,9 +4,10 @@ const ModalPagos = ({ nombre, apellido, cerrarModal }) => {
   const [mesesSeleccionados, setMesesSeleccionados] = useState([]);
   const [todosSeleccionados, setTodosSeleccionados] = useState(false);
   const [pagoExitoso, setPagoExitoso] = useState(false);
-  const [precioMensual, setPrecioMensual] = useState(0); // Estado para el precio mensual
-  const [modalVisible, setModalVisible] = useState(true); // Estado para controlar la visibilidad del modal
-  const [error, setError] = useState(''); // Estado para almacenar mensaje de error
+  const [precioMensual, setPrecioMensual] = useState(0); 
+  const [modalVisible, setModalVisible] = useState(true); 
+  const [error, setError] = useState(''); 
+  const [mesesPagados, setMesesPagados] = useState([]); // Estado para los meses pagados
 
   useEffect(() => {
     const obtenerMontoMensual = async () => {
@@ -21,20 +22,40 @@ const ModalPagos = ({ nombre, apellido, cerrarModal }) => {
           setPrecioMensual(result.precioMes);
         } else {
           setError(result.message);
-          // Después de 3 segundos, borrar el mensaje de error
           setTimeout(() => setError(''), 3000);
         }
       } catch (error) {
         setError("Ocurrió un error al obtener el monto mensual.");
-        // Después de 3 segundos, borrar el mensaje de error
         setTimeout(() => setError(''), 3000);
       }
     };
     obtenerMontoMensual();
   }, [nombre, apellido]);
-  
-  
-  // Calcular el total a pagar basado en los meses seleccionados
+
+  // Obtener los meses pagados por el socio
+  useEffect(() => {
+    const obtenerMesesPagados = async () => {
+      try {
+        const response = await fetch("http://localhost:3001/obtener_meses_pagos.php", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ nombre, apellido })
+        });
+        const result = await response.json();
+        if (result.success) {
+          setMesesPagados(result.mesesPagados); // Guardar los meses pagados
+        } else {
+          setError(result.message);
+          setTimeout(() => setError(''), 3000);
+        }
+      } catch (error) {
+        setError("Ocurrió un error al obtener los meses pagados.");
+        setTimeout(() => setError(''), 3000);
+      }
+    };
+    obtenerMesesPagados();
+  }, [nombre, apellido]);
+
   const totalPagar = mesesSeleccionados.length * precioMensual;
 
   const meses = [...Array(12)].map((_, i) => ({ 
@@ -43,13 +64,14 @@ const ModalPagos = ({ nombre, apellido, cerrarModal }) => {
   }));
 
   const handleSeleccionarMes = (mes) => {
+    if (mesesPagados.includes(mes)) return; // No permitir seleccionar meses ya pagados
     setMesesSeleccionados(prev =>
       prev.includes(mes) ? prev.filter(m => m !== mes) : [...prev, mes]
     );
   };
 
   const handleSeleccionarTodos = () => {
-    setMesesSeleccionados(todosSeleccionados ? [] : meses.map(mes => mes.id));
+    setMesesSeleccionados(todosSeleccionados ? [] : meses.filter(m => !mesesPagados.includes(m.id)).map(m => m.id));
     setTodosSeleccionados(!todosSeleccionados);
   };
 
@@ -62,21 +84,15 @@ const ModalPagos = ({ nombre, apellido, cerrarModal }) => {
       });
       const result = await response.json();
       if (result.success) {
-        setPagoExitoso(true); // Cambiar el estado para mostrar el mensaje de éxito
-        setModalVisible(false); // Ocultar el modal
+        setPagoExitoso(true);
+        setModalVisible(false);
       } else {
-        setError(result.message); // Establecer el mensaje de error
-        // Hacer que el mensaje de error desaparezca después de 3 segundos
-        setTimeout(() => {
-          setError('');
-        }, 3000);
+        setError(result.message);
+        setTimeout(() => setError(''), 3000);
       }
     } catch (error) {
-      setError("Ocurrió un error al realizar el pago."); // Establecer mensaje de error
-      // Hacer que el mensaje de error desaparezca después de 3 segundos
-      setTimeout(() => {
-        setError('');
-      }, 3000);
+      setError("Ocurrió un error al realizar el pago.");
+      setTimeout(() => setError(''), 3000);
     }
   };
 
@@ -188,6 +204,9 @@ const ModalPagos = ({ nombre, apellido, cerrarModal }) => {
   };
 
 
+
+
+
   return (
     <div style={styles.container}>
       {modalVisible ? (
@@ -195,7 +214,7 @@ const ModalPagos = ({ nombre, apellido, cerrarModal }) => {
           <h1 style={styles.title}>Modal de Pagos</h1>
           <p style={styles.subtitle}>Socio: {nombre} {apellido}</p>
 
-          {error && <p style={styles.errorMessage }>{error}</p>} {/* Mostrar mensaje de error */}
+          {error && <p style={styles.errorMessage}>{error}</p>}
 
           <div style={styles.tableContainer}>
             <table style={styles.table}>
@@ -207,7 +226,14 @@ const ModalPagos = ({ nombre, apellido, cerrarModal }) => {
               </thead>
               <tbody>
                 {meses.map((mes) => (
-                  <tr key={mes.id}>
+                  <tr
+                    key={mes.id}
+                    style={
+                      mesesPagados.includes(mes.id)
+                        ? { backgroundColor: '#d3d3d3' } // Gris claro para los meses ya pagados
+                        : null
+                    }
+                  >
                     <td style={styles.td}>{mes.nombre}</td>
                     <td style={styles.td}>
                       <input
@@ -215,6 +241,7 @@ const ModalPagos = ({ nombre, apellido, cerrarModal }) => {
                         checked={mesesSeleccionados.includes(mes.id)}
                         onChange={() => handleSeleccionarMes(mes.id)}
                         style={styles.checkboxInput}
+                        disabled={mesesPagados.includes(mes.id)} // Deshabilitar meses ya pagados
                       />
                     </td>
                   </tr>
@@ -228,6 +255,7 @@ const ModalPagos = ({ nombre, apellido, cerrarModal }) => {
               checked={todosSeleccionados}
               onChange={handleSeleccionarTodos}
               style={styles.checkboxInput}
+              disabled={mesesPagados.length === 12} // Desactivar "Seleccionar todos" si todos los meses ya fueron pagados
             />
             <label style={styles.selectAllLabel}>Todos los meses</label>
             <h2 style={styles.totalAmount}>Total a pagar: ${totalPagar}</h2>
@@ -250,6 +278,7 @@ const ModalPagos = ({ nombre, apellido, cerrarModal }) => {
     </div>
   );
 };
+
 
 
 
