@@ -24,24 +24,32 @@ const GestionarSocios = () => {
   const [actualizar, setActualizar] = useState(false);
   const [primeraCarga, setPrimeraCarga] = useState(true);
   const [cargando, setCargando] = useState(false);
+  const [restaurandoEstado, setRestaurandoEstado] = useState(true); // Bandera para restaurar el estado
+
 
   // Ejecutar la búsqueda automáticamente cuando cambia `busqueda` o `tipoEntidad`
   useEffect(() => {
     const ejecutarBusqueda = async () => {
+      if (restaurandoEstado) {
+        // Si estamos restaurando el estado, no ejecutamos la búsqueda automática
+        return;
+      }
+  
       if (busqueda) {
         await handleBusqueda(busqueda);
       } else {
         await handleMostrarTodos();
       }
     };
-
+  
     ejecutarBusqueda();
   }, [busqueda, tipoEntidad]);
-
+  
   useEffect(() => {
     const obtenerDatos = async () => {
       setCargando(true);
       try {
+        // Obtener medios de pago
         const responseMediosPago = await fetch("http://localhost:3001/obtener_datos.php");
         if (responseMediosPago.ok) {
           const data = await responseMediosPago.json();
@@ -53,38 +61,33 @@ const GestionarSocios = () => {
         } else {
           setError("Error al obtener los medios de pago.");
         }
-
+  
+        // Restaurar el estado de la última búsqueda o filtrado
+        const ultimaAccion = localStorage.getItem("ultimaAccion");
         const ultimaBusqueda = localStorage.getItem("ultimaBusqueda");
         const ultimosResultados = localStorage.getItem("ultimosResultados");
-        const ultimaSeleccion = localStorage.getItem("ultimaSeleccion");
         const ultimaLetraSeleccionada = localStorage.getItem("ultimaLetraSeleccionada");
         const ultimoMedioPagoSeleccionado = localStorage.getItem("ultimoMedioPagoSeleccionado");
-
-        if (ultimaBusqueda) {
-          setBusqueda(ultimaBusqueda);
-          await handleBusqueda(ultimaBusqueda);
-        } else if (ultimosResultados) {
+  
+        if (ultimaAccion === "busqueda" && ultimaBusqueda && ultimosResultados) {
+          // Restaurar la última búsqueda
           setBusqueda(ultimaBusqueda);
           setSociosFiltrados(JSON.parse(ultimosResultados));
-        } else if (ultimaSeleccion) {
-          if (ultimaSeleccion === "todos") {
-            await handleMostrarTodos();
-          } else if (/^[A-Z]$/.test(ultimaSeleccion)) {
-            setLetraSeleccionada(ultimaSeleccion);
-            await handleFiltrarPorLetra(ultimaSeleccion, tipoEntidad);
-          } else {
-            setMedioPagoSeleccionado(ultimaSeleccion);
-            await handleFiltrarPorMedioPago(ultimaSeleccion);
-          }
-        } else if (ultimaLetraSeleccionada) {
+          setRestaurandoEstado(false); // Marcamos que ya no estamos restaurando el estado
+        } else if (ultimaAccion === "letra" && ultimaLetraSeleccionada) {
+          // Restaurar el filtrado por letra
           setLetraSeleccionada(ultimaLetraSeleccionada);
           await handleFiltrarPorLetra(ultimaLetraSeleccionada, tipoEntidad);
-        } else if (ultimoMedioPagoSeleccionado) {
+          setRestaurandoEstado(false); // Marcamos que ya no estamos restaurando el estado
+        } else if (ultimaAccion === "medioPago" && ultimoMedioPagoSeleccionado) {
+          // Restaurar el filtrado por medio de pago
           setMedioPagoSeleccionado(ultimoMedioPagoSeleccionado);
           await handleFiltrarPorMedioPago(ultimoMedioPagoSeleccionado);
+          setRestaurandoEstado(false); // Marcamos que ya no estamos restaurando el estado
         } else {
-          setSocios([]);
-          setSociosFiltrados([]);
+          // Mostrar todos los socios si no hay una acción previa
+          await handleMostrarTodos();
+          setRestaurandoEstado(false); // Marcamos que ya no estamos restaurando el estado
         }
       } catch (error) {
         setError("Hubo un problema al obtener los datos.");
@@ -93,31 +96,32 @@ const GestionarSocios = () => {
         setCargando(false);
       }
     };
-
+  
     obtenerDatos();
   }, [actualizar, tipoEntidad]);
-
+  
   const handleBusqueda = async (busquedaParam) => {
     let query = busquedaParam || busqueda || "";
-
+  
     if (!query) {
       await handleMostrarTodos();
       return;
     }
-
+  
     try {
       const url = tipoEntidad === "socios"
         ? `http://localhost:3001/buscarSocio.php?busqueda=${encodeURIComponent(query)}&tipoEntidad=socios`
         : `http://localhost:3001/buscarSocio.php?busqueda=${encodeURIComponent(query)}&tipoEntidad=empresas`;
-
+  
       const response = await fetch(url);
-
+  
       if (response.ok) {
         const data = await response.json();
-
+  
         if (Array.isArray(data) && data.length > 0) {
           setSocios(data);
           setSociosFiltrados(data);
+          localStorage.setItem("ultimaAccion", "busqueda");
           localStorage.setItem("ultimaBusqueda", query);
           localStorage.setItem("ultimosResultados", JSON.stringify(data));
         } else {
@@ -134,40 +138,35 @@ const GestionarSocios = () => {
       setSociosFiltrados([]);
     }
   };
-
-  const handleAgregarSocio = () => {
-    navigate("/Agregarsocio");
-    setActualizar(prev => !prev);
-  };
-
+  
   const handleVolverAtras = async () => {
-    const ultimaSeleccion = localStorage.getItem("ultimaSeleccion");
-    const ultimaEntidad = localStorage.getItem("ultimaEntidad") || "socios";
-
-    setTipoEntidad(ultimaEntidad);
-
-    if (ultimaSeleccion === "todos") {
-      await handleMostrarTodos();
-    } else if (/^[A-Z]$/.test(ultimaSeleccion)) {
-      await handleFiltrarPorLetra(ultimaSeleccion, ultimaEntidad);
-    } else if (ultimaSeleccion) {
-      setMedioPagoSeleccionado(ultimaSeleccion);
-      await handleFiltrarPorMedioPago(ultimaSeleccion);
-    }
-
-    navigate(-1);
+    navigate(-1); // Navegar hacia atrás
   };
 
+
+
+
+
+
+
+
+
+
+
+  
   const handleFiltrarPorLetra = async (letra, tipo) => {
     try {
       let url = `http://localhost:3001/obtener_letra.php?letra=${letra}&tipo=${tipo}`;
       const response = await fetch(url);
-
+  
       if (response.ok) {
         const data = await response.json();
-        console.log("Respuesta del servidor:", data);
         setSocios(Array.isArray(data) ? data : []);
         setSociosFiltrados(Array.isArray(data) ? data : []);
+        localStorage.setItem("ultimaAccion", "letra");
+        localStorage.setItem("ultimaLetraSeleccionada", letra);
+        localStorage.removeItem("ultimaBusqueda");
+        localStorage.removeItem("ultimosResultados");
         setError(null);
       } else {
         setSocios([]);
@@ -180,6 +179,83 @@ const GestionarSocios = () => {
       console.error("Error al obtener socios:", error);
     }
   };
+  
+  const handleFiltrarPorMedioPago = async (medioPago) => {
+    try {
+      const url = `http://localhost:3001/filtro_mp.php?medio=${encodeURIComponent(medioPago)}&tipo=${tipoEntidad}`;
+      const response = await fetch(url);
+  
+      if (response.ok) {
+        const data = await response.json();
+  
+        if (Array.isArray(data) && data.length > 0) {
+          setSocios(data);
+          setSociosFiltrados(data);
+          localStorage.setItem("ultimaAccion", "medioPago");
+          localStorage.setItem("ultimoMedioPagoSeleccionado", medioPago);
+          localStorage.removeItem("ultimaBusqueda");
+          localStorage.removeItem("ultimosResultados");
+          setError(null);
+        } else {
+          setSocios([]);
+          setSociosFiltrados([]);
+        }
+      } else {
+        setSocios([]);
+        setSociosFiltrados([]);
+        setError("Error al obtener los socios.");
+      }
+    } catch (error) {
+      setSocios([]);
+      setSociosFiltrados([]);
+      setError("Error al obtener los socios.");
+    }
+  };
+  const handleMostrarTodos = async () => {
+    try {
+      const entidad = localStorage.getItem("ultimaEntidad") || "socios";
+      const url = `http://localhost:3001/todos_socios.php?tipo=${entidad}`;
+      const response = await fetch(url);
+  
+      if (response.ok) {
+        const data = await response.json();
+        setSocios(Array.isArray(data.socios) ? data.socios : []);
+        setSociosFiltrados(Array.isArray(data.socios) ? data.socios : []);
+        setError(null);
+  
+        // Guardar la acción "todos" en el localStorage
+        localStorage.setItem("ultimaAccion", "todos");
+        localStorage.removeItem("ultimaBusqueda");
+        localStorage.removeItem("ultimosResultados");
+      } else {
+        setSocios([]);
+        setSociosFiltrados([]);
+      }
+    } catch (error) {
+      setSocios([]);
+      setSociosFiltrados([]);
+      setError("Error al obtener los datos.");
+    }
+  };
+
+
+
+
+
+
+
+
+
+
+
+
+
+  const handleAgregarSocio = () => {
+    navigate("/Agregarsocio");
+    setActualizar(prev => !prev);
+  };
+
+ 
 
   const handleSeleccion = async (e) => {
     const selectedValue = e.target.value;
@@ -216,59 +292,7 @@ const GestionarSocios = () => {
     }
   };
 
-  const handleFiltrarPorMedioPago = async (medioPago) => {
-    try {
-      const url = `http://localhost:3001/filtro_mp.php?medio=${encodeURIComponent(medioPago)}&tipo=${tipoEntidad}`;
-      const response = await fetch(url);
 
-      if (response.ok) {
-        const data = await response.json();
-
-        if (Array.isArray(data) && data.length > 0) {
-          setSocios(data);
-          setSociosFiltrados(data);
-          localStorage.setItem("ultimaSeleccion", medioPago);
-        } else {
-          setSocios([]);
-          setSociosFiltrados([]);
-        }
-        setError(null);
-      } else {
-        setSocios([]);
-        setSociosFiltrados([]);
-        setError("Error al obtener los socios.");
-      }
-    } catch (error) {
-      setSocios([]);
-      setSociosFiltrados([]);
-      setError("Error al obtener los socios.");
-    }
-  };
-
-  const handleMostrarTodos = async () => {
-    try {
-      const entidad = localStorage.getItem("ultimaEntidad") || "socios";
-      const url = `http://localhost:3001/todos_socios.php?tipo=${entidad}`;
-      const response = await fetch(url);
-
-      if (response.ok) {
-        const data = await response.json();
-        setSocios(Array.isArray(data.socios) ? data.socios : []);
-        setSociosFiltrados(Array.isArray(data.socios) ? data.socios : []);
-        setError(null);
-
-        localStorage.removeItem("ultimaBusqueda");
-        localStorage.removeItem("ultimosResultados");
-      } else {
-        setSocios([]);
-        setSociosFiltrados([]);
-      }
-    } catch (error) {
-      setSocios([]);
-      setSociosFiltrados([]);
-      setError("Error al obtener los datos.");
-    }
-  };
 
   const handleFilaSeleccionada = (index, socio) => {
     setFilaSeleccionada(filaSeleccionada === index ? null : index);
@@ -328,6 +352,44 @@ const GestionarSocios = () => {
     setSocioSeleccionado(socio);
     setMostrarModal(true);
   };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
   const exportarAExcel = () => {
