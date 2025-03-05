@@ -27,78 +27,99 @@ const GestionarSocios = () => {
   const [restaurandoEstado, setRestaurandoEstado] = useState(true); // Bandera para restaurar el estado
 
 
-  // Ejecutar la búsqueda automáticamente cuando cambia `busqueda` o `tipoEntidad`
-  useEffect(() => {
-    const ejecutarBusqueda = async () => {
-      if (restaurandoEstado) {
-        // Si estamos restaurando el estado, no ejecutamos la búsqueda automática
-        return;
-      }
-  
-      if (busqueda) {
-        await handleBusqueda(busqueda);
+// Ejecutar la búsqueda automáticamente cuando cambia `busqueda` o `tipoEntidad`
+useEffect(() => {
+  const ejecutarBusqueda = async () => {
+    if (restaurandoEstado) {
+      // Si estamos restaurando el estado, no ejecutamos la búsqueda automática
+      return;
+    }
+
+    if (busqueda) {
+      await handleBusqueda(busqueda);
+    } else {
+      await handleMostrarTodos();
+    }
+  };
+
+  ejecutarBusqueda();
+}, [busqueda, tipoEntidad]);
+
+
+
+
+
+
+useEffect(() => {
+  const obtenerDatos = async () => {
+    setCargando(true);
+    try {
+      // Obtener medios de pago
+      const responseMediosPago = await fetch("http://localhost:3001/obtener_datos.php");
+      if (responseMediosPago.ok) {
+        const data = await responseMediosPago.json();
+        if (Array.isArray(data.mediosPago)) {
+          setMediosDePago(data.mediosPago);
+        } else {
+          setError("Error: No se encontraron medios de pago.");
+        }
       } else {
+        setError("Error al obtener los medios de pago.");
+      }
+
+      // Restaurar el estado de la última búsqueda o filtrado
+      const ultimaAccion = localStorage.getItem("ultimaAccion");
+      const ultimaBusqueda = localStorage.getItem("ultimaBusqueda");
+      const ultimosResultados = localStorage.getItem("ultimosResultados");
+      const ultimaLetraSeleccionada = localStorage.getItem("ultimaLetraSeleccionada");
+      const ultimoMedioPagoSeleccionado = localStorage.getItem("ultimoMedioPagoSeleccionado");
+
+      if (ultimaAccion === "busqueda" && ultimaBusqueda && ultimosResultados) {
+        // Restaurar la última búsqueda
+        setBusqueda(ultimaBusqueda);
+        setSociosFiltrados(JSON.parse(ultimosResultados));
+        setRestaurandoEstado(false);
+      } else if (ultimaAccion === "letra" && ultimaLetraSeleccionada) {
+        // Restaurar el filtrado por letra
+        setLetraSeleccionada(ultimaLetraSeleccionada);
+        await handleFiltrarPorLetra(ultimaLetraSeleccionada, tipoEntidad);
+        setRestaurandoEstado(false);
+      } else if (ultimaAccion === "medioPago" && ultimoMedioPagoSeleccionado) {
+        // Restaurar el filtrado por medio de pago
+        setMedioPagoSeleccionado(ultimoMedioPagoSeleccionado);
+        await handleFiltrarPorMedioPago(ultimoMedioPagoSeleccionado);
+        setRestaurandoEstado(false);
+      } else if (ultimaAccion === "todos") {
+        // Restaurar la acción "todos"
         await handleMostrarTodos();
+        setRestaurandoEstado(false);
+      } else {
+        // Si no hay una acción previa, mostrar la tabla en blanco (opción "Seleccionar")
+        setSocios([]);
+        setSociosFiltrados([]);
+        setRestaurandoEstado(false);
       }
-    };
-  
-    ejecutarBusqueda();
-  }, [busqueda, tipoEntidad]);
-  
-  useEffect(() => {
-    const obtenerDatos = async () => {
-      setCargando(true);
-      try {
-        // Obtener medios de pago
-        const responseMediosPago = await fetch("http://localhost:3001/obtener_datos.php");
-        if (responseMediosPago.ok) {
-          const data = await responseMediosPago.json();
-          if (Array.isArray(data.mediosPago)) {
-            setMediosDePago(data.mediosPago);
-          } else {
-            setError("Error: No se encontraron medios de pago.");
-          }
-        } else {
-          setError("Error al obtener los medios de pago.");
-        }
-  
-        // Restaurar el estado de la última búsqueda o filtrado
-        const ultimaAccion = localStorage.getItem("ultimaAccion");
-        const ultimaBusqueda = localStorage.getItem("ultimaBusqueda");
-        const ultimosResultados = localStorage.getItem("ultimosResultados");
-        const ultimaLetraSeleccionada = localStorage.getItem("ultimaLetraSeleccionada");
-        const ultimoMedioPagoSeleccionado = localStorage.getItem("ultimoMedioPagoSeleccionado");
-  
-        if (ultimaAccion === "busqueda" && ultimaBusqueda && ultimosResultados) {
-          // Restaurar la última búsqueda
-          setBusqueda(ultimaBusqueda);
-          setSociosFiltrados(JSON.parse(ultimosResultados));
-          setRestaurandoEstado(false); // Marcamos que ya no estamos restaurando el estado
-        } else if (ultimaAccion === "letra" && ultimaLetraSeleccionada) {
-          // Restaurar el filtrado por letra
-          setLetraSeleccionada(ultimaLetraSeleccionada);
-          await handleFiltrarPorLetra(ultimaLetraSeleccionada, tipoEntidad);
-          setRestaurandoEstado(false); // Marcamos que ya no estamos restaurando el estado
-        } else if (ultimaAccion === "medioPago" && ultimoMedioPagoSeleccionado) {
-          // Restaurar el filtrado por medio de pago
-          setMedioPagoSeleccionado(ultimoMedioPagoSeleccionado);
-          await handleFiltrarPorMedioPago(ultimoMedioPagoSeleccionado);
-          setRestaurandoEstado(false); // Marcamos que ya no estamos restaurando el estado
-        } else {
-          // Mostrar todos los socios si no hay una acción previa
-          await handleMostrarTodos();
-          setRestaurandoEstado(false); // Marcamos que ya no estamos restaurando el estado
-        }
-      } catch (error) {
-        setError("Hubo un problema al obtener los datos.");
-        console.error("Error:", error);
-      } finally {
-        setCargando(false);
-      }
-    };
-  
-    obtenerDatos();
-  }, [actualizar, tipoEntidad]);
+    } catch (error) {
+      setError("Hubo un problema al obtener los datos.");
+      console.error("Error:", error);
+    } finally {
+      setCargando(false);
+    }
+  };
+
+  obtenerDatos();
+}, [actualizar, tipoEntidad]);
+
+
+
+
+
+
+
+
+
+
+
   
   const handleBusqueda = async (busquedaParam) => {
     let query = busquedaParam || busqueda || "";
@@ -259,40 +280,46 @@ const GestionarSocios = () => {
 
   const handleSeleccion = async (e) => {
     const selectedValue = e.target.value;
-
+  
     localStorage.setItem("ultimaSeleccion", selectedValue);
     localStorage.setItem("ultimaEntidad", tipoEntidad);
-
+  
     localStorage.removeItem("ultimaBusqueda");
     localStorage.removeItem("ultimosResultados");
-
+  
     setPrimeraCarga(false);
-
-    if (selectedValue === "todos") {
-      await handleMostrarTodos();
-      setLetraSeleccionada("");
-      setMedioPagoSeleccionado("");
-      setBusqueda("");
-    } else if (selectedValue === "") {
+  
+    if (selectedValue === "Seleccionar") {
+      // Mostrar la tabla en blanco
       setSocios([]);
       setSociosFiltrados([]);
       setLetraSeleccionada("");
       setMedioPagoSeleccionado("");
       setBusqueda("");
+      localStorage.setItem("ultimaAccion", "seleccionar"); // Guardar la acción "seleccionar"
+    } else if (selectedValue === "todos") {
+      // Mostrar todos los socios
+      await handleMostrarTodos();
+      setLetraSeleccionada("");
+      setMedioPagoSeleccionado("");
+      setBusqueda("");
+      localStorage.setItem("ultimaAccion", "todos"); // Guardar la acción "todos"
     } else if (/^[A-Z]$/.test(selectedValue)) {
+      // Filtrar por letra
       setLetraSeleccionada(selectedValue);
       setMedioPagoSeleccionado("");
+      localStorage.setItem("ultimaAccion", "letra");
       localStorage.setItem("ultimaLetraSeleccionada", selectedValue);
       await handleFiltrarPorLetra(selectedValue, tipoEntidad);
     } else {
+      // Filtrar por medio de pago
       setMedioPagoSeleccionado(selectedValue);
       setLetraSeleccionada("");
+      localStorage.setItem("ultimaAccion", "medioPago");
       localStorage.setItem("ultimoMedioPagoSeleccionado", selectedValue);
       await handleFiltrarPorMedioPago(selectedValue);
     }
   };
-
-
 
   const handleFilaSeleccionada = (index, socio) => {
     setFilaSeleccionada(filaSeleccionada === index ? null : index);
@@ -575,14 +602,18 @@ const GestionarSocios = () => {
               <select
                 id="alphabet"
                 className="dropdown"
-                value={letraSeleccionada || medioPagoSeleccionado || (primeraCarga ? "" : "todos")}
+                value={letraSeleccionada || medioPagoSeleccionado || localStorage.getItem("ultimaSeleccion") || "Seleccionar"}
                 onChange={handleSeleccion}
               >
-                {primeraCarga && <option value="Seleccionar" disabled>Seleccionar</option>}
+                <option value="Seleccionar" disabled>
+                  Seleccionar
+                </option>
                 <option value="todos">Todos</option>
 
                 {["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"].map((letter, index) => (
-                  <option key={index} value={letter}>{letter}</option>
+                  <option key={index} value={letter}>
+                    {letter}
+                  </option>
                 ))}
 
                 {mediosDePago.length > 0 ? (
@@ -681,7 +712,9 @@ const GestionarSocios = () => {
               ) : (
                 <div className="row">
                   <div className="not_socio" colSpan="5">
-                    No hay socios para esta letra o búsqueda.
+                    {letraSeleccionada || medioPagoSeleccionado || busqueda
+                      ? "No hay socios para esta letra, medio de pago o búsqueda."
+                      : "Seleccione una opción para mostrar los socios."}
                   </div>
                 </div>
               )}

@@ -14,6 +14,9 @@ const PaginaPrincipal = () => {
     localStorage.removeItem("ultimosResultados");
     localStorage.removeItem("socioSeleccionado");
     localStorage.removeItem("filtroSeleccionado");
+    localStorage.removeItem("ultimaLetraSeleccionada");
+    localStorage.removeItem("ultimoMedioPagoSeleccionado");
+    localStorage.removeItem("ultimaAccion");
   
     // Asegurar que la opción inicial sea "Seleccionar"
     localStorage.setItem("ultimaSeleccion", "Seleccionar");
