@@ -159,6 +159,38 @@ useEffect(() => {
       setSociosFiltrados([]);
     }
   };
+
+  const handleBusquedaInputChange = (e) => {
+    const value = e.target.value;
+    setBusqueda(value);
+  
+    // Si el usuario empieza a escribir en el buscador, limpiar la selección del dropdown
+    if (value.length > 0) {
+      setLetraSeleccionada("");
+      setMedioPagoSeleccionado("");
+      localStorage.removeItem("ultimaSeleccion");
+    }
+  };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   
   const handleVolverAtras = async () => {
     navigate(-1); // Navegar hacia atrás
@@ -284,35 +316,32 @@ useEffect(() => {
     localStorage.setItem("ultimaSeleccion", selectedValue);
     localStorage.setItem("ultimaEntidad", tipoEntidad);
   
+    // Limpiar búsqueda cuando se selecciona algo en el dropdown
+    setBusqueda("");
+  
     localStorage.removeItem("ultimaBusqueda");
     localStorage.removeItem("ultimosResultados");
   
     setPrimeraCarga(false);
   
     if (selectedValue === "Seleccionar") {
-      // Mostrar la tabla en blanco
       setSocios([]);
       setSociosFiltrados([]);
       setLetraSeleccionada("");
       setMedioPagoSeleccionado("");
-      setBusqueda("");
-      localStorage.setItem("ultimaAccion", "seleccionar"); // Guardar la acción "seleccionar"
+      localStorage.setItem("ultimaAccion", "seleccionar");
     } else if (selectedValue === "todos") {
-      // Mostrar todos los socios
       await handleMostrarTodos();
       setLetraSeleccionada("");
       setMedioPagoSeleccionado("");
-      setBusqueda("");
-      localStorage.setItem("ultimaAccion", "todos"); // Guardar la acción "todos"
+      localStorage.setItem("ultimaAccion", "todos");
     } else if (/^[A-Z]$/.test(selectedValue)) {
-      // Filtrar por letra
       setLetraSeleccionada(selectedValue);
       setMedioPagoSeleccionado("");
       localStorage.setItem("ultimaAccion", "letra");
       localStorage.setItem("ultimaLetraSeleccionada", selectedValue);
       await handleFiltrarPorLetra(selectedValue, tipoEntidad);
     } else {
-      // Filtrar por medio de pago
       setMedioPagoSeleccionado(selectedValue);
       setLetraSeleccionada("");
       localStorage.setItem("ultimaAccion", "medioPago");
@@ -320,6 +349,9 @@ useEffect(() => {
       await handleFiltrarPorMedioPago(selectedValue);
     }
   };
+
+
+
 
   const handleFilaSeleccionada = (index, socio) => {
     setFilaSeleccionada(filaSeleccionada === index ? null : index);
@@ -584,15 +616,16 @@ useEffect(() => {
           <h2 className="socio-title">Gestionar Socios</h2>
           <div className="front-row">
             <div className="search-bar">
-              <input
-                id="search"
-                type="text"
-                placeholder="Buscar por nombre o apellido"
-                className="search-input"
-                value={busqueda}
-                onChange={(e) => setBusqueda(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleBusqueda(busqueda)}
-              />
+            <input
+              id="search"
+              type="text"
+              placeholder="Buscar por nombre o apellido"
+              className="search-input"
+              value={busqueda}
+              onChange={handleBusquedaInputChange}
+              onKeyDown={(e) => e.key === "Enter" && handleBusqueda(busqueda)}
+            />
+
               <button className="search-button" onClick={() => handleBusqueda(busqueda)}>
                 <FontAwesomeIcon icon={faSearch} className="icon-button" />
               </button>
@@ -744,7 +777,7 @@ useEffect(() => {
             </button>
             <button className="socio-button btn-print" onClick={handleImprimirTodosComprobantes}>
               <FontAwesomeIcon icon={faPrint} className="socio-icon-button" />
-               Imprimir Comprobante
+               Imprimir Comprobantes
             </button>
 
           </div>

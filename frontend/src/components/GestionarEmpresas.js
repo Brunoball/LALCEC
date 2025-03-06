@@ -14,7 +14,7 @@ const GestionarEmpresas = () => {
   const [filaSeleccionada, setFilaSeleccionada] = useState(null);
   const [empresaSeleccionada, setEmpresaSeleccionada] = useState(null);
   const [error, setError] = useState(null);
-  const [busqueda, setBusqueda] = useState("");
+  const [busqueda, setBusqueda] = useState(localStorage.getItem("ultimaBusqueda") || "");
   const [empresasFiltradas, setEmpresasFiltradas] = useState([]);
   const [mostrarModal, setMostrarModal] = useState(false);
   const [mostrarModalEliminar, setMostrarModalEliminar] = useState(false);
@@ -24,6 +24,7 @@ const GestionarEmpresas = () => {
   const [actualizar, setActualizar] = useState(false);
   const [primeraCarga, setPrimeraCarga] = useState(true);
   const [cargando, setCargando] = useState(false);
+  const [seleccionActual, setSeleccionActual] = useState("Seleccionar");
 
   // Ejecutar la búsqueda automáticamente cuando cambia `busqueda` o `tipoEntidad`
   useEffect(() => {
@@ -55,36 +56,25 @@ const GestionarEmpresas = () => {
         }
   
         const ultimaBusqueda = localStorage.getItem("ultimaBusqueda");
-        const ultimosResultados = localStorage.getItem("ultimosResultados");
         const ultimaSeleccion = localStorage.getItem("ultimaSeleccion");
-        const ultimaLetraSeleccionada = localStorage.getItem("ultimaLetraSeleccionada");
-        const ultimoMedioPagoSeleccionado = localStorage.getItem("ultimoMedioPagoSeleccionado");
   
         if (ultimaBusqueda) {
           setBusqueda(ultimaBusqueda);
-          await handleBusqueda(ultimaBusqueda);
-        } else if (ultimosResultados) {
-          setBusqueda(ultimaBusqueda);
-          setEmpresasFiltradas(JSON.parse(ultimosResultados));
-        } else if (ultimaSeleccion) {
-          if (ultimaSeleccion === "todos") {
-            await handleMostrarTodos();
-          } else if (/^[A-Z]$/.test(ultimaSeleccion)) {
-            setLetraSeleccionada(ultimaSeleccion);
-            await handleFiltrarPorLetra(ultimaSeleccion, tipoEntidad);
-          } else {
-            setMedioPagoSeleccionado(ultimaSeleccion);
-            await handleFiltrarPorMedioPago(ultimaSeleccion);
-          }
-        } else if (ultimaLetraSeleccionada) {
-          setLetraSeleccionada(ultimaLetraSeleccionada);
-          await handleFiltrarPorLetra(ultimaLetraSeleccionada, tipoEntidad);
-        } else if (ultimoMedioPagoSeleccionado) {
-          setMedioPagoSeleccionado(ultimoMedioPagoSeleccionado);
-          await handleFiltrarPorMedioPago(ultimoMedioPagoSeleccionado);
-        } else {
+          await handleBusqueda(ultimaBusqueda); // Realiza la búsqueda usando la última consulta
+        } else if (ultimaSeleccion === "Seleccionar") {
+          // Si la última opción fue "Seleccionar", dejamos la tabla en blanco
           setEmpresas([]);
           setEmpresasFiltradas([]);
+        } else if (ultimaSeleccion === "todos") {
+          await handleMostrarTodos();
+        } else if (/^[A-Z]$/.test(ultimaSeleccion)) {
+          setLetraSeleccionada(ultimaSeleccion);
+          await handleFiltrarPorLetra(ultimaSeleccion, tipoEntidad);
+        } else if (ultimaSeleccion) {
+          setMedioPagoSeleccionado(ultimaSeleccion);
+          await handleFiltrarPorMedioPago(ultimaSeleccion);
+        } else {
+          setEmpresas([]); // Deja la tabla en blanco si no hay opción guardada
         }
       } catch (error) {
         setError("Hubo un problema al obtener los datos.");
@@ -97,34 +87,6 @@ const GestionarEmpresas = () => {
     obtenerDatos();
   }, [actualizar, tipoEntidad]);
 
-
-
-
-
-
-
-
-
-
-
-
-
-  // Función para editar una empresa
-  const handleEditarEmpresa = (razonSocial) => {
-    navigate(`/editarEmpresa/${razonSocial}`);
-    setActualizar(prev => !prev);
-  };
-
-
-
-
-
-
-
-
-
-
-
   const handleBusqueda = async (busquedaParam) => {
     let query = busquedaParam || busqueda || "";
   
@@ -132,7 +94,6 @@ const GestionarEmpresas = () => {
       setEmpresas([]);
       setEmpresasFiltradas([]);
       localStorage.removeItem("ultimaBusqueda"); // Limpiar la última búsqueda
-      localStorage.removeItem("ultimosResultados"); // Limpiar los últimos resultados
       return;
     }
   
@@ -147,40 +108,28 @@ const GestionarEmpresas = () => {
           setEmpresas(data);
           setEmpresasFiltradas(data);
           localStorage.setItem("ultimaBusqueda", query); // Guardar la última búsqueda
-          localStorage.setItem("ultimosResultados", JSON.stringify(data)); // Guardar los últimos resultados
+          localStorage.setItem("ultimaSeleccion", ""); // Limpiar la selección de filtros
         } else {
           setEmpresas([]);
           setEmpresasFiltradas([]);
-          localStorage.removeItem("ultimaBusqueda"); // Limpiar la última búsqueda
-          localStorage.removeItem("ultimosResultados"); // Limpiar los últimos resultados
         }
       } else {
         setEmpresas([]);
         setEmpresasFiltradas([]);
-        localStorage.removeItem("ultimaBusqueda"); // Limpiar la última búsqueda
-        localStorage.removeItem("ultimosResultados"); // Limpiar los últimos resultados
       }
     } catch (err) {
       console.error("Error en la búsqueda:", err);
       setEmpresas([]);
       setEmpresasFiltradas([]);
-      localStorage.removeItem("ultimaBusqueda"); // Limpiar la última búsqueda
-      localStorage.removeItem("ultimosResultados"); // Limpiar los últimos resultados
     }
   };
 
 
-
-
-
-
-
-
-
-
-
-
-
+  // Función para editar una empresa
+  const handleEditarEmpresa = (razonSocial) => {
+    navigate(`/editarEmpresa/${razonSocial}`);
+    setActualizar(prev => !prev);
+  };
 
 
   // Función para agregar una nueva empresa
@@ -235,21 +184,17 @@ const GestionarEmpresas = () => {
   // Función para manejar la selección de filtros
   const handleSeleccion = async (e) => {
     const selectedValue = e.target.value;
-
+    setSeleccionActual(selectedValue); // Actualiza la selección actual en el select
+  
     localStorage.setItem("ultimaSeleccion", selectedValue);
     localStorage.setItem("ultimaEntidad", tipoEntidad);
-
-    localStorage.removeItem("ultimaBusqueda");
-    localStorage.removeItem("ultimosResultados");
-
-    setPrimeraCarga(false);
-
+  
     if (selectedValue === "todos") {
       await handleMostrarTodos();
       setLetraSeleccionada("");
       setMedioPagoSeleccionado("");
       setBusqueda("");
-    } else if (selectedValue === "") {
+    } else if (selectedValue === "Seleccionar") {
       setEmpresas([]);
       setEmpresasFiltradas([]);
       setLetraSeleccionada("");
@@ -396,6 +341,19 @@ const GestionarEmpresas = () => {
     setEmpresaSeleccionada(empresa);
     setMostrarModal(true);
   };
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   // Función para exportar datos a Excel
   const exportarAExcel = () => {
@@ -556,61 +514,72 @@ const GestionarEmpresas = () => {
 
 
 
-
-
-
-
-
   return (
     <div className="empresa-container">
       <div className="empresa-box">
-        <div className="front-row-emp">
-          <h2 className="empresa-title">Gestionar Empresas</h2>
-          <div className="front-row">
-            <div className="search-bar">
-              <input
-                id="search"
-                type="text"
-                placeholder="Buscar por nombre"
-                className="search-input"
-                value={busqueda}
-                onChange={(e) => setBusqueda(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleBusqueda(busqueda)}
-              />
-              <button className="search-button" onClick={() => handleBusqueda(busqueda)}>
-                <FontAwesomeIcon icon={faSearch} className="icon-button" />
-              </button>
-            </div>
 
-            <div className="alphabet-dropdown">
-              <select
-                id="alphabet"
-                className="dropdown"
-                value={letraSeleccionada || medioPagoSeleccionado || (primeraCarga ? "" : "todos")}
-                onChange={handleSeleccion}
-              >
-                {primeraCarga && <option value="Seleccionar" disabled>Seleccionar</option>}
-                <option value="todos">Todos</option>
 
-                {["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"].map((letter, index) => (
-                  <option key={index} value={letter}>{letter}</option>
-                ))}
 
-                {mediosDePago.length > 0 ? (
-                  mediosDePago.map((medio, index) => (
-                    <option key={`medio-${index}`} value={medio.Medio_Pago}>
-                      {medio.Medio_Pago}
-                    </option>
-                  ))
-                ) : (
-                  <option disabled>No hay medios de pago disponibles</option>
-                )}
-              </select>
-            </div>
-
-            {error && <p className="error">{error}</p>}
+      <div className="front-row-emp">
+        <h2 className="empresa-title">Gestionar Empresas</h2>
+        <div className="front-row">
+          <div className="search-bar">
+            <input
+              id="search"
+              type="text"
+              placeholder="Buscar por nombre"
+              className="search-input"
+              value={busqueda}
+              onChange={(e) => {
+                setBusqueda(e.target.value);
+                setSeleccionActual("Seleccionar"); // Reiniciar el select
+                localStorage.setItem("ultimaSeleccion", "Seleccionar");
+              }}
+              onKeyDown={(e) => e.key === "Enter" && handleBusqueda(busqueda)}
+            />
+            <button className="search-button" onClick={() => handleBusqueda(busqueda)}>
+              <FontAwesomeIcon icon={faSearch} className="icon-button" />
+            </button>
           </div>
+
+          <div className="alphabet-dropdown">
+            <select
+              id="alphabet"
+              className="dropdown"
+              value={seleccionActual}
+              onChange={(e) => {
+                handleSeleccion(e);
+                setBusqueda(""); // Limpiar el buscador cuando se selecciona una opción
+              }}
+            >
+              <option value="Seleccionar">Seleccionar</option>
+              <option value="todos">Todos</option>
+
+              {["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"].map((letter, index) => (
+                <option key={index} value={letter}>{letter}</option>
+              ))}
+
+              {mediosDePago.length > 0 ? (
+                mediosDePago.map((medio, index) => (
+                  <option key={`medio-${index}`} value={medio.Medio_Pago}>
+                    {medio.Medio_Pago}
+                  </option>
+                ))
+              ) : (
+                <option disabled>No hay medios de pago disponibles</option>
+              )}
+            </select>
+          </div>
+
+          {error && <p className="error">{error}</p>}
         </div>
+      </div>
+
+
+
+
+
+
 
         {errorMessage && (
           <div className="error-message-emp">
@@ -719,7 +688,7 @@ const GestionarEmpresas = () => {
             </button>
             <button className="empresa-button btn-print" onClick={handleImprimirTodosComprobantes}>
               <FontAwesomeIcon icon={faPrint} className="empresa-icon-button" />
-              Imprimir Comprobante
+              Imprimir Comprobantes
             </button>
           </div>
         </div>
