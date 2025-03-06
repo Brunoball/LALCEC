@@ -10,13 +10,17 @@ const GestionarCuotas = () => {
   const [activeTab, setActiveTab] = useState("pagado");
   const [sociosPagados, setSociosPagados] = useState([]);
   const [sociosDeudores, setSociosDeudores] = useState([]);
+  const [empresasPagadas, setEmpresasPagadas] = useState([]);
+  const [empresasDeudoras, setEmpresasDeudoras] = useState([]);
   const [meses, setMeses] = useState([]);
   const [selectedMonth, setSelectedMonth] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("socio"); // "socio" o "empresa"
   const [empresas, setEmpresas] = useState([]);
+  const [viewType, setViewType] = useState("socio"); // "socio" o "empresa"
 
+  // Obtener los meses disponibles
   useEffect(() => {
     const fetchMeses = async () => {
       try {
@@ -31,32 +35,46 @@ const GestionarCuotas = () => {
     fetchMeses();
   }, []);
 
+  // Obtener los datos de socios o empresas según el mes seleccionado
   useEffect(() => {
-    const fetchSocios = async () => {
+    const fetchData = async () => {
       if (selectedMonth) {
         try {
-          const responsePagados = await fetch(
-            `http://localhost:3001/socios_pagados.php?mes=${selectedMonth}`
-          );
-          const dataPagados = await responsePagados.json();
-          const sociosSinId = dataPagados.map(({ id_socios, ...resto }) => resto);
-          setSociosPagados(sociosSinId);
+          if (viewType === "socio") {
+            const responsePagados = await fetch(
+              `http://localhost:3001/socios_pagados.php?mes=${selectedMonth}`
+            );
+            const dataPagados = await responsePagados.json();
+            setSociosPagados(dataPagados);
 
-          const responseDeudores = await fetch(
-            `http://localhost:3001/socios_deudores.php?mes=${selectedMonth}`
-          );
-          const dataDeudores = await responseDeudores.json();
-          const deudoresSinId = dataDeudores.map(({ id_socios, ...resto }) => resto);
-          setSociosDeudores(deudoresSinId);
+            const responseDeudores = await fetch(
+              `http://localhost:3001/socios_deudores.php?mes=${selectedMonth}`
+            );
+            const dataDeudores = await responseDeudores.json();
+            setSociosDeudores(dataDeudores);
+          } else if (viewType === "empresa") {
+            const responsePagados = await fetch(
+              `http://localhost:3001/empresas_pagadas.php?mes=${selectedMonth}`
+            );
+            const dataPagados = await responsePagados.json();
+            setEmpresasPagadas(dataPagados);
+
+            const responseDeudores = await fetch(
+              `http://localhost:3001/empresas_deudoras.php?mes=${selectedMonth}`
+            );
+            const dataDeudores = await responseDeudores.json();
+            setEmpresasDeudoras(dataDeudores);
+          }
         } catch (error) {
-          console.error("Error al obtener los socios:", error);
+          console.error("Error al obtener los datos:", error);
         }
       }
     };
 
-    fetchSocios();
-  }, [selectedMonth]);
+    fetchData();
+  }, [selectedMonth, viewType]);
 
+  // Obtener la lista de empresas para el filtro
   useEffect(() => {
     const fetchEmpresas = async () => {
       try {
@@ -71,44 +89,52 @@ const GestionarCuotas = () => {
     fetchEmpresas();
   }, []);
 
+  // Función para volver atrás
   const handleVolverAtras = () => navigate(-1);
 
+  // Función para manejar el cambio de mes
   const handleMonthChange = (e) => {
     setSelectedMonth(e.target.value);
   };
 
+  // Función para exportar a Excel
   const handleExportExcel = () => {
-    let socios = activeTab === "pagado" ? sociosPagados : sociosDeudores;
+    let data = [];
+    if (viewType === "socio") {
+      data = activeTab === "pagado" ? sociosPagados : sociosDeudores;
+    } else if (viewType === "empresa") {
+      data = activeTab === "pagado" ? empresasPagadas : empresasDeudoras;
+    }
 
-    if (socios.length === 0) {
-      setErrorMessage("Datos incompletos: No hay socios para exportar.");
-
-      setTimeout(() => {
-        setErrorMessage("");
-      }, 3000);
-
+    if (data.length === 0) {
+      setErrorMessage("Datos incompletos: No hay datos para exportar.");
+      setTimeout(() => setErrorMessage(""), 3000);
       return;
     }
 
-    const sociosExport = socios.map(({ idSocios, nombre, apellido, ...resto }) => ({
-      idSocios,
-      apellido,
-      nombre,
-      ...resto,
+    const dataExport = data.map((item) => ({
+      ...item,
       Mes: selectedMonth,
       Tipo: activeTab === "pagado" ? "Pagados" : "Deudores",
     }));
 
-    const ws = XLSX.utils.json_to_sheet(sociosExport);
+    const ws = XLSX.utils.json_to_sheet(dataExport);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Socios");
-    XLSX.writeFile(wb, `socios_${selectedMonth}_${activeTab}.xlsx`);
+    XLSX.utils.book_append_sheet(wb, ws, viewType === "socio" ? "Socios" : "Empresas");
+    XLSX.writeFile(wb, `${viewType}_${selectedMonth}_${activeTab}.xlsx`);
 
     setErrorMessage("");
   };
 
-  const handleImprimirRegsitro = () => {
-    let socios = activeTab === "pagado" ? sociosPagados : sociosDeudores;
+  // Función para imprimir el registro
+  const handleImprimirRegistro = () => {
+    let data = [];
+    if (viewType === "socio") {
+      data = activeTab === "pagado" ? sociosPagados : sociosDeudores;
+    } else if (viewType === "empresa") {
+      data = activeTab === "pagado" ? empresasPagadas : empresasDeudoras;
+    }
+
     let content = `
       <html>
         <head>
@@ -126,12 +152,11 @@ const GestionarCuotas = () => {
           <table>
             <thead>
               <tr>
-                <th>APELLIDO</th>
-                <th>NOMBRE</th>
+                ${viewType === "socio" ? "<th>APELLIDO</th><th>NOMBRE</th>" : "<th>EMPRESA</th>"}
               </tr>
             </thead>
             <tbody>
-              ${socios.map(socio => `<tr><td>${socio.apellido}</td><td>${socio.nombre}</td></tr>`).join("")}
+              ${data.map(item => `<tr>${viewType === "socio" ? `<td>${item.apellido}</td><td>${item.nombre}</td>` : `<td>${item.nombre}</td>`}</tr>`).join("")}
             </tbody>
           </table>
         </body>
@@ -144,48 +169,55 @@ const GestionarCuotas = () => {
     printWindow.print();
   };
 
+  // Función para manejar la búsqueda
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
   };
 
-  const filterSocios = (socios) => {
-    if (filterType === "socio") {
-      return socios.filter(
-        (socio) =>
-          socio.apellido.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          socio.nombre.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    } else if (filterType === "empresa") {
-      return socios.filter((socio) =>
-        socio.empresa?.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-    return socios;
+  // Función para filtrar los datos
+  const filterData = (data) => {
+    return data.filter((item) =>
+      viewType === "socio"
+        ? item.apellido.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          item.nombre.toLowerCase().includes(searchTerm.toLowerCase())
+        : item.nombre.toLowerCase().includes(searchTerm.toLowerCase())
+    );
   };
 
-  const renderTabla = (socios) => {
-    const filteredSocios = filterSocios(socios);
+  // Función para renderizar la tabla
+  const renderTabla = (data) => {
+    const filteredData = filterData(data);
 
     return (
       <div className="table-container">
         <table className="table">
           <thead>
             <tr>
-              <th>Apellido</th>
-              <th>Nombre</th>
-              <th className="domicilio-column">Dirección</th>
-              <th className="categoria-column">Categoría</th>
-              {filterType === "empresa" && <th>Empresa</th>}
+              {viewType === "socio" ? (
+                <>
+                  <th>Apellido</th>
+                  <th>Nombre</th>
+                  <th className="domicilio-column">Dirección</th>
+                  <th className="categoria-column">Categoría</th>
+                </>
+              ) : (
+                <th>Empresa</th>
+              )}
             </tr>
           </thead>
           <tbody>
-            {filteredSocios.map((socio, index) => (
+            {filteredData.map((item, index) => (
               <tr key={index}>
-                <td>{socio.apellido}</td>
-                <td>{socio.nombre}</td>
-                <td className="domicilio-column">{`${socio.domicilio} ${socio.numero}`}</td>
-                <td className="categoria-column">{socio.categoria}</td>
-                {filterType === "empresa" && <td>{socio.empresa}</td>}
+                {viewType === "socio" ? (
+                  <>
+                    <td>{item.apellido}</td>
+                    <td>{item.nombre}</td>
+                    <td className="domicilio-column">{`${item.domicilio} ${item.numero}`}</td>
+                    <td className="categoria-column">{item.categoria}</td>
+                  </>
+                ) : (
+                  <td>{item.nombre}</td>
+                )}
               </tr>
             ))}
           </tbody>
@@ -209,37 +241,22 @@ const GestionarCuotas = () => {
           </div>
           <div className="filter-type-container">
             <select
-              value={filterType}
-              onChange={(e) => setFilterType(e.target.value)}
+              value={viewType}
+              onChange={(e) => setViewType(e.target.value)}
               className="select"
             >
-              <option value="socio">Filtrar por Socio</option>
-              <option value="empresa">Filtrar por Empresa</option>
+              <option value="socio">Socios</option>
+              <option value="empresa">Empresas</option>
             </select>
           </div>
           <div className="search-container">
-            {filterType === "empresa" ? (
-              <select
-                className="select"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              >
-                <option value="">Todas las Empresas</option>
-                {empresas.map((empresa, index) => (
-                  <option key={index} value={empresa.nombre}>
-                    {empresa.nombre}
-                  </option>
-                ))}
-              </select>
-            ) : (
-              <input
-                type="text"
-                placeholder="Buscar por socio..."
-                value={searchTerm}
-                onChange={handleSearchChange}
-                className="search-input"
-              />
-            )}
+            <input
+              type="text"
+              placeholder={`Buscar por ${viewType === "socio" ? "socio..." : "empresa..."}`}
+              value={searchTerm}
+              onChange={handleSearchChange}
+              className="search-input"
+            />
             <FontAwesomeIcon icon={faSearch} className="search-icon" />
           </div>
           <div className="tab-container">
@@ -251,16 +268,20 @@ const GestionarCuotas = () => {
             </button>
           </div>
         </div>
-        {errorMessage && (
-          <div className="error-message">
-            {errorMessage}
-          </div>
-        )}
-        {activeTab === "pagado" ? renderTabla(sociosPagados) : renderTabla(sociosDeudores)}
+        {errorMessage && <div className="error-message">{errorMessage}</div>}
+        {activeTab === "pagado"
+          ? renderTabla(viewType === "socio" ? sociosPagados : empresasPagadas)
+          : renderTabla(viewType === "socio" ? sociosDeudores : empresasDeudoras)}
         <div className="buttons-container">
-          <button className="button-back" onClick={handleVolverAtras}><FontAwesomeIcon icon={faArrowLeft} /> Volver Atrás</button>
-          <button className="button-export" onClick={handleExportExcel}><FontAwesomeIcon icon={faFileExcel} /> Exportar a Excel</button>
-          <button className="button-print" onClick={handleImprimirRegsitro}><FontAwesomeIcon icon={faPrint} /> Imprimir Registro</button>
+          <button className="button-back" onClick={handleVolverAtras}>
+            <FontAwesomeIcon icon={faArrowLeft} /> Volver Atrás
+          </button>
+          <button className="button-export" onClick={handleExportExcel}>
+            <FontAwesomeIcon icon={faFileExcel} /> Exportar a Excel
+          </button>
+          <button className="button-print" onClick={handleImprimirRegistro}>
+            <FontAwesomeIcon icon={faPrint} /> Imprimir Registro
+          </button>
         </div>
       </div>
     </div>
