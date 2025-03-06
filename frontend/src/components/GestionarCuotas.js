@@ -16,8 +16,6 @@ const GestionarCuotas = () => {
   const [selectedMonth, setSelectedMonth] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterType, setFilterType] = useState("socio"); // "socio" o "empresa"
-  const [empresas, setEmpresas] = useState([]);
   const [viewType, setViewType] = useState("socio"); // "socio" o "empresa"
 
   // Obtener los meses disponibles
@@ -73,21 +71,6 @@ const GestionarCuotas = () => {
 
     fetchData();
   }, [selectedMonth, viewType]);
-
-  // Obtener la lista de empresas para el filtro
-  useEffect(() => {
-    const fetchEmpresas = async () => {
-      try {
-        const response = await fetch("http://localhost:3001/buscar_empresas.php");
-        const data = await response.json();
-        setEmpresas(data);
-      } catch (error) {
-        console.error("Error al obtener las empresas:", error);
-      }
-    };
-
-    fetchEmpresas();
-  }, []);
 
   // Función para volver atrás
   const handleVolverAtras = () => navigate(-1);
@@ -156,7 +139,7 @@ const GestionarCuotas = () => {
               </tr>
             </thead>
             <tbody>
-              ${data.map(item => `<tr>${viewType === "socio" ? `<td>${item.apellido}</td><td>${item.nombre}</td>` : `<td>${item.nombre}</td>`}</tr>`).join("")}
+              ${data.map(item => `<tr>${viewType === "socio" ? `<td>${item.apellido}</td><td>${item.nombre}</td>` : `<td>${item.razon_social}</td>`}</tr>`).join("")}
             </tbody>
           </table>
         </body>
@@ -180,7 +163,7 @@ const GestionarCuotas = () => {
       viewType === "socio"
         ? item.apellido.toLowerCase().includes(searchTerm.toLowerCase()) ||
           item.nombre.toLowerCase().includes(searchTerm.toLowerCase())
-        : item.nombre.toLowerCase().includes(searchTerm.toLowerCase())
+        : item.razon_social.toLowerCase().includes(searchTerm.toLowerCase())
     );
   };
 
@@ -201,7 +184,11 @@ const GestionarCuotas = () => {
                   <th className="categoria-column">Categoría</th>
                 </>
               ) : (
-                <th>Empresa</th>
+                <>
+                  <th>Empresa</th>
+                  <th className="domicilio-column">Dirección</th>
+                  <th className="categoria-column">Categoría</th>
+                </>
               )}
             </tr>
           </thead>
@@ -216,7 +203,11 @@ const GestionarCuotas = () => {
                     <td className="categoria-column">{item.categoria}</td>
                   </>
                 ) : (
-                  <td>{item.nombre}</td>
+                  <>
+                    <td>{item.razon_social}</td>
+                    <td className="domicilio-column">{item.domicilio}</td>
+                    <td className="categoria-column">{item.categoria}</td>
+                  </>
                 )}
               </tr>
             ))}

@@ -80,9 +80,22 @@
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
 .top-section {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
     width: 100%;
     margin-bottom: 1.5rem;
@@ -90,7 +103,8 @@
 }
 
 .select-container {
-    width: 30%;
+    width: 15%;
+    margin-left: -45px;
 }
 
 .select {
@@ -101,25 +115,67 @@
     font-size: 1rem;
 }
 
+
+.filter-type-container{
+    margin-right: 90px;
+}
+
+.tab-container{
+    margin-left: 90px;
+}
+
+
 .search-container {
-    width: 30%;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.search-input {
+    position: relative;
     width: 100%;
-    padding: 0.7rem;
+    max-width: 400px; /* Ajusta el tamaño del campo de búsqueda */
+  }
+  
+  .search-input {
+    width: 100%;
+    padding: 10px 40px 10px 15px; /* Añadir espacio interno para la lupa */
+    font-size: 16px;
+    border: 2px solid #ccc;
+    border-radius: 20px;
+    outline: none;
+    transition: all 0.3s ease;
+    box-sizing: border-box; /* Esto asegura que el padding no desborde el campo */
+  }
+  
+  .search-input:focus {
+    box-shadow: 0 0 2px rgba(136, 136, 136, 0.651);
     border-radius: 10px;
-    border: 1px solid #ccc;
-    font-size: 1rem;
-}
+  }
+  
+  /* Lupa dentro del input */
+  .search-icon {
+    position: absolute;
+    right: 15px; /* Ajusta la distancia desde la derecha */
+    top: 50%;
+    transform: translateY(-50%);
+    color: #888;
+    font-size: 18px;
+    pointer-events: none; /* Evita que la lupa interfiera con el campo de texto */
+  }
+  
 
-.search-icon {
-    color: #666;
-    cursor: pointer;
-}
+  
+  
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
 
 .error-message {
     background-color: #f8d7da;
