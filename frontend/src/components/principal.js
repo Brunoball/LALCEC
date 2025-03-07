@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faUsers, faDollarSign, faTags, faSignOutAlt, faBuilding } from "@fortawesome/free-solid-svg-icons";
+import { faUsers, faDollarSign, faTags, faSignOutAlt, faBuilding, faUserPlus } from "@fortawesome/free-solid-svg-icons";
 import logoLalcec from "./logo_lalcec.jpeg";
 
 const PaginaPrincipal = () => {
@@ -38,7 +39,10 @@ const PaginaPrincipal = () => {
   const handleRedireccionarCategorias = () => {
     navigate("/GestionarCategorias");
   };
-  
+
+  const handleRedireccionarRegistro = () => {
+    navigate("/registro");
+  };
 
   const handleCerrarSesion = () => {
     setShowModal(true);
@@ -87,6 +91,10 @@ const PaginaPrincipal = () => {
           <span style={styles.buttonText}>Gestionar Categorías</span>
         </button>
 
+        <button style={styles.button} onClick={handleRedireccionarRegistro}>
+          <FontAwesomeIcon icon={faUserPlus} style={styles.iconButton} />
+          <span style={styles.buttonText}>Registro</span>
+        </button>
 
         <button style={styles.logoutButton} onClick={handleCerrarSesion}>
           <FontAwesomeIcon icon={faSignOutAlt} style={styles.iconButton} />

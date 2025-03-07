@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faUser, faLock, faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
+import { faUser, faLock, faEye, faEyeSlash, faUserPlus, faArrowLeft } from "@fortawesome/free-solid-svg-icons";
 import logoLalcec from "./logo_lalcec.jpeg";
 import axios from "axios";
+import { useNavigate } from "react-router-dom"; // Importa useNavigate para la redirección
 
 const Registro = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -12,6 +13,7 @@ const Registro = () => {
   const [confirmarContraseña, setConfirmarContraseña] = useState("");
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("");
+  const navigate = useNavigate(); // Usa useNavigate para redireccionar
 
   const togglePasswordVisibility = () => {
     setShowPassword((prevShowPassword) => !prevShowPassword);
@@ -47,26 +49,24 @@ const Registro = () => {
       // Verifica si la respuesta contiene un error
       if (response.data.error) {
         if (response.data.error === "Usuario ya existe") {
-          showMessage("El usuario ya existe. Intenta con otro.", "warning"); // Mensaje de advertencia si el usuario ya existe
+          showMessage("El usuario ya existe. Intenta con otro.", "warning");
         } else {
-          showMessage(response.data.error, "error"); // Muestra el mensaje de error
+          showMessage(response.data.error, "error");
         }
       } else {
-        showMessage("¡Registro exitoso!", "success"); // Muestra el mensaje de éxito
-        clearFields(); // Limpia los campos del formulario
+        showMessage("¡Registro exitoso!", "success");
+        clearFields();
       }
     } catch (error) {
-      // Maneja errores de conexión o del servidor
       if (error.response && error.response.data.error) {
-        showMessage(error.response.data.error, "error"); // Muestra el mensaje de error del servidor
+        showMessage(error.response.data.error, "error");
       } else {
-        showMessage("Error al registrar el usuario. Intenta de nuevo.", "error"); // Mensaje genérico
+        showMessage("Error al registrar el usuario. Intenta de nuevo.", "error");
       }
       console.error("Error de registro:", error);
     }
   };
 
-  // Muestra un mensaje y lo oculta después de 5 segundos
   const showMessage = (text, type) => {
     setMessage(text);
     setMessageType(type);
@@ -76,11 +76,15 @@ const Registro = () => {
     }, 3000);
   };
 
-  // Limpia los campos del formulario
   const clearFields = () => {
     setUsuario("");
     setContraseña("");
     setConfirmarContraseña("");
+  };
+
+  // Función para redirigir a la página principal
+  const handleVolverAtras = () => {
+    navigate("/PaginaPrincipal");
   };
 
   return (
@@ -155,26 +159,27 @@ const Registro = () => {
               onClick={toggleConfirmPasswordVisibility}
             />
           </div>
-          <div style={styles.options}>
-            <label>
-              <a
-                href="/"
-                style={styles.link}
-                onMouseOver={(e) => (e.target.style.color = styles.linkHover.color)}
-                onMouseOut={(e) => (e.target.style.color = styles.link.color)}
-              >
-                ¿Ya tienes cuenta? Iniciar sesión
-              </a>
-            </label>
+          <div style={styles.buttonContainer}>
+            <button
+              type="submit"
+              style={styles.button}
+              onMouseOver={(e) => (e.target.style.transform = styles.buttonHover.transform)}
+              onMouseOut={(e) => (e.target.style.transform = "scale(1)")}
+            >
+              <FontAwesomeIcon icon={faUserPlus} style={{ marginRight: "8px" }} />
+              Registrarse
+            </button>
+            <button
+              type="button"
+              style={styles.buttonVolver}
+              onClick={handleVolverAtras}
+              onMouseOver={(e) => (e.target.style.transform = styles.buttonHover.transform)}
+              onMouseOut={(e) => (e.target.style.transform = "scale(1)")}
+            >
+              <FontAwesomeIcon icon={faArrowLeft} style={{ marginRight: "8px" }} />
+              Volver atrás
+            </button>
           </div>
-          <button
-            type="submit"
-            style={styles.button}
-            onMouseOver={(e) => (e.target.style.transform = styles.buttonHover.transform)}
-            onMouseOut={(e) => (e.target.style.transform = "scale(1)")}
-          >
-            REGISTRARSE
-          </button>
         </form>
       </div>
     </div>
@@ -249,34 +254,42 @@ const styles = {
     color: "#ff8800",
     fontSize: "1.2rem",
   },
-  options: {
+  buttonContainer: {
     display: "flex",
     justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: "1.5rem",
-    fontSize: "0.85rem",
-    color: "#666",
-  },
-  link: {
-    color: "#ff8800",
-    textDecoration: "none",
-    cursor: "pointer",
-    transition: "color 0.3s ease",
-  },
-  linkHover: {
-    color: "#ff6e00",
+    gap: "10px",
+    marginTop: "2.5rem",
+    marginBottom:"-15px",
   },
   button: {
-    background: "linear-gradient(135deg, #ff8800, #ff6e00)",
+    background: "linear-gradient(135deg, #007bff, #0056b3)", // Azul
     color: "white",
-    padding: "1rem 2rem",
+    padding: "1rem",
     borderRadius: "25px",
     border: "none",
-    fontSize: "1.1rem",
+    fontSize: "1rem",
     fontWeight: "600",
     cursor: "pointer",
     width: "100%",
     transition: "transform 0.3s ease",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  buttonVolver: {
+    background: "linear-gradient(135deg, #ff8800, #ff6e00)", // Naranja
+    color: "white",
+    padding: "1rem",
+    borderRadius: "25px",
+    border: "none",
+    fontSize: "1rem",
+    fontWeight: "600",
+    cursor: "pointer",
+    width: "100%",
+    transition: "transform 0.3s ease",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
   },
   buttonHover: {
     transform: "scale(1.05)",

@@ -91,9 +91,6 @@ const Login = () => {
               <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} style={styles.icon} />
             </span>
           </div>
-          <Link to="/registro" style={styles.linkCentered}>
-            ¿No tienes una cuenta? Regístrate
-          </Link>
           <button type="submit" style={styles.button}>
             Iniciar sesión
           </button>
@@ -102,6 +99,8 @@ const Login = () => {
     </div>
   );
 };
+
+
 
 const styles = {
   container: {
@@ -200,10 +199,13 @@ const styles = {
     color: "white",
     padding: "1rem",
     borderRadius: "15px",
+    width: "100%",
     fontSize: "1rem",
     fontWeight: "600",
     cursor: "pointer",
     border: "none",
+    marginBottom:"-30px",
+    marginTop:"20px",
   },
 };
 
