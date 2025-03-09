@@ -755,34 +755,43 @@ useEffect(() => {
           </div>
         </div>
 
-        <div className="buttons-container-socios">
-          <span className="socios-totales">
-            Cant socios: {sociosFiltrados.length}
-          </span>
 
-          <div className="buttons-container">
+
+
+
+        <div className="down-container">
+
+          <div className="contador-container">
+            <span className="socios-totales">
+              Cant socios: {sociosFiltrados.length}
+            </span>
+          </div>
+
+          <div className="botones-container">
             <button className="socio-button" onClick={handleAgregarSocio}>
               <FontAwesomeIcon icon={faPlus} className="socio-icon-button" />
               Agregar Socio
             </button>
 
-            <button className="socio-button btn-export" onClick={exportarAExcel}>
+            <button className="socio-button" onClick={exportarAExcel}>
               <FontAwesomeIcon icon={faFileExcel} className="socio-icon-button" />
               Exportar a Excel
             </button>
 
-            <button className="socio-button-back" onClick={handleVolverAtras}>
-              <FontAwesomeIcon icon={faArrowLeft} className="socio-icon-button" />
-              Volver Atrás
-            </button>
-            <button className="socio-button btn-print" onClick={handleImprimirTodosComprobantes}>
+            <button className="socio-button" onClick={handleImprimirTodosComprobantes}>
               <FontAwesomeIcon icon={faPrint} className="socio-icon-button" />
                Imprimir Comprobantes
             </button>
 
+            <button className="socio-button" onClick={handleVolverAtras}>
+              <FontAwesomeIcon icon={faArrowLeft} className="socio-icon-button" />
+              Volver Atrás
+            </button>
           </div>
         </div>
       </div>
+
+      
 
       {mostrarModalEliminar && (
         <div className="modal">
