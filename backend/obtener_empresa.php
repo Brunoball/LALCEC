@@ -15,19 +15,23 @@ if ($razon_social) {
             e.idEmp,
             e.razon_social,
             e.domicilio,
+            e.domicilio_2,  -- Agregamos domicilio_2 aquí
             e.telefono,
             e.email,
             e.observacion,
             e.idCategorias,
             e.idMedios_Pago,
-            e.cuit, -- Nuevo campo CUIT
-            e.cond_iva, -- Nuevo campo Condición de IVA
+            e.cuit, -- Campo CUIT
+            e.id_iva, -- Campo id_iva
             c.Nombre_categoria AS categoria,
-            c.Precio_Categoria AS precio_categoria
+            c.Precio_Categoria AS precio_categoria,
+            iva.descripcion AS descripcion_iva -- Obtener la descripción del IVA desde la tabla 'condicional_iva'
         FROM 
             empresas e
         LEFT JOIN 
             categorias c ON e.idCategorias = c.idCategorias
+        LEFT JOIN
+            condicional_iva iva ON e.id_iva = iva.id_iva -- Hacer JOIN con la tabla condicional_iva para obtener la descripción del IVA
         WHERE 
             e.razon_social = ?
     ";
@@ -41,6 +45,7 @@ if ($razon_social) {
         if ($result->num_rows > 0) {
             $empresa = $result->fetch_assoc();
 
+            // Obtener categorías
             $categoriasQuery = "SELECT idCategorias, Nombre_categoria, Precio_Categoria FROM categorias";
             $categoriasResult = $conn->query($categoriasQuery);
             $categorias = [];
@@ -48,6 +53,7 @@ if ($razon_social) {
                 $categorias[] = $row;
             }
 
+            // Obtener medios de pago
             $mediosPagoQuery = "SELECT IdMedios_pago, Medio_Pago FROM mediospago";
             $mediosPagoResult = $conn->query($mediosPagoQuery);
             $mediosPago = [];
@@ -55,9 +61,19 @@ if ($razon_social) {
                 $mediosPago[] = $row;
             }
 
+            // Obtener condiciones de IVA
+            $condicionesIvaQuery = "SELECT id_iva, descripcion FROM condicional_iva";
+            $condicionesIvaResult = $conn->query($condicionesIvaQuery);
+            $condicionesIva = [];
+            while ($row = $condicionesIvaResult->fetch_assoc()) {
+                $condicionesIva[] = $row;
+            }
+
             $empresa['categorias'] = $categorias;
             $empresa['mediosPago'] = $mediosPago;
+            $empresa['condicionesIva'] = $condicionesIva; // Agregar condiciones de IVA
 
+            // Agregar domicilio_2 al resultado
             echo json_encode($empresa);
         } else {
             http_response_code(404);

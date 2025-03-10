@@ -173,40 +173,11 @@ useEffect(() => {
   };
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  
   const handleVolverAtras = async () => {
     navigate(-1); // Navegar hacia atrás
   };
 
 
-
-
-
-
-
-
-
-
-
-  
   const handleFiltrarPorLetra = async (letra, tipo) => {
     try {
       let url = `http://localhost:3001/obtener_letra.php?letra=${letra}&tipo=${tipo}`;
@@ -290,16 +261,6 @@ useEffect(() => {
       setError("Error al obtener los datos.");
     }
   };
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -411,41 +372,6 @@ useEffect(() => {
     setSocioSeleccionado(socio);
     setMostrarModal(true);
   };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -680,7 +606,7 @@ useEffect(() => {
               <div className="column-header header-nom">Nombre</div>
               <div className="column-header header-cat">Cat/precio</div>
               <div className="column-header header-mp">Medio de Pago</div>
-              <div className="column-header header-dom">Domicilio</div>
+              <div className="column-header header-dom">Domicilio Cobro</div>
               <div className="column-header header-obs">Observacion</div>
               <div className="column-header icons-column"></div>
             </div>
@@ -706,7 +632,7 @@ useEffect(() => {
                         <div className="column column-nom">{socio.nombre}</div>
                         <div className="column column-cat">{socio.categoria} ${socio.precio_categoria || "0"}</div>
                         <div className="column column-mp">{socio.medio_pago}</div>
-                        <div className="column column-dom">{socio.domicilio} {socio.numero || ""}</div>
+                        <div className="column column-dom">{socio.domicilio_2}</div>
                         <div className="column column-obs">{socio.observacion}</div>
                         <div className="column icons-column">
                           {filaSeleccionada === index && (

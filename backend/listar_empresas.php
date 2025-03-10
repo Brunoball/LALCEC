@@ -18,8 +18,9 @@ $query = "
     SELECT 
         empresas.razon_social AS nombre,
         empresas.cuit,
-        empresas.cond_iva,
+        empresas.id_iva,
         empresas.domicilio,
+        empresas.domicilio_2,  -- Agregamos domicilio_2 aquí
         empresas.telefono,
         empresas.email,
         categorias.Nombre_Categoria AS categoria,
@@ -41,8 +42,9 @@ if ($result) {
             $empresas[] = [
                 "nombre" => $row["nombre"] ?? "",
                 "cuit" => $row["cuit"] ?? "",
-                "cond_iva" => $row["cond_iva"] ?? "",
+                "id_iva" => $row["id_iva"] ?? "",
                 "domicilio" => $row["domicilio"] ?? "",
+                "domicilio_2" => $row["domicilio_2"] ?? "",  // Agregamos domicilio_2 en el array
                 "telefono" => $row["telefono"] ?? "",
                 "email" => $row["email"] ?? "",
                 "categoria" => $row["categoria"] ?? "",

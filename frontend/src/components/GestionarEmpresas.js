@@ -472,7 +472,7 @@ const GestionarEmpresas = () => {
       `;
 
       empresas.forEach((empresa) => {
-        const { nombre, domicilio, categoria, precioCategoria, cobrador } = empresa;
+        const { nombre, domicilio_2, categoria, precioCategoria, cobrador } = empresa;
         const mesesPagados = "Marzo";
         const totalPagar = precioCategoria;
 
@@ -481,7 +481,7 @@ const GestionarEmpresas = () => {
               <div class="comprobante">
                   <div class="talon-empresa">
                       <p><strong>Empresa:</strong> ${nombre}</p>
-                      <p><strong>Domicilio:</strong> ${domicilio}</p>
+                      <p><strong>Domicilio:</strong> ${domicilio_2}</p>
                       <p><strong>Categoría / Monto:</strong> ${categoria} / $${totalPagar}</p>
                       <p><strong>Período:</strong> ${mesesPagados}</p>
                       <p><strong>Cobrador:</strong> ${cobrador}</p>
@@ -595,8 +595,9 @@ const GestionarEmpresas = () => {
               <div className="column-header header-razon">Razón Social</div>
               <div className="column-header header-cuit">CUIT</div>
               <div className="column-header header-iva">Cond. IVA</div>
-              <div className="column-header header-dom">Domicilio</div>
+              <div className="column-header header-dom">Domicilio cobro</div>
               <div className="column-header header-obs">Observaciones</div>
+              <div className="column-header header-medio">Medio de Pago</div> 
               <div className="column-header icons-column"></div>
             </div>
 
@@ -618,9 +619,10 @@ const GestionarEmpresas = () => {
                       >
                         <div className="column column-razon">{empresa.razon_social}</div>
                         <div className="column column-cuit">{empresa.cuit}</div>
-                        <div className="column column-iva">{empresa.cond_iva}</div>
-                        <div className="column column-dom">{empresa.domicilio} {empresa.numero || ""}</div>
+                        <div className="column column-iva">{empresa.descripcion_iva}</div>
+                        <div className="column column-dom">{empresa.domicilio_2}</div>
                         <div className="column column-obs">{empresa.observacion}</div>
+                        <div className="column column-medio">{empresa.medio_pago}</div>
                         <div className="column icons-column">
                           {filaSeleccionada === index && (
                             <div className="icons-container">
@@ -666,29 +668,32 @@ const GestionarEmpresas = () => {
           </div>
         </div>
 
-        <div className="buttons-container-empresas">
-          <span className="empresas-totales">
-            Cant empresas: {empresasFiltradas.length}
-          </span>
+        <div className="down-container-empresas">
+          <div className="contador-container">
+            <span className="empresas-totales">
+              Cant empresas: {empresasFiltradas.length}
+            </span>
+          </div>
 
-          <div className="buttons-container">
-            <button className="empresa-button" onClick={handleAgregarEmpresa}>
-              <FontAwesomeIcon icon={faPlus} className="empresa-icon-button" />
+          <div className="botones-container">
+            <button className="socio-button" onClick={handleAgregarEmpresa}>
+              <FontAwesomeIcon icon={faPlus} className="socio-icon-button" />
               Agregar Empresa
             </button>
 
-            <button className="empresa-button btn-export" onClick={exportarAExcel}>
-              <FontAwesomeIcon icon={faFileExcel} className="empresa-icon-button" />
+            <button className="socio-button" onClick={exportarAExcel}>
+              <FontAwesomeIcon icon={faFileExcel} className="socio-icon-button" />
               Exportar a Excel
             </button>
 
-            <button className="empresa-button-back" onClick={handleVolverAtras}>
-              <FontAwesomeIcon icon={faArrowLeft} className="empresa-icon-button" />
-              Volver Atrás
-            </button>
-            <button className="empresa-button btn-print" onClick={handleImprimirTodosComprobantes}>
-              <FontAwesomeIcon icon={faPrint} className="empresa-icon-button" />
+            <button className="socio-button" onClick={handleImprimirTodosComprobantes}>
+              <FontAwesomeIcon icon={faPrint} className="socio-icon-button" />
               Imprimir Comprobantes
+            </button>
+
+            <button className="socio-button" onClick={handleVolverAtras}>
+              <FontAwesomeIcon icon={faArrowLeft} className="socio-icon-button" />
+              Volver Atrás
             </button>
           </div>
         </div>

@@ -13,15 +13,16 @@ const EditarEmpresa = () => {
   const [cargando, setCargando] = useState(true);
   const [mensaje, setMensaje] = useState('');
   const [tipoMensaje, setTipoMensaje] = useState('');
-  const [razonSocial, setRazonSocial] = useState('');
   const [domicilio, setDomicilio] = useState('');
+  const [domicilio_2, setDomicilio_2] = useState('');
   const [telefono, setTelefono] = useState('');
   const [email, setEmail] = useState('');
   const [observacion, setObservacion] = useState('');
   const [medioPago, setMedioPago] = useState('');
   const [mediosPago, setMediosPago] = useState([]);
-  const [cuit, setCuit] = useState(''); // Nuevo campo CUIT
-  const [condIva, setCondIva] = useState(''); // Nuevo campo Condición de IVA
+  const [cuit, setCuit] = useState('');
+  const [condIva, setCondIva] = useState('');
+  const [condicionesIva, setCondicionesIva] = useState([]);
 
   const obtenerEmpresa = async () => {
     try {
@@ -35,23 +36,25 @@ const EditarEmpresa = () => {
       }
 
       const data = await response.json();
-      const { categorias, mediosPago, ...empresa } = data;
+      const { categorias, mediosPago, condicionesIva, ...empresa } = data;
 
       if (empresa) {
         setIdEmp(empresa.idEmp);
         setRazonSocialInput(empresa.razon_social || '');
         setDomicilio(empresa.domicilio || '');
+        setDomicilio_2(empresa.domicilio_2 || '');
         setTelefono(empresa.telefono || '');
         setEmail(empresa.email || '');
         setIdCategorias(empresa.idCategorias || '');
         setObservacion(empresa.observacion || '');
         setMedioPago(empresa.idMedios_Pago || '');
-        setCuit(empresa.cuit || ''); // Nuevo campo CUIT
-        setCondIva(empresa.cond_iva || ''); // Nuevo campo Condición de IVA
+        setCuit(empresa.cuit || '');
+        setCondIva(empresa.id_iva || '');
       }
 
       setCategorias(categorias || []);
       setMediosPago(mediosPago || []);
+      setCondicionesIva(condicionesIva || []);
     } catch (error) {
       setMensaje('Hubo un error al obtener los datos de la empresa: ' + error.message);
       setTipoMensaje('error');
@@ -67,51 +70,53 @@ const EditarEmpresa = () => {
     }
   }, [razon_social]);
 
-  const editarEmpresa = async () => {
-    if (!idCategorias) {
-      setMensaje("Debes seleccionar una categoría");
-      setTipoMensaje("error");
-      setTimeout(() => setMensaje(""), 3000);
-      return;
-    }
+const editarEmpresa = async () => {
+  // Validar que el campo obligatorio razon_social esté presente
+  if (!razon_social) {
+    setMensaje("El campo Razón Social es obligatorio");
+    setTipoMensaje("error");
+    setTimeout(() => setMensaje(""), 3000);
+    return;
+  }
 
-    try {
-      const response = await fetch('http://localhost:3001/editar_empresa.php', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          idEmp: idEmp,
-          razon_social: razonSocialInput,
-          domicilio: domicilio,
-          telefono: telefono,
-          email: email,
-          observacion: observacion,
-          idCategoria: idCategorias,
-          medioPago: medioPago,
-          cuit: cuit, // Nuevo campo CUIT
-          cond_iva: condIva, // Nuevo campo Condición de IVA
-        }),
-      });
+  try {
+    const response = await fetch('http://localhost:3001/editar_empresa.php', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        idEmp: idEmp,
+        razon_social: razonSocialInput,
+        domicilio: domicilio,
+        domicilio_2: domicilio_2,
+        telefono: telefono,
+        email: email,
+        observacion: observacion,
+        idCategoria: idCategorias, // Puede estar vacío o nulo
+        medioPago: medioPago,
+        cuit: cuit,
+        id_iva: condIva,
+      }),
+    });
 
-      const data = await response.json();
+    const data = await response.json();
 
-      if (response.ok) {
-        setMensaje('Empresa actualizada correctamente');
-        setTipoMensaje('success');
-        setTimeout(() => setMensaje(''), 3000);
-      } else {
-        setMensaje('Error al actualizar la empresa: ' + data.message);
-        setTipoMensaje('error');
-        setTimeout(() => setMensaje(''), 3000);
-      }
-    } catch (error) {
-      setMensaje('Error en la solicitud: ' + error.message);
+    if (response.ok) {
+      setMensaje('Empresa actualizada correctamente');
+      setTipoMensaje('success');
+      setTimeout(() => setMensaje(''), 3000);
+    } else {
+      setMensaje('Error al actualizar la empresa: ' + data.message);
       setTipoMensaje('error');
       setTimeout(() => setMensaje(''), 3000);
     }
-  };
+  } catch (error) {
+    setMensaje('Error en la solicitud: ' + error.message);
+    setTipoMensaje('error');
+    setTimeout(() => setMensaje(''), 3000);
+  }
+};
 
   if (cargando) {
     return (
@@ -203,6 +208,28 @@ const EditarEmpresa = () => {
             <div style={styles.floatingLabelWrapper}>
               <input
                 type="text"
+                value={domicilio_2}
+                onChange={(e) => setDomicilio_2(e.target.value)}
+                placeholder=" "
+                style={styles.input}
+                id="domicilio_2"
+              />
+              <label
+                htmlFor="domicilio_2"
+                style={{
+                  ...styles.floatingLabel,
+                  ...(domicilio_2 ? styles.floatingLabelFilled : {}),
+                }}
+              >
+                Domicilio de cobro
+              </label>
+            </div>
+          </div>
+
+          <div style={styles.inputGroup}>
+            <div style={styles.floatingLabelWrapper}>
+              <input
+                type="text"
                 value={telefono}
                 onChange={(e) => setTelefono(e.target.value)}
                 placeholder=" "
@@ -219,9 +246,7 @@ const EditarEmpresa = () => {
                 Teléfono
               </label>
             </div>
-          </div>
 
-          <div style={styles.inputGroup}>
             <div style={styles.floatingLabelWrapper}>
               <input
                 type="email"
@@ -241,7 +266,9 @@ const EditarEmpresa = () => {
                 Email
               </label>
             </div>
+          </div>
 
+          <div style={styles.inputGroup}>
             <div style={styles.floatingLabelWrapper}>
               <input
                 type="text"
@@ -261,9 +288,7 @@ const EditarEmpresa = () => {
                 Observación
               </label>
             </div>
-          </div>
 
-          <div style={styles.inputGroup}>
             <div style={styles.floatingLabelWrapper}>
               <input
                 type="text"
@@ -283,26 +308,21 @@ const EditarEmpresa = () => {
                 CUIT
               </label>
             </div>
+          </div>
 
-            <div style={styles.floatingLabelWrapper}>
-              <input
-                type="text"
-                value={condIva}
-                onChange={(e) => setCondIva(e.target.value)}
-                placeholder=" "
-                style={styles.input}
-                id="condIva"
-              />
-              <label
-                htmlFor="condIva"
-                style={{
-                  ...styles.floatingLabel,
-                  ...(condIva ? styles.floatingLabelFilled : {}),
-                }}
-              >
-                Condición de IVA
-              </label>
-            </div>
+          <div style={styles.inputGroup}>
+            <select
+              value={condIva || ""}
+              onChange={(e) => setCondIva(e.target.value)}
+              style={styles.input}
+            >
+              <option value="" disabled>Seleccione una condición de IVA</option>
+              {condicionesIva.map((cond) => (
+                <option key={cond.id_iva} value={cond.id_iva}>
+                  {cond.descripcion}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div style={styles.inputGroup}>
@@ -311,9 +331,7 @@ const EditarEmpresa = () => {
               onChange={(e) => setMedioPago(e.target.value)}
               style={styles.input}
             >
-              {medioPago === "" ? (
-                <option value="" disabled>Seleccione un medio de pago</option>
-              ) : null}
+              <option value="" disabled>Seleccione un medio de pago</option>
               {mediosPago.map((pago) => (
                 <option key={pago.IdMedios_pago} value={pago.IdMedios_pago}>
                   {pago.Medio_Pago}
@@ -326,9 +344,7 @@ const EditarEmpresa = () => {
               onChange={(e) => setIdCategorias(e.target.value)}
               style={styles.input}
             >
-              {idCategorias === "" ? (
-                <option value="" disabled>Seleccione una categoría</option>
-              ) : null}
+              <option value="" disabled>Seleccione una categoría</option>
               {categorias.map((cat) => (
                 <option key={cat.idCategorias} value={cat.idCategorias}>
                   {cat.Nombre_categoria} - ${cat.Precio_Categoria}
@@ -356,6 +372,10 @@ const EditarEmpresa = () => {
     </div>
   );
 };
+
+
+
+
 
 
 

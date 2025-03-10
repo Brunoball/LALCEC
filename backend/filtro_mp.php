@@ -52,6 +52,7 @@ $querySocios = "
         s.nombre, 
         s.apellido, 
         s.domicilio,
+        s.domicilio_2,
         s.numero,
         s.observacion,
         c.nombre_categoria AS categoria, 
