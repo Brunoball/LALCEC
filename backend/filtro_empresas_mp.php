@@ -57,12 +57,9 @@ $queryEmpresas = "
         e.telefono,
         e.email,
         e.observacion,
-        e.idCategorias AS idCategoria, 
-        e.idMedios_Pago,
         c.Nombre_categoria AS categoria,
         c.Precio_Categoria AS precio_categoria,
         m.Medio_Pago AS medio_pago,
-        e.id_iva,
         i.descripcion AS descripcion_iva
     FROM 
         empresas e
@@ -77,6 +74,7 @@ $queryEmpresas = "
     ORDER BY 
         e.razon_social ASC
 ";
+
 
 $stmtEmpresas = $conn->prepare($queryEmpresas);
 if (!$stmtEmpresas) {

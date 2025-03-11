@@ -22,7 +22,7 @@ if (!$medio) {
 $flag = ($tipo === 'empresa') ? 1 : 0;
 
 // Obtener el idMedios_Pago correspondiente al nombre del medio de pago
-$queryMedio = "SELECT idMedios_Pago, Medio_Pago FROM mediospago WHERE Medio_Pago = ?";
+$queryMedio = "SELECT idMedios_Pago FROM mediospago WHERE Medio_Pago = ?";
 $stmtMedio = $conn->prepare($queryMedio);
 
 if (!$stmtMedio) {
@@ -46,17 +46,18 @@ $idMediosPago = $rowMedio['idMedios_Pago'];
 
 $stmtMedio->close();
 
-// Obtener los socios o empresas asociados a este idMedios_Pago, con la categoría, precio de la categoría y medio de pago
+// Obtener los socios o empresas asociados a este idMedios_Pago, incluyendo idSocios
 $querySocios = "
     SELECT 
+        s.idSocios AS id,
         s.nombre, 
         s.apellido, 
         s.domicilio,
-        s.domicilio_2,
         s.numero,
+        s.domicilio_2,
         s.observacion,
         c.nombre_categoria AS categoria, 
-        c.precio_categoria AS precio_categoria,  -- Agregar el precio de la categoría
+        c.precio_categoria AS precio_categoria,
         m.medio_pago 
     FROM 
         socios s
@@ -69,6 +70,7 @@ $querySocios = "
     ORDER BY 
         s.apellido ASC, s.nombre ASC
 ";
+
 $stmtSocios = $conn->prepare($querySocios);
 
 if (!$stmtSocios) {

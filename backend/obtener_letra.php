@@ -26,14 +26,15 @@ $flag = ($tipo === 'empresa') ? 1 : 0;
 // Consulta SQL para obtener los socios o empresas que comienzan con la letra especificada
 $sql = "
     SELECT 
+        s.idSocios AS id,
         s.nombre, 
         s.apellido, 
         s.domicilio,
-        s.domicilio_2,
         s.numero,
+        s.domicilio_2,
         s.observacion,
         c.nombre_categoria AS categoria, 
-        c.precio_categoria AS precio_categoria,  -- Agregar el precio de la categoría
+        c.precio_categoria AS precio_categoria,
         m.medio_pago 
     FROM 
         socios s
@@ -46,6 +47,7 @@ $sql = "
     ORDER BY 
         s.apellido ASC, s.nombre ASC
 ";
+
 $stmt = $conn->prepare($sql);
 
 if (!$stmt) {
@@ -62,6 +64,7 @@ $data = array();
 if ($result->num_rows > 0) {
     while ($row = $result->fetch_assoc()) {
         $data[] = [
+            "id" => $row['id'],
             "nombre" => $row['nombre'],
             "apellido" => $row['apellido'],
             "domicilio" => $row['domicilio'],

@@ -379,31 +379,175 @@ useEffect(() => {
 
   const exportarAExcel = () => {
     if (sociosFiltrados.length === 0) {
-      setErrorMessage("Datos incompletos: No hay socios para exportar");
-
+      setErrorMessage("Datos incompletos: No hay socios para exportar.");
+  
       setTimeout(() => {
         setErrorMessage("");
       }, 3000);
-
+  
       return;
     }
-
+  
     const nombreArchivo = tipoEntidad === "socios" ? "Socios.xlsx" : "Empresas.xlsx";
-
-    const datosReordenados = sociosFiltrados.map(({ idSocios, nombre, apellido, ...resto }) => ({
-      idSocios,
+  
+    const datosReordenados = sociosFiltrados.map(({ id, nombre, apellido, ...resto }) => ({
+      id, // Asegúrate de que el nombre coincida con el que llega desde la API
       apellido,
       nombre,
       ...resto,
     }));
-
+    
     const ws = XLSX.utils.json_to_sheet(datosReordenados);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, tipoEntidad === "socios" ? "Socios" : "Empresas");
-
+  
     XLSX.writeFile(wb, nombreArchivo);
-
+  
     setErrorMessage("");
+  };
+  
+
+
+
+
+
+
+
+  const handleImprimirTodosComprobantes = async () => {
+    try {
+      if (sociosFiltrados.length === 0) {
+        setErrorMessage("Datos incompletos: No hay socios para imprimir.");
+  
+        setTimeout(() => {
+          setErrorMessage("");
+        }, 3000);
+  
+        return;
+      }
+  
+      // Función auxiliar para reemplazar null o undefined con una cadena vacía
+      const limpiarDato = (valor) => (valor == null ? "" : valor);
+  
+      const socios = sociosFiltrados;
+      let comprobantesHTML = `
+          <html>
+          <head>
+              <title>Comprobantes de Pago</title>
+              <style>
+                  @page {
+                      size: A4 portrait;
+                      margin: 0;
+                  }
+                  body {
+                    width: 210mm;
+                    height: 297mm;
+                    margin: 0;
+                    padding: 0;
+                    font-family: Arial, sans-serif;
+                    font-size: 12px;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: flex-start;
+                    align-items: center;
+                    position: relative;
+                    transform: rotate(90deg);
+                    transform-origin: top left;
+                    left: 70%;
+                    top: 0;
+                  }
+                  .contenedor {
+                      width: 210mm;
+                      margin: 10mm 0;
+                      page-break-after: always;
+                      box-sizing: border-box;
+                  }
+                  .comprobante {
+                      width: 100%;
+                      height: 100%;
+                      display: flex;
+                      box-sizing: border-box;
+                  }
+                  .talon-socio {
+                      width: 60%;
+                      padding-left: 20mm;
+                      padding-top: 13mm;
+                  }
+                  .talon-cobrador {
+                      width: 60mm;
+                      padding-left: 10mm;
+                      padding-top: 16mm;
+                  }
+                  p {
+                      margin-top: 5px;
+                      font-size: 13px;
+                  }
+              </style>
+          </head>
+          <body>
+      `;
+  
+      socios.forEach((socio) => {
+        const {
+          nombre,
+          apellido,
+          domicilio,
+          numero,
+          categoria,
+          precio_categoria,
+          medio_pago,
+        } = socio;
+  
+        // Limpiar todos los datos para evitar null o undefined
+        const nombreLimpio = limpiarDato(nombre);
+        const apellidoLimpio = limpiarDato(apellido);
+        const domicilioLimpio = limpiarDato(domicilio);
+        const numeroLimpio = limpiarDato(numero);
+        const categoriaLimpia = limpiarDato(categoria);
+        const precioLimpio = limpiarDato(precio_categoria);
+        const medioPagoLimpio = limpiarDato(medio_pago);
+  
+        const mesesPagados = new Date().toLocaleString('default', { month: 'long' }).toUpperCase();
+        const totalPagar = precioLimpio; // Usar el precio ya limpio
+  
+        comprobantesHTML += `
+            <div class="contenedor">
+                <div class="comprobante">
+                    <div class="talon-socio">
+                        <p><strong>Afiliado:</strong> ${nombreLimpio} ${apellidoLimpio}</p>
+                        <p><strong>Domicilio:</strong> ${domicilioLimpio} ${numeroLimpio}</p>
+                        <p><strong>Categoría / Monto:</strong> ${categoriaLimpia} / $${totalPagar}</p>
+                        <p><strong>Período:</strong> ${mesesPagados}</p>
+                        <p><strong>Cobrador:</strong> ${medioPagoLimpio}</p>
+                        <p>Por consultas comunicarse al 03564-15205778</p>
+                    </div>
+                    <div class="talon-cobrador">
+                        <p><strong>Nombre y Apellido:</strong> ${nombreLimpio} ${apellidoLimpio}</p>
+                        <p><strong>Categoría / Monto:</strong> ${categoriaLimpia} / $${totalPagar}</p>
+                        <p><strong>Período:</strong> ${mesesPagados}</p>
+                        <p><strong>Cobrador:</strong> ${medioPagoLimpio}</p>
+                    </div>
+                </div>
+            </div>
+        `;
+      });
+  
+      comprobantesHTML += `
+          </body>
+          </html>
+      `;
+  
+      const ventana = window.open('', '', 'width=600,height=400');
+      ventana.document.write(comprobantesHTML);
+      ventana.document.close();
+      ventana.print();
+  
+    } catch (error) {
+      setErrorMessage("Ocurrió un error al generar los comprobantes.");
+  
+      setTimeout(() => {
+        setErrorMessage("");
+      }, 3000);
+    }
   };
 
 
@@ -416,122 +560,7 @@ useEffect(() => {
 
 
 
-  const handleImprimirTodosComprobantes = async () => {
-    try {
-        // 1. Obtener todos los socios desde el servidor
-        const response = await fetch("http://localhost:3001/listar_socios.php");
-        const result = await response.json();
 
-        if (!result.success || !Array.isArray(result.socios) || result.socios.length === 0) {
-            alert("No se encontraron socios.");
-            return;
-        }
-
-        const socios = result.socios;
-
-        // 2. Crear una variable para almacenar todos los comprobantes
-        let comprobantesHTML = `
-            <html>
-            <head>
-                <title>Comprobantes de Pago</title>
-                <style>
-                    @page {
-                        size: A4 portrait; /* Hoja A4 en vertical */
-                        margin: 0;
-                    }
-                    body {
-                      width: 210mm; /* Ancho de la hoja A4 */
-                      height: 297mm; /* Alto de la hoja A4 */
-                      margin: 0;
-                      padding: 0;
-                      font-family: Arial, sans-serif;
-                      font-size: 12px;
-                      display: flex;
-                      flex-direction: column;
-                      justify-content: flex-start;
-                      align-items: center;
-                      position: relative;
-                      transform: rotate(90deg); /* Rota el contenido 90 grados */
-                      transform-origin: top left;
-                      left: 70%; /* Ajusta la posición del contenido para que quede dentro de la página */
-                      top: 0;
-                    }
-                    .contenedor {
-                        width: 210mm; /* Ancho de la hoja A4 */
-                        margin: 10mm 0; /* Margen superior e inferior para separar los comprobantes */
-                        page-break-after: always; /* Para asegurarse de que cada comprobante se imprima en una nueva página */
-                        box-sizing: border-box;
-                    }
-                    .comprobante {
-                        width: 100%;
-                        height: 100%; /* Alto del comprobante */
-                        display: flex;
-                        box-sizing: border-box;
-                    }
-                    .talon-socio {
-                        width: 60%;
-                        padding-left: 20mm;
-                        padding-top: 13mm;
-                    }
-                    .talon-cobrador {
-                        width: 60mm;
-                        padding-left: 10mm;
-                        padding-top: 16mm;
-                    }
-                    p {
-                        margin-top: 5px;
-                        font-size: 13px;
-                    }
-                </style>
-            </head>
-            <body>
-        `;
-
-        // 3. Recorrer todos los socios y generar el HTML para cada uno
-        socios.forEach((socio) => {
-            const { nombre, apellido, domicilio, numero, categoria, precioCategoria, cobrador } = socio;
-            const mesesPagados = "Marzo"; // Mes fijo
-            const totalPagar = precioCategoria; // Ajusta si es necesario
-
-            // Generar el comprobante en HTML
-            comprobantesHTML += `
-                <div class="contenedor">
-                    <div class="comprobante">
-                        <div class="talon-socio">
-                            <p><strong>Afiliado:</strong> ${nombre} ${apellido}</p>
-                            <p><strong>Domicilio:</strong> ${domicilio} ${numero}</p>
-                            <p><strong>Categoría / Monto:</strong> ${categoria} / $${totalPagar}</p>
-                            <p><strong>Período:</strong> ${mesesPagados}</p>
-                            <p><strong>Cobrador:</strong> ${cobrador}</p>
-                            <p>Por consultas comunicarse al 03564-15205778</p>
-                        </div>
-                        <div class="talon-cobrador">
-                            <p><strong>Nombre y Apellido:</strong> ${nombre} ${apellido}</p>
-                            <p><strong>Categoría / Monto:</strong> ${categoria} / $${totalPagar}</p>
-                            <p><strong>Período:</strong> ${mesesPagados}</p>
-                            <p><strong>Cobrador:</strong> ${cobrador}</p>
-                        </div>
-                    </div>
-                </div>
-            `;
-        });
-
-        // 4. Cerrar el HTML
-        comprobantesHTML += `
-            </body>
-            </html>
-        `;
-
-        // 5. Crear una ventana nueva para imprimir todos los comprobantes
-        const ventana = window.open('', '', 'width=600,height=400');
-        ventana.document.write(comprobantesHTML);
-        ventana.document.close();
-        ventana.print();
-
-    } catch (error) {
-        alert("Ocurrió un error al obtener los datos de los socios.");
-    }
-};
 
 
 

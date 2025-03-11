@@ -28,21 +28,19 @@ $flag = ($tipo === 'empresa') ? 1 : 0;
 // Obtener todos los socios o empresas según el tipo de entidad
 $query = "
     SELECT 
-        s.idSocios,
+        s.idSocios AS id,
         s.nombre,
         s.apellido,
         s.DNI,
         s.domicilio,
-        s.domicilio_2,  -- Se incluye el campo domicilio_2
         s.numero,
+        s.domicilio_2,
         s.observacion,
         s.localidad,
         s.telefono,
         s.email,
-        s.idCategoria, 
-        s.idMedios_Pago,
         c.Nombre_categoria AS categoria,
-        c.Precio_Categoria AS precio_categoria,  -- Aquí se obtiene el precio de la categoría
+        c.Precio_Categoria AS precio_categoria,
         m.Medio_Pago AS medio_pago
     FROM 
         socios s
@@ -55,6 +53,7 @@ $query = "
     ORDER BY 
         s.apellido ASC, s.nombre ASC
 ";
+
 
 $stmt = $conn->prepare($query);
 
