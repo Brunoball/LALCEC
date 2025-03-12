@@ -18,6 +18,7 @@ if ($nombre && $apellido) {
         s.apellido,
         s.DNI,
         s.domicilio,
+        s.domicilio_2,
         s.numero,
         s.observacion,
         s.localidad,

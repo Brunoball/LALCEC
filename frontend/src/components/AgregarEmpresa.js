@@ -8,6 +8,7 @@ const AgregarEmpresa = () => {
     cuit: "",
     cond_iva: "",
     domicilio: "",
+    domicilio_2: "",
     telefono: "",
     email: "",
     observacion: "",
@@ -18,16 +19,17 @@ const AgregarEmpresa = () => {
   const [categorias, setCategorias] = useState([]);
   const [mediosPago, setMediosPago] = useState([]);
   const [mensaje, setMensaje] = useState({ text: "", type: "" });
-  const [tipoEntidad, setTipoEntidad] = useState("");
+  const [condicionesIVA, setCondicionesIVA] = useState([]);
 
   useEffect(() => {
     const fetchDatos = async () => {
       try {
         const response = await fetch("http://localhost:3001/obtener_datos.php");
         const data = await response.json();
-        if (data.categorias && data.mediosPago) {
+        if (data.categorias && data.mediosPago && data.condicionesIVA) {
           setCategorias(data.categorias);
           setMediosPago(data.mediosPago);
+          setCondicionesIVA(data.condicionesIVA);
         } else {
           setMensaje({ text: "No se encontraron datos.", type: "error" });
         }
@@ -52,7 +54,7 @@ const AgregarEmpresa = () => {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...empresa, tipoEntidad }), // Incluir tipoEntidad
+          body: JSON.stringify(empresa),
         }
       );
       const data = await response.json();
@@ -64,13 +66,13 @@ const AgregarEmpresa = () => {
           cuit: "",
           cond_iva: "",
           domicilio: "",
+          domicilio_2: "",
           telefono: "",
           email: "",
           observacion: "",
           idCategoria: "",
           idMedios_Pago: "",
         });
-        setTipoEntidad("empresa"); // Resetear el tipo de entidad
       } else {
         setMensaje({ text: data.error_message, type: "error" });
       }
@@ -84,10 +86,6 @@ const AgregarEmpresa = () => {
 
   const handleGoBack = () => {
     window.history.back();
-  };
-
-  const handleTipoEntidadChange = (e) => {
-    setTipoEntidad(e.target.value); // Aquí se establece el valor de "socio" o "empresa"
   };
 
   return (
@@ -147,27 +145,27 @@ const AgregarEmpresa = () => {
           </div>
 
           <div style={styles.inputRow}>
-            <div style={styles.inputWrapper}>
-              <input
-                id="cond_iva"
-                type="text"
-                name="cond_iva"
-                value={empresa.cond_iva}
-                onChange={handleInputChange}
-                style={styles.input}
-                placeholder=" "
-              />
-              <label
-                htmlFor="cond_iva"
-                style={
-                  empresa.cond_iva
-                    ? { ...styles.floatingLabel, ...styles.floatingLabelActive }
-                    : styles.floatingLabel
-                }
-              >
-                Condición IVA
-              </label>
-            </div>
+
+            <select
+              id="cond_iva"
+              name="cond_iva"
+              value={empresa.cond_iva}
+              onChange={handleInputChange}
+              style={styles.select}
+            >
+              <option value="">Seleccione Condición IVA</option>
+              {condicionesIVA.length > 0 ? (
+                condicionesIVA.map((condicion) => (
+                  <option key={condicion.id_iva} value={condicion.id_iva}>
+                    {condicion.descripcion}
+                  </option>
+                ))
+              ) : (
+                <option value="" disabled>No hay condiciones de IVA disponibles</option>
+              )}
+            </select>
+            
+
             <div style={styles.inputWrapper}>
               <input
                 id="domicilio"
@@ -187,6 +185,52 @@ const AgregarEmpresa = () => {
                 }
               >
                 Domicilio
+              </label>
+            </div>
+          </div>
+
+          <div style={styles.inputRow}>
+            <div style={styles.inputWrapper}>
+              <input
+                id="domicilio_2"
+                type="text"
+                name="domicilio_2"
+                value={empresa.domicilio_2}
+                onChange={handleInputChange}
+                style={styles.input}
+                placeholder=" "
+              />
+              <label
+                htmlFor="domicilio_2"
+                style={
+                  empresa.domicilio_2
+                    ? { ...styles.floatingLabel, ...styles.floatingLabelActive }
+                    : styles.floatingLabel
+                }
+              >
+                Domicilio de cobro
+              </label>
+            </div>
+
+            <div style={styles.inputWrapper}>
+              <input
+                id="observacion"
+                type="text"
+                name="observacion"
+                value={empresa.observacion}
+                onChange={handleInputChange}
+                style={styles.input}
+                placeholder=" "
+              />
+              <label
+                htmlFor="observacion"
+                style={
+                  empresa.observacion
+                    ? { ...styles.floatingLabel, ...styles.floatingLabelActive }
+                    : styles.floatingLabel
+                }
+              >
+                Observación
               </label>
             </div>
           </div>
@@ -236,43 +280,7 @@ const AgregarEmpresa = () => {
             </div>
           </div>
 
-          {/* Campo de Observación ocupa todo el ancho */}
           <div style={styles.inputRow}>
-            <div style={{ ...styles.inputWrapper, width: "100%" }}>
-              <input
-                id="observacion"
-                type="text"
-                name="observacion"
-                value={empresa.observacion}
-                onChange={handleInputChange}
-                style={styles.input}
-                placeholder=" "
-              />
-              <label
-                htmlFor="observacion"
-                style={
-                  empresa.observacion
-                    ? { ...styles.floatingLabel, ...styles.floatingLabelActive }
-                    : styles.floatingLabel
-                }
-              >
-                Observación
-              </label>
-            </div>
-          </div>
-
-          <div style={styles.inputRow}>
-            <select
-              name="tipoEntidad"
-              value={tipoEntidad}
-              onChange={handleTipoEntidadChange}
-              style={styles.select}
-            >
-              <option value="">Seleccione Entidad</option>
-              <option value="socio">Socio</option>
-              <option value="empresa">Empresa</option>
-            </select>
-
             <select
               name="idMedios_Pago"
               value={empresa.idMedios_Pago}
@@ -321,6 +329,7 @@ const AgregarEmpresa = () => {
     </div>
   );
 };
+
 
 const styles = {
   container: {

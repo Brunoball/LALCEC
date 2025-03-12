@@ -222,34 +222,46 @@ const GestionarCuotas = () => {
       <div className="box">
         <h2 className="title">Gestionar Cuotas</h2>
         <div className="top-section">
+
           <div className="select-container">
-            <select id="meses" value={selectedMonth} onChange={handleMonthChange} className="select">
-              <option value="">Seleccionar mes</option>
-              {meses.map((mes, index) => (
-                <option key={index} value={mes.mes}>{mes.mes}</option>
-              ))}
-            </select>
+            <div className="select-mes">
+              <select
+                id="meses"
+                value={selectedMonth}
+                onChange={handleMonthChange}
+                className="dropdown"
+              >
+                <option value="">Seleccionar mes</option>
+                {meses.map((mes, index) => (
+                  <option key={index} value={mes.mes}>{mes.mes}</option>
+                ))}
+              </select>
+            </div>
+            <div className="select-entidad">
+              <select
+                value={viewType}
+                onChange={(e) => setViewType(e.target.value)}
+                className="dropdown"
+              >
+                <option value="socio">Socios</option>
+                <option value="empresa">Empresas</option>
+              </select>
+            </div>
           </div>
-          <div className="filter-type-container">
-            <select
-              value={viewType}
-              onChange={(e) => setViewType(e.target.value)}
-              className="select"
-            >
-              <option value="socio">Socios</option>
-              <option value="empresa">Empresas</option>
-            </select>
-          </div>
+
           <div className="search-container">
-            <input
-              type="text"
-              placeholder={`Buscar por ${viewType === "socio" ? "socio..." : "empresa..."}`}
-              value={searchTerm}
-              onChange={handleSearchChange}
-              className="search-input"
-            />
-            <FontAwesomeIcon icon={faSearch} className="search-icon" />
+            <div className="search-wrapper">
+              <input
+                type="text"
+                placeholder={`Buscar por ${viewType === "socio" ? "socio..." : "empresa..."}`}
+                value={searchTerm}
+                onChange={handleSearchChange}
+                className="search-input"
+              />
+              <FontAwesomeIcon icon={faSearch} className="search-icon" />
+            </div>
           </div>
+
           <div className="tab-container">
             <button className={activeTab === "pagado" ? "active-tab" : "inactive-tab"} onClick={() => setActiveTab("pagado")}>
               Pagado
@@ -259,6 +271,9 @@ const GestionarCuotas = () => {
             </button>
           </div>
         </div>
+
+
+        
         {errorMessage && <div className="error-message">{errorMessage}</div>}
         {activeTab === "pagado"
           ? renderTabla(viewType === "socio" ? sociosPagados : empresasPagadas)

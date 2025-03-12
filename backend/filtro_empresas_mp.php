@@ -46,28 +46,35 @@ $idMediosPago = $rowMedio['idMedios_Pago'];
 
 $stmtMedio->close();
 
-// Obtener las empresas asociadas a este idMedios_Pago, con la categoría, precio de la categoría y medio de pago
+// Consulta SQL para obtener las empresas con la categoría, precio de la categoría, medio de pago y descripción del IVA
 $queryEmpresas = "
     SELECT 
-        e.razon_social, 
-        e.cuit, 
-        e.cond_iva,
+        e.idEmp,
+        e.razon_social,
+        e.cuit,
         e.domicilio,
+        e.domicilio_2,
+        e.telefono,
+        e.email,
         e.observacion,
-        c.nombre_categoria AS categoria, 
-        c.precio_categoria AS precio_categoria,
-        m.medio_pago 
+        c.Nombre_categoria AS categoria,
+        c.Precio_Categoria AS precio_categoria,
+        m.Medio_Pago AS medio_pago,
+        i.descripcion AS descripcion_iva
     FROM 
         empresas e
     LEFT JOIN 
-        categorias c ON e.idCategorias = c.idcategorias
+        categorias c ON e.idCategorias = c.idCategorias
     LEFT JOIN 
-        mediospago m ON e.idMedios_Pago = m.idmedios_pago
+        mediospago m ON e.idMedios_Pago = m.IdMedios_pago
+    LEFT JOIN 
+        condicional_iva i ON e.id_iva = i.id_iva
     WHERE 
-        e.idmedios_pago = ?
+        e.idMedios_Pago = ?
     ORDER BY 
         e.razon_social ASC
 ";
+
 
 $stmtEmpresas = $conn->prepare($queryEmpresas);
 if (!$stmtEmpresas) {
@@ -75,7 +82,7 @@ if (!$stmtEmpresas) {
     exit;
 }
 
-$stmtEmpresas->bind_param('i', $idMediosPago); // One parameter
+$stmtEmpresas->bind_param('i', $idMediosPago); // Un parámetro
 $stmtEmpresas->execute();
 $resultEmpresas = $stmtEmpresas->get_result();
 $empresas = $resultEmpresas->fetch_all(MYSQLI_ASSOC);
@@ -84,5 +91,4 @@ $stmtEmpresas->close();
 $conn->close();
 
 echo json_encode($empresas);
-
 ?>

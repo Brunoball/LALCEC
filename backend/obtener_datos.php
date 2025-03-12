@@ -23,10 +23,19 @@ while ($row = $mediosPagoResult->fetch_assoc()) {
     $mediosPago[] = $row;
 }
 
-// Devolver ambas listas en un solo objeto JSON
+// Obtener todas las condiciones de IVA disponibles
+$condicionesIVAQuery = "SELECT id_iva, descripcion FROM condicional_iva"; // Asegúrate de que el nombre de la tabla y los campos sean correctos
+$condicionesIVAResult = $conn->query($condicionesIVAQuery);
+$condicionesIVA = [];
+while ($row = $condicionesIVAResult->fetch_assoc()) {
+    $condicionesIVA[] = $row;
+}
+
+// Devolver todas las listas en un solo objeto JSON
 echo json_encode([
     "categorias" => $categorias,
-    "mediosPago" => $mediosPago
+    "mediosPago" => $mediosPago,
+    "condicionesIVA" => $condicionesIVA // Agregar las condiciones de IVA
 ]);
 
 $conn->close();

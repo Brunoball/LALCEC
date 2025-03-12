@@ -400,65 +400,93 @@
 
 
 
-.buttons-container-socios {
+
+/* Contenedor principal */
+.down-container {
     display: flex;
-    align-items: center; /* Alinea verticalmente los elementos */
-    gap: 10px; /* Espacio entre los elementos */
-    margin-top: 20px; /* Espacio superior */
-    width: 70%;
-    margin-bottom: -20px;
+    align-items: center;
+    position: relative; /* Necesario para posicionar el botones-container */
+    padding: 10px;
+    margin-bottom: -25px;
+    width: 100%;
 }
 
-.buttons-container{
-    margin-bottom: 10px;
+/* Contador pegado a la izquierda */
+.contador-container {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
 }
 
+/* Estilo del contador */
 .socios-totales {
     font-size: 16px;
     font-weight: bold;
-    margin-right: auto; /* Empuja los botones hacia la derecha */
-    padding: 8px 12px;
-    background-color: #bff5bd; /* Fondo gris claro */
-    border-radius: 5px; /* Bordes redondeados */
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Sombra suave */
+    padding: 10px 15px;
+    background-color: #e3f2fd;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    color: #1976d2;
+    border: 1px solid #90caf9;
 }
 
 
-/* Botón General */
-.socio-button, .socio-button-back {
+
+
+
+/* Contenedor de los botones centrado horizontalmente */
+.botones-container {
+    display: flex;
+    gap: 12px; /* Espaciado más amplio entre botones */
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 70%; /* Aumenta el tamaño del contenedor de botones */
+}
+
+/* Botones con un diseño más moderno */
+.socio-button {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 8px;
-    font-size: 1rem; /* Texto más pequeño */
-    font-weight: normal;
-    padding: 0.8rem 1.2rem; /* Botón más pequeño */
+    gap: 8px; /* Espaciado entre icono y texto */
+    background: #3498db; /* Azul brillante y profesional */
+    color: white;
     border: none;
-    border-radius: 20px; /* Bordes menos redondeados */
+    font-size: 14.5px; /* Tamaño de fuente más pequeño */
+    font-weight: 600;
+    padding: 14px 19px; /* Botones más anchos y altos */
+    border-radius: 30px; /* Bordes más redondeados */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Sombra más sutil */
+    transition: all 0.3s ease-in-out;
     cursor: pointer;
-    transition: background 0.2s ease-in-out;
+    outline: none;
 }
 
 
-/* Botón Agregar */
-.socio-button {
-    background: #007aff;
-    color: white;
+
+/* Diferentes colores de botones según la acción */
+.socio-button:nth-child(1) {
+    background: #007aff; /* Azul vibrante */
 }
 
-.socio-button:hover {
-    background: #005ecb;
+.socio-button:nth-child(2) {
+    background: #28a745; /* Verde brillante */
+}
+
+.socio-button:nth-child(3) {
+    background: #003366; 
+}
+
+.socio-button:nth-child(4) {
+    background: #FF6600; /* Naranja degradado */
 }
 
 
-.btn-export {
-    background: #4caf50; 
-    color: white;
-}
 
-.btn-export:hover {
-    background-color: #45a049;
-}   
+
 
 .error-message-soc {
     background-color: #f8d7da;
@@ -475,25 +503,27 @@
     z-index: 1000;
     animation: fadeOut 3s ease-in-out forwards;
 }
-  
-
-/* Botón Volver */
-.socio-button-back {
-    background: #ff7700;
-    color: white;
-}
 
 
 
 
-.socio-button-back:hover {
-    background: #ff8800;
-}
 
-/* Íconos */
-.socio-icon-button {
-    font-size: 0.9rem;
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

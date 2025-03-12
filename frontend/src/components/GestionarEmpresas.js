@@ -355,10 +355,62 @@ const GestionarEmpresas = () => {
 
 
 
-  // Función para exportar datos a Excel
-  const exportarAExcel = () => {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Función para exportar datos a Excel
+const exportarAExcel = () => {
+  if (empresasFiltradas.length === 0) {
+    setErrorMessage("Datos incompletos: No hay empresas para exportar.");
+
+    setTimeout(() => {
+      setErrorMessage("");
+    }, 3000);
+
+    return;
+  }
+
+  const nombreArchivo = "Empresas.xlsx";
+
+  // Eliminar las columnas idEmpresas y nombre antes de crear el archivo Excel
+  const datosReordenados = empresasFiltradas.map(({ idEmpresas, nombre, ...resto }) => resto);
+
+  const ws = XLSX.utils.json_to_sheet(datosReordenados);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Empresas");
+
+  XLSX.writeFile(wb, nombreArchivo);
+
+  setErrorMessage("");
+};
+
+
+
+
+
+const handleImprimirTodosComprobantes = async () => {
+  try {
     if (empresasFiltradas.length === 0) {
-      setErrorMessage("Datos incompletos: No hay empresas para exportar");
+      setErrorMessage("Datos incompletos: No hay empresas para imprimir.");
 
       setTimeout(() => {
         setErrorMessage("");
@@ -367,54 +419,10 @@ const GestionarEmpresas = () => {
       return;
     }
 
-    const nombreArchivo = tipoEntidad === "empresas" ? "Empresas.xlsx" : "Empresas.xlsx";
+    // Función auxiliar para reemplazar null o undefined con una cadena vacía
+    const limpiarDato = (valor) => (valor == null ? "" : valor);
 
-    // Eliminar las columnas idEmpresas y nombre antes de crear el archivo Excel
-    const datosReordenados = empresasFiltradas.map(({ idEmpresas, nombre, ...resto }) => resto);
-
-    const ws = XLSX.utils.json_to_sheet(datosReordenados);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, tipoEntidad === "empresas" ? "Empresas" : "Empresas");
-
-    XLSX.writeFile(wb, nombreArchivo);
-
-    setErrorMessage("");
-  };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  // Función para imprimir todos los comprobantes
-  const handleImprimirTodosComprobantes = async () => {
-    try {
-      const response = await fetch("http://localhost:3001/listar_empresas.php");
-      const result = await response.json();
-
-      if (!result.success || !Array.isArray(result.empresas) || result.empresas.length === 0) {
-        alert("No se encontraron empresas.");
-        return;
-      }
-
-      const empresas = result.empresas;
-
-      let comprobantesHTML = `
+    let comprobantesHTML = `
         <html>
         <head>
             <title>Comprobantes de Pago</title>
@@ -424,25 +432,25 @@ const GestionarEmpresas = () => {
                     margin: 0;
                 }
                 body {
-                  width: 210mm;
-                  height: 297mm;
-                  margin: 0;
-                  padding: 0;
-                  font-family: Arial, sans-serif;
-                  font-size: 12px;
-                  display: flex;
-                  flex-direction: column;
-                  justify-content: flex-start;
-                  align-items: center;
-                  position: relative;
-                  transform: rotate(90deg);
-                  transform-origin: top left;
-                  left: 70%;
-                  top: 0;
+                    width: 210mm;
+                    height: 297mm;
+                    margin: 0;
+                    padding: 0;
+                    font-family: Arial, sans-serif;
+                    font-size: 12px;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: flex-start;
+                    align-items: center;
+                    position: relative;
+                    transform: rotate(90deg);
+                    transform-origin: top left;
+                    left: 70%;
+                    top: 0;
                 }
                 .contenedor {
                     width: 210mm;
-                    margin: 5mm 0;
+                    margin: 10mm 0;
                     page-break-after: always;
                     box-sizing: border-box;
                 }
@@ -454,12 +462,12 @@ const GestionarEmpresas = () => {
                 }
                 .talon-empresa {
                     width: 60%;
-                    padding-left: 10mm;
+                    padding-left: 20mm;
                     padding-top: 13mm;
                 }
                 .talon-cobrador {
                     width: 60mm;
-                    padding-left: 13mm;
+                    padding-left: 10mm;
                     padding-top: 16mm;
                 }
                 p {
@@ -469,48 +477,72 @@ const GestionarEmpresas = () => {
             </style>
         </head>
         <body>
-      `;
+    `;
 
-      empresas.forEach((empresa) => {
-        const { nombre, domicilio, categoria, precioCategoria, cobrador } = empresa;
-        const mesesPagados = "Marzo";
-        const totalPagar = precioCategoria;
+    empresasFiltradas.forEach((empresa) => {
+      // Limpiar todos los datos para evitar null o undefined
+      const razon_social = limpiarDato(empresa.razon_social);
+      const domicilio_2 = limpiarDato(empresa.domicilio_2);
+      const categoria = limpiarDato(empresa.categoria);
+      const precioCategoria = limpiarDato(empresa.precio_categoria);
+      const medio_pago = limpiarDato(empresa.medio_pago);
+      const mesesPagados = new Date().toLocaleString('default', { month: 'long' }).toUpperCase();
 
-        comprobantesHTML += `
+      comprobantesHTML += `
           <div class="contenedor">
               <div class="comprobante">
                   <div class="talon-empresa">
-                      <p><strong>Empresa:</strong> ${nombre}</p>
-                      <p><strong>Domicilio:</strong> ${domicilio}</p>
-                      <p><strong>Categoría / Monto:</strong> ${categoria} / $${totalPagar}</p>
+                      <p><strong>Empresa:</strong> ${razon_social}</p>
+                      <p><strong>Domicilio:</strong> ${domicilio_2}</p>
+                      <p><strong>Categoría / Monto:</strong> ${categoria} / $${precioCategoria}</p>
                       <p><strong>Período:</strong> ${mesesPagados}</p>
-                      <p><strong>Cobrador:</strong> ${cobrador}</p>
+                      <p><strong>Cobrador:</strong> ${medio_pago}</p>
                       <p>Por consultas comunicarse al 03564-15205778</p>
                   </div>
                   <div class="talon-cobrador">
-                      <p><strong>Nombre:</strong> ${nombre}</p>
-                      <p><strong>Categoría / Monto:</strong> ${categoria} / $${totalPagar}</p>
+                      <p><strong>Nombre:</strong> ${razon_social}</p>
+                      <p><strong>Categoría / Monto:</strong> ${categoria} / $${precioCategoria}</p>
                       <p><strong>Período:</strong> ${mesesPagados}</p>
-                      <p><strong>Cobrador:</strong> ${cobrador}</p>
+                      <p><strong>Cobrador:</strong> ${medio_pago}</p>
                   </div>
               </div>
           </div>
-        `;
-      });
-
-      comprobantesHTML += `
-        </body>
-        </html>
       `;
+    });
 
-      const ventana = window.open('', '', 'width=600,height=400');
-      ventana.document.write(comprobantesHTML);
-      ventana.document.close();
-      ventana.print();
-    } catch (error) {
-      alert("Ocurrió un error al obtener los datos de las empresas.");
-    }
-  };
+    comprobantesHTML += `</body></html>`;
+
+    const ventana = window.open('', '', 'width=600,height=400');
+    ventana.document.write(comprobantesHTML);
+    ventana.document.close();
+    ventana.print();
+
+  } catch (error) {
+    setErrorMessage("Ocurrió un error al generar los comprobantes.");
+
+    setTimeout(() => {
+      setErrorMessage("");
+    }, 3000);
+  }
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -595,8 +627,9 @@ const GestionarEmpresas = () => {
               <div className="column-header header-razon">Razón Social</div>
               <div className="column-header header-cuit">CUIT</div>
               <div className="column-header header-iva">Cond. IVA</div>
-              <div className="column-header header-dom">Domicilio</div>
+              <div className="column-header header-dom">Domicilio cobro</div>
               <div className="column-header header-obs">Observaciones</div>
+              <div className="column-header header-medio">Medio de Pago</div> 
               <div className="column-header icons-column"></div>
             </div>
 
@@ -618,9 +651,10 @@ const GestionarEmpresas = () => {
                       >
                         <div className="column column-razon">{empresa.razon_social}</div>
                         <div className="column column-cuit">{empresa.cuit}</div>
-                        <div className="column column-iva">{empresa.cond_iva}</div>
-                        <div className="column column-dom">{empresa.domicilio} {empresa.numero || ""}</div>
+                        <div className="column column-iva">{empresa.descripcion_iva}</div>
+                        <div className="column column-dom">{empresa.domicilio_2}</div>
                         <div className="column column-obs">{empresa.observacion}</div>
+                        <div className="column column-medio">{empresa.medio_pago}</div>
                         <div className="column icons-column">
                           {filaSeleccionada === index && (
                             <div className="icons-container">
@@ -666,29 +700,32 @@ const GestionarEmpresas = () => {
           </div>
         </div>
 
-        <div className="buttons-container-empresas">
-          <span className="empresas-totales">
-            Cant empresas: {empresasFiltradas.length}
-          </span>
+        <div className="down-container-empresas">
+          <div className="contador-container">
+            <span className="empresas-totales">
+              Cant empresas: {empresasFiltradas.length}
+            </span>
+          </div>
 
-          <div className="buttons-container">
-            <button className="empresa-button" onClick={handleAgregarEmpresa}>
-              <FontAwesomeIcon icon={faPlus} className="empresa-icon-button" />
+          <div className="botones-container">
+            <button className="socio-button" onClick={handleAgregarEmpresa}>
+              <FontAwesomeIcon icon={faPlus} className="socio-icon-button" />
               Agregar Empresa
             </button>
 
-            <button className="empresa-button btn-export" onClick={exportarAExcel}>
-              <FontAwesomeIcon icon={faFileExcel} className="empresa-icon-button" />
+            <button className="socio-button" onClick={exportarAExcel}>
+              <FontAwesomeIcon icon={faFileExcel} className="socio-icon-button" />
               Exportar a Excel
             </button>
 
-            <button className="empresa-button-back" onClick={handleVolverAtras}>
-              <FontAwesomeIcon icon={faArrowLeft} className="empresa-icon-button" />
-              Volver Atrás
-            </button>
-            <button className="empresa-button btn-print" onClick={handleImprimirTodosComprobantes}>
-              <FontAwesomeIcon icon={faPrint} className="empresa-icon-button" />
+            <button className="socio-button" onClick={handleImprimirTodosComprobantes}>
+              <FontAwesomeIcon icon={faPrint} className="socio-icon-button" />
               Imprimir Comprobantes
+            </button>
+
+            <button className="socio-button" onClick={handleVolverAtras}>
+              <FontAwesomeIcon icon={faArrowLeft} className="socio-icon-button" />
+              Volver Atrás
             </button>
           </div>
         </div>

@@ -20,97 +20,81 @@ if ($data) {
     $razon_social = isset($data['razon_social']) ? strtoupper($data['razon_social']) : null;
     $idEmp = isset($data['idEmp']) ? $data['idEmp'] : null;
     $domicilio = isset($data['domicilio']) ? strtoupper($data['domicilio']) : null;
+    $domicilio_2 = isset($data['domicilio_2']) ? strtoupper($data['domicilio_2']) : null;
     $telefono = isset($data['telefono']) ? strtoupper($data['telefono']) : null;
     $email = isset($data['email']) ? strtoupper($data['email']) : null;
     $observacion = isset($data['observacion']) ? strtoupper($data['observacion']) : null;
-    $idCategoria = isset($data['idCategoria']) ? $data['idCategoria'] : null;
-    $medioPago = isset($data['medioPago']) ? $data['medioPago'] : null;
-    $cuit = isset($data['cuit']) ? strtoupper($data['cuit']) : null;
-    $cond_iva = isset($data['cond_iva']) ? strtoupper($data['cond_iva']) : null;
+    $idCategoria = isset($data['idCategoria']) ? $data['idCategoria'] : null; // Opcional
+    $medioPago = isset($data['medioPago']) ? $data['medioPago'] : null; // Opcional
+    $cuit = isset($data['cuit']) && !empty(trim($data['cuit'])) ? strtoupper($data['cuit']) : null; // Opcional
+    $id_iva = isset($data['id_iva']) && $data['id_iva'] !== '' ? $data['id_iva'] : null;
 
     // Validar que el campo obligatorio razon_social esté presente
-    if ($razon_social) {
-        // Construir la consulta SQL dinámicamente
-        $query = "
-            UPDATE empresas
-            SET 
-                razon_social = ?,
-                domicilio = ?,
-                telefono = ?,
-                email = ?,
-                observacion = ?,
-                cuit = ?,
-                cond_iva = ?
-        ";
+    if ($razon_social && $idEmp) {
+        // Verificar si el CUIT ya existe en otro registro (solo si no está vacío)
+        if (!empty($cuit)) {
+            $queryCheckCuit = "SELECT idEmp FROM empresas WHERE cuit = ? AND idEmp != ?";
+            if ($stmtCheckCuit = $conn->prepare($queryCheckCuit)) {
+                $stmtCheckCuit->bind_param('si', $cuit, $idEmp);
+                $stmtCheckCuit->execute();
+                $stmtCheckCuit->store_result();
 
-        // Si idCategoria se recibe, incluirlo en la consulta
-        if ($idCategoria) {
-            $query .= ", idCategorias = ?";
+                if ($stmtCheckCuit->num_rows > 0) {
+                    http_response_code(400);
+                    echo json_encode(["message" => "El CUIT ya existe en otro registro"]);
+                    exit();
+                }
+
+                $stmtCheckCuit->close();
+            } else {
+                http_response_code(500);
+                echo json_encode(["message" => "Error al preparar la consulta de verificación de CUIT"]);
+                exit();
+            }
         }
 
-        // Si medioPago se recibe, incluirlo en la consulta
-        if ($medioPago) {
+        // Construir la consulta SQL dinámicamente
+        $query = "UPDATE empresas SET razon_social = ?, domicilio = ?, domicilio_2 = ?, telefono = ?, email = ?, observacion = ?, id_iva = ?";
+
+        // Parámetros y tipos de datos
+        $params = [$razon_social, $domicilio, $domicilio_2, $telefono, $email, $observacion, $id_iva];
+        $types = "sssssss";
+
+        // Agregar cuit solo si no es nulo
+        if (!empty($cuit)) {
+            $query .= ", cuit = ?";
+            $params[] = $cuit;
+            $types .= "s";
+        } else {
+            $query .= ", cuit = NULL"; // Forzar NULL si está vacío
+        }
+
+        // Agregar idCategoria solo si no es nulo
+        if (!empty($idCategoria)) {
+            $query .= ", idCategorias = ?";
+            $params[] = $idCategoria;
+            $types .= "i";
+        } else {
+            $query .= ", idCategorias = NULL"; // Forzar NULL si está vacío
+        }
+
+        // Agregar medioPago solo si no es nulo
+        if (!empty($medioPago)) {
             $query .= ", idMedios_Pago = ?";
+            $params[] = $medioPago;
+            $types .= "i";
+        } else {
+            $query .= ", idMedios_Pago = NULL"; // Forzar NULL si está vacío
         }
 
         $query .= " WHERE idEmp = ?";
+        $params[] = $idEmp;
+        $types .= "i";
 
         // Preparar la consulta
         if ($stmt = $conn->prepare($query)) {
-            // Vincular parámetros según los campos que se recibieron
-            if ($idCategoria && $medioPago) {
-                $stmt->bind_param(
-                    'ssssssssii',
-                    $razon_social,
-                    $domicilio,
-                    $telefono,
-                    $email,
-                    $observacion,
-                    $cuit,
-                    $cond_iva,
-                    $idCategoria,
-                    $medioPago,
-                    $idEmp
-                );
-            } elseif ($idCategoria) {
-                $stmt->bind_param(
-                    'sssssssi',
-                    $razon_social,
-                    $domicilio,
-                    $telefono,
-                    $email,
-                    $observacion,
-                    $cuit,
-                    $cond_iva,
-                    $idCategoria,
-                    $idEmp
-                );
-            } elseif ($medioPago) {
-                $stmt->bind_param(
-                    'sssssssi',
-                    $razon_social,
-                    $domicilio,
-                    $telefono,
-                    $email,
-                    $observacion,
-                    $cuit,
-                    $cond_iva,
-                    $medioPago,
-                    $idEmp
-                );
-            } else {
-                $stmt->bind_param(
-                    'sssssssi',
-                    $razon_social,
-                    $domicilio,
-                    $telefono,
-                    $email,
-                    $observacion,
-                    $cuit,
-                    $cond_iva,
-                    $idEmp
-                );
-            }
+            // Vincular parámetros dinámicamente
+            $stmt->bind_param($types, ...$params);
 
             // Ejecutar la consulta
             if ($stmt->execute()) {
@@ -120,6 +104,7 @@ if ($data) {
                 echo json_encode(["message" => "Error al actualizar la empresa"]);
             }
 
+            // Cerrar la declaración
             $stmt->close();
         } else {
             http_response_code(500);
@@ -127,7 +112,7 @@ if ($data) {
         }
     } else {
         http_response_code(400);
-        echo json_encode(["message" => "Falta el dato obligatorio: razon_social"]);
+        echo json_encode(["message" => "Falta el dato obligatorio: razon_social o idEmp"]);
     }
 } else {
     http_response_code(400);
@@ -136,5 +121,4 @@ if ($data) {
 
 // Cerrar la conexión
 $conn->close();
-
 ?>
