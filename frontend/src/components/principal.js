@@ -17,11 +17,10 @@ const PaginaPrincipal = () => {
     localStorage.removeItem("ultimaLetraSeleccionada");
     localStorage.removeItem("ultimoMedioPagoSeleccionado");
     localStorage.removeItem("ultimaAccion");
-  
+
     // Asegurar que la opción inicial sea "Seleccionar"
     localStorage.setItem("ultimaSeleccion", "Seleccionar");
   }, []);
-  
 
   const handleRedireccionarSocios = () => {
     navigate("/GestionarSocios");
@@ -38,7 +37,6 @@ const PaginaPrincipal = () => {
   const handleRedireccionarCategorias = () => {
     navigate("/GestionarCategorias");
   };
-  
 
   const handleCerrarSesion = () => {
     setShowModal(true);
@@ -46,17 +44,19 @@ const PaginaPrincipal = () => {
 
   const confirmarCierreSesion = () => {
     sessionStorage.clear(); // Borra la sesión
-  
-    // Previene regresar a la página anterior
-    window.history.pushState(null, null, "/");
+
+    // Limpiar el historial del navegador
+    window.history.pushState(null, null, window.location.href);
     window.onpopstate = function () {
       window.history.go(1);
     };
-  
-    // Redirige y recarga la página para limpiar datos
-    window.location.href = "/";
-  };
 
+    // Redirigir al usuario a la página de inicio de sesión
+    window.location.href = "/"; // Cambia "/" por la ruta de tu página de inicio de sesión
+
+    // Deshabilitar el caché del navegador
+    window.location.replace("/"); // Esto evita que la página se almacene en caché
+  };
 
   return (
     <div style={styles.container}>
@@ -71,7 +71,6 @@ const PaginaPrincipal = () => {
           <span style={styles.buttonText}>Gestionar Socios</span>
         </button>
 
-        
         <button style={styles.button} onClick={handleRedireccionarEmpresas}>
           <FontAwesomeIcon icon={faBuilding} style={styles.iconButton} />
           <span style={styles.buttonText}>Gestionar Empresas</span>
@@ -86,7 +85,6 @@ const PaginaPrincipal = () => {
           <FontAwesomeIcon icon={faTags} style={styles.iconButton} />
           <span style={styles.buttonText}>Gestionar Categorías</span>
         </button>
-
 
         <button style={styles.logoutButton} onClick={handleCerrarSesion}>
           <FontAwesomeIcon icon={faSignOutAlt} style={styles.iconButton} />
@@ -106,7 +104,6 @@ const PaginaPrincipal = () => {
     </div>
   );
 };
-
 
 const styles = {
   container: {
@@ -165,7 +162,7 @@ const styles = {
     fontSize: "1rem",
     fontWeight: "600",
     cursor: "pointer",
-    transition: "transform 0.2s ease",
+    transition: "transform 0.2s ease, box-shadow 0.2s ease",
     boxShadow: "0 5px 15px rgba(0, 0, 0, 0.3)",
     display: "flex",
     alignItems: "center",
@@ -175,6 +172,10 @@ const styles = {
     width: "100%",
     maxWidth: "300px",
     height: "50px",
+    ':hover': {
+      transform: "translateY(-5px)",
+      boxShadow: "0 8px 20px rgba(0, 0, 0, 0.4)",
+    },
   },
   logoutButton: {
     background: "red",
@@ -185,7 +186,7 @@ const styles = {
     fontSize: "1rem",
     fontWeight: "600",
     cursor: "pointer",
-    transition: "transform 0.2s ease",
+    transition: "transform 0.2s ease, box-shadow 0.2s ease",
     boxShadow: "0 5px 15px rgba(0, 0, 0, 0.3)",
     display: "flex",
     alignItems: "center",
@@ -195,6 +196,10 @@ const styles = {
     width: "100%",
     maxWidth: "300px",
     height: "50px",
+    ':hover': {
+      transform: "translateY(-5px)",
+      boxShadow: "0 8px 20px rgba(0, 0, 0, 0.4)",
+    },
   },
   iconButton: {
     fontSize: "1.2rem",
@@ -208,7 +213,7 @@ const styles = {
     left: 0,
     width: "100%",
     height: "100%",
-    background: "rgba(0, 0, 0, 0.5)", // Fondo oscuro semi-transparente
+    background: "rgba(0, 0, 0, 0.5)",
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
@@ -222,11 +227,9 @@ const styles = {
     boxShadow: "0 5px 15px rgba(0, 0, 0, 0.3)",
     width: "300px",
   },
-
   modaltext: {
-    fontSize:"20px",
+    fontSize: "20px",
   },
-
   modalButton: {
     background: "green",
     color: "white",
@@ -237,7 +240,7 @@ const styles = {
     fontWeight: "600",
     cursor: "pointer",
     margin: "10px",
-    marginTop:"20px"
+    marginTop: "20px",
   },
   modalButtonCancel: {
     background: "red",
