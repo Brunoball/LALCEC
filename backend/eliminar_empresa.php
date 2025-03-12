@@ -8,53 +8,55 @@ include(__DIR__ . '/db.php'); // Incluir la conexión a la base de datos
 
 // Verificar la conexión
 if ($conn->connect_error) {
-    die(json_encode(["success" => false, "message" => "Conexión fallida: " . $conn->connect_error]));
+    echo json_encode(["success" => false, "message" => "Conexión fallida: " . $conn->connect_error]);
+    exit;
 }
 
 // Verificar si se recibieron los parámetros 'idEmp' y 'razon_social' en la solicitud GET
-if (isset($_GET['idEmp']) && isset($_GET['razon_social'])) {
-    $idEmp = $_GET['idEmp']; // Obtener el ID de la empresa/socio a eliminar
-    $razon_social = $_GET['razon_social']; // Obtener la razón social de la empresa/socio a eliminar
+if (!isset($_GET['idEmp']) || !isset($_GET['razon_social'])) {
+    echo json_encode(["success" => false, "message" => "Parámetros 'idEmp' y 'razon_social' no proporcionados"]);
+    exit;
+}
 
+$idEmp = $_GET['idEmp'];
+$razon_social = $_GET['razon_social'];
+
+// Iniciar transacción para evitar inconsistencias
+$conn->begin_transaction();
+
+try {
     // Eliminar los registros dependientes en la tabla 'pagos_empresas'
     $deletePagosQuery = "DELETE FROM pagos_empresas WHERE idEmp = ?";
     $stmtDeletePagos = $conn->prepare($deletePagosQuery);
-
     if ($stmtDeletePagos) {
-        $stmtDeletePagos->bind_param("i", $idEmp); // Vincular el parámetro
-        $stmtDeletePagos->execute(); // Ejecutar la consulta
-        $stmtDeletePagos->close(); // Cerrar la declaración
+        $stmtDeletePagos->bind_param("i", $idEmp);
+        $stmtDeletePagos->execute();
+        $stmtDeletePagos->close();
     }
 
-    // Preparar la consulta SQL para eliminar la empresa/socio
-    $sql = "DELETE FROM empresas WHERE idEmp = ? AND razon_social = ?";
-    $stmt = $conn->prepare($sql);
+    // Eliminar la empresa/socio
+    $deleteEmpresaQuery = "DELETE FROM empresas WHERE idEmp = ? AND razon_social = ?";
+    $stmt = $conn->prepare($deleteEmpresaQuery);
+    
+    if (!$stmt) {
+        throw new Exception("Error al preparar la consulta: " . $conn->error);
+    }
 
-    if ($stmt) {
-        // Vincular los parámetros
-        $stmt->bind_param("is", $idEmp, $razon_social);
+    $stmt->bind_param("is", $idEmp, $razon_social);
+    $stmt->execute();
 
-        // Ejecutar la consulta
-        if ($stmt->execute()) {
-            // Verificar si se eliminó alguna fila
-            if ($stmt->affected_rows > 0) {
-                echo json_encode(["success" => true]); // Solo devuelve éxito
-            } else {
-                echo json_encode(["success" => false, "message" => "No se encontró la empresa/socio con el ID y razón social proporcionados"]);
-            }
-        } else {
-            echo json_encode(["success" => false, "message" => "Error al ejecutar la consulta: " . $stmt->error]);
-        }
-
-        // Cerrar la declaración
-        $stmt->close();
+    if ($stmt->affected_rows > 0) {
+        $conn->commit(); // Confirmar la transacción
+        echo json_encode(["success" => true, "message" => "Empresa eliminada correctamente"]);
     } else {
-        echo json_encode(["success" => false, "message" => "Error al preparar la consulta: " . $conn->error]);
+        throw new Exception("No se encontró la empresa/socio con el ID y razón social proporcionados");
     }
-} else {
-    echo json_encode(["success" => false, "message" => "Parámetros 'idEmp' y 'razon_social' no proporcionados"]);
+
+    $stmt->close();
+} catch (Exception $e) {
+    $conn->rollback(); // Revertir cambios en caso de error
+    echo json_encode(["success" => false, "message" => $e->getMessage()]);
 }
 
-// Cerrar la conexión
 $conn->close();
 ?>
