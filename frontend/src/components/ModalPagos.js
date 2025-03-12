@@ -111,7 +111,7 @@ const ModalPagos = ({ nombre, apellido, cerrarModal }) => {
             return;
         }
 
-        const { domicilio, numero, categoria, cobrador, precioCategoria } = result;
+        const { domicilio_2, categoria, cobrador, precioCategoria } = result;
 
         const mesesPagados = meses
             .filter(m => mesesSeleccionados.includes(m.id))
@@ -175,7 +175,7 @@ const ModalPagos = ({ nombre, apellido, cerrarModal }) => {
                     <div class="comprobante">
                         <div class="talon-socio">
                             <p><strong>Afiliado:</strong> ${nombre} ${apellido}</p>
-                            <p><strong>Domicilio:</strong> ${domicilio} ${numero}</p>
+                            <p><strong>Domicilio:</strong> ${domicilio_2}</p>
                             <p><strong>Categoría / Monto:</strong> ${categoria} / $${totalPagar}</p>
                             <p><strong>Período:</strong> ${mesesPagados}</p>
                             <p><strong>Cobrador:</strong> ${cobrador}</p>
@@ -201,8 +201,7 @@ const ModalPagos = ({ nombre, apellido, cerrarModal }) => {
     } catch (error) {
         alert("Ocurrió un error al obtener los datos del socio.");
     }
-  };
-
+};
 
 
 
