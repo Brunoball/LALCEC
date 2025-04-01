@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus, faArrowLeft, faEdit, faTrash, faSearch, faDollar, faFileExcel, faPrint } from "@fortawesome/free-solid-svg-icons";
-import ModalPagos from "./ModalPagos"; // Asegúrate de importar el ModalPagos
+import ModalPagos from "./ModalPagos";
 import "./GestionarSocios.css";
 
 const GestionarSocios = () => {
@@ -24,103 +24,80 @@ const GestionarSocios = () => {
   const [actualizar, setActualizar] = useState(false);
   const [primeraCarga, setPrimeraCarga] = useState(true);
   const [cargando, setCargando] = useState(false);
-  const [restaurandoEstado, setRestaurandoEstado] = useState(true); // Bandera para restaurar el estado
+  const [restaurandoEstado, setRestaurandoEstado] = useState(true);
+  const [mostrarModalMes, setMostrarModalMes] = useState(false);
+  const [mesSeleccionado, setMesSeleccionado] = useState("");
 
-
-// Ejecutar la búsqueda automáticamente cuando cambia `busqueda` o `tipoEntidad`
-useEffect(() => {
-  const ejecutarBusqueda = async () => {
-    if (restaurandoEstado) {
-      // Si estamos restaurando el estado, no ejecutamos la búsqueda automática
-      return;
-    }
-
-    if (busqueda) {
-      await handleBusqueda(busqueda);
-    } else {
-      await handleMostrarTodos();
-    }
-  };
-
-  ejecutarBusqueda();
-}, [busqueda, tipoEntidad]);
-
-
-
-
-
-
-useEffect(() => {
-  const obtenerDatos = async () => {
-    setCargando(true);
-    try {
-      // Obtener medios de pago
-      const responseMediosPago = await fetch("http://localhost:3001/obtener_datos.php");
-      if (responseMediosPago.ok) {
-        const data = await responseMediosPago.json();
-        if (Array.isArray(data.mediosPago)) {
-          setMediosDePago(data.mediosPago);
-        } else {
-          setError("Error: No se encontraron medios de pago.");
-        }
-      } else {
-        setError("Error al obtener los medios de pago.");
+  // Ejecutar la búsqueda automáticamente cuando cambia `busqueda` o `tipoEntidad`
+  useEffect(() => {
+    const ejecutarBusqueda = async () => {
+      if (restaurandoEstado) {
+        return;
       }
 
-      // Restaurar el estado de la última búsqueda o filtrado
-      const ultimaAccion = localStorage.getItem("ultimaAccion");
-      const ultimaBusqueda = localStorage.getItem("ultimaBusqueda");
-      const ultimosResultados = localStorage.getItem("ultimosResultados");
-      const ultimaLetraSeleccionada = localStorage.getItem("ultimaLetraSeleccionada");
-      const ultimoMedioPagoSeleccionado = localStorage.getItem("ultimoMedioPagoSeleccionado");
-
-      if (ultimaAccion === "busqueda" && ultimaBusqueda && ultimosResultados) {
-        // Restaurar la última búsqueda
-        setBusqueda(ultimaBusqueda);
-        setSociosFiltrados(JSON.parse(ultimosResultados));
-        setRestaurandoEstado(false);
-      } else if (ultimaAccion === "letra" && ultimaLetraSeleccionada) {
-        // Restaurar el filtrado por letra
-        setLetraSeleccionada(ultimaLetraSeleccionada);
-        await handleFiltrarPorLetra(ultimaLetraSeleccionada, tipoEntidad);
-        setRestaurandoEstado(false);
-      } else if (ultimaAccion === "medioPago" && ultimoMedioPagoSeleccionado) {
-        // Restaurar el filtrado por medio de pago
-        setMedioPagoSeleccionado(ultimoMedioPagoSeleccionado);
-        await handleFiltrarPorMedioPago(ultimoMedioPagoSeleccionado);
-        setRestaurandoEstado(false);
-      } else if (ultimaAccion === "todos") {
-        // Restaurar la acción "todos"
+      if (busqueda) {
+        await handleBusqueda(busqueda);
+      } else {
         await handleMostrarTodos();
-        setRestaurandoEstado(false);
-      } else {
-        // Si no hay una acción previa, mostrar la tabla en blanco (opción "Seleccionar")
-        setSocios([]);
-        setSociosFiltrados([]);
-        setRestaurandoEstado(false);
       }
-    } catch (error) {
-      setError("Hubo un problema al obtener los datos.");
-      console.error("Error:", error);
-    } finally {
-      setCargando(false);
-    }
-  };
+    };
 
-  obtenerDatos();
-}, [actualizar, tipoEntidad]);
+    ejecutarBusqueda();
+  }, [busqueda, tipoEntidad]);
 
+  useEffect(() => {
+    const obtenerDatos = async () => {
+      setCargando(true);
+      try {
+        const responseMediosPago = await fetch("http://localhost:3001/obtener_datos.php");
+        if (responseMediosPago.ok) {
+          const data = await responseMediosPago.json();
+          if (Array.isArray(data.mediosPago)) {
+            setMediosDePago(data.mediosPago);
+          } else {
+            setError("Error: No se encontraron medios de pago.");
+          }
+        } else {
+          setError("Error al obtener los medios de pago.");
+        }
 
+        const ultimaAccion = localStorage.getItem("ultimaAccion");
+        const ultimaBusqueda = localStorage.getItem("ultimaBusqueda");
+        const ultimosResultados = localStorage.getItem("ultimosResultados");
+        const ultimaLetraSeleccionada = localStorage.getItem("ultimaLetraSeleccionada");
+        const ultimoMedioPagoSeleccionado = localStorage.getItem("ultimoMedioPagoSeleccionado");
 
+        if (ultimaAccion === "busqueda" && ultimaBusqueda && ultimosResultados) {
+          setBusqueda(ultimaBusqueda);
+          setSociosFiltrados(JSON.parse(ultimosResultados));
+          setRestaurandoEstado(false);
+        } else if (ultimaAccion === "letra" && ultimaLetraSeleccionada) {
+          setLetraSeleccionada(ultimaLetraSeleccionada);
+          await handleFiltrarPorLetra(ultimaLetraSeleccionada, tipoEntidad);
+          setRestaurandoEstado(false);
+        } else if (ultimaAccion === "medioPago" && ultimoMedioPagoSeleccionado) {
+          setMedioPagoSeleccionado(ultimoMedioPagoSeleccionado);
+          await handleFiltrarPorMedioPago(ultimoMedioPagoSeleccionado);
+          setRestaurandoEstado(false);
+        } else if (ultimaAccion === "todos") {
+          await handleMostrarTodos();
+          setRestaurandoEstado(false);
+        } else {
+          setSocios([]);
+          setSociosFiltrados([]);
+          setRestaurandoEstado(false);
+        }
+      } catch (error) {
+        setError("Hubo un problema al obtener los datos.");
+        console.error("Error:", error);
+      } finally {
+        setCargando(false);
+      }
+    };
 
+    obtenerDatos();
+  }, [actualizar, tipoEntidad]);
 
-
-
-
-
-
-
-  
   const handleBusqueda = async (busquedaParam) => {
     let query = busquedaParam || busqueda || "";
   
@@ -164,7 +141,6 @@ useEffect(() => {
     const value = e.target.value;
     setBusqueda(value);
   
-    // Si el usuario empieza a escribir en el buscador, limpiar la selección del dropdown
     if (value.length > 0) {
       setLetraSeleccionada("");
       setMedioPagoSeleccionado("");
@@ -172,11 +148,9 @@ useEffect(() => {
     }
   };
 
-
   const handleVolverAtras = async () => {
-    navigate(-1); // Navegar hacia atrás
+    navigate(-1);
   };
-
 
   const handleFiltrarPorLetra = async (letra, tipo) => {
     try {
@@ -235,6 +209,7 @@ useEffect(() => {
       setError("Error al obtener los socios.");
     }
   };
+
   const handleMostrarTodos = async () => {
     try {
       const entidad = localStorage.getItem("ultimaEntidad") || "socios";
@@ -247,7 +222,6 @@ useEffect(() => {
         setSociosFiltrados(Array.isArray(data.socios) ? data.socios : []);
         setError(null);
   
-        // Guardar la acción "todos" en el localStorage
         localStorage.setItem("ultimaAccion", "todos");
         localStorage.removeItem("ultimaBusqueda");
         localStorage.removeItem("ultimosResultados");
@@ -262,27 +236,19 @@ useEffect(() => {
     }
   };
 
-
-
   const handleAgregarSocio = () => {
     navigate("/Agregarsocio");
     setActualizar(prev => !prev);
   };
-
- 
 
   const handleSeleccion = async (e) => {
     const selectedValue = e.target.value;
   
     localStorage.setItem("ultimaSeleccion", selectedValue);
     localStorage.setItem("ultimaEntidad", tipoEntidad);
-  
-    // Limpiar búsqueda cuando se selecciona algo en el dropdown
     setBusqueda("");
-  
     localStorage.removeItem("ultimaBusqueda");
     localStorage.removeItem("ultimosResultados");
-  
     setPrimeraCarga(false);
   
     if (selectedValue === "Seleccionar") {
@@ -310,9 +276,6 @@ useEffect(() => {
       await handleFiltrarPorMedioPago(selectedValue);
     }
   };
-
-
-
 
   const handleFilaSeleccionada = (index, socio) => {
     setFilaSeleccionada(filaSeleccionada === index ? null : index);
@@ -373,10 +336,6 @@ useEffect(() => {
     setMostrarModal(true);
   };
 
-
-
-
-
   const exportarAExcel = () => {
     if (sociosFiltrados.length === 0) {
       setErrorMessage("Datos incompletos: No hay socios para exportar.");
@@ -391,7 +350,7 @@ useEffect(() => {
     const nombreArchivo = tipoEntidad === "socios" ? "Socios.xlsx" : "Empresas.xlsx";
   
     const datosReordenados = sociosFiltrados.map(({ id, nombre, apellido, ...resto }) => ({
-      id, // Asegúrate de que el nombre coincida con el que llega desde la API
+      id,
       apellido,
       nombre,
       ...resto,
@@ -405,40 +364,47 @@ useEffect(() => {
   
     setErrorMessage("");
   };
-  
 
+  const abrirModalMes = () => {
+    if (sociosFiltrados.length === 0) {
+      setErrorMessage("Datos incompletos: No hay socios para imprimir.");
+      setTimeout(() => {
+        setErrorMessage("");
+      }, 3000);
+      return;
+    }
+    setMostrarModalMes(true);
+  };
 
+  const cerrarModalMes = () => {
+    setMostrarModalMes(false);
+  };
 
-
-
-
+  const handleImprimirComprobantes = () => {
+    if (!mesSeleccionado) {
+      setErrorMessage("Por favor seleccione un mes.");
+      setTimeout(() => {
+        setErrorMessage("");
+      }, 3000);
+      return;
+    }
+    cerrarModalMes();
+    handleImprimirTodosComprobantes();
+  };
 
   const handleImprimirTodosComprobantes = async () => {
     try {
-      if (sociosFiltrados.length === 0) {
-        setErrorMessage("Datos incompletos: No hay socios para imprimir.");
-  
-        setTimeout(() => {
-          setErrorMessage("");
-        }, 3000);
-  
-        return;
-      }
-  
-      // Función auxiliar para reemplazar null o undefined con una cadena vacía
-      const limpiarDato = (valor) => (valor == null ? "" : valor);
-  
       const socios = sociosFiltrados;
       let comprobantesHTML = `
-          <html>
-          <head>
-              <title>Comprobantes de Pago</title>
-              <style>
-                  @page {
-                      size: A4 portrait;
-                      margin: 0;
-                  }
-                  body {
+        <html>
+        <head>
+            <title>Comprobantes de Pago</title>
+            <style>
+                @page {
+                    size: A4 portrait;
+                    margin: 0;
+                }
+                body {
                     width: 210mm;
                     height: 297mm;
                     margin: 0;
@@ -454,115 +420,102 @@ useEffect(() => {
                     transform-origin: top left;
                     left: 70%;
                     top: 0;
-                  }
-                  .contenedor {
-                      width: 210mm;
-                      margin: 10mm 0;
-                      page-break-after: always;
-                      box-sizing: border-box;
-                  }
-                  .comprobante {
-                      width: 100%;
-                      height: 100%;
-                      display: flex;
-                      box-sizing: border-box;
-                  }
-                  .talon-socio {
-                      width: 60%;
-                      padding-left: 20mm;
-                      padding-top: 13mm;
-                  }
-                  .talon-cobrador {
-                      width: 60mm;
-                      padding-left: 10mm;
-                      padding-top: 16mm;
-                  }
-                  p {
-                      margin-top: 5px;
-                      font-size: 13px;
-                  }
-              </style>
-          </head>
-          <body>
+                }
+                .contenedor {
+                    width: 210mm;
+                    margin: 10mm 0;
+                    page-break-after: always;
+                    box-sizing: border-box;
+                }
+                .comprobante {
+                    width: 100%;
+                    height: 100%;
+                    display: flex;
+                    box-sizing: border-box;
+                }
+                .talon-socio {
+                    width: 60%;
+                    padding-left: 20mm;
+                    padding-top: 13mm;
+                }
+                .talon-cobrador {
+                    width: 60mm;
+                    padding-left: 10mm;
+                    padding-top: 16mm;
+                }
+                p {
+                    margin-top: 5px;
+                    font-size: 13px;
+                }
+            </style>
+        </head>
+        <body>
       `;
-  
+
       socios.forEach((socio) => {
         const {
           nombre,
           apellido,
-          domicilio,
-          numero,
+          domicilio_2,
           categoria,
           precio_categoria,
           medio_pago,
         } = socio;
-  
-        // Limpiar todos los datos para evitar null o undefined
-        const nombreLimpio = limpiarDato(nombre);
-        const apellidoLimpio = limpiarDato(apellido);
-        const domicilioLimpio = limpiarDato(domicilio);
-        const numeroLimpio = limpiarDato(numero);
-        const categoriaLimpia = limpiarDato(categoria);
-        const precioLimpio = limpiarDato(precio_categoria);
-        const medioPagoLimpio = limpiarDato(medio_pago);
-  
-        const mesesPagados = new Date().toLocaleString('default', { month: 'long' }).toUpperCase();
-        const totalPagar = precioLimpio; // Usar el precio ya limpio
-  
+
+        const nombreLimpio = nombre || "";
+        const apellidoLimpio = apellido || "";
+        const domicilio2Limpio = domicilio_2 || "";
+        const categoriaLimpia = categoria || "";
+        const precioLimpio = precio_categoria || "0";
+        const medioPagoLimpio = medio_pago || "";
+
+        const mesesPagados = mesSeleccionado || new Date().toLocaleString('default', { month: 'long' }).toUpperCase();
+        const totalPagar = precioLimpio;
+
         comprobantesHTML += `
-            <div class="contenedor">
-                <div class="comprobante">
-                    <div class="talon-socio">
-                        <p><strong>Afiliado:</strong> ${nombreLimpio} ${apellidoLimpio}</p>
-                        <p><strong>Domicilio:</strong> ${domicilioLimpio} ${numeroLimpio}</p>
-                        <p><strong>Categoría / Monto:</strong> ${categoriaLimpia} / $${totalPagar}</p>
-                        <p><strong>Período:</strong> ${mesesPagados}</p>
-                        <p><strong>Cobrador:</strong> ${medioPagoLimpio}</p>
-                        <p>Por consultas comunicarse al 03564-15205778</p>
-                    </div>
-                    <div class="talon-cobrador">
-                        <p><strong>Nombre y Apellido:</strong> ${nombreLimpio} ${apellidoLimpio}</p>
-                        <p><strong>Categoría / Monto:</strong> ${categoriaLimpia} / $${totalPagar}</p>
-                        <p><strong>Período:</strong> ${mesesPagados}</p>
-                        <p><strong>Cobrador:</strong> ${medioPagoLimpio}</p>
-                    </div>
-                </div>
+          <div class="contenedor">
+            <div class="comprobante">
+              <div class="talon-socio">
+                <p><strong>Afiliado:</strong> ${nombreLimpio} ${apellidoLimpio}</p>
+                <p><strong>Domicilio:</strong> ${domicilio2Limpio}</p>
+                <p><strong>Categoría / Monto:</strong> ${categoriaLimpia} / $${totalPagar}</p>
+                <p><strong>Período:</strong> ${mesesPagados}</p>
+                <p><strong>Cobrador:</strong> ${medioPagoLimpio}</p>
+                <p>Por consultas comunicarse al 03564-15205778</p>
+              </div>
+              <div class="talon-cobrador">
+                <p><strong>Nombre y Apellido:</strong> ${nombreLimpio} ${apellidoLimpio}</p>
+                <p><strong>Categoría / Monto:</strong> ${categoriaLimpia} / $${totalPagar}</p>
+                <p><strong>Período:</strong> ${mesesPagados}</p>
+                <p><strong>Cobrador:</strong> ${medioPagoLimpio}</p>
+              </div>
             </div>
+          </div>
         `;
       });
-  
+
       comprobantesHTML += `
-          </body>
-          </html>
+        </body>
+        </html>
       `;
-  
+
       const ventana = window.open('', '', 'width=600,height=400');
       ventana.document.write(comprobantesHTML);
       ventana.document.close();
       ventana.print();
-  
+
     } catch (error) {
       setErrorMessage("Ocurrió un error al generar los comprobantes.");
-  
       setTimeout(() => {
         setErrorMessage("");
       }, 3000);
     }
   };
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+  const meses = [
+    "ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO",
+    "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE"
+  ];
 
   return (
     <div className="socio-container">
@@ -571,16 +524,15 @@ useEffect(() => {
           <h2 className="socio-title">Gestionar Socios</h2>
           <div className="front-row">
             <div className="search-bar">
-            <input
-              id="search"
-              type="text"
-              placeholder="Buscar por nombre o apellido"
-              className="search-input"
-              value={busqueda}
-              onChange={handleBusquedaInputChange}
-              onKeyDown={(e) => e.key === "Enter" && handleBusqueda(busqueda)}
-            />
-
+              <input
+                id="search"
+                type="text"
+                placeholder="Buscar por nombre o apellido"
+                className="search-input"
+                value={busqueda}
+                onChange={handleBusquedaInputChange}
+                onKeyDown={(e) => e.key === "Enter" && handleBusqueda(busqueda)}
+              />
               <button className="search-button" onClick={() => handleBusqueda(busqueda)}>
                 <FontAwesomeIcon icon={faSearch} className="icon-button" />
               </button>
@@ -597,13 +549,11 @@ useEffect(() => {
                   Seleccionar
                 </option>
                 <option value="todos">Todos</option>
-
                 {["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"].map((letter, index) => (
                   <option key={index} value={letter}>
                     {letter}
                   </option>
                 ))}
-
                 {mediosDePago.length > 0 ? (
                   mediosDePago.map((medio, index) => (
                     <option key={`medio-${index}`} value={medio.Medio_Pago}>
@@ -626,8 +576,6 @@ useEffect(() => {
           </div>
         )}
 
-        {error && <p className="error-message">{error}</p>}
-
         <div className="socios-list">
           <div className="box-table">
             <div className="header">
@@ -649,53 +597,50 @@ useEffect(() => {
                 </div>
               ) : sociosFiltrados.length > 0 ? (
                 <div className="scrollable">
-                  {sociosFiltrados.map((socio, index) => {
-                    console.log(`Socio ${index}:`, socio);
-                    return (
-                      <div
-                        key={index}
-                        className={`row ${filaSeleccionada === index ? "selected-row" : index % 2 === 0 ? "even-row" : "odd-row"}`}
-                        onClick={() => handleFilaSeleccionada(index, socio)}
-                      >
-                        <div className="column column-ape">{socio.apellido}</div>
-                        <div className="column column-nom">{socio.nombre}</div>
-                        <div className="column column-cat">{socio.categoria} ${socio.precio_categoria || "0"}</div>
-                        <div className="column column-mp">{socio.medio_pago}</div>
-                        <div className="column column-dom">{socio.domicilio_2}</div>
-                        <div className="column column-obs">{socio.observacion}</div>
-                        <div className="column icons-column">
-                          {filaSeleccionada === index && (
-                            <div className="icons-container">
-                              <FontAwesomeIcon
-                                icon={faEdit}
-                                className="icon"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleEditarSocio(socio.nombre, socio.apellido);
-                                }}
-                              />
-                              <FontAwesomeIcon
-                                icon={faTrash}
-                                className="icon"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleConfirmarEliminar(socio);
-                                }}
-                              />
-                              <FontAwesomeIcon
-                                icon={faDollar}
-                                className="icon"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handlePagoSocio(socio);
-                                }}
-                              />
-                            </div>
-                          )}
-                        </div>
+                  {sociosFiltrados.map((socio, index) => (
+                    <div
+                      key={index}
+                      className={`row ${filaSeleccionada === index ? "selected-row" : index % 2 === 0 ? "even-row" : "odd-row"}`}
+                      onClick={() => handleFilaSeleccionada(index, socio)}
+                    >
+                      <div className="column column-ape">{socio.apellido}</div>
+                      <div className="column column-nom">{socio.nombre}</div>
+                      <div className="column column-cat">{socio.categoria} ${socio.precio_categoria || "0"}</div>
+                      <div className="column column-mp">{socio.medio_pago}</div>
+                      <div className="column column-dom">{socio.domicilio_2}</div>
+                      <div className="column column-obs">{socio.observacion}</div>
+                      <div className="column icons-column">
+                        {filaSeleccionada === index && (
+                          <div className="icons-container">
+                            <FontAwesomeIcon
+                              icon={faEdit}
+                              className="icon"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEditarSocio(socio.nombre, socio.apellido);
+                              }}
+                            />
+                            <FontAwesomeIcon
+                              icon={faTrash}
+                              className="icon"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleConfirmarEliminar(socio);
+                              }}
+                            />
+                            <FontAwesomeIcon
+                              icon={faDollar}
+                              className="icon"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handlePagoSocio(socio);
+                              }}
+                            />
+                          </div>
+                        )}
                       </div>
-                    );
-                  })}
+                    </div>
+                  ))}
                 </div>
               ) : (
                 <div className="row">
@@ -710,12 +655,7 @@ useEffect(() => {
           </div>
         </div>
 
-
-
-
-
         <div className="down-container">
-
           <div className="contador-container">
             <span className="socios-totales">
               Cant socios: {sociosFiltrados.length}
@@ -733,9 +673,9 @@ useEffect(() => {
               Exportar a Excel
             </button>
 
-            <button className="socio-button" onClick={handleImprimirTodosComprobantes}>
+            <button className="socio-button" onClick={abrirModalMes}>
               <FontAwesomeIcon icon={faPrint} className="socio-icon-button" />
-               Imprimir Comprobantes
+              Imprimir Comprobantes
             </button>
 
             <button className="socio-button" onClick={handleVolverAtras}>
@@ -746,14 +686,11 @@ useEffect(() => {
         </div>
       </div>
 
-      
-
       {mostrarModalEliminar && (
         <div className="modal">
           <div className="modal-content">
             <h3 className="modal-title">¿Deseas eliminar este socio?</h3>
             <p className="modal-text">{`${socioSeleccionado.nombre} ${socioSeleccionado.apellido}`}</p>
-
             <div className="modal-buttons">
               <button className="modal-button cancel-button" onClick={handleCancelarEliminar}>
                 Cancelar
@@ -772,6 +709,33 @@ useEffect(() => {
           apellido={socioSeleccionado.apellido}
           cerrarModal={cerrarModal}
         />
+      )}
+
+      {mostrarModalMes && (
+        <div className="modal">
+          <div className="modal-content">
+            <h3 className="modal-title">Seleccionar Mes para Comprobantes</h3>
+            <div className="meses-container">
+              {meses.map((mes, index) => (
+                <button
+                  key={index}
+                  className={`mes-button ${mesSeleccionado === mes ? "selected" : ""}`}
+                  onClick={() => setMesSeleccionado(mes)}
+                >
+                  {mes}
+                </button>
+              ))}
+            </div>
+            <div className="modal-buttons">
+              <button className="modal-button cancel-button" onClick={cerrarModalMes}>
+                Cancelar
+              </button>
+              <button className="modal-button accept-button" onClick={handleImprimirComprobantes}>
+                Imprimir
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

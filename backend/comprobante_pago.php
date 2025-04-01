@@ -16,8 +16,7 @@ $query = "
     SELECT 
         socios.nombre, 
         socios.apellido, 
-        socios.domicilio, 
-        socios.numero, 
+        socios.domicilio_2,  
         categorias.Nombre_Categoria, 
         categorias.Precio_Categoria, 
         mediospago.Medio_Pago
@@ -33,8 +32,7 @@ if ($result->num_rows > 0) {
     $row = $result->fetch_assoc();
     
     // Asignar valores en blanco en lugar de null si no existen
-    $domicilio = isset($row["domicilio"]) ? $row["domicilio"] : "";
-    $numero = isset($row["numero"]) ? $row["numero"] : "";
+    $domicilio_2 = isset($row["domicilio_2"]) ? $row["domicilio_2"] : "";
     $categoria = isset($row["Nombre_Categoria"]) ? $row["Nombre_Categoria"] : "";
     $precioCategoria = isset($row["Precio_Categoria"]) ? $row["Precio_Categoria"] : "";
     $cobrador = isset($row["Medio_Pago"]) ? $row["Medio_Pago"] : "";
@@ -43,8 +41,7 @@ if ($result->num_rows > 0) {
         "success" => true,
         "nombre" => $row["nombre"],
         "apellido" => $row["apellido"],
-        "domicilio" => $domicilio, 
-        "numero" => $numero, 
+        "domicilio_2" => $domicilio_2, // Usar domicilio_2 directamente
         "categoria" => $categoria,
         "precioCategoria" => $precioCategoria,
         "cobrador" => $cobrador

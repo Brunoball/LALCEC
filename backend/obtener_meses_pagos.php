@@ -1,6 +1,6 @@
 <?php
 // Archivo: obtener_meses_pagos_soc.php
-header("Access-Control-Allow-Origin: http://localhost:3003"); // Permite solicitudes desde el frontend
+header("Access-Control-Allow-Origin: http://localhost:3000"); // Permite solicitudes desde el frontend
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS"); // Métodos permitidos
 header("Access-Control-Allow-Headers: Content-Type"); // Encabezados permitidos
 

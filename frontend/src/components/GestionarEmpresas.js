@@ -24,6 +24,9 @@ const GestionarEmpresas = () => {
   const [actualizar, setActualizar] = useState(false);
   const [cargando, setCargando] = useState(false);
   const [restaurandoEstado, setRestaurandoEstado] = useState(true);
+  const [mostrarModalMes, setMostrarModalMes] = useState(false);
+  const [mesSeleccionado, setMesSeleccionado] = useState(""); 
+
 
   // Búsqueda automática cuando cambian `busqueda` o `tipoEntidad`
   useEffect(() => {
@@ -359,104 +362,143 @@ const GestionarEmpresas = () => {
     setErrorMessage("");
   };
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  const abrirModalMes = () => {
+    if (empresasFiltradas.length === 0) {
+      setErrorMessage("Datos incompletos: No hay empresas para imprimir.");
+      setTimeout(() => {
+        setErrorMessage("");
+      }, 3000);
+      return;
+    }
+    setMostrarModalMes(true);
+  };
+
+  const cerrarModalMes = () => {
+    setMostrarModalMes(false);
+  };
+
+  const handleImprimirComprobantes = () => {
+    if (!mesSeleccionado) {
+      setErrorMessage("Por favor seleccione un mes.");
+      setTimeout(() => {
+        setErrorMessage("");
+      }, 3000);
+      return;
+    }
+    cerrarModalMes();
+    handleImprimirTodosComprobantes();
+  };
+
   const handleImprimirTodosComprobantes = async () => {
     try {
       if (empresasFiltradas.length === 0) {
         setErrorMessage("Datos incompletos: No hay empresas para imprimir.");
-
         setTimeout(() => {
           setErrorMessage("");
         }, 3000);
-
         return;
       }
 
-      const limpiarDato = (valor) => (valor == null ? "" : valor);
-
       let comprobantesHTML = `
-          <html>
-          <head>
-              <title>Comprobantes de Pago</title>
-              <style>
-                  @page {
-                      size: A4 portrait;
-                      margin: 0;
-                  }
-                  body {
-                      width: 210mm;
-                      height: 297mm;
-                      margin: 0;
-                      padding: 0;
-                      font-family: Arial, sans-serif;
-                      font-size: 12px;
-                      display: flex;
-                      flex-direction: column;
-                      justify-content: flex-start;
-                      align-items: center;
-                      position: relative;
-                      transform: rotate(90deg);
-                      transform-origin: top left;
-                      left: 70%;
-                      top: 0;
-                  }
-                  .contenedor {
-                      width: 210mm;
-                      margin: 10mm 0;
-                      page-break-after: always;
-                      box-sizing: border-box;
-                  }
-                  .comprobante {
-                      width: 100%;
-                      height: 100%;
-                      display: flex;
-                      box-sizing: border-box;
-                  }
-                  .talon-empresa {
-                      width: 60%;
-                      padding-left: 20mm;
-                      padding-top: 13mm;
-                  }
-                  .talon-cobrador {
-                      width: 60mm;
-                      padding-left: 10mm;
-                      padding-top: 16mm;
-                  }
-                  p {
-                      margin-top: 5px;
-                      font-size: 13px;
-                  }
-              </style>
-          </head>
-          <body>
+        <html>
+        <head>
+            <title>Comprobantes de Pago</title>
+            <style>
+                @page {
+                    size: A4 portrait;
+                    margin: 0;
+                }
+                body {
+                    width: 210mm;
+                    height: 297mm;
+                    margin: 0;
+                    padding: 0;
+                    font-family: Arial, sans-serif;
+                    font-size: 12px;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: flex-start;
+                    align-items: center;
+                    position: relative;
+                    transform: rotate(90deg);
+                    transform-origin: top left;
+                    left: 70%;
+                    top: 0;
+                }
+                .contenedor {
+                    width: 210mm;
+                    margin: 10mm 0;
+                    page-break-after: always;
+                    box-sizing: border-box;
+                }
+                .comprobante {
+                    width: 100%;
+                    height: 100%;
+                    display: flex;
+                    box-sizing: border-box;
+                }
+                .talon-empresa {
+                    width: 60%;
+                    padding-left: 20mm;
+                    padding-top: 13mm;
+                }
+                .talon-cobrador {
+                    width: 60mm;
+                    padding-left: 10mm;
+                    padding-top: 16mm;
+                }
+                p {
+                    margin-top: 5px;
+                    font-size: 13px;
+                }
+            </style>
+        </head>
+        <body>
       `;
 
       empresasFiltradas.forEach((empresa) => {
-        const razon_social = limpiarDato(empresa.razon_social);
-        const domicilio_2 = limpiarDato(empresa.domicilio_2);
-        const categoria = limpiarDato(empresa.categoria);
-        const precioCategoria = limpiarDato(empresa.precio_categoria);
-        const medio_pago = limpiarDato(empresa.medio_pago);
-        const mesesPagados = new Date().toLocaleString('default', { month: 'long' }).toUpperCase();
+        const razonSocial = empresa.razon_social || "";
+        const domicilio2 = empresa.domicilio_2 || "";
+        const categoria = empresa.categoria || "";
+        const precioCategoria = empresa.precio_categoria || "0";
+        const medioPago = empresa.medio_pago || "";
+        const mesesPagados = mesSeleccionado || new Date().toLocaleString('default', { month: 'long' }).toUpperCase();
 
         comprobantesHTML += `
-            <div class="contenedor">
-                <div class="comprobante">
-                    <div class="talon-empresa">
-                        <p><strong>Empresa:</strong> ${razon_social}</p>
-                        <p><strong>Domicilio:</strong> ${domicilio_2}</p>
-                        <p><strong>Categoría / Monto:</strong> ${categoria} / $${precioCategoria}</p>
-                        <p><strong>Período:</strong> ${mesesPagados}</p>
-                        <p><strong>Cobrador:</strong> ${medio_pago}</p>
-                        <p>Por consultas comunicarse al 03564-15205778</p>
-                    </div>
-                    <div class="talon-cobrador">
-                        <p><strong>Nombre:</strong> ${razon_social}</p>
-                        <p><strong>Categoría / Monto:</strong> ${categoria} / $${precioCategoria}</p>
-                        <p><strong>Período:</strong> ${mesesPagados}</p>
-                        <p><strong>Cobrador:</strong> ${medio_pago}</p>
-                    </div>
-                </div>
+          <div class="contenedor">
+            <div class="comprobante">
+              <div class="talon-empresa">
+                <p><strong>Empresa:</strong> ${razonSocial}</p>
+                <p><strong>Domicilio:</strong> ${domicilio2}</p>
+                <p><strong>Categoría / Monto:</strong> ${categoria} / $${precioCategoria}</p>
+                <p><strong>Período:</strong> ${mesesPagados}</p>
+                <p><strong>Cobrador:</strong> ${medioPago}</p>
+                <p>Por consultas comunicarse al 03564-15205778</p>
+              </div>
+              <div class="talon-cobrador">
+                <p><strong>Nombre:</strong> ${razonSocial}</p>
+                <p><strong>Categoría / Monto:</strong> ${categoria} / $${precioCategoria}</p>
+                <p><strong>Período:</strong> ${mesesPagados}</p>
+                <p><strong>Cobrador:</strong> ${medioPago}</p>
+              </div>
             </div>
+          </div>
         `;
       });
 
@@ -466,10 +508,8 @@ const GestionarEmpresas = () => {
       ventana.document.write(comprobantesHTML);
       ventana.document.close();
       ventana.print();
-
     } catch (error) {
       setErrorMessage("Ocurrió un error al generar los comprobantes.");
-
       setTimeout(() => {
         setErrorMessage("");
       }, 3000);
@@ -477,7 +517,10 @@ const GestionarEmpresas = () => {
   };
 
 
-
+  const meses = [
+    "ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO",
+    "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE"
+  ];
 
 
 
@@ -666,7 +709,7 @@ const GestionarEmpresas = () => {
               Exportar a Excel
             </button>
 
-            <button className="socio-button" onClick={handleImprimirTodosComprobantes}>
+            <button className="socio-button" onClick={abrirModalMes}>
               <FontAwesomeIcon icon={faPrint} className="socio-icon-button" />
               Imprimir Comprobantes
             </button>
@@ -678,6 +721,33 @@ const GestionarEmpresas = () => {
           </div>
         </div>
       </div>
+
+      {mostrarModalMes && (
+        <div className="modal">
+          <div className="modal-content">
+            <h3 className="modal-title">Seleccionar Mes para Comprobantes</h3>
+            <div className="meses-container">
+              {meses.map((mes, index) => (
+                <button
+                  key={index}
+                  className={`mes-button ${mesSeleccionado === mes ? "selected" : ""}`}
+                  onClick={() => setMesSeleccionado(mes)}
+                >
+                  {mes}
+                </button>
+              ))}
+            </div>
+            <div className="modal-buttons">
+              <button className="modal-button cancel-button" onClick={cerrarModalMes}>
+                Cancelar
+              </button>
+              <button className="modal-button accept-button" onClick={handleImprimirComprobantes}>
+                Imprimir
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {mostrarModalEliminar && (
         <div className="modal">

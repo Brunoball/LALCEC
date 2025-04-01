@@ -1,8 +1,8 @@
 <?php
 // Permitir solicitudes desde cualquier origen
-header("Access-Control-Allow-Origin: http://localhost:3003"); // Cambia a tu frontend si es diferente
-header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type");
+header('Content-Type: application/json');
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Headers: *");
 
 // Si la solicitud es de tipo OPTIONS (preflight), simplemente devuelve una respuesta vacía
 if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {

@@ -1,6 +1,6 @@
 <?php
 // Permitir solicitudes desde cualquier origen
-header("Access-Control-Allow-Origin: http://localhost:3003"); // Cambia a tu frontend si es diferente
+header("Access-Control-Allow-Origin: http://localhost:3000"); // Cambia a tu frontend si es diferente
 header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
 

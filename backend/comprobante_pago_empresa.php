@@ -11,11 +11,12 @@ include('db.php'); // Asegúrate de que la ruta sea correcta
 $data = json_decode(file_get_contents("php://input"), true);
 $razonSocial = $conn->real_escape_string($data["razonSocial"]);
 
-// Modificar la consulta para obtener el domicilio, categoria, cobrador y precio de la empresa
+// Modificar la consulta para obtener el domicilio, domicilio_2, categoria, cobrador y precio de la empresa
 $query = "
     SELECT 
         empresas.razon_social, 
         empresas.domicilio, 
+        empresas.domicilio_2, 
         categorias.Nombre_Categoria, 
         categorias.Precio_Categoria, 
         mediospago.Medio_Pago
@@ -40,6 +41,7 @@ if ($result->num_rows > 0) {
     
     // Asignar valores en blanco en lugar de null si no existen
     $domicilio = isset($row["domicilio"]) ? $row["domicilio"] : "";
+    $domicilio2 = isset($row["domicilio_2"]) ? $row["domicilio_2"] : "";
     $categoria = isset($row["Nombre_Categoria"]) ? $row["Nombre_Categoria"] : "";
     $precioCategoria = isset($row["Precio_Categoria"]) ? $row["Precio_Categoria"] : "";
     $cobrador = isset($row["Medio_Pago"]) ? $row["Medio_Pago"] : "";
@@ -49,6 +51,7 @@ if ($result->num_rows > 0) {
         "success" => true,
         "razonSocial" => $row["razon_social"],
         "domicilio" => $domicilio, 
+        "domicilio_2" => $domicilio2, // Asegúrate de que este campo esté presente
         "categoria" => $categoria,
         "precioCategoria" => $precioCategoria,
         "cobrador" => $cobrador
