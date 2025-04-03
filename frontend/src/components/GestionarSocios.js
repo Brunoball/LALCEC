@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlus, faArrowLeft, faEdit, faTrash, faSearch, faDollar, faFileExcel, faPrint } from "@fortawesome/free-solid-svg-icons";
+import { faPlus, faArrowLeft, faEdit, faTrash, faSearch, faDollar, faFileExcel, faPrint, faInfoCircle } from "@fortawesome/free-solid-svg-icons";
 import ModalPagos from "./ModalPagos";
 import "./GestionarSocios.css";
 
@@ -27,10 +27,13 @@ const GestionarSocios = () => {
   const [restaurandoEstado, setRestaurandoEstado] = useState(true);
   const [mostrarModalMes, setMostrarModalMes] = useState(false);
   const [mesSeleccionado, setMesSeleccionado] = useState("");
+  const [mostrarModalInfo, setMostrarModalInfo] = useState(false);
+  const [infoSocio, setInfoSocio] = useState(null);
+  const [mesesPagados, setMesesPagados] = useState([]);
+  const [mesesAdeudados, setMesesAdeudados] = useState([]);
 
-  // Función para determinar el estado de pago del socio
   const getEstadoPago = (mesesPagados) => {
-    if (!mesesPagados) return 'rojo'; // Si no hay datos, considerar como moroso
+    if (!mesesPagados) return 'rojo';
     
     const meses = mesesPagados.split(',').map(mes => mes.trim().toUpperCase());
     const mesActual = new Date().toLocaleString('default', { month: 'long' }).toUpperCase();
@@ -45,11 +48,11 @@ const GestionarSocios = () => {
     const mesesDebidos = mesesHastaActual.filter(mes => !meses.includes(mes));
     
     if (mesesDebidos.length === 0) {
-      return 'verde'; // Pagó todos los meses
+      return 'verde';
     } else if (mesesDebidos.length <= 2) {
-      return 'amarillo'; // Debe 1 o 2 meses
+      return 'amarillo';
     } else {
-      return 'rojo'; // Debe 3 o más meses
+      return 'rojo';
     }
   };
 
@@ -352,7 +355,6 @@ const GestionarSocios = () => {
   };
 
   const handlePagoRealizado = () => {
-    // Actualizar el estado para forzar la recarga de los datos
     setActualizar(prev => !prev);
   };
 
@@ -365,6 +367,53 @@ const GestionarSocios = () => {
     setMostrarModal(true);
   };
 
+  const handleMostrarInfoSocio = async (socio) => {
+    try {
+        setCargando(true);
+        console.log(`Solicitando datos para socio ID: ${socio.id}`);
+
+        const response = await fetch(`http://localhost:3001/obtener_info_socio.php?id=${socio.id}`);
+        
+        if (!response.ok) {
+            throw new Error(`Error HTTP: ${response.status}`);
+        }
+
+        const result = await response.json();
+        console.log("Respuesta completa del backend:", result); // Depuración
+
+        if (!result.success) {
+            throw new Error(result.message || 'Error en los datos recibidos');
+        }
+
+        const data = result.data;
+        console.log('Datos del socio:', data);
+
+        // Procesar meses pagados
+        const mesesPagados = data.meses_pagados ? data.meses_pagados.split(',') : [];
+        
+        // Calcular meses adeudados
+        const mesesAnio = ["ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO", 
+                           "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE"];
+        const mesesAdeudados = mesesAnio.filter(mes => !mesesPagados.includes(mes));
+
+        // Actualizar estados
+        setInfoSocio(data);
+        setMesesPagados(mesesPagados);
+        setMesesAdeudados(mesesAdeudados);
+        setMostrarModalInfo(true);
+
+    } catch (error) {
+        console.error('Error al obtener información:', error);
+        setErrorMessage(`Error: ${error.message}`);
+        setTimeout(() => setErrorMessage(''), 5000);
+    } finally {
+        setCargando(false);
+    }
+};
+
+
+
+
   const exportarAExcel = () => {
     if (sociosFiltrados.length === 0) {
       setErrorMessage("Datos incompletos: No hay socios para exportar.");
@@ -375,7 +424,7 @@ const GestionarSocios = () => {
   
       return;
     }
-  
+
     const nombreArchivo = tipoEntidad === "socios" ? "Socios.xlsx" : "Empresas.xlsx";
   
     const datosReordenados = sociosFiltrados.map(({ id, nombre, apellido, ...resto }) => ({
@@ -548,6 +597,7 @@ const GestionarSocios = () => {
 
   return (
     <div className="socio-container">
+      
       <div className="socio-box">
         <div className="front-row-soc">
           <h2 className="socio-title">Gestionar Socios</h2>
@@ -649,6 +699,14 @@ const GestionarSocios = () => {
                         <div className="column icons-column">
                           {filaSeleccionada === index && (
                             <div className="icons-container">
+                              <FontAwesomeIcon
+                                icon={faInfoCircle}
+                                className="icon"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleMostrarInfoSocio(socio);
+                                }}
+                              />
                               <FontAwesomeIcon
                                 icon={faEdit}
                                 className="icon"
@@ -765,12 +823,75 @@ const GestionarSocios = () => {
                 </button>
               ))}
             </div>
+
+            <div className="info-section">
+              <h4>Meses Adeudados</h4>
+              {mesesAdeudados.length > 0 ? (
+                <div className="meses-container">
+                  {mesesAdeudados.map((mes, index) => (
+                    <span key={index} className="mes-adeudado">{mes}</span>
+                  ))}
+                </div>
+              ) : (
+                <p>No hay meses adeudados</p>
+              )}
+            </div>
+            
             <div className="modal-buttons">
               <button className="modal-button cancel-button" onClick={cerrarModalMes}>
                 Cancelar
               </button>
               <button className="modal-button accept-button" onClick={handleImprimirComprobantes}>
                 Imprimir
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {mostrarModalInfo && infoSocio && (
+        <div className="modal">
+          <div className="modal-content">
+            <h3 className="modal-title">Información del Socio</h3>
+            <div className="info-section">
+              <p><strong>Nombre:</strong> {infoSocio.nombre} {infoSocio.apellido}</p>
+              <p><strong>DNI:</strong> {infoSocio.dni}</p>
+              <p><strong>Teléfono:</strong> {infoSocio.telefono}</p>
+              <p><strong>Domicilio:</strong> {infoSocio.domicilio_1}</p>
+              <p><strong>Domicilio Cobro:</strong> {infoSocio.domicilio_2}</p>
+              <p><strong>Categoría:</strong> {infoSocio.categoria} (${infoSocio.precio_categoria})</p>
+              <p><strong>Medio de Pago:</strong> {infoSocio.medio_pago}</p>
+              <p><strong>Observaciones:</strong> {infoSocio.observacion}</p>
+              
+              <h4>Meses Pagados</h4>
+              {mesesPagados.length > 0 ? (
+                <div className="meses-container">
+                  {mesesPagados.map((mes, index) => (
+                    <span key={index} className="mes-pagado">{mes}</span>
+                  ))}
+                </div>
+              ) : (
+                <p>No hay meses pagados registrados</p>
+              )}
+              
+              <h4>Meses Adeudados</h4>
+              {mesesAdeudados.length > 0 ? (
+                <div className="meses-container">
+                  {mesesAdeudados.map((mes, index) => (
+                    <span key={index} className="mes-adeudado">{mes}</span>
+                  ))}
+                </div>
+              ) : (
+                <p>No hay meses adeudados</p>
+              )}
+            </div>
+            
+            <div className="modal-buttons">
+              <button 
+                className="modal-button accept-button" 
+                onClick={() => setMostrarModalInfo(false)}
+              >
+                Cerrar
               </button>
             </div>
           </div>

@@ -46,9 +46,58 @@
 }
   
 
-
-
-
+/* Estilos para el modal de información */
+.info-detallada {
+    padding: 15px;
+  }
+  
+  .info-row {
+    margin-bottom: 10px;
+    display: flex;
+  }
+  
+  .info-label {
+    font-weight: bold;
+    min-width: 150px;
+  }
+  
+  .info-value {
+    flex-grow: 1;
+  }
+  
+  .meses-section {
+    margin-top: 20px;
+    border-top: 1px solid #eee;
+    padding-top: 15px;
+  }
+  
+  .meses-lista {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 10px;
+  }
+  
+  .mes-tag {
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-size: 0.9em;
+  }
+  
+  .mes-tag.pagado {
+    background-color: #d4edda;
+    color: #155724;
+  }
+  
+  .mes-tag.adeudado {
+    background-color: #f8d7da;
+    color: #721c24;
+  }
+  
+  .no-data {
+    color: #6c757d;
+    font-style: italic;
+  }
 
 
 
