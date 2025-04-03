@@ -18,6 +18,10 @@ if (!$medio) {
     exit;
 }
 
+// Verificar si la tabla de pagos existe
+$checkPagosTable = $conn->query("SHOW TABLES LIKE 'pagos'");
+$tienePagos = ($checkPagosTable->num_rows > 0);
+
 // Determinar el valor de flag según el tipo de entidad
 $flag = ($tipo === 'empresa') ? 1 : 0;
 
@@ -46,7 +50,7 @@ $idMediosPago = $rowMedio['idMedios_Pago'];
 
 $stmtMedio->close();
 
-// Obtener los socios o empresas asociados a este idMedios_Pago, incluyendo idSocios
+// Construir la consulta principal
 $querySocios = "
     SELECT 
         s.idSocios AS id,
@@ -58,7 +62,16 @@ $querySocios = "
         s.observacion,
         c.nombre_categoria AS categoria, 
         c.precio_categoria AS precio_categoria,
-        m.medio_pago 
+        m.medio_pago";
+
+// Agregar meses pagados si la tabla existe
+if ($tienePagos) {
+    $querySocios .= ",
+        (SELECT GROUP_CONCAT(DISTINCT p.idMes ORDER BY p.idMes SEPARATOR ', ') 
+         FROM pagos p WHERE p.idSocios = s.idSocios) as meses_pagados";
+}
+
+$querySocios .= "
     FROM 
         socios s
     LEFT JOIN 
@@ -68,13 +81,12 @@ $querySocios = "
     WHERE 
         s.idmedios_pago = ? AND s.flag = ?
     ORDER BY 
-        s.apellido ASC, s.nombre ASC
-";
+        s.apellido ASC, s.nombre ASC";
 
 $stmtSocios = $conn->prepare($querySocios);
 
 if (!$stmtSocios) {
-    echo json_encode(["error" => "Error en la consulta de socios: " . $conn->error]);
+    echo json_encode(["error" => "Error en la preparación de la consulta: " . $conn->error]);
     exit;
 }
 
@@ -82,7 +94,29 @@ $stmtSocios->bind_param('ii', $idMediosPago, $flag);
 $stmtSocios->execute();
 $resultSocios = $stmtSocios->get_result();
 
-$socios = $resultSocios->fetch_all(MYSQLI_ASSOC);
+$socios = [];
+while ($row = $resultSocios->fetch_assoc()) {
+    // Procesar meses pagados si existen
+    if ($tienePagos && isset($row['meses_pagados'])) {
+        if (!empty($row['meses_pagados'])) {
+            $mesesNumeros = explode(', ', $row['meses_pagados']);
+            $mesesNombres = array_map(function($mes) {
+                $nombresMeses = [
+                    1 => 'Enero', 2 => 'Febrero', 3 => 'Marzo', 4 => 'Abril',
+                    5 => 'Mayo', 6 => 'Junio', 7 => 'Julio', 8 => 'Agosto',
+                    9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre', 12 => 'Diciembre'
+                ];
+                return $nombresMeses[(int)$mes] ?? $mes;
+            }, $mesesNumeros);
+            $row['meses_pagados'] = implode(', ', $mesesNombres);
+        } else {
+            $row['meses_pagados'] = '-';
+        }
+    } else {
+        $row['meses_pagados'] = null;
+    }
+    $socios[] = $row;
+}
 
 $stmtSocios->close();
 $conn->close();

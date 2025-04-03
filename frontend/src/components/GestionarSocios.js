@@ -28,7 +28,31 @@ const GestionarSocios = () => {
   const [mostrarModalMes, setMostrarModalMes] = useState(false);
   const [mesSeleccionado, setMesSeleccionado] = useState("");
 
-  // Ejecutar la búsqueda automáticamente cuando cambia `busqueda` o `tipoEntidad`
+  // Función para determinar el estado de pago del socio
+  const getEstadoPago = (mesesPagados) => {
+    if (!mesesPagados) return 'rojo'; // Si no hay datos, considerar como moroso
+    
+    const meses = mesesPagados.split(',').map(mes => mes.trim().toUpperCase());
+    const mesActual = new Date().toLocaleString('default', { month: 'long' }).toUpperCase();
+    const mesesAnio = [
+      "ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO",
+      "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE"
+    ];
+    
+    const indiceMesActual = mesesAnio.indexOf(mesActual);
+    const mesesHastaActual = mesesAnio.slice(0, indiceMesActual + 1);
+    
+    const mesesDebidos = mesesHastaActual.filter(mes => !meses.includes(mes));
+    
+    if (mesesDebidos.length === 0) {
+      return 'verde'; // Pagó todos los meses
+    } else if (mesesDebidos.length <= 2) {
+      return 'amarillo'; // Debe 1 o 2 meses
+    } else {
+      return 'rojo'; // Debe 3 o más meses
+    }
+  };
+
   useEffect(() => {
     const ejecutarBusqueda = async () => {
       if (restaurandoEstado) {
@@ -327,6 +351,11 @@ const GestionarSocios = () => {
     setMostrarModalEliminar(false);
   };
 
+  const handlePagoRealizado = () => {
+    // Actualizar el estado para forzar la recarga de los datos
+    setActualizar(prev => !prev);
+  };
+
   const cerrarModal = () => {
     setMostrarModal(false);
   };
@@ -597,50 +626,59 @@ const GestionarSocios = () => {
                 </div>
               ) : sociosFiltrados.length > 0 ? (
                 <div className="scrollable">
-                  {sociosFiltrados.map((socio, index) => (
-                    <div
-                      key={index}
-                      className={`row ${filaSeleccionada === index ? "selected-row" : index % 2 === 0 ? "even-row" : "odd-row"}`}
-                      onClick={() => handleFilaSeleccionada(index, socio)}
-                    >
-                      <div className="column column-ape">{socio.apellido}</div>
-                      <div className="column column-nom">{socio.nombre}</div>
-                      <div className="column column-cat">{socio.categoria} ${socio.precio_categoria || "0"}</div>
-                      <div className="column column-mp">{socio.medio_pago}</div>
-                      <div className="column column-dom">{socio.domicilio_2}</div>
-                      <div className="column column-obs">{socio.observacion}</div>
-                      <div className="column icons-column">
-                        {filaSeleccionada === index && (
-                          <div className="icons-container">
-                            <FontAwesomeIcon
-                              icon={faEdit}
-                              className="icon"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleEditarSocio(socio.nombre, socio.apellido);
-                              }}
-                            />
-                            <FontAwesomeIcon
-                              icon={faTrash}
-                              className="icon"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleConfirmarEliminar(socio);
-                              }}
-                            />
-                            <FontAwesomeIcon
-                              icon={faDollar}
-                              className="icon"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handlePagoSocio(socio);
-                              }}
-                            />
-                          </div>
-                        )}
+                  {sociosFiltrados.map((socio, index) => {
+                    const estadoPago = getEstadoPago(socio.meses_pagados);
+                    const rowClass = filaSeleccionada === index 
+                      ? `selected-row ${estadoPago}` 
+                      : index % 2 === 0 
+                        ? `even-row ${estadoPago}` 
+                        : `odd-row ${estadoPago}`;
+                    
+                    return (
+                      <div
+                        key={index}
+                        className={`row ${rowClass}`}
+                        onClick={() => handleFilaSeleccionada(index, socio)}
+                      >
+                        <div className="column column-ape">{socio.apellido}</div>
+                        <div className="column column-nom">{socio.nombre}</div>
+                        <div className="column column-cat">{socio.categoria} ${socio.precio_categoria || "0"}</div>
+                        <div className="column column-mp">{socio.medio_pago}</div>
+                        <div className="column column-dom">{socio.domicilio_2}</div>
+                        <div className="column column-obs">{socio.observacion}</div>
+                        <div className="column icons-column">
+                          {filaSeleccionada === index && (
+                            <div className="icons-container">
+                              <FontAwesomeIcon
+                                icon={faEdit}
+                                className="icon"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleEditarSocio(socio.nombre, socio.apellido);
+                                }}
+                              />
+                              <FontAwesomeIcon
+                                icon={faTrash}
+                                className="icon"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleConfirmarEliminar(socio);
+                                }}
+                              />
+                              <FontAwesomeIcon
+                                icon={faDollar}
+                                className="icon"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handlePagoSocio(socio);
+                                }}
+                              />
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="row">
@@ -708,6 +746,7 @@ const GestionarSocios = () => {
           nombre={socioSeleccionado.nombre}
           apellido={socioSeleccionado.apellido}
           cerrarModal={cerrarModal}
+          onPagoRealizado={handlePagoRealizado}
         />
       )}
 

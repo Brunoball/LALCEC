@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 
-const ModalPagos = ({ nombre, apellido, cerrarModal }) => {
+const ModalPagos = ({ nombre, apellido, cerrarModal, onPagoRealizado }) => {
   const [mesesSeleccionados, setMesesSeleccionados] = useState([]);
   const [todosSeleccionados, setTodosSeleccionados] = useState(false);
   const [pagoExitoso, setPagoExitoso] = useState(false);
   const [precioMensual, setPrecioMensual] = useState(0); 
   const [modalVisible, setModalVisible] = useState(true); 
   const [error, setError] = useState(''); 
-  const [mesesPagados, setMesesPagados] = useState([]); // Estado para los meses pagados
+  const [mesesPagados, setMesesPagados] = useState([]);
 
   useEffect(() => {
     const obtenerMontoMensual = async () => {
@@ -32,7 +32,6 @@ const ModalPagos = ({ nombre, apellido, cerrarModal }) => {
     obtenerMontoMensual();
   }, [nombre, apellido]);
 
-  // Obtener los meses pagados por el socio
   useEffect(() => {
     const obtenerMesesPagados = async () => {
       try {
@@ -43,7 +42,7 @@ const ModalPagos = ({ nombre, apellido, cerrarModal }) => {
         });
         const result = await response.json();
         if (result.success) {
-          setMesesPagados(result.mesesPagados); // Guardar los meses pagados
+          setMesesPagados(result.mesesPagados);
         } else {
           setError(result.message);
           setTimeout(() => setError(''), 3000);
@@ -64,7 +63,7 @@ const ModalPagos = ({ nombre, apellido, cerrarModal }) => {
   }));
 
   const handleSeleccionarMes = (mes) => {
-    if (mesesPagados.includes(mes)) return; // No permitir seleccionar meses ya pagados
+    if (mesesPagados.includes(mes)) return;
     setMesesSeleccionados(prev =>
       prev.includes(mes) ? prev.filter(m => m !== mes) : [...prev, mes]
     );
@@ -86,6 +85,10 @@ const ModalPagos = ({ nombre, apellido, cerrarModal }) => {
       if (result.success) {
         setPagoExitoso(true);
         setModalVisible(false);
+        // Llamar a la función onPagoRealizado para notificar al componente padre
+        if (onPagoRealizado) {
+          onPagoRealizado();
+        }
       } else {
         setError(result.message);
         setTimeout(() => setError(''), 3000);
@@ -124,12 +127,12 @@ const ModalPagos = ({ nombre, apellido, cerrarModal }) => {
                 <title>Comprobante de Pago</title>
                 <style>
                     @page {
-                        size: A4 portrait; /* Hoja A4 en vertical */
+                        size: A4 portrait;
                         margin: 0;
                     }
                     body {
-                        width: 210mm; /* Ancho de la hoja A4 */
-                        height: 297mm; /* Alto de la hoja A4 */
+                        width: 210mm;
+                        height: 297mm;
                         margin: 0;
                         padding: 0;
                         font-family: Arial, sans-serif;
@@ -139,13 +142,13 @@ const ModalPagos = ({ nombre, apellido, cerrarModal }) => {
                         align-items: center;
                     }
                     .contenedor {
-                      width: 210mm; /* Ancho del comprobante */
-                      height: 70mm; /* Alto del comprobante */
+                      width: 210mm;
+                      height: 70mm;
                       position: absolute;
-                      top: 33%; /* Centra verticalmente */
-                      left: 50%; /* Centra horizontalmente */
-                      transform: translate(-50%, -50%) rotate(90deg); /* Centrado y rotación */
-                      transform-origin: center center; /* Punto de origen de la rotación */
+                      top: 33%;
+                      left: 50%;
+                      transform: translate(-50%, -50%) rotate(90deg);
+                      transform-origin: center center;
                       box-sizing: border-box;
                     }
                     .comprobante {
@@ -201,10 +204,7 @@ const ModalPagos = ({ nombre, apellido, cerrarModal }) => {
     } catch (error) {
         alert("Ocurrió un error al obtener los datos del socio.");
     }
-};
-
-
-
+  };
 
   return (
     <div style={styles.container}>
@@ -229,7 +229,7 @@ const ModalPagos = ({ nombre, apellido, cerrarModal }) => {
                     key={mes.id}
                     style={
                       mesesPagados.includes(mes.id)
-                        ? { backgroundColor: '#d3d3d3' } // Gris claro para los meses ya pagados
+                        ? { backgroundColor: '#d3d3d3' }
                         : null
                     }
                   >
@@ -240,7 +240,7 @@ const ModalPagos = ({ nombre, apellido, cerrarModal }) => {
                         checked={mesesSeleccionados.includes(mes.id)}
                         onChange={() => handleSeleccionarMes(mes.id)}
                         style={styles.checkboxInput}
-                        disabled={mesesPagados.includes(mes.id)} // Deshabilitar meses ya pagados
+                        disabled={mesesPagados.includes(mes.id)}
                       />
                     </td>
                   </tr>
@@ -254,7 +254,7 @@ const ModalPagos = ({ nombre, apellido, cerrarModal }) => {
               checked={todosSeleccionados}
               onChange={handleSeleccionarTodos}
               style={styles.checkboxInput}
-              disabled={mesesPagados.length === 12} // Desactivar "Seleccionar todos" si todos los meses ya fueron pagados
+              disabled={mesesPagados.length === 12}
             />
             <label style={styles.selectAllLabel}>Todos los meses</label>
             <h2 style={styles.totalAmount}>Total a pagar: ${totalPagar}</h2>
@@ -278,10 +278,6 @@ const ModalPagos = ({ nombre, apellido, cerrarModal }) => {
   );
 };
 
-
-
-
-
 const styles = {
   container: { 
     display: "flex", 
@@ -295,7 +291,6 @@ const styles = {
     height: "100vh",
     zIndex: 1000 
   },
-
   modalContent: { 
     backgroundColor: "#fff", 
     padding: "2.5rem", 
@@ -307,63 +302,51 @@ const styles = {
     minHeight:"70vh",
     textAlign: "center",
   },
-
   title: { 
     fontSize: "1.65rem", 
     fontWeight: "550", 
     color: "#4b4b4b",
     marginTop:"-15px"
   },
-
   subtitle: { 
     fontSize: "1.2rem", 
     color: "#666", 
     marginBottom: "1rem",
   },
-
   tableContainer: { 
     maxHeight: "64%", 
     overflowY: "auto", 
   },
-
   table: { 
     width: "100%", 
     borderCollapse: "collapse" 
   },
-
   th: { 
     backgroundColor: "#0288d1", 
     color: "#fff", 
     padding: "12px 15px",
     textAlign:"center",
   },
-
   td: { 
     padding: "12px 15px", 
     textAlign: "center" 
   },
-
   checkboxInput: { 
     cursor: "pointer", 
     width: "20px", 
     height: "20px" 
   },
-
-
-
   selectAllContainer: { 
     marginTop: "10px", 
     textAlign: "left",
-    display: "flex", // Para alinear los elementos en una fila
-    alignItems: "center", // Alinear verticalmente al centro
+    display: "flex",
+    alignItems: "center",
   },
-
   selectAllLabel: { 
     fontSize: "1rem", 
     color: "#333", 
     cursor: "pointer" 
   },
-
   totalAmount: {
     backgroundColor: "#bff5bd",
     color: "#333",
@@ -372,17 +355,14 @@ const styles = {
     border: "1px solid #ddd",
     fontSize: "1.1rem",
     fontWeight: "540",
-    marginLeft: "auto", // Mueve el totalAmount a la derecha
+    marginLeft: "auto",
     boxShadow: "0 4px 10px rgba(0, 0, 0, 0.1)"
   },
-
-
   buttonsContainer: { 
     display: "flex", 
     justifyContent: "space-between", 
     marginTop: "1rem",
   },
-
   cancelButton: { 
     backgroundColor: "#e74c3c", 
     color: "#fff", 
@@ -393,7 +373,6 @@ const styles = {
     border: "none", 
     outline: "none" 
   },
-
   payButton: { 
     backgroundColor: "#0288d1", 
     color: "#fff", 
@@ -404,10 +383,9 @@ const styles = {
     border: "none", 
     outline: "none", 
   },
-
   successMessage: {
-    width: "90%",  // Usar un porcentaje para el ancho
-    maxWidth: "420px", // Máximo ancho para no hacer el contenedor demasiado grande en pantallas grandes
+    width: "90%",
+    maxWidth: "420px",
     textAlign: "center",
     padding: "20px",
     border: "1px solid #ddd",
@@ -416,14 +394,11 @@ const styles = {
     boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)",
     margin: "auto",
   },
-
   successMessageh2: {
-    marginBottom: "50px", // Reducir margen para pantallas pequeñas
-    fontSize: "23px",  // Ajustar el tamaño del texto
+    marginBottom: "50px",
+    fontSize: "23px",
     color: "#2c3e50",
   },
-
-
   receiptButton: { 
       backgroundColor: "#27AE60",
       color: "#fff",
@@ -434,53 +409,11 @@ const styles = {
       border: "none",
       outline: "none",
       fontSize: "15px",
-      fontWeight: "400",  // Letra más fina
+      fontWeight: "400",
       fontFamily: "'Poppins', sans-serif",
       transition: "all 0.3s ease",
       boxShadow: "0px 4px 6px rgba(0, 0, 0, 0.2)",
   },
-
-  cancelButton: { 
-      backgroundColor: "#e74c3c",
-      color: "#fff",
-      padding: "8px 18px",
-      borderRadius: "6px",
-      cursor: "pointer",
-      width: "48%",
-      border: "none",
-      outline: "none",
-      fontSize: "15px",
-      fontWeight: "500",  // Letra más fina
-      fontFamily: "'Poppins', sans-serif",
-      transition: "all 0.3s ease",
-      boxShadow: "0px 4px 6px rgba(0, 0, 0, 0.2)",
-  },
-
-  // Efecto Hover
-  receiptButtonHover: {
-      backgroundColor: "#219150",
-      transform: "scale(1.05)",
-      boxShadow: "0px 6px 10px rgba(0, 0, 0, 0.3)",
-  },
-
-  cancelButtonHover: {
-      backgroundColor: "#c0392b",
-      transform: "scale(1.05)",
-      boxShadow: "0px 6px 10px rgba(0, 0, 0, 0.3)",
-  },
-
-  // Efecto Active (cuando se presiona)
-  receiptButtonActive: {
-      transform: "scale(0.95)",
-      boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.1)",
-  },
-
-  cancelButtonActive: {
-      transform: "scale(0.95)",
-      boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.1)",
-  },
-
-
   errorMessage: {
     backgroundColor: "#f8d7da",
     color: "#721c24",

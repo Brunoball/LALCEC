@@ -25,6 +25,10 @@ $tipo = $_GET['tipo'] ?? 'socios'; // Default a 'socios'
 // Determinar el valor de flag según el tipo de entidad
 $flag = ($tipo === 'empresa') ? 1 : 0;
 
+// Verificar si la tabla de pagos existe y tiene datos
+$checkPagosTable = $conn->query("SHOW TABLES LIKE 'pagos'");
+$tienePagos = ($checkPagosTable->num_rows > 0);
+
 // Obtener todos los socios o empresas según el tipo de entidad
 $query = "
     SELECT 
@@ -41,19 +45,47 @@ $query = "
         s.email,
         c.Nombre_categoria AS categoria,
         c.Precio_Categoria AS precio_categoria,
-        m.Medio_Pago AS medio_pago
+        m.Medio_Pago AS medio_pago";
+
+// Agregar meses pagados solo si la tabla de pagos existe
+if ($tienePagos) {
+    $query .= ",
+        GROUP_CONCAT(DISTINCT p.idMes ORDER BY p.idMes SEPARATOR ', ') as meses_pagados";
+}
+
+$query .= "
     FROM 
         socios s
     LEFT JOIN 
         categorias c ON s.idCategoria = c.idCategorias
     LEFT JOIN 
-        mediospago m ON s.idMedios_Pago = m.IdMedios_pago
-    WHERE 
-        s.flag = ?
-    ORDER BY 
-        s.apellido ASC, s.nombre ASC
-";
+        mediospago m ON s.idMedios_Pago = m.IdMedios_pago";
 
+// Agregar JOIN con pagos solo si la tabla existe
+if ($tienePagos) {
+    // Verificar el nombre correcto de la columna (idSocio o idSocios)
+    $checkColumn = $conn->query("SHOW COLUMNS FROM pagos LIKE 'idSocios'");
+    $columnaPagos = ($checkColumn->num_rows > 0) ? 'idSocios' : 'idSocio';
+    
+    $query .= "
+    LEFT JOIN
+        pagos p ON s.idSocios = p.{$columnaPagos}";
+}
+
+$query .= "
+    WHERE 
+        s.flag = ?";
+
+// Agregar GROUP BY solo si se incluyó la tabla de pagos
+if ($tienePagos) {
+    $query .= "
+    GROUP BY
+        s.idSocios";
+}
+
+$query .= "
+    ORDER BY 
+        s.apellido ASC, s.nombre ASC";
 
 $stmt = $conn->prepare($query);
 
@@ -72,6 +104,25 @@ $result = $stmt->get_result();
 
 $socios = [];
 while ($row = $result->fetch_assoc()) {
+    // Procesar meses pagados si existen
+    if ($tienePagos) {
+        if (!empty($row['meses_pagados'])) {
+            $mesesNumeros = explode(', ', $row['meses_pagados']);
+            $mesesNombres = array_map(function($mes) {
+                $nombresMeses = [
+                    1 => 'Enero', 2 => 'Febrero', 3 => 'Marzo', 4 => 'Abril',
+                    5 => 'Mayo', 6 => 'Junio', 7 => 'Julio', 8 => 'Agosto',
+                    9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre', 12 => 'Diciembre'
+                ];
+                return $nombresMeses[(int)$mes] ?? $mes;
+            }, $mesesNumeros);
+            $row['meses_pagados'] = implode(', ', $mesesNombres);
+        } else {
+            $row['meses_pagados'] = '-';
+        }
+    } else {
+        $row['meses_pagados'] = 'No disponible';
+    }
     $socios[] = $row;
 }
 
@@ -103,10 +154,28 @@ function obtenerCategoriasYMediosPago($conn) {
 
 $extraData = obtenerCategoriasYMediosPago($conn);
 
+// Obtener nombres de meses para mostrar en el frontend si es necesario
+$nombresMeses = [
+    ['id' => 1, 'nombre' => 'Enero'],
+    ['id' => 2, 'nombre' => 'Febrero'],
+    ['id' => 3, 'nombre' => 'Marzo'],
+    ['id' => 4, 'nombre' => 'Abril'],
+    ['id' => 5, 'nombre' => 'Mayo'],
+    ['id' => 6, 'nombre' => 'Junio'],
+    ['id' => 7, 'nombre' => 'Julio'],
+    ['id' => 8, 'nombre' => 'Agosto'],
+    ['id' => 9, 'nombre' => 'Septiembre'],
+    ['id' => 10, 'nombre' => 'Octubre'],
+    ['id' => 11, 'nombre' => 'Noviembre'],
+    ['id' => 12, 'nombre' => 'Diciembre']
+];
+
 echo json_encode([
     "socios" => $socios,
     "categorias" => $extraData["categorias"],
-    "mediosPago" => $extraData["mediosPago"]
+    "mediosPago" => $extraData["mediosPago"],
+    "meses" => $nombresMeses,
+    "tienePagos" => $tienePagos
 ]);
 
 $conn->close();

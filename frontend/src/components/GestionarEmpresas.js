@@ -25,8 +25,32 @@ const GestionarEmpresas = () => {
   const [cargando, setCargando] = useState(false);
   const [restaurandoEstado, setRestaurandoEstado] = useState(true);
   const [mostrarModalMes, setMostrarModalMes] = useState(false);
-  const [mesSeleccionado, setMesSeleccionado] = useState(""); 
+  const [mesSeleccionado, setMesSeleccionado] = useState("");
 
+  // Función para determinar el estado de pago de la empresa
+  const getEstadoPago = (mesesPagados) => {
+    if (!mesesPagados) return 'rojo'; // Si no hay datos, considerar como moroso
+    
+    const meses = mesesPagados.split(',').map(mes => mes.trim().toUpperCase());
+    const mesActual = new Date().toLocaleString('default', { month: 'long' }).toUpperCase();
+    const mesesAnio = [
+      "ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO",
+      "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE"
+    ];
+    
+    const indiceMesActual = mesesAnio.indexOf(mesActual);
+    const mesesHastaActual = mesesAnio.slice(0, indiceMesActual + 1);
+    
+    const mesesDebidos = mesesHastaActual.filter(mes => !meses.includes(mes));
+    
+    if (mesesDebidos.length === 0) {
+      return 'verde'; // Pagó todos los meses
+    } else if (mesesDebidos.length <= 2) {
+      return 'amarillo'; // Debe 1 o 2 meses
+    } else {
+      return 'rojo'; // Debe 3 o más meses
+    }
+  };
 
   // Búsqueda automática cuando cambian `busqueda` o `tipoEntidad`
   useEffect(() => {
@@ -242,6 +266,11 @@ const GestionarEmpresas = () => {
     setActualizar(prev => !prev);
   };
 
+  const handlePagoRealizado = () => {
+    // Actualizar el estado para forzar la recarga de los datos
+    setActualizar(prev => !prev);
+  };
+
   const handleSeleccion = async (e) => {
     const selectedValue = e.target.value;
 
@@ -306,7 +335,7 @@ const GestionarEmpresas = () => {
 
         const data = await response.json();
 
-        if (data.success) {  // Verifica el booleano en lugar del mensaje
+        if (data.success) {
             setEmpresas(empresas.filter(empresa => empresa.idEmp !== empresaSeleccionada.idEmp));
             setEmpresasFiltradas(empresasFiltradas.filter(empresa => empresa.idEmp !== empresaSeleccionada.idEmp));
             setMostrarModalEliminar(false);
@@ -318,7 +347,6 @@ const GestionarEmpresas = () => {
         alert("Hubo un problema al eliminar la empresa.");
     }
   };
-
 
   const handleConfirmarEliminar = (empresa) => {
     setEmpresaSeleccionada(empresa);
@@ -361,22 +389,6 @@ const GestionarEmpresas = () => {
 
     setErrorMessage("");
   };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
   const abrirModalMes = () => {
     if (empresasFiltradas.length === 0) {
@@ -516,36 +528,14 @@ const GestionarEmpresas = () => {
     }
   };
 
-
   const meses = [
     "ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO",
     "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE"
   ];
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   return (
     <div className="empresa-container">
       <div className="empresa-box">
-
-
-
         <div className="front-row-emp">
           <h2 className="empresa-title">Gestionar Empresas</h2>
           <div className="front-row">
@@ -597,20 +587,12 @@ const GestionarEmpresas = () => {
             {error && <p className="error">{error}</p>}
           </div>
         </div>
-  
-
-
-
-
-
 
         {errorMessage && (
           <div className="error-message-emp">
             {errorMessage}
           </div>
         )}
-
-        {error && <p className="error-message">{error}</p>}
 
         <div className="empresas-list">
           <div className="box-table">
@@ -634,10 +616,17 @@ const GestionarEmpresas = () => {
               ) : empresasFiltradas.length > 0 ? (
                 <div className="scrollable">
                   {empresasFiltradas.map((empresa, index) => {
+                    const estadoPago = getEstadoPago(empresa.meses_pagados);
+                    const rowClass = filaSeleccionada === index 
+                      ? `selected-row ${estadoPago}` 
+                      : index % 2 === 0 
+                        ? `even-row ${estadoPago}` 
+                        : `odd-row ${estadoPago}`;
+                    
                     return (
                       <div
                         key={index}
-                        className={`row ${filaSeleccionada === index ? "selected-row" : index % 2 === 0 ? "even-row" : "odd-row"}`}
+                        className={`row ${rowClass}`}
                         onClick={() => handleFilaSeleccionada(index, empresa)}
                       >
                         <div className="column column-razon">{empresa.razon_social}</div>
@@ -771,6 +760,7 @@ const GestionarEmpresas = () => {
         <ModalPagosEmpresas
           razonSocial={empresaSeleccionada.razon_social}
           cerrarModal={cerrarModal}
+          onPagoRealizado={handlePagoRealizado}
         />
       )}
     </div>

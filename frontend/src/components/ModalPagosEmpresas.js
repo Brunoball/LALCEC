@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from "react";
 
-const ModalPagosEmpresas = ({ razonSocial, cerrarModal }) => {
+const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
   const [mesesSeleccionados, setMesesSeleccionados] = useState([]);
   const [todosSeleccionados, setTodosSeleccionados] = useState(false);
   const [pagoExitoso, setPagoExitoso] = useState(false);
   const [precioMensual, setPrecioMensual] = useState(0);
   const [modalVisible, setModalVisible] = useState(true);
   const [error, setError] = useState("");
-  const [mesesPagados, setMesesPagados] = useState([]); // Estado para los meses pagados
+  const [mesesPagados, setMesesPagados] = useState([]);
 
   useEffect(() => {
     const obtenerMontoMensual = async () => {
       try {
-        const response = await fetch("https://lalcec.3devsnet.com/api/Monto_pago_empresas.php", {
+        const response = await fetch("http://localhost:3001/Monto_pago_empresas.php", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ razonSocial, tipoEntidad: "empresa" }),
@@ -33,18 +33,17 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal }) => {
     obtenerMontoMensual();
   }, [razonSocial]);
 
-  // Obtener los meses pagados por la empresa
   useEffect(() => {
     const obtenerMesesPagados = async () => {
       try {
-        const response = await fetch("https://lalcec.3devsnet.com/api/obtener_meses_pagos_empresas.php", {
+        const response = await fetch("http://localhost:3001/obtener_meses_pagos_empresas.php", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ razonSocial, tipoEntidad: "empresa" })
         });
         const result = await response.json();
         if (result.success) {
-          setMesesPagados(result.mesesPagados); // Guardar los meses pagados
+          setMesesPagados(result.mesesPagados);
         } else {
           setError(result.message);
           setTimeout(() => setError(''), 3000);
@@ -57,19 +56,17 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal }) => {
     obtenerMesesPagados();
   }, [razonSocial]);
 
-  // Lista de meses
   const meses = [...Array(12)].map((_, i) => ({
     id: i + 1,
     nombre: new Date(0, i).toLocaleString("es", { month: "long" }).toUpperCase(),
   }));
 
-  // Calcular total a pagar
   const totalPagar = mesesSeleccionados.length * precioMensual;
 
   const handleSeleccionarMes = (mes) => {
-    if (mesesPagados.includes(mes)) return; // No permitir seleccionar meses ya pagados
-    setMesesSeleccionados((prev) =>
-      prev.includes(mes) ? prev.filter((m) => m !== mes) : [...prev, mes]
+    if (mesesPagados.includes(mes)) return;
+    setMesesSeleccionados(prev =>
+      prev.includes(mes) ? prev.filter(m => m !== mes) : [...prev, mes]
     );
   };
 
@@ -80,15 +77,23 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal }) => {
 
   const handleRealizarPago = async () => {
     try {
-      const response = await fetch("https://lalcec.3devsnet.com/api/registrar_pagos_empresas.php", {
+      const response = await fetch("http://localhost:3001/registrar_pagos_empresas.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ razonSocial, meses: mesesSeleccionados, tipoEntidad: "empresa" })
+        body: JSON.stringify({ 
+          razonSocial, 
+          meses: mesesSeleccionados, 
+          tipoEntidad: "empresa" 
+        })
       });
       const result = await response.json();
       if (result.success) {
         setPagoExitoso(true);
         setModalVisible(false);
+        // Notificar al componente padre para actualizar
+        if (onPagoRealizado) {
+          onPagoRealizado();
+        }
       } else {
         setError(result.message);
         setTimeout(() => setError(''), 3000);
@@ -101,121 +106,85 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal }) => {
 
   const handleImprimirComprobante = async () => {
     try {
-        const response = await fetch("https://lalcec.3devsnet.com/api/comprobante_pago_empresa.php", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ razonSocial, tipoEntidad: "empresa" })
-        });
+      const response = await fetch("http://localhost:3001/comprobante_pago_empresa.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ razonSocial, tipoEntidad: "empresa" })
+      });
 
-        const result = await response.json();
+      const result = await response.json();
 
-        if (!result.success) {
-            alert("Error al obtener los datos de la empresa: " + result.message);
-            return;
-        }
+      if (!result.success) {
+        alert("Error al obtener los datos de la empresa: " + result.message);
+        return;
+      }
 
-        // Asegúrate de que estás accediendo a domicilio_2 correctamente
-        const { domicilio_2, categoria, cobrador, precioCategoria } = result;
+      const { domicilio_2, categoria, cobrador, precioCategoria } = result;
+      const mesesPagadosStr = meses
+        .filter(m => mesesSeleccionados.includes(m.id))
+        .map(m => m.nombre)
+        .join(", ");
 
-        const mesesPagados = meses
-            .filter(m => mesesSeleccionados.includes(m.id))
-            .map(m => m.nombre)
-            .join(", ");
+      const comprobanteHTML = `
+        <html>
+        <head>
+          <title>Comprobante de Pago</title>
+          <style>
+            @page { size: A4 portrait; margin: 0; }
+            body {
+              width: 210mm; height: 297mm; margin: 0; padding: 0;
+              font-family: Arial, sans-serif; font-size: 12px;
+              display: flex; justify-content: center; align-items: center;
+            }
+            .contenedor {
+              width: 210mm; height: 70mm; position: absolute;
+              top: 33%; left: 50%;
+              transform: translate(-50%, -50%) rotate(90deg);
+              transform-origin: center center; box-sizing: border-box;
+            }
+            .comprobante {
+              width: 100%; height: 100%; display: flex; box-sizing: border-box;
+            }
+            .talon-empresa {
+              width: 60%; padding-left: 20mm; padding-top: 13mm;
+            }
+            .talon-cobrador {
+              width: 60mm; padding-left: 10mm; padding-top: 16mm;
+            }
+            p { margin-top: 5px; font-size: 13px; }
+          </style>
+        </head>
+        <body>
+          <div class="contenedor">
+            <div class="comprobante">
+              <div class="talon-empresa">
+                <p><strong>Empresa:</strong> ${razonSocial}</p>
+                <p><strong>Domicilio:</strong> ${domicilio_2}</p>
+                <p><strong>Categoría / Monto:</strong> ${categoria} / $${totalPagar}</p>
+                <p><strong>Período:</strong> ${mesesPagadosStr}</p>
+                <p><strong>Cobrador:</strong> ${cobrador}</p>
+                <p>Por consultas comunicarse al 03564-15205778</p>
+              </div>
+              <div class="talon-cobrador">
+                <p><strong>Empresa:</strong> ${razonSocial}</p>
+                <p><strong>Categoría / Monto:</strong> ${categoria} / $${totalPagar}</p>
+                <p><strong>Período:</strong> ${mesesPagadosStr}</p>
+                <p><strong>Cobrador:</strong> ${cobrador}</p>
+              </div>
+            </div>
+          </div>
+        </body>
+        </html>
+      `;
 
-        const comprobanteHTML = `
-            <html>
-            <head>
-                <title>Comprobante de Pago</title>
-                <style>
-                    @page {
-                        size: A4 portrait;
-                        margin: 0;
-                    }
-                    body {
-                        width: 210mm;
-                        height: 297mm;
-                        margin: 0;
-                        padding: 0;
-                        font-family: Arial, sans-serif;
-                        font-size: 12px;
-                        display: flex;
-                        justify-content: center;
-                        align-items: center;
-                    }
-                    .contenedor {
-                        width: 210mm;
-                        height: 70mm;
-                        position: absolute;
-                        top: 33%;
-                        left: 50%;
-                        transform: translate(-50%, -50%) rotate(90deg);
-                        transform-origin: center center;
-                        box-sizing: border-box;
-                    }
-                    .comprobante {
-                        width: 100%;
-                        height: 100%;
-                        display: flex;
-                        box-sizing: border-box;
-                    }
-                    .talon-empresa {
-                        width: 60%;
-                        padding-left: 20mm;
-                        padding-top: 13mm;
-                    }
-                    .talon-cobrador {
-                        width: 60mm;
-                        padding-left: 10mm;
-                        padding-top: 16mm;
-                    }
-                    p {
-                        margin-top: 5px;
-                        font-size: 13px;
-                    }
-                </style>
-            </head>
-            <body>
-                <div class="contenedor">
-                    <div class="comprobante">
-                        <div class="talon-empresa">
-                            <p><strong>Empresa:</strong> ${razonSocial}</p>
-                            <p><strong>Domicilio:</strong> ${domicilio_2}</p> 
-                            <p><strong>Categoría / Monto:</strong> ${categoria} / $${totalPagar}</p>
-                            <p><strong>Período:</strong> ${mesesPagados}</p>
-                            <p><strong>Cobrador:</strong> ${cobrador}</p>
-                            <p>Por consultas comunicarse al 03564-15205778</p>
-                        </div>
-                        <div class="talon-cobrador">
-                            <p><strong>Empresa:</strong> ${razonSocial}</p>
-                            <p><strong>Categoría / Monto:</strong> ${categoria} / $${totalPagar}</p>
-                            <p><strong>Período:</strong> ${mesesPagados}</p>
-                            <p><strong>Cobrador:</strong> ${cobrador}</p>
-                        </div>
-                    </div>
-                </div>
-            </body>
-            </html>
-        `;
-
-        const ventana = window.open('', '', 'width=600,height=400');
-        ventana.document.write(comprobanteHTML);
-        ventana.document.close();
-        ventana.print();
+      const ventana = window.open('', '', 'width=600,height=400');
+      ventana.document.write(comprobanteHTML);
+      ventana.document.close();
+      ventana.print();
     } catch (error) {
-        alert("Ocurrió un error al obtener los datos de la empresa.");
+      alert("Ocurrió un error al obtener los datos de la empresa.");
     }
   };
-
-
-
-
-
-
-
-
-
-
-
 
   return (
     <div style={styles.container}>
@@ -238,11 +207,7 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal }) => {
                 {meses.map((mes) => (
                   <tr
                     key={mes.id}
-                    style={
-                      mesesPagados.includes(mes.id)
-                        ? { backgroundColor: '#d3d3d3' } // Gris claro para los meses ya pagados
-                        : null
-                    }
+                    style={mesesPagados.includes(mes.id) ? { backgroundColor: '#d3d3d3' } : null}
                   >
                     <td style={styles.td}>{mes.nombre}</td>
                     <td style={styles.td}>
@@ -251,7 +216,7 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal }) => {
                         checked={mesesSeleccionados.includes(mes.id)}
                         onChange={() => handleSeleccionarMes(mes.id)}
                         style={styles.checkboxInput}
-                        disabled={mesesPagados.includes(mes.id)} // Deshabilitar meses ya pagados
+                        disabled={mesesPagados.includes(mes.id)}
                       />
                     </td>
                   </tr>
@@ -266,7 +231,7 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal }) => {
               checked={todosSeleccionados}
               onChange={handleSeleccionarTodos}
               style={styles.checkboxInput}
-              disabled={mesesPagados.length === 12} // Desactivar "Seleccionar todos" si todos los meses ya fueron pagados
+              disabled={mesesPagados.length === 12}
             />
             <label style={styles.selectAllLabel}>Todos los meses</label>
             <h2 style={styles.totalAmount}>Total a pagar: ${totalPagar}</h2>
@@ -289,7 +254,6 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal }) => {
     </div>
   );
 };
-
 
 
 

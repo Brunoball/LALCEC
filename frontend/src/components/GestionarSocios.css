@@ -655,9 +655,30 @@
 
 
 
-
-
-
+  .row.verde {
+    background-color: #a5c8a0; /* Verde suave y elegante */
+  }
+  
+  .row.amarillo {
+    background-color: #f4d27a; /* Amarillo con tono cálido y refinado */
+  }
+  
+  .row.rojo {
+    background-color: #e0a5a5; /* Rojo más apagado y sutil */
+  }
+  
+  .selected-row.verde {
+    background-color: #8fb490; /* Verde un poco más oscuro para selección */
+  }
+  
+  .selected-row.amarillo {
+    background-color: #e5c069; /* Amarillo más equilibrado para selección */
+  }
+  
+  .selected-row.rojo {
+    background-color: #d49595; /* Rojo con menor saturación para selección */
+  }
+  
 
 
 

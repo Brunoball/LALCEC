@@ -20,10 +20,14 @@ if (!preg_match('/^[A-Za-z]$/', $letra)) {
     die(json_encode(["error" => "Letra no válida"]));
 }
 
+// Verificar si la tabla de pagos existe
+$checkPagosTable = $conn->query("SHOW TABLES LIKE 'pagos'");
+$tienePagos = ($checkPagosTable->num_rows > 0);
+
 // Determinar el valor de flag según el tipo de entidad
 $flag = ($tipo === 'empresa') ? 1 : 0;
 
-// Consulta SQL para obtener los socios o empresas que comienzan con la letra especificada
+// Construir la consulta base
 $sql = "
     SELECT 
         s.idSocios AS id,
@@ -35,7 +39,16 @@ $sql = "
         s.observacion,
         c.nombre_categoria AS categoria, 
         c.precio_categoria AS precio_categoria,
-        m.medio_pago 
+        m.medio_pago";
+
+// Agregar meses pagados si la tabla existe
+if ($tienePagos) {
+    $sql .= ",
+        (SELECT GROUP_CONCAT(DISTINCT p.idMes ORDER BY p.idMes SEPARATOR ', ') 
+         FROM pagos p WHERE p.idSocios = s.idSocios) as meses_pagados";
+}
+
+$sql .= "
     FROM 
         socios s
     LEFT JOIN 
@@ -45,8 +58,7 @@ $sql = "
     WHERE 
         s.flag = ? AND s.apellido LIKE ?
     ORDER BY 
-        s.apellido ASC, s.nombre ASC
-";
+        s.apellido ASC, s.nombre ASC";
 
 $stmt = $conn->prepare($sql);
 
@@ -63,6 +75,25 @@ $data = array();
 
 if ($result->num_rows > 0) {
     while ($row = $result->fetch_assoc()) {
+        // Procesar meses pagados si existen
+        $meses_pagados = null;
+        if ($tienePagos && isset($row['meses_pagados'])) {
+            if (!empty($row['meses_pagados'])) {
+                $mesesNumeros = explode(', ', $row['meses_pagados']);
+                $mesesNombres = array_map(function($mes) {
+                    $nombresMeses = [
+                        1 => 'Enero', 2 => 'Febrero', 3 => 'Marzo', 4 => 'Abril',
+                        5 => 'Mayo', 6 => 'Junio', 7 => 'Julio', 8 => 'Agosto',
+                        9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre', 12 => 'Diciembre'
+                    ];
+                    return $nombresMeses[(int)$mes] ?? $mes;
+                }, $mesesNumeros);
+                $meses_pagados = implode(', ', $mesesNombres);
+            } else {
+                $meses_pagados = '-';
+            }
+        }
+
         $data[] = [
             "id" => $row['id'],
             "nombre" => $row['nombre'],
@@ -73,7 +104,8 @@ if ($result->num_rows > 0) {
             "observacion" => $row['observacion'],
             "categoria" => $row['categoria'],
             "precio_categoria" => $row['precio_categoria'],
-            "medio_pago" => $row['medio_pago']
+            "medio_pago" => $row['medio_pago'],
+            "meses_pagados" => $meses_pagados
         ];
     }
 }
