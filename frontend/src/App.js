@@ -15,6 +15,10 @@ import ModalPagos from "./components/ModalPagos"; // Asegúrate de importar Moda
 import ModalPagosEmpresas from "./components/ModalPagosEmpresas";
 import AgregarCategoria from "./components/agregar_categoria"; 
 import EditarCategoria from "./components/editar_categoria"; 
+import DashboardContable from './components/DashboardContable';
+
+
+
 
 const App = () => {
   return (
@@ -36,6 +40,7 @@ const App = () => {
         <Route path="/ModalPagosEmpresas/:razon_social" element={<ModalPagosEmpresas />} />
         <Route path="/agregar_categoria" element={<AgregarCategoria />} />
         <Route path="/editar_categoria/:nombre_categoria" element={<EditarCategoria />} />
+        <Route path="/DashboardContable" element={<DashboardContable />} />
 
       </Routes>
     </BrowserRouter>

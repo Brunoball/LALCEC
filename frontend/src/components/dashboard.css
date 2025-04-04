@@ -1,0 +1,97 @@
+/* dashboard.css */
+
+body {
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f5f5f5;
+    color: #333;
+  }
+  
+  .dashboard-container {
+    padding: 30px;
+    background-color: #fff;
+    border-radius: 20px;
+    max-width: 1000px;
+    margin: 40px auto;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .dashboard-title {
+    font-size: 2rem;
+    margin-bottom: 20px;
+    color: #ff7b00;
+  }
+  
+  .card {
+    background-color: #fefefe;
+    border: 1px solid #ddd;
+    border-left: 5px solid #ff7b00;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
+  
+  .card .icon {
+    font-size: 30px;
+    color: #ff7b00;
+  }
+  
+  .card .info {
+    flex-grow: 1;
+  }
+  
+  .card .info-title {
+    font-size: 0.9rem;
+    color: #777;
+  }
+  
+  .card .info-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+  }
+  
+  .section {
+    background-color: #f9f9f9;
+    padding: 20px;
+    border-radius: 12px;
+    margin-top: 20px;
+  }
+  
+  .section h2 {
+    color: #333;
+    margin-bottom: 10px;
+    font-size: 1.2rem;
+  }
+  
+  .section ul {
+    list-style: none;
+    padding: 0;
+  }
+  
+  .section li {
+    padding: 8px 0;
+    border-bottom: 1px solid #ddd;
+    display: flex;
+    justify-content: space-between;
+    color: #444;
+  }
+  
+  .back-button {
+    margin-top: 30px;
+    background-color: #ff7b00;
+    border: none;
+    padding: 10px 20px;
+    color: white;
+    font-weight: bold;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .back-button:hover {
+    background-color: #e56e00;
+  }
+  

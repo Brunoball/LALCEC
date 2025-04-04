@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faUsers, faDollarSign, faTags, faSignOutAlt, faBuilding, faUserPlus } from "@fortawesome/free-solid-svg-icons";
+import { faUsers, faDollarSign, faTags, faSignOutAlt, faBuilding, faUserPlus, faFileInvoiceDollar } from "@fortawesome/free-solid-svg-icons";
 import logoLalcec from "./logo_lalcec.jpeg";
 
 const PaginaPrincipal = () => {
@@ -42,6 +42,9 @@ const PaginaPrincipal = () => {
 
   const handleRedireccionarRegistro = () => {
     navigate("/registro");
+  };
+  const handleRedireccionarContable = () => {
+    navigate("/DashboardContable");
   };
 
   const handleCerrarSesion = () => {
@@ -95,11 +98,16 @@ const PaginaPrincipal = () => {
           <FontAwesomeIcon icon={faUserPlus} style={styles.iconButton} />
           <span style={styles.buttonText}>Registro</span>
         </button>
+        <button style={styles.button} onClick={handleRedireccionarContable}>
+          <FontAwesomeIcon icon={faFileInvoiceDollar} style={styles.iconButton} />
+          <span style={styles.buttonText}>Contable</span>
+        </button>
 
         <button style={styles.logoutButton} onClick={handleCerrarSesion}>
           <FontAwesomeIcon icon={faSignOutAlt} style={styles.iconButton} />
           <span style={styles.buttonText}>Cerrar Sesión</span>
         </button>
+        
       </div>
 
       {showModal && (
