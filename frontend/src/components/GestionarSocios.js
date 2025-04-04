@@ -32,29 +32,6 @@ const GestionarSocios = () => {
   const [mesesPagados, setMesesPagados] = useState([]);
   const [mesesAdeudados, setMesesAdeudados] = useState([]);
 
-  const getEstadoPago = (mesesPagados) => {
-    if (!mesesPagados) return 'rojo';
-    
-    const meses = mesesPagados.split(',').map(mes => mes.trim().toUpperCase());
-    const mesActual = new Date().toLocaleString('default', { month: 'long' }).toUpperCase();
-    const mesesAnio = [
-      "ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO",
-      "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE"
-    ];
-    
-    const indiceMesActual = mesesAnio.indexOf(mesActual);
-    const mesesHastaActual = mesesAnio.slice(0, indiceMesActual + 1);
-    
-    const mesesDebidos = mesesHastaActual.filter(mes => !meses.includes(mes));
-    
-    if (mesesDebidos.length === 0) {
-      return 'verde';
-    } else if (mesesDebidos.length <= 2) {
-      return 'amarillo';
-    } else {
-      return 'rojo';
-    }
-  };
 
   useEffect(() => {
     const ejecutarBusqueda = async () => {
@@ -367,49 +344,53 @@ const GestionarSocios = () => {
     setMostrarModal(true);
   };
 
-  const handleMostrarInfoSocio = async (socio) => {
-    try {
-        setCargando(true);
-        console.log(`Solicitando datos para socio ID: ${socio.id}`);
 
-        const response = await fetch(`http://localhost:3001/obtener_info_socio.php?id=${socio.id}`);
-        
-        if (!response.ok) {
-            throw new Error(`Error HTTP: ${response.status}`);
-        }
-
-        const result = await response.json();
-        console.log("Respuesta completa del backend:", result); // Depuración
-
-        if (!result.success) {
-            throw new Error(result.message || 'Error en los datos recibidos');
-        }
-
-        const data = result.data;
-        console.log('Datos del socio:', data);
-
-        // Procesar meses pagados
-        const mesesPagados = data.meses_pagados ? data.meses_pagados.split(',') : [];
-        
-        // Calcular meses adeudados
-        const mesesAnio = ["ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO", 
-                           "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE"];
-        const mesesAdeudados = mesesAnio.filter(mes => !mesesPagados.includes(mes));
-
-        // Actualizar estados
-        setInfoSocio(data);
-        setMesesPagados(mesesPagados);
-        setMesesAdeudados(mesesAdeudados);
-        setMostrarModalInfo(true);
-
-    } catch (error) {
-        console.error('Error al obtener información:', error);
-        setErrorMessage(`Error: ${error.message}`);
-        setTimeout(() => setErrorMessage(''), 5000);
-    } finally {
-        setCargando(false);
+  const getEstadoPago = (mesesPagados) => {
+    if (!mesesPagados) return 'rojo';
+    
+    const meses = mesesPagados.split(',').map(mes => mes.trim().toUpperCase());
+    const mesActual = new Date().toLocaleString('default', { month: 'long' }).toUpperCase();
+    const mesesAnio = [
+      "ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO",
+      "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE"
+    ];
+    
+    const indiceMesActual = mesesAnio.indexOf(mesActual);
+    const mesesHastaActual = mesesAnio.slice(0, indiceMesActual + 1);
+    
+    const mesesDebidos = mesesHastaActual.filter(mes => !meses.includes(mes));
+    
+    if (mesesDebidos.length === 0) {
+      return 'verde';
+    } else if (mesesDebidos.length <= 2) {
+      return 'amarillo';
+    } else {
+      return 'rojo';
     }
-};
+  };
+
+
+
+  const handleMostrarInfoSocio = (socio) => {
+    setCargando(true);
+    try {
+      // Normalizar los meses pagados: mayúsculas y sin espacios
+      const mesesPagados = socio.meses_pagados
+        ? socio.meses_pagados.split(',').map(mes => mes.trim().toUpperCase())
+        : [];
+  
+      setInfoSocio(socio);
+      setMesesPagados(mesesPagados); // ya está bien para pintar los meses
+      setMostrarModalInfo(true);
+    } catch (error) {
+      console.error('Error al procesar información:', error);
+      setErrorMessage(`Error: ${error.message}`);
+      setTimeout(() => setErrorMessage(''), 5000);
+    } finally {
+      setCargando(false);
+    }
+  };
+  
 
 
 
@@ -825,7 +806,7 @@ const GestionarSocios = () => {
             </div>
 
             <div className="info-section">
-              <h4>Meses Adeudados</h4>
+              <h4></h4>
               {mesesAdeudados.length > 0 ? (
                 <div className="meses-container">
                   {mesesAdeudados.map((mes, index) => (
@@ -833,7 +814,7 @@ const GestionarSocios = () => {
                   ))}
                 </div>
               ) : (
-                <p>No hay meses adeudados</p>
+                <p></p>
               )}
             </div>
             
@@ -849,46 +830,98 @@ const GestionarSocios = () => {
         </div>
       )}
 
+
+
       {mostrarModalInfo && infoSocio && (
-        <div className="modal">
-          <div className="modal-content">
-            <h3 className="modal-title">Información del Socio</h3>
-            <div className="info-section">
+        <div className="modal-socio">
+          <div className="modal-socio-content">
+            <h3 className="modal-socio-title">Información del Socio</h3>
+            <div className="modal-socio-info">
               <p><strong>Nombre:</strong> {infoSocio.nombre} {infoSocio.apellido}</p>
-              <p><strong>DNI:</strong> {infoSocio.dni}</p>
+              <p><strong>DNI:</strong> {infoSocio.DNI}</p>
               <p><strong>Teléfono:</strong> {infoSocio.telefono}</p>
-              <p><strong>Domicilio:</strong> {infoSocio.domicilio_1}</p>
+              <p><strong>Domicilio:</strong> {infoSocio.domicilio} {infoSocio.numero}</p>
               <p><strong>Domicilio Cobro:</strong> {infoSocio.domicilio_2}</p>
               <p><strong>Categoría:</strong> {infoSocio.categoria} (${infoSocio.precio_categoria})</p>
               <p><strong>Medio de Pago:</strong> {infoSocio.medio_pago}</p>
               <p><strong>Observaciones:</strong> {infoSocio.observacion}</p>
-              
-              <h4>Meses Pagados</h4>
-              {mesesPagados.length > 0 ? (
-                <div className="meses-container">
-                  {mesesPagados.map((mes, index) => (
-                    <span key={index} className="mes-pagado">{mes}</span>
-                  ))}
-                </div>
-              ) : (
-                <p>No hay meses pagados registrados</p>
-              )}
-              
-              <h4>Meses Adeudados</h4>
-              {mesesAdeudados.length > 0 ? (
-                <div className="meses-container">
-                  {mesesAdeudados.map((mes, index) => (
-                    <span key={index} className="mes-adeudado">{mes}</span>
-                  ))}
-                </div>
-              ) : (
-                <p>No hay meses adeudados</p>
-              )}
             </div>
-            
-            <div className="modal-buttons">
+
+            <div className="modal-socio-meses">
+              <h4 className="modal-socio-subtitle">
+                Estado de Meses: 
+                <span className="modal-socio-estado">
+                  {(() => {
+                    const meses = [
+                      "ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO",
+                      "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE"
+                    ];
+
+                    const mesActual = new Date().getMonth(); // 0 = enero
+                    const mesesHastaAhora = meses.slice(0, mesActual + 1); // Desde enero hasta el mes actual
+
+                    // Filtramos cuántos de esos meses fueron pagados
+                    const mesesPagadosHastaAhora = mesesHastaAhora.filter(mes =>
+                      mesesPagados.includes(mes)
+                    );
+
+                    const cantidadEsperada = mesesHastaAhora.length;
+                    const cantidadPagosHastaAhora = mesesPagadosHastaAhora.length;
+                    const pagosTotales = mesesPagados.length;
+
+                    const deuda = cantidadEsperada - cantidadPagosHastaAhora;
+
+                    // Si debe algún mes hasta el actual, se considera deuda
+                    if (deuda > 0) {
+                      if (deuda === 1 || deuda === 2) {
+                        return `⚠️ Atrasado ${deuda} mes${deuda > 1 ? 'es' : ''}`;
+                      }
+                      return `🚫 Atrasado (${deuda} meses)`;
+                    }
+
+                    // Si pagó hasta el actual, evaluamos si pagó el año completo
+                    if (pagosTotales === 12) {
+                      return "🎯 Año completo";
+                    }
+
+                    // Si pagó más de lo esperado, está adelantado
+                    const adelantado = pagosTotales - cantidadEsperada;
+                    if (adelantado > 0) {
+                      return `📅 Adelantado (${adelantado} mes${adelantado > 1 ? 'es' : ''})`;
+                    }
+
+                    // Si pagó lo justo hasta el mes actual
+                    return "✅ Al día";
+                  })()}
+                </span>
+              </h4>
+
+
+
+
+
+              <div className="modal-socio-meses-container">
+                {[
+                  "ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO",
+                  "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE"
+                ].map((mes, index) => (
+                  <span
+                    key={index}
+                    className={
+                      mesesPagados.includes(mes)
+                        ? "modal-socio-mes modal-socio-pagado"
+                        : "modal-socio-mes modal-socio-adeudado"
+                    }
+                  >
+                    {mes}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <div className="modal-socio-buttons">
               <button 
-                className="modal-button accept-button" 
+                className="modal-socio-button cerrar-button" 
                 onClick={() => setMostrarModalInfo(false)}
               >
                 Cerrar
@@ -897,6 +930,12 @@ const GestionarSocios = () => {
           </div>
         </div>
       )}
+
+
+
+
+
+
     </div>
   );
 };

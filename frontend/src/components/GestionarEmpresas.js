@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlus, faArrowLeft, faEdit, faTrash, faSearch, faDollar, faFileExcel, faPrint } from "@fortawesome/free-solid-svg-icons";
+import { faPlus, faArrowLeft, faEdit, faTrash, faSearch, faDollar, faFileExcel, faPrint, faInfoCircle } from "@fortawesome/free-solid-svg-icons";
 import ModalPagosEmpresas from "./ModalPagosEmpresas";
 import "./GestionarEmpresas.css";
 
@@ -26,10 +26,13 @@ const GestionarEmpresas = () => {
   const [restaurandoEstado, setRestaurandoEstado] = useState(true);
   const [mostrarModalMes, setMostrarModalMes] = useState(false);
   const [mesSeleccionado, setMesSeleccionado] = useState("");
+  const [mostrarModalInfo, setMostrarModalInfo] = useState(false);
+  const [infoEmpresa, setInfoEmpresa] = useState(null);
+  const [mesesPagados, setMesesPagados] = useState([]);
 
   // Función para determinar el estado de pago de la empresa
   const getEstadoPago = (mesesPagados) => {
-    if (!mesesPagados) return 'rojo'; // Si no hay datos, considerar como moroso
+    if (!mesesPagados) return 'rojo';
     
     const meses = mesesPagados.split(',').map(mes => mes.trim().toUpperCase());
     const mesActual = new Date().toLocaleString('default', { month: 'long' }).toUpperCase();
@@ -44,11 +47,11 @@ const GestionarEmpresas = () => {
     const mesesDebidos = mesesHastaActual.filter(mes => !meses.includes(mes));
     
     if (mesesDebidos.length === 0) {
-      return 'verde'; // Pagó todos los meses
+      return 'verde';
     } else if (mesesDebidos.length <= 2) {
-      return 'amarillo'; // Debe 1 o 2 meses
+      return 'amarillo';
     } else {
-      return 'rojo'; // Debe 3 o más meses
+      return 'rojo';
     }
   };
 
@@ -267,7 +270,6 @@ const GestionarEmpresas = () => {
   };
 
   const handlePagoRealizado = () => {
-    // Actualizar el estado para forzar la recarga de los datos
     setActualizar(prev => !prev);
   };
 
@@ -364,6 +366,26 @@ const GestionarEmpresas = () => {
   const handlePagoEmpresa = (empresa) => {
     setEmpresaSeleccionada(empresa);
     setMostrarModal(true);
+  };
+
+  const handleMostrarInfoEmpresa = (empresa) => {
+    setCargando(true);
+    try {
+      // Normalizar los meses pagados: mayúsculas y sin espacios
+      const mesesPagados = empresa.meses_pagados
+        ? empresa.meses_pagados.split(',').map(mes => mes.trim().toUpperCase())
+        : [];
+  
+      setInfoEmpresa(empresa);
+      setMesesPagados(mesesPagados);
+      setMostrarModalInfo(true);
+    } catch (error) {
+      console.error('Error al procesar información:', error);
+      setErrorMessage(`Error: ${error.message}`);
+      setTimeout(() => setErrorMessage(''), 5000);
+    } finally {
+      setCargando(false);
+    }
   };
 
   const exportarAExcel = () => {
@@ -639,6 +661,14 @@ const GestionarEmpresas = () => {
                           {filaSeleccionada === index && (
                             <div className="icons-container">
                               <FontAwesomeIcon
+                                icon={faInfoCircle}
+                                className="icon"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleMostrarInfoEmpresa(empresa);
+                                }}
+                              />
+                              <FontAwesomeIcon
                                 icon={faEdit}
                                 className="icon"
                                 onClick={(e) => {
@@ -762,6 +792,102 @@ const GestionarEmpresas = () => {
           cerrarModal={cerrarModal}
           onPagoRealizado={handlePagoRealizado}
         />
+      )}
+
+      {mostrarModalInfo && infoEmpresa && (
+        <div className="modal-empresa">
+          <div className="modal-empresa-content">
+            <h3 className="modal-empresa-title">Información de la Empresa</h3>
+            <div className="modal-empresa-info">
+              <p><strong>Razón Social:</strong> {infoEmpresa.razon_social}</p>
+              <p><strong>CUIT:</strong> {infoEmpresa.cuit}</p>
+              <p><strong>Condición IVA:</strong> {infoEmpresa.descripcion_iva}</p>
+              <p><strong>Teléfono:</strong> {infoEmpresa.telefono}</p>
+              <p><strong>Domicilio Legal:</strong> {infoEmpresa.domicilio} {infoEmpresa.numero}</p>
+              <p><strong>Domicilio Cobro:</strong> {infoEmpresa.domicilio_2}</p>
+              <p><strong>Categoría:</strong> {infoEmpresa.categoria} (${infoEmpresa.precio_categoria})</p>
+              <p><strong>Medio de Pago:</strong> {infoEmpresa.medio_pago}</p>
+              <p><strong>Observaciones:</strong> {infoEmpresa.observacion}</p>
+            </div>
+
+            <div className="modal-empresa-meses">
+              <h4 className="modal-empresa-subtitle">
+                Estado de Meses: 
+                <span className="modal-empresa-estado">
+                  {(() => {
+                    const meses = [
+                      "ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO",
+                      "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE"
+                    ];
+
+                    const mesActual = new Date().getMonth(); // 0 = enero
+                    const mesesHastaAhora = meses.slice(0, mesActual + 1); // Desde enero hasta el mes actual
+
+                    // Filtramos cuántos de esos meses fueron pagados
+                    const mesesPagadosHastaAhora = mesesHastaAhora.filter(mes =>
+                      mesesPagados.includes(mes)
+                    );
+
+                    const cantidadEsperada = mesesHastaAhora.length;
+                    const cantidadPagosHastaAhora = mesesPagadosHastaAhora.length;
+                    const pagosTotales = mesesPagados.length;
+
+                    const deuda = cantidadEsperada - cantidadPagosHastaAhora;
+
+                    // Si debe algún mes hasta el actual, se considera deuda
+                    if (deuda > 0) {
+                      if (deuda === 1 || deuda === 2) {
+                        return `⚠️ Atrasado ${deuda} mes${deuda > 1 ? 'es' : ''}`;
+                      }
+                      return `🚫 Atrasado (${deuda} meses)`;
+                    }
+
+                    // Si pagó hasta el actual, evaluamos si pagó el año completo
+                    if (pagosTotales === 12) {
+                      return "🎯 Año completo";
+                    }
+
+                    // Si pagó más de lo esperado, está adelantado
+                    const adelantado = pagosTotales - cantidadEsperada;
+                    if (adelantado > 0) {
+                      return `📅 Adelantado (${adelantado} mes${adelantado > 1 ? 'es' : ''})`;
+                    }
+
+                    // Si pagó lo justo hasta el mes actual
+                    return "✅ Al día";
+                  })()}
+                </span>
+              </h4>
+
+              <div className="modal-empresa-meses-container">
+                {[
+                  "ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO",
+                  "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE"
+                ].map((mes, index) => (
+                  <span
+                    key={index}
+                    className={
+                      mesesPagados.includes(mes)
+                        ? "modal-empresa-mes modal-empresa-pagado"
+                        : "modal-empresa-mes modal-empresa-adeudado"
+                    }
+                  >
+                    {mes}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <div className="modal-empresa-buttons">
+              <button 
+                className="modal-empresa-button cerrar-button" 
+                onClick={() => setMostrarModalInfo(false)}
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
