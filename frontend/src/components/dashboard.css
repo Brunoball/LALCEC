@@ -1,97 +1,202 @@
-/* dashboard.css */
-
 body {
-    margin: 0;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f5f5f5;
-    color: #333;
+  margin: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #333;
+  overflow-x: hidden;
+  min-height: 100vh; /* Cambiado a 100vh */
+  background: linear-gradient(135deg, #cccccc 30%, #ff6e00 70%) fixed;
+  display: flex; /* Añadido */
+  flex-direction: column; /* Añadido */
+  justify-content: center; /* Añadido para centrado vertical */
+}
+
+.contable-container {
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 15px;
+  max-width: 1200px;
+  margin: 20px auto; /* Esto ya centra horizontalmente */
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  /* Eliminado min-height: calc(100vh - 100px) */
+  /* No necesitamos altura mínima porque el body maneja el centrado */
+}
+
+
+.contable-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.contable-title {
+  font-size: 1.8rem;
+  color: #ff7b00;
+  margin: 0;
+}
+
+.contable-summary-cards {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.contable-summary-card {
+  flex: 1;
+  background-color: #fefefe;
+  border: 1px solid #ddd;
+  border-left: 5px solid #ff7b00;
+  padding: 15px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.contable-card-icon {
+  font-size: 24px;
+  color: #ff7b00;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #fff8f0;
+  border-radius: 8px;
+}
+
+.contable-card-content h3 {
+  font-size: 0.9rem;
+  color: #777;
+  margin: 0 0 5px 0;
+}
+
+.contable-card-content p {
+  font-size: 1.3rem;
+  font-weight: bold;
+  margin: 0;
+}
+
+.contable-categories-section {
+  background-color: #f9f9f9;
+  padding: 15px;
+  border-radius: 10px;
+}
+
+.contable-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.contable-section-header h2 {
+  color: #333;
+  margin: 0;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.contable-month-selector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.contable-month-selector select {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  background-color: white;
+  font-size: 0.9rem;
+}
+
+.contable-month-selector svg {
+  color: #ff7b00;
+}
+
+.contable-categories-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 15px;
+}
+
+.contable-category-card {
+  background-color: white;
+  border-radius: 8px;
+  padding: 15px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  text-align: center;
+}
+
+.contable-category-header h3 {
+  margin: 0 0 10px 0;
+  font-size: 1.1rem;
+  color: #ff7b00;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 8px;
+}
+
+.contable-category-people {
+  font-size: 1.5rem;
+  margin: 15px 0;
+  color: #666;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.contable-category-people svg {
+  color: #ff7b00;
+  font-size: 1.2rem;
+}
+
+.contable-category-total {
+  display: flex;
+  justify-content: space-between;
+  font-weight: bold;
+  padding-top: 8px;
+  border-top: 1px solid #eee;
+  margin-top: 8px;
+}
+
+.contable-back-button {
+  background-color: #ff7b00;
+  border: none;
+  padding: 8px 15px;
+  color: white;
+  font-weight: bold;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  font-size: 0.9rem;
+}
+
+.contable-back-button:hover {
+  background-color: #e56e00;
+}
+
+@media (max-width: 768px) {
+  .contable-summary-cards {
+    flex-direction: column;
   }
   
-  .dashboard-container {
-    padding: 30px;
-    background-color: #fff;
-    border-radius: 20px;
-    max-width: 1000px;
-    margin: 40px auto;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  .contable-categories-cards {
+    grid-template-columns: 1fr 1fr;
   }
-  
-  .dashboard-title {
-    font-size: 2rem;
-    margin-bottom: 20px;
-    color: #ff7b00;
+
+  .contable-section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
   }
-  
-  .card {
-    background-color: #fefefe;
-    border: 1px solid #ddd;
-    border-left: 5px solid #ff7b00;
-    padding: 20px;
-    border-radius: 12px;
-    margin-bottom: 20px;
-    display: flex;
-    align-items: center;
-    gap: 15px;
+}
+
+@media (max-width: 480px) {
+  .contable-categories-cards {
+    grid-template-columns: 1fr;
   }
-  
-  .card .icon {
-    font-size: 30px;
-    color: #ff7b00;
-  }
-  
-  .card .info {
-    flex-grow: 1;
-  }
-  
-  .card .info-title {
-    font-size: 0.9rem;
-    color: #777;
-  }
-  
-  .card .info-value {
-    font-size: 1.5rem;
-    font-weight: bold;
-  }
-  
-  .section {
-    background-color: #f9f9f9;
-    padding: 20px;
-    border-radius: 12px;
-    margin-top: 20px;
-  }
-  
-  .section h2 {
-    color: #333;
-    margin-bottom: 10px;
-    font-size: 1.2rem;
-  }
-  
-  .section ul {
-    list-style: none;
-    padding: 0;
-  }
-  
-  .section li {
-    padding: 8px 0;
-    border-bottom: 1px solid #ddd;
-    display: flex;
-    justify-content: space-between;
-    color: #444;
-  }
-  
-  .back-button {
-    margin-top: 30px;
-    background-color: #ff7b00;
-    border: none;
-    padding: 10px 20px;
-    color: white;
-    font-weight: bold;
-    border-radius: 10px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-  }
-  
-  .back-button:hover {
-    background-color: #e56e00;
-  }
-  
+}

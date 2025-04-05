@@ -97,8 +97,8 @@ const GestionarCategorias = () => {
             <h3 style={styles.modalTitle}>¿Eliminar categoría?</h3>
             <p style={styles.modalText}>¿Estás seguro de que quieres eliminar esta categoría?</p>
             <div style={styles.modalButtons}>
-              <button style={{ ...styles.modalButton, ...styles.acceptButton }} onClick={handleEliminarCategoria}>Aceptar</button>
               <button style={{ ...styles.modalButton, ...styles.cancelButton }} onClick={() => setModalOpen(false)}>Cancelar</button>
+              <button style={{ ...styles.modalButton, ...styles.acceptButton }} onClick={handleEliminarCategoria}>Aceptar</button>
             </div>
           </div>
         </div>
