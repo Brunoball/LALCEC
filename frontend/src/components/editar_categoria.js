@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSave, faArrowLeft } from "@fortawesome/free-solid-svg-icons";
+import { faSave, faArrowLeft, faHistory } from "@fortawesome/free-solid-svg-icons";
 import { useParams, useNavigate } from "react-router-dom";
 
 const EditarCategoria = () => {
@@ -12,6 +12,8 @@ const EditarCategoria = () => {
   const [nombre, setNombre] = useState('');
   const [precio, setPrecio] = useState('');
   const [mensaje, setMensaje] = useState("");
+  const [historicoPrecios, setHistoricoPrecios] = useState([]);
+  const [showHistorico, setShowHistorico] = useState(false);
 
   useEffect(() => {
     const obtenerCategoria = async () => {
@@ -35,6 +37,11 @@ const EditarCategoria = () => {
         setCategoria(data.data);
         setNombre(data.data.Nombre_Categoria);
         setPrecio(data.data.Precio_Categoria);
+        
+        // Guardar el histórico si viene en la respuesta
+        if (data.data.historico_precios) {
+          setHistoricoPrecios(data.data.historico_precios);
+        }
       } catch (error) {
         setError(error.message);
       } finally {
@@ -66,6 +73,14 @@ const EditarCategoria = () => {
       const data = await response.json();
       if (data.success) {
         setMensaje("Categoría actualizada correctamente");
+        // Actualizar los datos incluyendo el histórico
+        const updatedResponse = await fetch(
+          `http://localhost:3001/editar_categoria.php?action=editar_categoria&nombre_categoria=${encodeURIComponent(nombre_categoria)}`
+        );
+        const updatedData = await updatedResponse.json();
+        if (updatedData.data.historico_precios) {
+          setHistoricoPrecios(updatedData.data.historico_precios);
+        }
       } else {
         setMensaje("Error al actualizar la categoría");
       }
@@ -180,7 +195,59 @@ const EditarCategoria = () => {
             </button>
           </div>
         </form>
+
+        <button 
+          style={styles.viewHistoryButton}
+          onClick={() => setShowHistorico(true)}
+          disabled={historicoPrecios.length === 0}
+        >
+          <FontAwesomeIcon icon={faHistory} style={styles.iconSpacing} />
+          Ver Histórico de Precios
+        </button>
       </div>
+
+      {showHistorico && (
+        <div style={styles.historicoModal}>
+          <div style={styles.historicoContent}>
+            <h3 style={styles.historicoTitle}>Histórico de Precios</h3>
+            <button 
+              style={styles.closeHistorico}
+              onClick={() => setShowHistorico(false)}
+            >
+              &times;
+            </button>
+            
+            {historicoPrecios.length > 0 ? (
+              <table style={styles.historicoTable}>
+                <thead>
+                  <tr>
+                    <th style={styles.tableHeader}>Fecha</th>
+                    <th style={styles.tableHeader}>Precio Anterior</th>
+                    <th style={styles.tableHeader}>Precio Nuevo</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {historicoPrecios.map((item, index) => (
+                    <tr key={index} style={index % 2 === 0 ? styles.evenRow : styles.oddRow}>
+                      <td style={styles.tableCell}>
+                        {new Date(item.fecha_cambio).toLocaleDateString('es-AR', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: 'numeric',
+                        })}
+                      </td>
+                      <td style={styles.tableCell}>${item.precio_anterior}</td>
+                      <td style={styles.tableCell}>${item.precio_nuevo}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <p style={styles.noHistoryText}>No hay registros históricos para esta categoría</p>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -218,7 +285,7 @@ const styles = {
     width: '100%',
     display: 'flex',
     flexDirection: 'column',
-    alignItems: 'center', // Esto asegura que todos los campos estén centrados horizontalmente
+    alignItems: 'center',
   },
   inputRow: {
     marginBottom: '1.5rem',
@@ -228,11 +295,11 @@ const styles = {
     position: 'relative',
     width: '100%',
     display: 'flex',
-    justifyContent: 'center', // Asegura que los campos de entrada estén centrados
+    justifyContent: 'center',
   },
   input: {
-    width: '100%', // Ajusta el ancho para asegurarse de que no se salgan
-    maxWidth: '400px', // Controla el máximo ancho
+    width: '100%',
+    maxWidth: '400px',
     padding: '10px 12px',
     borderRadius: '10px',
     border: '1px solid #ccc',
@@ -262,9 +329,10 @@ const styles = {
   },
   buttonsContainer: {
     display: 'flex',
-    justifyContent: 'center', // Centra los botones
-    gap: '1rem', // Espacio entre los botones
+    justifyContent: 'center',
+    gap: '1rem',
     width: '100%',
+    marginTop: '1rem',
   },
   saveButton: {
     backgroundColor: '#ff6e00',
@@ -292,36 +360,48 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
   },
+  viewHistoryButton: {
+    backgroundColor: 'transparent',
+    color: '#4b4b4b',
+    border: '1px solid #4b4b4b',
+    padding: '0.6rem 1.2rem',
+    borderRadius: '30px',
+    fontWeight: '500',
+    fontSize: '0.9rem',
+    cursor: 'pointer',
+    transition: 'all 0.3s ease',
+    display: 'flex',
+    alignItems: 'center',
+    marginTop: '1.5rem',
+  },
   iconSpacing: {
     marginRight: '10px',
   },
   successMessage: {
-    backgroundColor: 'rgba(76, 175, 80, 0.2)', // Verde claro con transparencia
+    backgroundColor: 'rgba(76, 175, 80, 0.2)',
     color: '#4CAF50',
     padding: '1rem',
     borderRadius: '10px',
     fontSize: '1rem',
     fontWeight: '600',
-    width: '98%', // Reducido para no sobrepasar los bordes del contenedor
+    width: '98%',
     textAlign: 'center',
     boxShadow: '0 5px 15px rgba(0, 0, 0, 0.1)',
-    marginTop: '-2rem', // Subir ligeramente el mensaje
-    alignSelf: 'center', // Centrar horizontalmente
-    transition: 'opacity 0.3s ease', // Transición suave para el mensaje
+    marginTop: '-2rem',
+    alignSelf: 'center',
+    transition: 'opacity 0.3s ease',
   },
-
-  // Estilos existentes
   loaderContainer: {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
     height: '100vh',
-    backgroundColor: '#f9f9f9', // Fondo claro para resaltar el spinner
+    backgroundColor: '#f9f9f9',
   },
   loader: {
-    border: '8px solid #f3f3f3', // Borde claro
-    borderTop: '8px solid #3498db', // Borde animado
+    border: '8px solid #f3f3f3',
+    borderTop: '8px solid #3498db',
     borderRadius: '50%',
     width: '60px',
     height: '60px',
@@ -332,16 +412,72 @@ const styles = {
     fontSize: '16px',
     color: '#555',
   },
-  // Agrega la animación al spinner
-  '@keyframes spin': {
-    from: {
-      transform: 'rotate(0deg)',
-    },
-    to: {
-      transform: 'rotate(360deg)',
-    },
+  historicoModal: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  historicoContent: {
+    backgroundColor: 'white',
+    padding: '25px',
+    borderRadius: '15px',
+    width: '80%',
+    maxWidth: '700px',
+    maxHeight: '80vh',
+    overflowY: 'auto',
+    position: 'relative',
+    boxShadow: '0 5px 20px rgba(0,0,0,0.2)',
+  },
+  historicoTitle: {
+    color: '#4b4b4b',
+    marginBottom: '20px',
+    textAlign: 'center',
+  },
+  closeHistorico: {
+    position: 'absolute',
+    top: '15px',
+    right: '15px',
+    background: 'none',
+    border: 'none',
+    fontSize: '1.5rem',
+    cursor: 'pointer',
+    color: '#666',
+  },
+  historicoTable: {
+    width: '100%',
+    borderCollapse: 'collapse',
+    marginTop: '15px',
+  },
+  tableHeader: {
+    backgroundColor: '#f5f5f5',
+    padding: '12px',
+    textAlign: 'left',
+    fontWeight: '600',
+    color: '#4b4b4b',
+    borderBottom: '2px solid #ddd',
+  },
+  tableCell: {
+    padding: '10px 12px',
+    borderBottom: '1px solid #eee',
+  },
+  evenRow: {
+    backgroundColor: '#f9f9f9',
+  },
+  oddRow: {
+    backgroundColor: 'white',
+  },
+  noHistoryText: {
+    textAlign: 'center',
+    color: '#666',
+    padding: '20px',
   },
 };
-
 
 export default EditarCategoria;

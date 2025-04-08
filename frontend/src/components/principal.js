@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -23,99 +22,78 @@ const PaginaPrincipal = () => {
     localStorage.setItem("ultimaSeleccion", "Seleccionar");
   }, []);
   
+  const handleRedireccionarSocios = () => navigate("/GestionarSocios");
+  const handleRedireccionarEmpresas = () => navigate("/GestionarEmpresas");
+  const handleRedireccionarCuotas = () => navigate("/GestionarCuotas");
+  const handleRedireccionarCategorias = () => navigate("/GestionarCategorias");
+  const handleRedireccionarRegistro = () => navigate("/registro");
+  const handleRedireccionarContable = () => navigate("/DashboardContable");
 
-  const handleRedireccionarSocios = () => {
-    navigate("/GestionarSocios");
-  };
-
-  const handleRedireccionarEmpresas = () => {
-    navigate("/GestionarEmpresas");
-  };
-
-  const handleRedireccionarCuotas = () => {
-    navigate("/GestionarCuotas");
-  };
-
-  const handleRedireccionarCategorias = () => {
-    navigate("/GestionarCategorias");
-  };
-
-  const handleRedireccionarRegistro = () => {
-    navigate("/registro");
-  };
-  const handleRedireccionarContable = () => {
-    navigate("/DashboardContable");
-  };
-
-  const handleCerrarSesion = () => {
-    setShowModal(true);
-  };
+  const handleCerrarSesion = () => setShowModal(true);
 
   const confirmarCierreSesion = () => {
-    sessionStorage.clear(); // Borra la sesión
-  
-    // Previene regresar a la página anterior
+    sessionStorage.clear();
     window.history.pushState(null, null, "/");
-    window.onpopstate = function () {
+    window.onpopstate = function() {
       window.history.go(1);
     };
-  
-    // Redirige y recarga la página para limpiar datos
     window.location.href = "/";
   };
 
+  const menuItems = [
+    { icon: faUsers, text: "Gestionar Socios", action: handleRedireccionarSocios },
+    { icon: faBuilding, text: "Gestionar Empresas", action: handleRedireccionarEmpresas },
+    { icon: faDollarSign, text: "Gestionar Cuotas", action: handleRedireccionarCuotas },
+    { icon: faTags, text: "Gestionar Categorías", action: handleRedireccionarCategorias },
+    { icon: faUserPlus, text: "Registro", action: handleRedireccionarRegistro },
+    { icon: faFileInvoiceDollar, text: "Contable", action: handleRedireccionarContable }
+  ];
 
   return (
     <div style={styles.container}>
-      <div style={styles.box}>
-        <div style={styles.avatar}>
-          <img src={logoLalcec} alt="Logo LALCEC" style={styles.avatarImage} />
+      <div style={styles.card}>
+        <div style={styles.header}>
+          <div style={styles.logoContainer}>
+            <img src={logoLalcec} alt="Logo LALCEC" style={styles.logo} />
+          </div>
+          <h1 style={styles.title}>Sistema de Gestión LALCEC</h1>
+          <p style={styles.subtitle}>Panel de administración</p>
         </div>
-        <h2 style={styles.title}>Bienvenido a LALCEC</h2>
 
-        <button style={styles.button} onClick={handleRedireccionarSocios}>
-          <FontAwesomeIcon icon={faUsers} style={styles.iconButton} />
-          <span style={styles.buttonText}>Gestionar Socios</span>
-        </button>
-
-        
-        <button style={styles.button} onClick={handleRedireccionarEmpresas}>
-          <FontAwesomeIcon icon={faBuilding} style={styles.iconButton} />
-          <span style={styles.buttonText}>Gestionar Empresas</span>
-        </button>
-
-        <button style={styles.button} onClick={handleRedireccionarCuotas}>
-          <FontAwesomeIcon icon={faDollarSign} style={styles.iconButton} />
-          <span style={styles.buttonText}>Gestionar Cuotas</span>
-        </button>
-
-        <button style={styles.button} onClick={handleRedireccionarCategorias}>
-          <FontAwesomeIcon icon={faTags} style={styles.iconButton} />
-          <span style={styles.buttonText}>Gestionar Categorías</span>
-        </button>
-
-        <button style={styles.button} onClick={handleRedireccionarRegistro}>
-          <FontAwesomeIcon icon={faUserPlus} style={styles.iconButton} />
-          <span style={styles.buttonText}>Registro</span>
-        </button>
-        <button style={styles.button} onClick={handleRedireccionarContable}>
-          <FontAwesomeIcon icon={faFileInvoiceDollar} style={styles.iconButton} />
-          <span style={styles.buttonText}>Contable</span>
-        </button>
+        <div style={styles.menuGrid}>
+          {menuItems.map((item, index) => (
+            <button 
+              key={index} 
+              style={styles.menuButton}
+              onClick={item.action}
+            >
+              <div style={styles.buttonIcon}>
+                <FontAwesomeIcon icon={item.icon} size="lg" />
+              </div>
+              <span style={styles.buttonText}>{item.text}</span>
+            </button>
+          ))}
+        </div>
 
         <button style={styles.logoutButton} onClick={handleCerrarSesion}>
-          <FontAwesomeIcon icon={faSignOutAlt} style={styles.iconButton} />
-          <span style={styles.buttonText}>Cerrar Sesión</span>
+          <FontAwesomeIcon icon={faSignOutAlt} style={styles.logoutIcon} />
+          <span>Cerrar Sesión</span>
         </button>
-        
       </div>
 
       {showModal && (
         <div style={styles.modalOverlay}>
           <div style={styles.modal}>
-            <p style={styles.modaltext}> ¿Estás seguro de que quieres cerrar sesión?</p>
-            <button style={styles.modalButton} onClick={confirmarCierreSesion}>Sí</button>
-            <button style={styles.modalButtonCancel} onClick={() => setShowModal(false)}>No</button>
+            <h3 style={styles.modalTitle}>Confirmar cierre de sesión</h3>
+            <p style={styles.modalText}>¿Estás seguro de que deseas cerrar la sesión?</p>
+            <div style={styles.modalButtons}>
+              <button style={styles.modalButtonCancel} onClick={() => setShowModal(false)}>
+                Cancelar
+              </button>
+              <button style={styles.modalButtonConfirm} onClick={confirmarCierreSesion}>
+                Confirmar
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -123,148 +101,190 @@ const PaginaPrincipal = () => {
   );
 };
 
-
 const styles = {
   container: {
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
-    height: "100vh",
-    margin: 0,
-    fontFamily: "'Poppins', sans-serif",
-    background: "linear-gradient(135deg, #dcdcdc 30%, #ff6e00 70%)",
+    minHeight: "100vh",
+    padding: "0 28px", // Cambiado para solo tener padding horizontal
+    fontFamily: "'Segoe UI', Roboto, 'Helvetica Neue', sans-serif",
+    background: "linear-gradient(135deg, #cccccc 30%, #ff6e00 70%)",
+    boxSizing: "border-box", // Añade esto para que el padding no afecte las dimensiones
+  },  
+  
+  card: {
+    width: "100%",
+    maxWidth: "900px",
+    backgroundColor: "#ffffff",
+    borderRadius: "12px",
+    boxShadow: "0 10px 30px rgba(0, 0, 0, 0.08)",
+    overflow: "hidden",
+    padding: "30px",
+    margin: "auto", // Añade esto para asegurar el centrado
   },
-  box: {
-    background: "rgba(255, 255, 255, 0.95)",
-    padding: "2.5rem",
-    borderRadius: "25px",
-    boxShadow: "0 10px 25px rgba(0, 0, 0, 0.2)",
+
+  header: {
     textAlign: "center",
-    width: "350px",
+    marginBottom: "40px",
+  },
+  logoContainer: {
+    width: "120px",
+    height: "120px",
+    margin: "0 auto 20px",
+    borderRadius: "50%",
+    backgroundColor: "#fff",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
+    border: "3px solid #ff6e00",
+    overflow: "hidden",
+  },
+  logo: {
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+  },
+  title: {
+    fontSize: "28px",
+    fontWeight: "600",
+    color: "#2d3748",
+    margin: "0 0 8px",
+  },
+  subtitle: {
+    fontSize: "16px",
+    color: "#718096",
+    margin: "0",
+  },
+  menuGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+    gap: "20px",
+    marginBottom: "30px",
+  },
+  menuButton: {
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
+    justifyContent: "center",
+    padding: "25px 15px",
+    backgroundColor: "#ffffff",
+    borderRadius: "10px",
+    border: "1px solid #e2e8f0",
+    cursor: "pointer",
+    transition: "all 0.3s ease",
+    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.05)",
+    color: "#4a5568",
+    textDecoration: "none",
+    '&:hover': {
+      transform: "translateY(-3px)",
+      boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
+      borderColor: "#ff6e00",
+      backgroundColor: "#fffaf5",
+    },
   },
-  avatar: {
-    background: "linear-gradient(135deg, #ff8800, #ff6e00)",
+  buttonIcon: {
+    width: "50px",
+    height: "50px",
     borderRadius: "50%",
-    width: "100px",
-    height: "100px",
-    margin: "-70px auto 20px",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    fontSize: "50px",
-    color: "white",
-    boxShadow: "0 5px 15px rgba(0, 0, 0, 0.3)",
-    overflow: "hidden",
-  },
-  avatarImage: {
-    width: "120%",
-    height: "120%",
-    objectFit: "cover",
-    objectPosition: "center",
-    transform: "scale(1.2)",
-  },
-  title: {
-    fontSize: "1.6rem",
-    fontWeight: "600",
-    marginBottom: "1.5rem",
-    color: "#4b4b4b",
-  },
-  button: {
-    background: "linear-gradient(135deg, #ff8800, #ff6e00)",
-    color: "white",
-    padding: "1rem",
-    border: "none",
-    borderRadius: "15px",
-    fontSize: "1rem",
-    fontWeight: "600",
-    cursor: "pointer",
-    transition: "transform 0.2s ease",
-    boxShadow: "0 5px 15px rgba(0, 0, 0, 0.3)",
+    backgroundColor: "#fff4e6",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    gap: "10px",
-    marginBottom: "1rem",
-    width: "100%",
-    maxWidth: "300px",
-    height: "50px",
-  },
-  logoutButton: {
-    background: "red",
-    color: "white",
-    padding: "1rem",
-    border: "none",
-    borderRadius: "15px",
-    fontSize: "1rem",
-    fontWeight: "600",
-    cursor: "pointer",
-    transition: "transform 0.2s ease",
-    boxShadow: "0 5px 15px rgba(0, 0, 0, 0.3)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: "10px",
-    marginTop: "1rem",
-    width: "100%",
-    maxWidth: "300px",
-    height: "50px",
-  },
-  iconButton: {
-    fontSize: "1.2rem",
+    marginBottom: "15px",
+    color: "#ff6e00",
+    fontSize: "20px",
   },
   buttonText: {
-    fontSize: "1rem",
+    fontSize: "16px",
+    fontWeight: "500",
+    textAlign: "center",
+  },
+  logoutButton: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "10px",
+    width: "100%",
+    padding: "12px",
+    backgroundColor: "#fff",
+    border: "1px solid #e53e3e",
+    borderRadius: "8px",
+    color: "#e53e3e",
+    fontWeight: "500",
+    cursor: "pointer",
+    transition: "all 0.3s ease",
+    '&:hover': {
+      backgroundColor: "#fff5f5",
+    },
+  },
+  logoutIcon: {
+    fontSize: "16px",
   },
   modalOverlay: {
     position: "fixed",
     top: 0,
     left: 0,
-    width: "100%",
-    height: "100%",
-    background: "rgba(0, 0, 0, 0.5)", // Fondo oscuro semi-transparente
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
     display: "flex",
-    justifyContent: "center",
     alignItems: "center",
+    justifyContent: "center",
     zIndex: 1000,
   },
   modal: {
-    background: "white",
-    padding: "2rem",
-    borderRadius: "10px",
+    backgroundColor: "#fff",
+    borderRadius: "12px",
+    padding: "30px",
+    width: "100%",
+    maxWidth: "400px",
+    boxShadow: "0 10px 25px rgba(0, 0, 0, 0.1)",
     textAlign: "center",
-    boxShadow: "0 5px 15px rgba(0, 0, 0, 0.3)",
-    width: "300px",
   },
-
-  modaltext: {
-    fontSize:"20px",
-  },
-
-  modalButton: {
-    background: "green",
-    color: "white",
-    padding: "0.8rem 2rem",
-    border: "none",
-    borderRadius: "10px",
-    fontSize: "1rem",
+  modalTitle: {
+    fontSize: "20px",
     fontWeight: "600",
-    cursor: "pointer",
-    margin: "10px",
-    marginTop:"20px"
+    marginBottom: "15px",
+    color: "#2d3748",
+  },
+  modalText: {
+    fontSize: "16px",
+    color: "#4a5568",
+    marginBottom: "25px",
+    lineHeight: "1.5",
+  },
+  modalButtons: {
+    display: "flex",
+    justifyContent: "center",
+    gap: "15px",
   },
   modalButtonCancel: {
-    background: "red",
-    color: "white",
-    padding: "0.8rem 2rem",
-    border: "none",
-    borderRadius: "10px",
-    fontSize: "1rem",
-    fontWeight: "600",
+    padding: "10px 20px",
+    backgroundColor: "#fff",
+    border: "1px solid #cbd5e0",
+    borderRadius: "6px",
+    color: "#4a5568",
+    fontWeight: "500",
     cursor: "pointer",
-    margin: "10px",
+    transition: "all 0.2s ease",
+    '&:hover': {
+      backgroundColor: "#f7fafc",
+    },
+  },
+  modalButtonConfirm: {
+    padding: "10px 20px",
+    backgroundColor: "#e53e3e",
+    border: "none",
+    borderRadius: "6px",
+    color: "#fff",
+    fontWeight: "500",
+    cursor: "pointer",
+    transition: "all 0.2s ease",
+    '&:hover': {
+      backgroundColor: "#c53030",
+    },
   },
 };
 

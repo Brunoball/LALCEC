@@ -7,6 +7,9 @@ import {
   faTags,
   faCalendarAlt,
   faUser,
+  faArrowUp,
+  faArrowDown,
+  faChartLine
 } from "@fortawesome/free-solid-svg-icons";
 
 export default function DashboardContable() {
@@ -16,65 +19,46 @@ export default function DashboardContable() {
   const [totalSocios, setTotalSocios] = useState(0);
   const [totalRecaudado, setTotalRecaudado] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    socios: { cambio: 5.2, tendencia: 'up' },
+    recaudado: { cambio: 12.7, tendencia: 'up' },
+    categorias: { cambio: -2.3, tendencia: 'down' }
+  });
 
-  useEffect(() => {
-    fetch("http://localhost:3001/getCategorias.php")
+  const fetchData = (mes = "Todos") => {
+    setLoading(true);
+    fetch(`http://localhost:3001/getCategorias.php?mes=${mes}&t=${Date.now()}`)
       .then((res) => {
-        if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status}`);
-        }
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         return res.json();
       })
       .then((response) => {
         const data = response.data || response;
         console.log("Datos recibidos:", data);
         
-        // Procesar categorías
-        if (data.categorias && Array.isArray(data.categorias)) {
-          const validData = data.categorias.filter(item => 
-            item.nombre !== undefined && 
-            item.monto !== undefined &&
-            item.socios !== undefined
-          );
-  
-          if (validData.length > 0) {
-            setCategorias(validData);
-  
-            const totals = validData.reduce((acc, cat) => ({
-              socios: acc.socios + (cat.socios || 0),
-              recaudado: acc.recaudado + ((cat.socios || 0) * (cat.monto || 0))
-            }), { socios: 0, recaudado: 0 });
-  
-            setTotalSocios(totals.socios);
-            setTotalRecaudado(totals.recaudado);
-          } else {
-            console.warn("Datos de categorías no tienen la estructura esperada");
-          }
+        if (data.categorias?.length > 0) {
+          setCategorias(data.categorias);
+          
+          const totals = data.categorias.reduce((acc, cat) => ({
+            socios: acc.socios + (cat.socios || 0),
+            recaudado: acc.recaudado + ((cat.socios || 0) * (cat.monto || 0))
+          }), { socios: 0, recaudado: 0 });
+          
+          setTotalSocios(totals.socios);
+          setTotalRecaudado(totals.recaudado);
         }
-
-        // Procesar meses
-        if (data.meses && Array.isArray(data.meses)) {
-          setMeses(data.meses);
-        } else {
-          console.warn("No se recibieron meses válidos desde el servidor");
-          // Opcional: establecer meses por defecto si la API no los devuelve
-          setMeses([
-            "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-            "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
-          ]);
-        }
-      })
-      .catch((err) => {
-        console.error("Error en la solicitud:", err);
-        // Opcional: establecer meses por defecto si hay error
-        setMeses([
-          "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-          "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+        
+        setMeses(data.meses || [
+          "ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO",
+          "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE"
         ]);
       })
-      .finally(() => {
-        setLoading(false);
-      });
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    fetchData();
   }, []);
 
   const volver = () => {
@@ -82,94 +66,151 @@ export default function DashboardContable() {
   };
 
   const handleMesChange = (e) => {
-    setMesSeleccionado(e.target.value);
-    // Aquí puedes agregar lógica para filtrar por mes si es necesario
+    const nuevoMes = e.target.value;
+    setMesSeleccionado(nuevoMes);
+    fetchData(nuevoMes);
+  };
+
+  const calcularPorcentajeSocios = (socios) => {
+    const totalReferencia = 500;
+    return totalReferencia === 0 ? 0 : Math.min(100, Math.round((socios / totalReferencia) * 100));
   };
 
   if (loading) {
-    return <div className="contable-container">Cargando...</div>;
+    return <div className="dashboard-contable-body">Cargando...</div>;
   }
 
   return (
-    <div className="contable-container">
-      <div className="contable-header">
-        <h1 className="contable-title">Contable</h1>
-        <button className="contable-back-button" onClick={volver}>
-          ← Volver
-        </button>
-      </div>
-
-      <div className="contable-summary-cards">
-        <div className="contable-summary-card">
-          <div className="contable-card-icon">
-            <FontAwesomeIcon icon={faUsers} />
-          </div>
-          <div className="contable-card-content">
-            <h3>Socios activos</h3>
-            <p>{totalSocios.toLocaleString()}</p>
-          </div>
+    <div className="dashboard-contable-body">
+      <div className="contable-container">
+        <div className="contable-header">
+          <h1 className="contable-title">
+            <FontAwesomeIcon icon={faChartLine} /> Panel Contable
+          </h1>
+          <button className="contable-back-button" onClick={volver}>
+            ← Volver
+          </button>
         </div>
 
-        <div className="contable-summary-card">
-          <div className="contable-card-icon">
-            <FontAwesomeIcon icon={faDollarSign} />
-          </div>
-          <div className="contable-card-content">
-            <h3>Total recaudado</h3>
-            <p>${totalRecaudado.toLocaleString()}</p>
-          </div>
-        </div>
-
-        <div className="contable-summary-card">
-          <div className="contable-card-icon">
-            <FontAwesomeIcon icon={faTags} />
-          </div>
-          <div className="contable-card-content">
-            <h3>Categorías</h3>
-            <p>{categorias.length}</p>
-          </div>
-        </div>
-      </div>
-
-      <div className="contable-categories-section">
-        <div className="contable-section-header">
-          <h2>
-            <FontAwesomeIcon icon={faTags} /> Categorías
-          </h2>
-          <div className="contable-month-selector">
-            <FontAwesomeIcon icon={faCalendarAlt} />
-            <select 
-              value={mesSeleccionado} 
-              onChange={handleMesChange}
-              className="contable-month-select"
-            >
-              <option value="Todos">Todos los meses</option>
-              {meses.map((mes, index) => (
-                <option key={index} value={mes}>{mes}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        <div className="contable-categories-cards">
-          {categorias.length > 0 ? (
-            categorias.map((categoria, i) => (
-              <div className="contable-category-card" key={i}>
-                <div className="contable-category-header">
-                  <h3>{categoria.nombre} - ${categoria.monto.toLocaleString()}</h3>
-                </div>
-                <div className="contable-category-people">
-                  <FontAwesomeIcon icon={faUser} /> {categoria.socios.toLocaleString()}
-                </div>
-                <div className="contable-category-total">
-                  <span>Total</span>
-                  <span>${(categoria.monto * categoria.socios).toLocaleString()}</span>
-                </div>
+        <div className="contable-summary-cards">
+          <div className="contable-summary-card">
+            <div className="contable-card-icon">
+              <FontAwesomeIcon icon={faUsers} />
+            </div>
+            <div className="contable-card-content">
+              <h3>Socios activos</h3>
+              <p>{totalSocios.toLocaleString()}</p>
+              <div className="contable-card-trend">
+                <FontAwesomeIcon 
+                  icon={stats.socios.tendencia === 'up' ? faArrowUp : faArrowDown} 
+                  className={`trend-${stats.socios.tendencia}`} 
+                />
+                <span className={`trend-${stats.socios.tendencia}`}>
+                  {stats.socios.cambio}% este mes
+                </span>
               </div>
-            ))
-          ) : (
-            <p>No hay categorías disponibles</p>
-          )}
+            </div>
+          </div>
+
+          <div className="contable-summary-card">
+            <div className="contable-card-icon">
+              <FontAwesomeIcon icon={faDollarSign} />
+            </div>
+            <div className="contable-card-content">
+              <h3>Total recaudado</h3>
+              <p>${totalRecaudado.toLocaleString()}</p>
+              <div className="contable-card-trend">
+                <FontAwesomeIcon 
+                  icon={stats.recaudado.tendencia === 'up' ? faArrowUp : faArrowDown} 
+                  className={`trend-${stats.recaudado.tendencia}`} 
+                />
+                <span className={`trend-${stats.recaudado.tendencia}`}>
+                  {stats.recaudado.cambio}% este mes
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="contable-summary-card">
+            <div className="contable-card-icon">
+              <FontAwesomeIcon icon={faTags} />
+            </div>
+            <div className="contable-card-content">
+              <h3>Categorías</h3>
+              <p>{categorias.length}</p>
+              <div className="contable-card-trend">
+                <FontAwesomeIcon 
+                  icon={stats.categorias.tendencia === 'up' ? faArrowUp : faArrowDown} 
+                  className={`trend-${stats.categorias.tendencia}`} 
+                />
+                <span className={`trend-${stats.categorias.tendencia}`}>
+                  {stats.categorias.cambio}% este mes
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="contable-categories-section">
+          <div className="contable-section-header">
+            <h2>
+              <FontAwesomeIcon icon={faTags} /> Categorías
+            </h2>
+            <div className="contable-month-selector">
+              <FontAwesomeIcon icon={faCalendarAlt} />
+              <select 
+                value={mesSeleccionado} 
+                onChange={handleMesChange}
+                className="contable-month-select"
+              >
+                <option value="Todos">Todos los meses</option>
+                {meses.map((mes, index) => (
+                  <option key={index} value={mes}>{mes.charAt(0) + mes.slice(1).toLowerCase()}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="contable-categories-scroll-container">
+            <div className="contable-categories-cards">
+              {categorias.length > 0 ? (
+                categorias.map((categoria, i) => (
+                  <div className="contable-category-card" key={i}>
+                    <div className="contable-category-header">
+                      <div className="contable-category-header-content">
+                        <h3>{categoria.nombre}</h3>
+                        <div className="price-display">
+                          <span className="monthly-price">${categoria.monto.toLocaleString()}/mes</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="contable-category-body">
+                      <div className="contable-category-people">
+                        <FontAwesomeIcon icon={faUser} /> {categoria.socios.toLocaleString()} socios
+                      </div>
+                      <div className="contable-progress-container">
+                        <div className="contable-progress-bar">
+                          <div 
+                            className="contable-progress-fill"
+                            style={{ width: `${calcularPorcentajeSocios(categoria.socios)}%` }}
+                          ></div>
+                        </div>
+                        <span className="contable-progress-percent">
+                          {calcularPorcentajeSocios(categoria.socios)}%
+                        </span>
+                      </div>
+                      <div className="contable-category-total">
+                        <span className="total-label">Total mensual:</span>
+                        <span className="total-value">${(categoria.monto * categoria.socios).toLocaleString()}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p>No hay categorías disponibles</p>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>
