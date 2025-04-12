@@ -24,9 +24,6 @@ if (!preg_match('/^[A-Za-z]$/', $letra)) {
 $checkPagosTable = $conn->query("SHOW TABLES LIKE 'pagos'");
 $tienePagos = ($checkPagosTable->num_rows > 0);
 
-// Determinar el valor de flag según el tipo de entidad
-$flag = ($tipo === 'empresa') ? 1 : 0;
-
 // Construir la consulta base
 $sql = "
     SELECT 
@@ -56,7 +53,7 @@ $sql .= "
     LEFT JOIN 
         mediospago m ON s.idmedios_pago = m.idmedios_pago
     WHERE 
-        s.flag = ? AND s.apellido LIKE ?
+        s.apellido LIKE ?
     ORDER BY 
         s.apellido ASC, s.nombre ASC";
 
@@ -67,7 +64,7 @@ if (!$stmt) {
 }
 
 $likeLetra = $letra . '%';
-$stmt->bind_param("is", $flag, $likeLetra);
+$stmt->bind_param("s", $likeLetra);
 $stmt->execute();
 $result = $stmt->get_result();
 

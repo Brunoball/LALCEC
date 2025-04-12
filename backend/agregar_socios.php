@@ -17,27 +17,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     function limpiarDato($dato) {
         global $conn;
-        return isset($dato) && $dato !== '' ? strtoupper($conn->real_escape_string($dato)) : NULL;
+        return isset($dato) && $dato !== '' ? mb_strtoupper($conn->real_escape_string($dato), 'UTF-8') : NULL;
     }
 
-    $nombre = limpiarDato($data['nombre']);
-    $apellido = limpiarDato($data['apellido']);
-    $dni = limpiarDato($data['dni']);
-    $email = trim(strtolower($data['email'] ?? ''));
-    $telefono = limpiarDato($data['telefono']);
-    $domicilio = limpiarDato($data['domicilio']);
-    $domicilio_2 = limpiarDato($data['domicilio_2']);
-    $localidad = limpiarDato($data['localidad']);
-    $numero = limpiarDato($data['numero']);
-    $idCategoria = limpiarDato($data['idCategoria']);
-    $idMedios_Pago = limpiarDato($data['idMedios_Pago']);
-    $observacion = limpiarDato($data['observacion']);
-    $tipoEntidad = limpiarDato($data['tipoEntidad']); // Nuevo campo
+    // Obtener datos (solo nombre y apellido son obligatorios)
+    $nombre = isset($data['nombre']) ? limpiarDato($data['nombre']) : NULL;
+    $apellido = isset($data['apellido']) ? limpiarDato($data['apellido']) : NULL;
+    $dni = isset($data['dni']) ? limpiarDato($data['dni']) : NULL;
+    $email = isset($data['email']) ? trim(strtolower($data['email'])) : '';
+    $telefono = isset($data['telefono']) ? limpiarDato($data['telefono']) : NULL;
+    $domicilio = isset($data['domicilio']) ? limpiarDato($data['domicilio']) : NULL;
+    $domicilio_2 = isset($data['domicilio_2']) ? limpiarDato($data['domicilio_2']) : NULL;
+    $localidad = isset($data['localidad']) ? limpiarDato($data['localidad']) : NULL;
+    $numero = isset($data['numero']) ? limpiarDato($data['numero']) : NULL;
+    $idCategoria = isset($data['idCategoria']) ? limpiarDato($data['idCategoria']) : NULL;
+    $idMedios_Pago = isset($data['idMedios_Pago']) ? limpiarDato($data['idMedios_Pago']) : NULL;
+    $observacion = isset($data['observacion']) ? limpiarDato($data['observacion']) : NULL;
+    $fecha_union = date("Y-m-d"); // Obtener la fecha actual en formato YYYY-MM-DD
 
     // Validaciones de los datos
-    function validarCampoTexto($valor, $campo) {
-        if ($valor !== NULL && (!preg_match("/^[a-zA-Z\s]+$/", $valor) || strlen($valor) > 40)) {
-            echo json_encode(["error_message" => "El campo $campo solo puede contener letras y un máximo de 40 caracteres."]);
+    function validarCampoNombreApellido($valor, $campo) {
+        if ($valor !== NULL && (!preg_match("/^[a-zA-ZñÑ\s.]+$/u", $valor) || strlen($valor) > 40)) {
+            echo json_encode(["error_message" => "El campo $campo solo puede contener letras (incluyendo ñ/Ñ), puntos y espacios, con un máximo de 40 caracteres."]);
+            exit();
+        }
+    }
+
+    function validarCampoDni($valor) {
+        if ($valor !== NULL && (!preg_match("/^[0-9.]+$/", $valor) || strlen($valor) > 20)) {
+            echo json_encode(["error_message" => "El DNI solo puede contener números y puntos, con un máximo de 20 caracteres."]);
+            exit();
+        }
+    }
+
+    function validarCampoLocalidad($valor) {
+        if ($valor !== NULL && (!preg_match("/^[a-zA-ZñÑ\s.]+$/u", $valor) || strlen($valor) > 40)) {
+            echo json_encode(["error_message" => "La localidad solo puede contener letras (incluyendo ñ/Ñ), puntos y espacios, con un máximo de 40 caracteres."]);
+            exit();
+        }
+    }
+
+    function validarCampoDomicilio($valor) {
+        if ($valor !== NULL && (!preg_match("/^[a-zA-Z0-9ñÑ\s.]+$/u", $valor) || strlen($valor) > 40)) {
+            echo json_encode(["error_message" => "El domicilio solo puede contener letras (incluyendo ñ/Ñ), números, puntos y espacios, con un máximo de 40 caracteres."]);
             exit();
         }
     }
@@ -49,66 +71,78 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    validarCampoTexto($nombre, "Nombre");
-    validarCampoTexto($apellido, "Apellido");
-    validarCampoTexto($localidad, "Localidad");
-    validarCampoTexto($domicilio, "Domicilio");
+    function validarCampoDomicilio2($valor) {
+        if ($valor !== NULL && (!preg_match("/^[a-zA-Z0-9ñÑ\s.]+$/u", $valor) || strlen($valor) > 40)) {
+            echo json_encode(["error_message" => "El domicilio 2 solo puede contener letras (incluyendo ñ/Ñ), números, puntos y espacios, con un máximo de 40 caracteres."]);
+            exit();
+        }
+    }
 
-    validarCampoNumerico($dni, "DNI", 20);
+    function validarCampoObservacion($valor) {
+        if ($valor !== NULL && (!preg_match("/^[a-zA-Z0-9ñÑ\s.]+$/u", $valor) || strlen($valor) > 60)) {
+            echo json_encode(["error_message" => "La observación solo puede contener letras (incluyendo ñ/Ñ), números, puntos y espacios, con un máximo de 60 caracteres."]);
+            exit();
+        }
+    }
+
+    // Validar campos obligatorios
+    if ($nombre === NULL) {
+        echo json_encode(["error_message" => "El nombre es obligatorio"]);
+        exit();
+    }
+
+    if ($apellido === NULL) {
+        echo json_encode(["error_message" => "El apellido es obligatorio"]);
+        exit();
+    }
+
+    // Aplicar validaciones
+    validarCampoNombreApellido($nombre, "Nombre");
+    validarCampoNombreApellido($apellido, "Apellido");
+    validarCampoDni($dni);
+    validarCampoLocalidad($localidad);
+    validarCampoDomicilio($domicilio);
     validarCampoNumerico($numero, "Número", 20);
-    
+
     if ($telefono !== NULL && (!preg_match("/^[0-9\-]+$/", $telefono) || strlen($telefono) > 20)) {
         echo json_encode(["error_message" => "El teléfono solo puede contener números y guiones, con un máximo de 20 caracteres."]);
         exit();
     }
 
-    if ($domicilio_2 !== NULL && (!preg_match("/^[a-zA-Z0-9\s]+$/", $domicilio_2) || strlen($domicilio_2) > 40)) {
-        echo json_encode(["error_message" => "El domicilio 2 solo puede contener letras y números con un máximo de 40 caracteres."]);
-        exit();
-    }
-
-    if ($observacion !== NULL && (!preg_match("/^[a-zA-Z0-9\s]+$/", $observacion) || strlen($observacion) > 40)) {
-        echo json_encode(["error_message" => "El campo Observación solo puede contener letras, números y un máximo de 40 caracteres."]);
-        exit();
-    }
+    validarCampoDomicilio2($domicilio_2);
+    validarCampoObservacion($observacion);
 
     if ($email !== '' && !preg_match("/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.com$/i", $email)) {
         echo json_encode(["error_message" => "El email ingresado debe ser válido y terminar en '.com'."]);
         exit();
     }
 
-    // Determinar el valor de flag según el tipo de entidad
-    $tipoEntidad = strtoupper(trim($data['tipoEntidad'])); // Asegúrate de que 'empresa' siempre se maneje en mayúsculas
-    $flag = ($tipoEntidad === 'EMPRESA') ? 1 : 0;
-    
-    
-
-    // Consulta para insertar el nuevo socio
-    $query = "INSERT INTO socios (nombre, apellido, dni, email, telefono, domicilio, domicilio_2, localidad, numero, idCategoria, idMedios_Pago, observacion, flag) 
+    // Consulta para insertar el nuevo socio incluyendo la fecha de unión
+    $query = "INSERT INTO socios (nombre, apellido, dni, email, telefono, domicilio, domicilio_2, localidad, numero, idCategoria, idMedios_Pago, observacion, Fechaunion)
               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
     $stmt = $conn->prepare($query);
     $stmt->bind_param(
-        "ssssssssssssi", 
-        $nombre, 
-        $apellido, 
-        $dni, 
-        $email, 
-        $telefono, 
-        $domicilio, 
-        $domicilio_2, 
-        $localidad, 
-        $numero, 
-        $idCategoria, 
-        $idMedios_Pago, 
+        "sssssssssssss",
+        $nombre,
+        $apellido,
+        $dni,
+        $email,
+        $telefono,
+        $domicilio,
+        $domicilio_2,
+        $localidad,
+        $numero,
+        $idCategoria,
+        $idMedios_Pago,
         $observacion,
-        $flag // Usar el valor de flag determinado arriba
+        $fecha_union
     );
 
     if ($stmt->execute()) {
         echo json_encode(["success_message" => "Socio agregado con éxito"]);
     } else {
-        echo json_encode(["error_message" => "Error al agregar socio: " . $conn->error]);
+        echo json_encode(["error_message" => "Error al agregar socio: " . $stmt->error . " (Código de error: " . $conn->errno . ")"]);
     }
 
     $stmt->close();

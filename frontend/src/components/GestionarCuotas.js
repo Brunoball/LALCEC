@@ -4,6 +4,19 @@ import * as XLSX from "xlsx";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPrint, faFileExcel, faArrowLeft, faSearch, faReceipt } from '@fortawesome/free-solid-svg-icons';
 import "./GestionarCuotas.css";
+import {
+  faMoneyCheckAlt,
+  faFilter,
+  faCalendarAlt,
+  faUsers,
+  faList,
+  faCheckCircle,
+  faExclamationTriangle,
+  faExclamationCircle,
+  faCog,
+  faTimes,
+  faQuestionCircle,
+} from '@fortawesome/free-solid-svg-icons';
 
 const GestionarCuotas = () => {
   const navigate = useNavigate();
@@ -17,7 +30,6 @@ const GestionarCuotas = () => {
   const [errorMessage, setErrorMessage] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [viewType, setViewType] = useState("socio"); // "socio" o "empresa"
-  const [selectedItem, setSelectedItem] = useState(null);
   const [mostrarModalMes, setMostrarModalMes] = useState(false);
   const [mesSeleccionado, setMesSeleccionado] = useState("");
 
@@ -94,7 +106,7 @@ const GestionarCuotas = () => {
     }
 
     if (data.length === 0) {
-      setErrorMessage("Datos incompletos: No hay datos para exportar.");
+      setErrorMessage("No hay datos para exportar.");
       setTimeout(() => setErrorMessage(""), 3000);
       return;
     }
@@ -115,11 +127,23 @@ const GestionarCuotas = () => {
 
   // Función para imprimir el registro
   const handleImprimirRegistro = () => {
+    if (!selectedMonth) {
+      setErrorMessage("Por favor seleccione un mes.");
+      setTimeout(() => setErrorMessage(""), 3000);
+      return;
+    }
+
     let data = [];
     if (viewType === "socio") {
       data = activeTab === "pagado" ? sociosPagados : sociosDeudores;
     } else if (viewType === "empresa") {
       data = activeTab === "pagado" ? empresasPagadas : empresasDeudoras;
+    }
+
+    if (data.length === 0) {
+      setErrorMessage("No hay datos para imprimir.");
+      setTimeout(() => setErrorMessage(""), 3000);
+      return;
     }
 
     let content = `
@@ -154,96 +178,6 @@ const GestionarCuotas = () => {
     printWindow.document.write(content);
     printWindow.document.close();
     printWindow.print();
-  };
-
-  // Función para imprimir comprobante individual
-  const handleImprimirComprobante = () => {
-    if (!selectedItem) {
-      setErrorMessage("Por favor seleccione un item de la lista");
-      setTimeout(() => setErrorMessage(""), 3000);
-      return;
-    }
-
-    const fechaActual = new Date().toLocaleDateString();
-    const monto = selectedItem.categoria === "A" ? "5000" : 
-                 selectedItem.categoria === "B" ? "3000" : 
-                 selectedItem.categoria === "C" ? "2000" : "N/A";
-
-    let content = `
-      <html>
-        <head>
-          <style>
-            body { font-family: Arial, sans-serif; margin: 20px; }
-            .comprobante { border: 2px solid #000; padding: 20px; max-width: 500px; margin: 0 auto; }
-            .header { text-align: center; margin-bottom: 20px; }
-            .title { font-size: 24px; font-weight: bold; margin-bottom: 10px; }
-            .subtitle { font-size: 18px; margin-bottom: 20px; }
-            .info { margin-bottom: 15px; }
-            .info-label { font-weight: bold; display: inline-block; width: 150px; }
-            .footer { margin-top: 30px; text-align: center; font-style: italic; }
-            .separator { border-top: 1px dashed #000; margin: 20px 0; }
-          </style>
-        </head>
-        <body>
-          <div class="comprobante">
-            <div class="header">
-              <div class="title">COMPROBANTE DE PAGO</div>
-              <div class="subtitle">Club Social y Deportivo</div>
-            </div>
-            
-            <div class="info">
-              <span class="info-label">Fecha:</span> ${fechaActual}
-            </div>
-            
-            <div class="info">
-              <span class="info-label">Mes:</span> ${selectedMonth}
-            </div>
-            
-            <div class="separator"></div>
-            
-            <div class="info">
-              <span class="info-label">${viewType === "socio" ? "Socio:" : "Empresa:"}</span> 
-              ${viewType === "socio" ? `${selectedItem.apellido}, ${selectedItem.nombre}` : selectedItem.razon_social}
-            </div>
-            
-            <div class="info">
-              <span class="info-label">Categoría:</span> ${selectedItem.categoria}
-            </div>
-            
-            <div class="info">
-              <span class="info-label">Monto:</span> $${monto}
-            </div>
-            
-            <div class="separator"></div>
-            
-            <div class="footer">
-              <p>¡Gracias por su pago!</p>
-              <p>Este comprobante no es válido como factura</p>
-            </div>
-          </div>
-        </body>
-      </html>
-    `;
-
-    const printWindow = window.open("", "Imprimir Comprobante", "width=600,height=800");
-    printWindow.document.write(content);
-    printWindow.document.close();
-    printWindow.print();
-  };
-
-  // Función para abrir modal de selección de mes
-  const abrirModalMes = () => {
-    if (!selectedMonth) {
-      setErrorMessage("Por favor seleccione un mes primero");
-      setTimeout(() => setErrorMessage(""), 3000);
-      return;
-    }
-    setMostrarModalMes(true);
-  };
-
-  // Función para cerrar modal de mes
-  const cerrarModalMes = () => {
-    setMostrarModalMes(false);
   };
 
   // Función para imprimir todos los comprobantes
@@ -383,45 +317,41 @@ const GestionarCuotas = () => {
     const filteredData = filterData(data);
 
     return (
-      <div className="table-container">
-        <table className="table">
+      <div className="gc-table-container">
+        <table className="gc-table">
           <thead>
             <tr>
               {viewType === "socio" ? (
                 <>
                   <th>Apellido</th>
                   <th>Nombre</th>
-                  <th className="domicilio-column">Dirección</th>
-                  <th className="categoria-column">Categoría</th>
+                  <th className="gc-domicilio-column">Dirección</th>
+                  <th className="gc-categoria-column">Categoría</th>
                 </>
               ) : (
                 <>
-                  <th>Empresa</th>
-                  <th className="domicilio-column">Dirección</th>
-                  <th className="categoria-column">Categoría</th>
+                  <th>Razón Social</th>
+                  <th className="gc-domicilio-column">Dirección</th>
+                  <th className="gc-categoria-column">Categoría</th>
                 </>
               )}
             </tr>
           </thead>
           <tbody>
             {filteredData.map((item, index) => (
-              <tr 
-                key={index} 
-                onClick={() => setSelectedItem(item)}
-                className={selectedItem === item ? "selected-row" : ""}
-              >
+              <tr key={index}>
                 {viewType === "socio" ? (
                   <>
                     <td>{item.apellido}</td>
                     <td>{item.nombre}</td>
-                    <td className="domicilio-column">{`${item.domicilio} ${item.numero}`}</td>
-                    <td className="categoria-column">{item.categoria}</td>
+                    <td className="gc-domicilio-column">{`${item.domicilio} ${item.numero}`}</td>
+                    <td className="gc-categoria-column">{item.categoria} ${item.precio_categoria}</td>
                   </>
                 ) : (
                   <>
                     <td>{item.razon_social}</td>
-                    <td className="domicilio-column">{item.domicilio}</td>
-                    <td className="categoria-column">{item.categoria}</td>
+                    <td className="gc-domicilio-column">{item.domicilio}</td>
+                    <td className="gc-categoria-column">{item.categoria} ${item.precio_categoria}</td>
                   </>
                 )}
               </tr>
@@ -433,105 +363,165 @@ const GestionarCuotas = () => {
   };
 
   return (
-    <div className="container">
-      <div className="box">
-        <h2 className="title">Gestionar Cuotas</h2>
-        <div className="top-section">
-          <div className="select-container">
-            <div className="select-mes">
-              <select
-                id="meses"
-                value={selectedMonth}
-                onChange={handleMonthChange}
-                className="dropdown"
-              >
-                <option value="">Seleccionar mes</option>
-                {meses.map((mes, index) => (
-                  <option key={index} value={mes.mes}>{mes.mes}</option>
-                ))}
-              </select>
+    <div className="gc-container">
+      {/* Sección izquierda con filtros y controles */}
+      <div className="gc-left-section gc-box">
+        <div className="gc-header-section">
+          <h2 className="gc-title">
+            <FontAwesomeIcon icon={faMoneyCheckAlt} className="gc-title-icon" />
+            Gestionar Cuotas
+          </h2>
+          <div className="gc-divider"></div>
+        </div>
+        
+        <div className="gc-top-section">
+          <div className="gc-filter-card">
+            <div className="gc-filter-header">
+              <FontAwesomeIcon icon={faFilter} className="gc-filter-icon" />
+              <span>Filtros</span>
             </div>
-            <div className="select-entidad">
-              <select
-                value={viewType}
-                onChange={(e) => setViewType(e.target.value)}
-                className="dropdown"
-              >
-                <option value="socio">Socios</option>
-                <option value="empresa">Empresas</option>
-              </select>
+            
+            <div className="gc-select-container">
+              <div className="gc-input-group">
+                <label htmlFor="meses" className="gc-input-label">
+                  <FontAwesomeIcon icon={faCalendarAlt} /> Mes
+                </label>
+                <select
+                  id="meses"
+                  value={selectedMonth}
+                  onChange={handleMonthChange}
+                  className="gc-dropdown"
+                >
+                  <option value="">Seleccionar mes</option>
+                  {meses.map((mes, index) => (
+                    <option key={index} value={mes.mes}>{mes.mes}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="gc-input-group">
+                <label htmlFor="entidad" className="gc-input-label">
+                  <FontAwesomeIcon icon={faUsers} /> Tipo de vista
+                </label>
+                <select
+                  id="entidad"
+                  value={viewType}
+                  onChange={(e) => setViewType(e.target.value)}
+                  className="gc-dropdown"
+                >
+                  <option value="socio">Socios</option>
+                  <option value="empresa">Empresas</option>
+                </select>
+              </div>
+
+              <div className="gc-input-group">
+                <label htmlFor="search" className="gc-input-label">
+                  <FontAwesomeIcon icon={faSearch} /> Buscar
+                </label>
+                <div className="gc-search-integrated">
+                  <FontAwesomeIcon icon={faSearch} className="gc-search-icon" />
+                  <input
+                    id="search"
+                    type="text"
+                    placeholder={`Buscar ${viewType === "socio" ? "socio..." : "empresa..."}`}
+                    value={searchTerm}
+                    onChange={handleSearchChange}
+                  />
+                </div>
+              </div>
             </div>
           </div>
-
-          <div className="search-container">
-            <div className="search-wrapper">
-              <input
-                type="text"
-                placeholder={`Buscar por ${viewType === "socio" ? "socio..." : "empresa..."}`}
-                value={searchTerm}
-                onChange={handleSearchChange}
-                className="search-input"
-              />
-              <FontAwesomeIcon icon={faSearch} className="search-icon" />
+  
+          <div className="gc-tabs-card">
+            <div className="gc-tabs-header">
+              <FontAwesomeIcon icon={faList} className="gc-tabs-icon" />
+              <span>Estado de cuotas</span>
             </div>
-          </div>
-
-          <div className="tab-container">
-            <button className={activeTab === "pagado" ? "active-tab" : "inactive-tab"} onClick={() => setActiveTab("pagado")}>
-              Pagado
-            </button>
-            <button className={activeTab === "deudores" ? "active-tab" : "inactive-tab"} onClick={() => setActiveTab("deudores")}>
-              Deudores
-            </button>
+            <div className="gc-tab-container">
+              <button 
+                className={`gc-tab-button ${activeTab === "pagado" ? "gc-active-tab" : ""}`}
+                onClick={() => setActiveTab("pagado")}
+              >
+                <FontAwesomeIcon icon={faCheckCircle} />
+                Pagado
+                <span className="gc-tab-badge">
+                  {viewType === "socio" ? sociosPagados.length : empresasPagadas.length}
+                </span>
+              </button>
+              <button 
+                className={`gc-tab-button ${activeTab === "deudores" ? "gc-active-tab" : ""}`}
+                onClick={() => setActiveTab("deudores")}
+              >
+                <FontAwesomeIcon icon={faExclamationTriangle} />
+                Deudores
+                <span className="gc-tab-badge">
+                  {viewType === "socio" ? sociosDeudores.length : empresasDeudoras.length}
+                </span>
+              </button>
+            </div>
           </div>
         </div>
-
-        {errorMessage && <div className="error-message">{errorMessage}</div>}
-        {activeTab === "pagado"
-          ? renderTabla(viewType === "socio" ? sociosPagados : empresasPagadas)
-          : renderTabla(viewType === "socio" ? sociosDeudores : empresasDeudoras)}
+  
+        {errorMessage && (
+          <div className="gc-alert gc-alert-error">
+            <FontAwesomeIcon icon={faExclamationCircle} />
+            {errorMessage}
+          </div>
+        )}
         
-        <div className="buttons-container">
-          <button className="button-back" onClick={handleVolverAtras}>
-            <FontAwesomeIcon icon={faArrowLeft} /> Volver Atrás
-          </button>
-          <button className="button-export" onClick={handleExportExcel}>
-            <FontAwesomeIcon icon={faFileExcel} /> Exportar a Excel
-          </button>
-          <button className="button-print" onClick={handleImprimirRegistro}>
-            <FontAwesomeIcon icon={faPrint} /> Imprimir Registro
-          </button>
-
-          <button className="button-print-all" onClick={abrirModalMes}>
-            <FontAwesomeIcon icon={faPrint} /> Imprimir Todos
-          </button>
+        <div className="gc-actions-card">
+          <div className="gc-actions-header">
+            <FontAwesomeIcon icon={faCog} className="gc-actions-icon" />
+            <span>Acciones</span>
+          </div>
+          <div className="gc-buttons-container">
+            <button className="gc-button gc-button-back" onClick={handleVolverAtras}>
+              <FontAwesomeIcon icon={faArrowLeft} />
+              <span>Volver Atrás</span>
+            </button>
+            <button className="gc-button gc-button-export" onClick={handleExportExcel}>
+              <FontAwesomeIcon icon={faFileExcel} />
+              <span>Exportar a Excel</span>
+            </button>
+            <button className="gc-button gc-button-print" onClick={handleImprimirRegistro}>
+              <FontAwesomeIcon icon={faPrint} />
+              <span>Registro</span>
+            </button>
+            <button className="gc-button gc-button-print-all" onClick={handleImprimirTodosComprobantes}>
+              <FontAwesomeIcon icon={faPrint} />
+              <span>Imprimir Todos</span>
+            </button>
+          </div>
         </div>
       </div>
-
-      {/* Modal para confirmar impresión de todos los comprobantes */}
-      {mostrarModalMes && (
-        <div className="modal">
-          <div className="modal-content">
-            <h3 className="modal-title">Confirmar Impresión</h3>
-            <p className="modal-text">
-              ¿Desea imprimir comprobantes para {activeTab === "pagado" ? "todos los pagados" : "todos los deudores"} del mes {mesSeleccionado}?
-            </p>
-            <p className="modal-text">
+  
+      {/* Sección derecha con la tabla */}
+      <div className="gc-right-section gc-box">
+        <div className="gc-table-header">
+          <h3>
+            <FontAwesomeIcon icon={activeTab === "pagado" ? faCheckCircle : faExclamationTriangle} />
+            {activeTab === "pagado" ? "Cuotas Pagadas" : "Cuotas Pendientes"}
+          </h3>
+          <div className="gc-summary-info">
+            <span className="gc-summary-item">
+              <FontAwesomeIcon icon={faUsers} />
               Total: {viewType === "socio" 
                 ? (activeTab === "pagado" ? sociosPagados.length : sociosDeudores.length)
-                : (activeTab === "pagado" ? empresasPagadas.length : empresasDeudoras.length)} {viewType === "socio" ? "socios" : "empresas"}
-            </p>
-            <div className="modal-buttons">
-              <button className="modal-button cancel-button" onClick={cerrarModalMes}>
-                Cancelar
-              </button>
-              <button className="modal-button accept-button" onClick={handleImprimirTodosComprobantes}>
-                Imprimir
-              </button>
-            </div>
+                : (activeTab === "pagado" ? empresasPagadas.length : empresasDeudoras.length)}
+            </span>
+            <span className="gc-summary-item">
+              <FontAwesomeIcon icon={faCalendarAlt} />
+              Mes: {selectedMonth || "Todos"}
+            </span>
           </div>
         </div>
-      )}
+        
+        <div className="gc-table-container">
+          {activeTab === "pagado"
+            ? renderTabla(viewType === "socio" ? sociosPagados : empresasPagadas)
+            : renderTabla(viewType === "socio" ? sociosDeudores : empresasDeudoras)}
+        </div>
+      </div>
     </div>
   );
 };

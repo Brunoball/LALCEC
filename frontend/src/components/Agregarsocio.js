@@ -340,20 +340,6 @@ const AgregarSocio = () => {
 
 
           <div style={styles.inputRow}>
-
-            <select
-              name="tipoEntidad"
-              value={tipoEntidad}
-              onChange={handleTipoEntidadChange}
-              style={styles.select}
-            >
-              <option value="">Seleccione Entidad</option>
-              <option value="socio">Socio</option>
-              <option value="empresa">Empresa</option>
-            </select>
-
-
-
             <select
               name="idMedios_Pago"
               value={socio.idMedios_Pago}

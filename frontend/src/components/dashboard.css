@@ -152,6 +152,38 @@ html, body {
   gap: 10px;
 }
 
+/* CONTENEDOR DE SELECTORES */
+.contable-selectors-container {
+  display: flex;
+  gap: 15px;
+}
+
+/* SELECTOR DE TIPO */
+.contable-type-selector {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background-color: white;
+  padding: 8px 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.contable-type-selector select {
+  padding: 8px 15px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  background-color: white;
+  font-size: 0.9rem;
+  cursor: pointer;
+  outline: none;
+}
+
+.contable-type-selector svg {
+  color: #ff7b00;
+  font-size: 1.1rem;
+}
+
 /* SELECTOR DE MES */
 .contable-month-selector {
   display: flex;
@@ -356,6 +388,12 @@ html, body {
     gap: 15px;
   }
 
+  .contable-selectors-container {
+    width: 100%;
+    flex-direction: column;
+    gap: 10px;
+  }
+
   .contable-title {
     font-size: 1.6rem;
   }
@@ -371,5 +409,3 @@ html, body {
     height: calc(100vh - 30px);
   }
 }
-
-

@@ -6,112 +6,137 @@ header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
 header("Content-Type: application/json");
 
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    exit(0);
-}
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') exit(0);
 
 include(__DIR__ . '/db.php');
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $data = json_decode(file_get_contents("php://input"), true);
-
-    if (!$data) {
-        echo json_encode(["error_message" => "No se recibieron datos válidos"]);
-        exit;
-    }
-
-    function limpiarDato($dato) {
-        global $conn;
-        return isset($dato) && trim($dato) !== '' ? strtoupper($conn->real_escape_string(trim($dato))) : NULL;
-    }
-
-    function limpiarEntero($dato) {
-        return isset($dato) && is_numeric($dato) ? (int)$dato : NULL;
-    }
-
-    $razon_social = limpiarDato($data['razon_social'] ?? NULL);
-    $cuit = limpiarDato($data['cuit'] ?? '');
-    $cond_iva = limpiarEntero($data['cond_iva'] ?? NULL); // Obtener el id_iva directamente
-    $domicilio = limpiarDato($data['domicilio'] ?? 'No especificado');
-    $domicilio_2 = limpiarDato($data['domicilio_2'] ?? NULL);
-    $telefono = limpiarDato($data['telefono'] ?? NULL);
-    $email = isset($data['email']) && trim($data['email']) !== '' ? trim(strtolower($data['email'])) : NULL;
-    $observacion = limpiarDato($data['observacion'] ?? NULL);
-    $idCategorias = limpiarEntero($data['idCategoria'] ?? NULL);
-    $idMedios_Pago = limpiarEntero($data['idMedios_Pago'] ?? NULL);
-
-    // Verificar que la razón social sea obligatoria
-    if (!$razon_social) {
-        echo json_encode(["error_message" => "El campo Razón Social es obligatorio."]);
-        exit();
-    }
-
-    // Validar el email
-    if ($email !== NULL && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        echo json_encode(["error_message" => "El email ingresado no es válido."]);
-        exit();
-    }
-
-    // Validar si la categoría existe en la base de datos
-    if ($idCategorias !== NULL) {
-        $checkQuery = "SELECT idCategorias FROM categorias WHERE idCategorias = ?";
-        $checkStmt = $conn->prepare($checkQuery);
-        $checkStmt->bind_param("i", $idCategorias);
-        $checkStmt->execute();
-        $checkStmt->store_result();
-
-        if ($checkStmt->num_rows === 0) {
-            echo json_encode(["error_message" => "El idCategoria proporcionado no existe en la tabla categorias."]);
-            exit();
-        }
-        $checkStmt->close();
-    }
-
-    // Verificar si el id_iva existe en la base de datos
-    if ($cond_iva !== NULL) {
-        $checkCondIVAQuery = "SELECT id_iva FROM condicional_iva WHERE id_iva = ?";
-        $checkCondIVAStmt = $conn->prepare($checkCondIVAQuery);
-        $checkCondIVAStmt->bind_param("i", $cond_iva);
-        $checkCondIVAStmt->execute();
-        $checkCondIVAStmt->store_result();
-
-        if ($checkCondIVAStmt->num_rows === 0) {
-            echo json_encode(["error_message" => "La condición de IVA seleccionada no existe."]);
-            exit();
-        }
-        $checkCondIVAStmt->close();
-    }
-
-    // Insertar los datos en la tabla 'empresas'
-    $query = "INSERT INTO empresas (razon_social, cuit, id_iva, domicilio, domicilio_2, telefono, email, observacion, idCategorias, idMedios_Pago) 
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-
-    $stmt = $conn->prepare($query);
-    $stmt->bind_param(
-        "ssissssiii",
-        $razon_social, 
-        $cuit, 
-        $cond_iva, // Insertar el id_iva directamente
-        $domicilio, 
-        $domicilio_2,
-        $telefono, 
-        $email, 
-        $observacion, 
-        $idCategorias,  
-        $idMedios_Pago  
-    );
-
-    if ($stmt->execute()) {
-        echo json_encode(["success_message" => "Empresa agregada con éxito"]);
-    } else {
-        echo json_encode(["error_message" => "Error al agregar empresa: " . $conn->error]);
-    }
-
-    $stmt->close();
-} else {
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode(["error_message" => "Método no permitido. Se esperaba POST"]);
+    exit();
 }
 
-$conn->close();
+$data = json_decode(file_get_contents("php://input"), true);
+if (!$data) {
+    echo json_encode(["error_message" => "No se recibieron datos válidos"]);
+    exit;
+}
 
+// FUNCIONES DE LIMPIEZA
+function limpiarTexto($dato) {
+    global $conn;
+    return isset($dato) && trim($dato) !== '' ? mb_strtoupper($conn->real_escape_string(trim($dato)), 'UTF-8') : NULL;
+}
+
+function limpiarEntero($dato) {
+    return isset($dato) && is_numeric($dato) ? (int)$dato : NULL;
+}
+
+function validarCampoTexto($valor, $campo, $regex, $max) {
+    if ($valor !== NULL && (!preg_match($regex, $valor) || strlen($valor) > $max)) {
+        echo json_encode(["error_message" => "El campo $campo tiene un formato inválido o supera los $max caracteres."]);
+        exit();
+    }
+}
+
+// VALIDAR Y LIMPIAR DATOS
+$razon_social = limpiarTexto($data['razon_social'] ?? '');
+if (!$razon_social) {
+    echo json_encode(["error_message" => "La Razón Social es obligatoria."]);
+    exit();
+}
+validarCampoTexto($razon_social, "Razón Social", '/^[A-ZÑÁÉÍÓÚÜ.\s]+$/u', 60);
+
+$cuit = trim($data['cuit'] ?? '');
+if ($cuit !== '' && !preg_match('/^\d{2}-\d{8}-\d{1}$/', $cuit)) {
+    echo json_encode(["error_message" => "El CUIT debe tener el formato XX-XXXXXXXX-X."]);
+    exit();
+}
+$cuit = $cuit !== '' ? strtoupper($conn->real_escape_string($cuit)) : NULL;
+
+$cond_iva = limpiarEntero($data['cond_iva'] ?? NULL);
+
+$domicilio = limpiarTexto($data['domicilio'] ?? NULL);
+validarCampoTexto($domicilio, "Domicilio", '/^[A-ZÑÁÉÍÓÚÜ0-9.\s]+$/u', 40);
+
+$domicilio_2 = limpiarTexto($data['domicilio_2'] ?? NULL);
+validarCampoTexto($domicilio_2, "Domicilio Alternativo", '/^[A-ZÑÁÉÍÓÚÜ0-9.\s]+$/u', 40);
+
+$telefono = limpiarTexto($data['telefono'] ?? NULL);
+if ($telefono !== NULL && (!preg_match('/^[0-9\- ]+$/', $telefono) || strlen($telefono) > 20)) {
+    echo json_encode(["error_message" => "El teléfono contiene caracteres inválidos o supera los 20 caracteres."]);
+    exit();
+}
+
+$email = trim($data['email'] ?? '');
+if ($email !== '' && (!filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($email) > 60)) {
+    echo json_encode(["error_message" => "El email no tiene un formato válido o supera los 60 caracteres."]);
+    exit();
+}
+$email = $email !== '' ? strtolower($conn->real_escape_string($email)) : NULL;
+
+$observacion = limpiarTexto($data['observacion'] ?? NULL);
+validarCampoTexto($observacion, "Observación", '/^[A-ZÑÁÉÍÓÚÜ0-9.\s]*$/u', 60);
+
+$idCategorias = limpiarEntero($data['idCategoria'] ?? NULL);
+$idMedios_Pago = limpiarEntero($data['idMedios_Pago'] ?? NULL);
+$fechaunion = date('Y-m-d');
+
+// VERIFICAR EXISTENCIA DE CLAVES FORÁNEAS
+if ($idCategorias !== NULL) {
+    $checkCategoria = $conn->prepare("SELECT idCategorias FROM categorias WHERE idCategorias = ?");
+    $checkCategoria->bind_param("i", $idCategorias);
+    $checkCategoria->execute();
+    $checkCategoria->store_result();
+    if ($checkCategoria->num_rows === 0) {
+        echo json_encode(["error_message" => "El idCategoria proporcionado no existe."]);
+        exit();
+    }
+    $checkCategoria->close();
+}
+
+if ($cond_iva !== NULL) {
+    $checkIVA = $conn->prepare("SELECT id_iva FROM condicional_iva WHERE id_iva = ?");
+    $checkIVA->bind_param("i", $cond_iva);
+    $checkIVA->execute();
+    $checkIVA->store_result();
+    if ($checkIVA->num_rows === 0) {
+        echo json_encode(["error_message" => "La condición de IVA seleccionada no existe."]);
+        exit();
+    }
+    $checkIVA->close();
+}
+
+// INSERTAR EN LA BASE DE DATOS
+$query = "INSERT INTO empresas (razon_social, cuit, id_iva, domicilio, domicilio_2, telefono, email, observacion, idCategorias, idMedios_Pago, fechaunion)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+$stmt = $conn->prepare($query);
+if (!$stmt) {
+    echo json_encode(["error_message" => "Error al preparar la consulta: " . $conn->error]);
+    exit();
+}
+
+$stmt->bind_param(
+    "ssissssiiis",
+    $razon_social,
+    $cuit,
+    $cond_iva,
+    $domicilio,
+    $domicilio_2,
+    $telefono,
+    $email,
+    $observacion,
+    $idCategorias,
+    $idMedios_Pago,
+    $fechaunion
+);
+
+if ($stmt->execute()) {
+    echo json_encode(["success_message" => "Empresa agregada con éxito"]);
+} else {
+    echo json_encode(["error_message" => "Error al agregar empresa: " . $stmt->error]);
+}
+
+$stmt->close();
+$conn->close();
 ?>

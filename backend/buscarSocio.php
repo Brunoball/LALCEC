@@ -5,9 +5,8 @@ header("Access-Control-Allow-Headers: Content-Type, Authorization");
 
 include(__DIR__ . '/db.php');  
 
-// Obtener los parámetros
+// Obtener el parámetro de búsqueda
 $busqueda = $_GET['busqueda'] ?? null;
-$tipoEntidad = $_GET['tipoEntidad'] ?? 'socios';
 
 header('Content-Type: application/json');
 
@@ -35,9 +34,7 @@ if ($busqueda) {
             c.Precio_Categoria AS precio_categoria,
             m.Medio_Pago AS medio_pago";
 
-    // Agregar meses pagados si la tabla existe
     if ($tienePagos) {
-        // Verificar el nombre correcto de la columna (idSocios)
         $query .= ",
             (SELECT GROUP_CONCAT(DISTINCT p.idMes ORDER BY p.idMes SEPARATOR ', ') 
              FROM pagos p WHERE p.idSocios = s.idSocios) as meses_pagados";
@@ -52,13 +49,11 @@ if ($busqueda) {
             mediospago m ON s.idMedios_Pago = m.IdMedios_pago
         WHERE 
             (s.nombre LIKE ? OR s.apellido LIKE ?)
-            AND s.flag = " . ($tipoEntidad === 'empresas' ? 1 : 0) . "
         ORDER BY 
             s.apellido ASC, s.nombre ASC";
 
     $stmt = $conn->prepare($query);
     if ($stmt) {
-        // Agregar comodines "%" para búsqueda parcial
         $param = '%' . $busqueda . '%';
         $stmt->bind_param('ss', $param, $param);
         $stmt->execute();
@@ -67,7 +62,6 @@ if ($busqueda) {
         if ($result->num_rows > 0) {
             $resultados = [];
             while ($row = $result->fetch_assoc()) {
-                // Procesar meses pagados si existen
                 if ($tienePagos && isset($row['meses_pagados'])) {
                     if (!empty($row['meses_pagados'])) {
                         $mesesNumeros = explode(', ', $row['meses_pagados']);

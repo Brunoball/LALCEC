@@ -7,6 +7,54 @@ header("Access-Control-Allow-Headers: Content-Type");
 // Conexión a la base de datos
 require_once 'db.php';
 
+// Función para obtener el precio correcto según el mes seleccionado
+function obtenerPrecioPorMes($conn, $idCategoria, $mesSeleccionado) {
+    // 1. Obtener precio base actual
+    $sqlPrecioBase = "SELECT Precio_Categoria FROM categorias WHERE idCategorias = ?";
+    $stmtBase = $conn->prepare($sqlPrecioBase);
+    $stmtBase->bind_param("i", $idCategoria);
+    $stmtBase->execute();
+    $resultBase = $stmtBase->get_result();
+    $precioActual = ($resultBase->num_rows > 0) ? $resultBase->fetch_assoc()['Precio_Categoria'] : 0;
+
+    if ($mesSeleccionado === null || $mesSeleccionado === 'Todos') {
+        return $precioActual;
+    }
+
+    // 2. Obtener ID del mes seleccionado
+    $sqlMesId = "SELECT idMes FROM meses_pagos WHERE mes = ?";
+    $stmtMes = $conn->prepare($sqlMesId);
+    $stmtMes->bind_param("s", $mesSeleccionado);
+    $stmtMes->execute();
+    $resultMes = $stmtMes->get_result();
+
+    if ($resultMes->num_rows === 0) {
+        return $precioActual;
+    }
+
+    $idMesSeleccionado = $resultMes->fetch_assoc()['idMes'];
+
+    // 3. Buscar el PRIMER cambio posterior al mes seleccionado
+    $sqlHistorico = "SELECT precio_anterior 
+                     FROM historico_precios_categorias 
+                     WHERE idCategoria = ? AND idMes > ? 
+                     ORDER BY idMes ASC
+                     LIMIT 1";
+
+    $stmtHist = $conn->prepare($sqlHistorico);
+    $stmtHist->bind_param("ii", $idCategoria, $idMesSeleccionado);
+    $stmtHist->execute();
+    $resultHist = $stmtHist->get_result();
+
+    // Si hay un cambio posterior, significa que el precio era el anterior
+    if ($resultHist->num_rows > 0) {
+        return $resultHist->fetch_assoc()['precio_anterior'];
+    }
+
+    // 4. Si no hay cambios posteriores, usar el precio actual
+    return $precioActual;
+}
+
 // Obtener el mes seleccionado desde la solicitud
 $mesSeleccionado = isset($_GET['mes']) ? $_GET['mes'] : '';
 
@@ -19,20 +67,21 @@ if ($mesSeleccionado) {
         $rowMes = $resultMes->fetch_assoc();
         $idMes = $rowMes['idMes'];
 
-        // Consulta SQL para obtener los socios que pagaron en ese mes (sin duplicados)
+        // Consulta SQL para obtener los socios que pagaron en ese mes (agregado idCategoria)
         $sqlPagos = "
             SELECT DISTINCT socios.idSocios, 
                             socios.nombre, 
                             socios.apellido, 
                             socios.domicilio, 
                             socios.numero, 
+                            socios.idCategoria,
                             categorias.Nombre_Categoria AS categoria
             FROM pagos
             JOIN socios ON pagos.idSocios = socios.idSocios
             LEFT JOIN categorias ON socios.idCategoria = categorias.idCategorias
             WHERE pagos.idMes = $idMes
             GROUP BY socios.idSocios
-            ORDER BY socios.apellido ASC"; // Ordena alfabéticamente por apellido
+            ORDER BY socios.apellido ASC";
 
         $resultPagos = $conn->query($sqlPagos);
         $sociosPagados = array();
@@ -44,6 +93,11 @@ if ($mesSeleccionado) {
                 $row['domicilio'] = $row['domicilio'] ?? '';
                 $row['numero'] = $row['numero'] ?? '';
                 $row['categoria'] = $row['categoria'] ?? '';
+
+                // Obtener el precio correcto según el mes seleccionado
+                $idCategoria = $row['idCategoria'] ?? null;
+                $row['precio_categoria'] = obtenerPrecioPorMes($conn, $idCategoria, $mesSeleccionado);
+
                 $sociosPagados[] = $row;
             }
         }

@@ -9,11 +9,23 @@ const Login = () => {
   const [usuario, setUsuario] = useState("");
   const [contraseña, setContraseña] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [mensaje, setMensaje] = useState("");
   const [mensajeTipo, setMensajeTipo] = useState(""); // "exito" o "error"
   const navigate = useNavigate();
   const socket = new WebSocket("ws://localhost:3000/ws");
 
+  // Cargar credenciales guardadas al montar el componente
+  useEffect(() => {
+    const savedUser = localStorage.getItem('rememberedUser');
+    const savedPassword = localStorage.getItem('rememberedPassword');
+    
+    if (savedUser && savedPassword) {
+      setUsuario(savedUser);
+      setContraseña(savedPassword);
+      setRememberMe(true);
+    }
+  }, []);
 
   const togglePasswordVisibility = () => setShowPassword((prev) => !prev);
 
@@ -29,6 +41,16 @@ const Login = () => {
       if (response.status === 200 && response.data.message === "Inicio de sesión exitoso") {
         setMensaje("¡Inicio de sesión exitoso!");
         setMensajeTipo("exito");
+
+        // Guardar credenciales si el checkbox está marcado
+        if (rememberMe) {
+          localStorage.setItem('rememberedUser', usuario);
+          localStorage.setItem('rememberedPassword', contraseña);
+        } else {
+          // Limpiar credenciales guardadas si el checkbox no está marcado
+          localStorage.removeItem('rememberedUser');
+          localStorage.removeItem('rememberedPassword');
+        }
 
         setTimeout(() => {
           navigate("/PaginaPrincipal");
@@ -91,6 +113,18 @@ const Login = () => {
               <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} style={styles.icon} />
             </span>
           </div>
+          <div style={styles.rememberMeContainer}>
+            <input
+              type="checkbox"
+              id="rememberMe"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+              style={styles.checkbox}
+            />
+            <label htmlFor="rememberMe" style={styles.rememberMeLabel}>
+              Recordar cuenta
+            </label>
+          </div>
           <button type="submit" style={styles.button}>
             Iniciar sesión
           </button>
@@ -99,8 +133,6 @@ const Login = () => {
     </div>
   );
 };
-
-
 
 const styles = {
   container: {
@@ -152,7 +184,7 @@ const styles = {
     margin: "10px auto",
     boxShadow: "0 5px 15px rgba(0, 0, 0, 0.2)",
     width: "90%",
-    marginBottom:"20px"
+    marginBottom: "20px"
   },
   messageError: {
     backgroundColor: "#f8d7da",
@@ -164,7 +196,7 @@ const styles = {
     margin: "10px auto",
     boxShadow: "0 5px 15px rgba(0, 0, 0, 0.2)",
     width: "90%",
-    marginBottom:"20px"
+    marginBottom: "20px"
   },
   inputGroup: {
     display: "flex",
@@ -188,11 +220,21 @@ const styles = {
     color: "#ff8800",
     fontSize: "1.2rem",
   },
-  linkCentered: {
-    display: "block",
-    margin: "1rem 0 1.5rem",
-    color: "#ff8800",
-    textDecoration: "none",
+  rememberMeContainer: {
+    display: "flex",
+    alignItems: "center",
+    marginBottom: "1rem",
+    justifyContent: "flex-start",
+    paddingLeft: "10px",
+  },
+  checkbox: {
+    marginRight: "8px",
+    accentColor: "#ff8800",
+  },
+  rememberMeLabel: {
+    color: "#4b4b4b",
+    fontSize: "0.9rem",
+    cursor: "pointer",
   },
   button: {
     background: "linear-gradient(135deg, #ff8800, #ff6e00)",
@@ -204,8 +246,8 @@ const styles = {
     fontWeight: "600",
     cursor: "pointer",
     border: "none",
-    marginBottom:"-30px",
-    marginTop:"20px",
+    marginBottom: "-30px",
+    marginTop: "20px",
   },
 };
 

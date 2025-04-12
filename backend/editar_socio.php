@@ -10,138 +10,172 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
 
 include(__DIR__ . '/db.php');
 
+// Función para enviar respuestas consistentes
+function sendResponse($success, $message, $data = null) {
+    header('Content-Type: application/json');
+    $response = ['success' => $success, 'message' => $message];
+    if ($data !== null) {
+        $response['data'] = $data;
+    }
+    echo json_encode($response);
+    exit();
+}
+
 $data = json_decode(file_get_contents('php://input'), true);
 
-// Capturar datos desde el request
-$idSocios = $data['idSocios'] ?? null;
-$nombre = mb_strtoupper($data['nombre'] ?? '', 'UTF-8');  // Convertir a mayúsculas
-$apellido = mb_strtoupper($data['apellido'] ?? '', 'UTF-8');  // Convertir a mayúsculas
-$dni = mb_strtoupper($data['dni'] ?? '', 'UTF-8');  // Convertir a mayúsculas
-$domicilio = mb_strtoupper($data['domicilio'] ?? '', 'UTF-8');  // Convertir a mayúsculas
-$domicilio_2 = mb_strtoupper($data['domicilio_2'] ?? '', 'UTF-8');  // Convertir a mayúsculas
-$numero = mb_strtoupper($data['numero'] ?? '', 'UTF-8');  // Convertir a mayúsculas
-$localidad = mb_strtoupper($data['localidad'] ?? '', 'UTF-8');  // Convertir a mayúsculas
-$telefono = mb_strtoupper($data['telefono'] ?? '', 'UTF-8');  // Convertir a mayúsculas
-$email = mb_strtoupper($data['email'] ?? '', 'UTF-8');  // Convertir a mayúsculas
-$observacion = mb_strtoupper($data['observacion'] ?? '', 'UTF-8');  // Convertir a mayúsculas
-$idCategoria = !empty($data['categoria']) ? $data['categoria'] : null;
-$idMediosPago = $data['medioPago'] ?? null;
+// Función para limpiar datos
+function limpiarDato($dato) {
+    global $conn;
+    return isset($dato) && $dato !== '' ? mb_strtoupper($conn->real_escape_string($dato), 'UTF-8') : NULL;
+}
 
-header('Content-Type: application/json');
+// Validaciones de los datos
+function validarCampoNombreApellido($valor, $campo) {
+    if ($valor !== NULL && (!preg_match("/^[a-zA-ZñÑ\s.]+$/u", $valor) || strlen($valor) > 40)) {
+        sendResponse(false, "El campo $campo solo puede contener letras (incluyendo ñ/Ñ), puntos y espacios, con un máximo de 40 caracteres.");
+    }
+}
+
+function validarCampoDni($valor) {
+    if ($valor !== NULL && (!preg_match("/^[0-9.]+$/", $valor) || strlen($valor) > 20)) {
+        sendResponse(false, "El DNI solo puede contener números y puntos, con un máximo de 20 caracteres.");
+    }
+}
+
+function validarCampoLocalidad($valor) {
+    if ($valor !== NULL && (!preg_match("/^[a-zA-ZñÑ\s.]+$/u", $valor) || strlen($valor) > 40)) {
+        sendResponse(false, "La localidad solo puede contener letras (incluyendo ñ/Ñ), puntos y espacios, con un máximo de 40 caracteres.");
+    }
+}
+
+function validarCampoDomicilio($valor) {
+    if ($valor !== NULL && (!preg_match("/^[a-zA-Z0-9ñÑ\s.]+$/u", $valor) || strlen($valor) > 40)) {
+        sendResponse(false, "El domicilio solo puede contener letras (incluyendo ñ/Ñ), números, puntos y espacios, con un máximo de 40 caracteres.");
+    }
+}
+
+function validarCampoNumerico($valor, $campo, $maxLength) {
+    if ($valor !== NULL && (!preg_match("/^[0-9]+$/", $valor) || strlen($valor) > $maxLength)) {
+        sendResponse(false, "El campo $campo solo puede contener números y un máximo de $maxLength caracteres.");
+    }
+}
+
+function validarCampoDomicilio2($valor) {
+    if ($valor !== NULL && (!preg_match("/^[a-zA-Z0-9ñÑ\s.]+$/u", $valor) || strlen($valor) > 40)) {
+        sendResponse(false, "El domicilio 2 solo puede contener letras (incluyendo ñ/Ñ), números, puntos y espacios, con un máximo de 40 caracteres.");
+    }
+}
+
+function validarCampoObservacion($valor) {
+    if ($valor !== NULL && (!preg_match("/^[a-zA-Z0-9ñÑ\s.]+$/u", $valor) || strlen($valor) > 60)) {
+        sendResponse(false, "La observación solo puede contener letras (incluyendo ñ/Ñ), números, puntos y espacios, con un máximo de 60 caracteres.");
+    }
+}
+
+// Capturar y limpiar datos desde el request
+$idSocios = isset($data['idSocios']) ? limpiarDato($data['idSocios']) : NULL;
+$nombre = isset($data['nombre']) ? limpiarDato($data['nombre']) : NULL;
+$apellido = isset($data['apellido']) ? limpiarDato($data['apellido']) : NULL;
+$dni = isset($data['dni']) ? limpiarDato($data['dni']) : NULL;
+$email = isset($data['email']) ? trim(strtolower($data['email'])) : '';
+$telefono = isset($data['telefono']) ? limpiarDato($data['telefono']) : NULL;
+$domicilio = isset($data['domicilio']) ? limpiarDato($data['domicilio']) : NULL;
+$domicilio_2 = isset($data['domicilio_2']) ? limpiarDato($data['domicilio_2']) : NULL;
+$localidad = isset($data['localidad']) ? limpiarDato($data['localidad']) : NULL;
+$numero = isset($data['numero']) ? limpiarDato($data['numero']) : NULL;
+$idCategoria = isset($data['categoria']) ? limpiarDato($data['categoria']) : NULL;
+$idMediosPago = isset($data['medioPago']) ? limpiarDato($data['medioPago']) : NULL;
+$observacion = isset($data['observacion']) ? limpiarDato($data['observacion']) : NULL;
 
 // Validar que exista un ID de socio
-if ($idSocios) {
-    // Validaciones para campos de texto (nombre, apellido, localidad, domicilio, observacion)
-    if ($nombre !== '' && (!preg_match("/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s\.]+$/", $nombre) || strlen($nombre) > 40)) {
-        echo json_encode(["message" => "El nombre solo puede contener letras (incluyendo acentos y ñ), puntos y un máximo de 40 caracteres."]);
-        exit();
-    }
-    
-    if ($apellido !== '' && (!preg_match("/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s\.]+$/", $apellido) || strlen($apellido) > 40)) {
-        echo json_encode(["message" => "El apellido solo puede contener letras (incluyendo acentos y ñ), puntos y un máximo de 40 caracteres."]);
-        exit();
-    }
-    
-    if ($localidad !== '' && (!preg_match("/^[a-zA-Z\s]+$/", $localidad) || strlen($localidad) > 40)) {
-        echo json_encode(["message" => "La localidad solo puede contener letras y un máximo de 40 caracteres."]);
-        exit();
-    }
-
-    if ($domicilio !== '' && (!preg_match("/^[a-zA-Z0-9\s\.]+$/", $domicilio) || strlen($domicilio) > 40)) {
-        echo json_encode(["message" => "El domicilio solo puede contener letras, números, puntos y un máximo de 40 caracteres."]);
-        exit();
-    }
-    
-    if ($observacion !== '' && (!preg_match("/^[a-zA-Z0-9\s\.]+$/", $observacion) || strlen($observacion) > 40)) {
-        echo json_encode(["message" => "La observación solo puede contener letras, números, puntos y un máximo de 40 caracteres."]);
-        exit();
-    }
-
-    // Validaciones para campos numéricos (dni, telefono, numero) que permitan puntos
-    if ($dni !== '' && (!preg_match("/^[0-9\.]+$/", $dni) || strlen($dni) > 20)) {
-        echo json_encode(["message" => "El DNI solo puede contener números y puntos, con un máximo de 20 caracteres."]);
-        exit();
-    }
-
-    // Permitir números, guiones y espacios en el teléfono
-    if ($telefono !== '' && (!preg_match("/^[0-9\- ]+$/", $telefono) || strlen($telefono) > 20)) {
-        echo json_encode(["message" => "El teléfono solo puede contener números, guiones y espacios, con un máximo de 20 caracteres."]);
-        exit();
-    }
-
-    if ($numero !== '' && (!preg_match("/^[0-9]+$/", $numero) || strlen($numero) > 20)) {
-        echo json_encode(["message" => "El número solo puede contener números y un máximo de 20 caracteres."]);
-        exit();
-    }
-
-    // Validación para domicilio_2 (solo letras, números, espacios y puntos, con un máximo de 40 caracteres)
-    if ($domicilio_2 !== '' && (!preg_match("/^[a-zA-Z0-9\s\.]+$/", $domicilio_2) || strlen($domicilio_2) > 40)) {
-        echo json_encode(["message" => "El domicilio 2 solo puede contener letras, números, puntos y un máximo de 40 caracteres."]);
-        exit();
+if ($idSocios === NULL) {
+    sendResponse(false, "Falta el ID del socio para actualizar");
 }
 
-    $email = trim(strtolower($email)); // Normaliza el email a minúsculas y elimina espacios
+// Validar campos obligatorios
+if ($nombre === NULL) {
+    sendResponse(false, "El nombre es obligatorio");
+}
 
-    if ($email !== '' && !preg_match("/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(com|com\.ar)$/i", $email)) {
-        echo json_encode(["message" => "El email ingresado debe ser válido, sin espacios y terminar en '.com' o '.com.ar'."]);
-        exit();
-    }
+if ($apellido === NULL) {
+    sendResponse(false, "El apellido es obligatorio");
+}
 
-    $query = "
-        UPDATE socios 
-        SET 
-            nombre = ?, 
-            apellido = ?, 
-            DNI = ?, 
-            domicilio = ?, 
-            domicilio_2 = ?,  
-            numero = ?, 
-            localidad = ?, 
-            telefono = ?, 
-            email = ?, 
-            observacion = ?,  
-            idCategoria = ?, 
-            idMedios_Pago = ? 
-        WHERE idSocios = ?
-    ";
+// Aplicar validaciones
+validarCampoNombreApellido($nombre, "Nombre");
+validarCampoNombreApellido($apellido, "Apellido");
+validarCampoDni($dni);
+validarCampoLocalidad($localidad);
+validarCampoDomicilio($domicilio);
+validarCampoNumerico($numero, "Número", 20);
 
-    $stmt = $conn->prepare($query);
-    if ($stmt) {
-        // Enlazar los parámetros
-        $stmt->bind_param(
-            'ssssssssssiii',
-            $nombre, 
-            $apellido, 
-            $dni, 
-            $domicilio, 
-            $domicilio_2,  // Enlace para domicilio_2
-            $numero, 
-            $localidad, 
-            $telefono, 
-            $email, 
-            $observacion,  // Enlace para observación
-            $idCategoria, 
-            $idMediosPago, 
-            $idSocios
-        );
-        $stmt->execute();
+if ($telefono !== NULL && (!preg_match("/^[0-9\-]+$/", $telefono) || strlen($telefono) > 20)) {
+    sendResponse(false, "El teléfono solo puede contener números y guiones, con un máximo de 20 caracteres.");
+}
 
-        // Verificar si se actualizó alguna fila
-        if ($stmt->affected_rows > 0) {
-            echo json_encode(["message" => "Socio actualizado correctamente"]);
-        } else {
-            echo json_encode(["message" => "No se encontraron cambios para actualizar"]);
-        }
+validarCampoDomicilio2($domicilio_2);
+validarCampoObservacion($observacion);
 
-        $stmt->close();
+if ($email !== '' && !preg_match("/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.com$/i", $email)) {
+    sendResponse(false, "El email ingresado debe ser válido y terminar en '.com'.");
+}
+
+// Consulta para actualizar el socio
+$query = "
+    UPDATE socios 
+    SET 
+        nombre = ?, 
+        apellido = ?, 
+        dni = ?, 
+        email = ?, 
+        telefono = ?, 
+        domicilio = ?, 
+        domicilio_2 = ?, 
+        localidad = ?, 
+        numero = ?, 
+        idCategoria = ?, 
+        idMedios_Pago = ?, 
+        observacion = ?
+    WHERE idSocios = ?
+";
+
+$stmt = $conn->prepare($query);
+if ($stmt === false) {
+    sendResponse(false, "Error al preparar la consulta: " . $conn->error);
+}
+
+// Enlazar los parámetros
+$bindResult = $stmt->bind_param(
+    'sssssssssiiii',
+    $nombre, 
+    $apellido, 
+    $dni, 
+    $email, 
+    $telefono, 
+    $domicilio, 
+    $domicilio_2,
+    $localidad, 
+    $numero, 
+    $idCategoria, 
+    $idMediosPago, 
+    $observacion,
+    $idSocios
+);
+
+if ($bindResult === false) {
+    sendResponse(false, "Error al enlazar parámetros: " . $stmt->error);
+}
+
+if ($stmt->execute()) {
+    if ($stmt->affected_rows > 0) {
+        sendResponse(true, "Socio actualizado correctamente");
     } else {
-        http_response_code(500);
-        echo json_encode(["message" => "Error al preparar la consulta"]);
+        sendResponse(false, "No se encontraron cambios para actualizar");
     }
 } else {
-    http_response_code(400);
-    echo json_encode(["message" => "Falta el ID del socio para actualizar"]);
+    sendResponse(false, "Error al actualizar socio: " . $stmt->error);
 }
 
+$stmt->close();
 $conn->close();
 ?>

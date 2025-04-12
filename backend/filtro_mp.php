@@ -9,9 +9,8 @@ include(__DIR__ . '/db.php');
 // Configurar la codificación UTF-8
 mysqli_set_charset($conn, "utf8");
 
-// Obtener el medio de pago y el tipo de entidad desde la URL
+// Obtener el medio de pago desde la URL
 $medio = $_GET['medio'] ?? '';
-$tipo = $_GET['tipo'] ?? 'socios'; // Default a 'socios'
 
 if (!$medio) {
     echo json_encode(["error" => "El parámetro 'medio' es requerido."]);
@@ -21,9 +20,6 @@ if (!$medio) {
 // Verificar si la tabla de pagos existe
 $checkPagosTable = $conn->query("SHOW TABLES LIKE 'pagos'");
 $tienePagos = ($checkPagosTable->num_rows > 0);
-
-// Determinar el valor de flag según el tipo de entidad
-$flag = ($tipo === 'empresa') ? 1 : 0;
 
 // Obtener el idMedios_Pago correspondiente al nombre del medio de pago
 $queryMedio = "SELECT idMedios_Pago FROM mediospago WHERE Medio_Pago = ?";
@@ -64,7 +60,6 @@ $querySocios = "
         c.precio_categoria AS precio_categoria,
         m.medio_pago";
 
-// Agregar meses pagados si la tabla existe
 if ($tienePagos) {
     $querySocios .= ",
         (SELECT GROUP_CONCAT(DISTINCT p.idMes ORDER BY p.idMes SEPARATOR ', ') 
@@ -79,7 +74,7 @@ $querySocios .= "
     LEFT JOIN 
         mediospago m ON s.idmedios_pago = m.idmedios_pago
     WHERE 
-        s.idmedios_pago = ? AND s.flag = ?
+        s.idmedios_pago = ?
     ORDER BY 
         s.apellido ASC, s.nombre ASC";
 
@@ -90,13 +85,12 @@ if (!$stmtSocios) {
     exit;
 }
 
-$stmtSocios->bind_param('ii', $idMediosPago, $flag);
+$stmtSocios->bind_param('i', $idMediosPago);
 $stmtSocios->execute();
 $resultSocios = $stmtSocios->get_result();
 
 $socios = [];
 while ($row = $resultSocios->fetch_assoc()) {
-    // Procesar meses pagados si existen
     if ($tienePagos && isset($row['meses_pagados'])) {
         if (!empty($row['meses_pagados'])) {
             $mesesNumeros = explode(', ', $row['meses_pagados']);

@@ -3,7 +3,6 @@ header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: POST, GET, OPTIONS, PUT, DELETE");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
 
-// Manejar la solicitud de preflight (OPTIONS)
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit();
@@ -11,114 +10,143 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 include(__DIR__ . '/db.php');
 
-// Obtener datos JSON desde el cuerpo de la solicitud
 $data = json_decode(file_get_contents("php://input"), true);
 
-// Verificar si los datos están presentes
 if ($data) {
-    // Convertir todos los campos a mayúsculas antes de procesarlos
-    $razon_social = isset($data['razon_social']) ? strtoupper($data['razon_social']) : null;
-    $idEmp = isset($data['idEmp']) ? $data['idEmp'] : null;
-    $domicilio = isset($data['domicilio']) ? strtoupper($data['domicilio']) : null;
-    $domicilio_2 = isset($data['domicilio_2']) ? strtoupper($data['domicilio_2']) : null;
-    $telefono = isset($data['telefono']) ? strtoupper($data['telefono']) : null;
-    $email = isset($data['email']) ? strtoupper($data['email']) : null;
-    $observacion = isset($data['observacion']) ? strtoupper($data['observacion']) : null;
-    $idCategoria = isset($data['idCategoria']) ? $data['idCategoria'] : null; // Opcional
-    $medioPago = isset($data['medioPago']) ? $data['medioPago'] : null; // Opcional
-    $cuit = isset($data['cuit']) && !empty(trim($data['cuit'])) ? strtoupper($data['cuit']) : null; // Opcional
-    $id_iva = isset($data['id_iva']) && $data['id_iva'] !== '' ? $data['id_iva'] : null;
+    // Convertir a mayúsculas donde aplique
+    $razon_social = isset($data['razon_social']) ? strtoupper(trim($data['razon_social'])) : null;
+    $idEmp = isset($data['idEmp']) ? intval($data['idEmp']) : null;
+    $domicilio = isset($data['domicilio']) ? strtoupper(trim($data['domicilio'])) : null;
+    $domicilio_2 = isset($data['domicilio_2']) ? strtoupper(trim($data['domicilio_2'])) : null;
+    $telefono = isset($data['telefono']) ? strtoupper(trim($data['telefono'])) : null;
+    $email = isset($data['email']) ? strtoupper(trim($data['email'])) : null;
+    $observacion = isset($data['observacion']) ? strtoupper(trim($data['observacion'])) : null;
+    $idCategoria = isset($data['idCategoria']) ? intval($data['idCategoria']) : null;
+    $medioPago = isset($data['medioPago']) ? intval($data['medioPago']) : null;
+    $cuit = isset($data['cuit']) ? strtoupper(trim($data['cuit'])) : null;
+    $id_iva = isset($data['id_iva']) && $data['id_iva'] !== '' ? intval($data['id_iva']) : null;
 
-    // Validar que el campo obligatorio razon_social esté presente
-    if ($razon_social && $idEmp) {
-        // Verificar si el CUIT ya existe en otro registro (solo si no está vacío)
-        if (!empty($cuit)) {
-            $queryCheckCuit = "SELECT idEmp FROM empresas WHERE cuit = ? AND idEmp != ?";
-            if ($stmtCheckCuit = $conn->prepare($queryCheckCuit)) {
-                $stmtCheckCuit->bind_param('si', $cuit, $idEmp);
-                $stmtCheckCuit->execute();
-                $stmtCheckCuit->store_result();
-
-                if ($stmtCheckCuit->num_rows > 0) {
-                    http_response_code(400);
-                    echo json_encode(["message" => "El CUIT ya existe en otro registro"]);
-                    exit();
-                }
-
-                $stmtCheckCuit->close();
-            } else {
-                http_response_code(500);
-                echo json_encode(["message" => "Error al preparar la consulta de verificación de CUIT"]);
-                exit();
-            }
-        }
-
-        // Construir la consulta SQL dinámicamente
-        $query = "UPDATE empresas SET razon_social = ?, domicilio = ?, domicilio_2 = ?, telefono = ?, email = ?, observacion = ?, id_iva = ?";
-
-        // Parámetros y tipos de datos
-        $params = [$razon_social, $domicilio, $domicilio_2, $telefono, $email, $observacion, $id_iva];
-        $types = "sssssss";
-
-        // Agregar cuit solo si no es nulo
-        if (!empty($cuit)) {
-            $query .= ", cuit = ?";
-            $params[] = $cuit;
-            $types .= "s";
-        } else {
-            $query .= ", cuit = NULL"; // Forzar NULL si está vacío
-        }
-
-        // Agregar idCategoria solo si no es nulo
-        if (!empty($idCategoria)) {
-            $query .= ", idCategorias = ?";
-            $params[] = $idCategoria;
-            $types .= "i";
-        } else {
-            $query .= ", idCategorias = NULL"; // Forzar NULL si está vacío
-        }
-
-        // Agregar medioPago solo si no es nulo
-        if (!empty($medioPago)) {
-            $query .= ", idMedios_Pago = ?";
-            $params[] = $medioPago;
-            $types .= "i";
-        } else {
-            $query .= ", idMedios_Pago = NULL"; // Forzar NULL si está vacío
-        }
-
-        $query .= " WHERE idEmp = ?";
-        $params[] = $idEmp;
-        $types .= "i";
-
-        // Preparar la consulta
-        if ($stmt = $conn->prepare($query)) {
-            // Vincular parámetros dinámicamente
-            $stmt->bind_param($types, ...$params);
-
-            // Ejecutar la consulta
-            if ($stmt->execute()) {
-                echo json_encode(["message" => "Empresa actualizada correctamente"]);
-            } else {
-                http_response_code(500);
-                echo json_encode(["message" => "Error al actualizar la empresa"]);
-            }
-
-            // Cerrar la declaración
-            $stmt->close();
-        } else {
-            http_response_code(500);
-            echo json_encode(["message" => "Error al preparar la consulta"]);
-        }
-    } else {
+    // Validaciones
+    if (!$razon_social || !$idEmp) {
         http_response_code(400);
         echo json_encode(["message" => "Falta el dato obligatorio: razon_social o idEmp"]);
+        exit();
+    }
+
+    if (strlen($razon_social) > 100) {
+        http_response_code(400);
+        echo json_encode(["message" => "La razón social no puede superar los 100 caracteres"]);
+        exit();
+    }
+
+    if ($domicilio && strlen($domicilio) > 100) {
+        http_response_code(400);
+        echo json_encode(["message" => "El domicilio no puede superar los 100 caracteres"]);
+        exit();
+    }
+
+    if ($domicilio_2 && strlen($domicilio_2) > 100) {
+        http_response_code(400);
+        echo json_encode(["message" => "El domicilio alternativo no puede superar los 100 caracteres"]);
+        exit();
+    }
+
+    if ($telefono && !preg_match('/^[0-9+\-\s()]{6,20}$/', $telefono)) {
+        http_response_code(400);
+        echo json_encode(["message" => "El teléfono tiene un formato inválido"]);
+        exit();
+    }
+
+    if ($email && !filter_var(strtolower($email), FILTER_VALIDATE_EMAIL)) {
+        http_response_code(400);
+        echo json_encode(["message" => "El email tiene un formato inválido"]);
+        exit();
+    }
+
+    if ($cuit && !preg_match('/^[0-9]{2}-[0-9]{8}-[0-9]{1}$/', $cuit)) {
+        http_response_code(400);
+        echo json_encode(["message" => "El CUIT debe tener el formato XX-XXXXXXXX-X"]);
+        exit();
+    }
+
+    if (!is_null($id_iva) && !is_int($id_iva)) {
+        http_response_code(400);
+        echo json_encode(["message" => "El ID de IVA debe ser un número entero"]);
+        exit();
+    }
+
+    // Verificar CUIT único si se proporcionó
+    if (!empty($cuit)) {
+        $queryCheckCuit = "SELECT idEmp FROM empresas WHERE cuit = ? AND idEmp != ?";
+        if ($stmtCheckCuit = $conn->prepare($queryCheckCuit)) {
+            $stmtCheckCuit->bind_param('si', $cuit, $idEmp);
+            $stmtCheckCuit->execute();
+            $stmtCheckCuit->store_result();
+
+            if ($stmtCheckCuit->num_rows > 0) {
+                http_response_code(400);
+                echo json_encode(["message" => "El CUIT ya existe en otro registro"]);
+                exit();
+            }
+
+            $stmtCheckCuit->close();
+        } else {
+            http_response_code(500);
+            echo json_encode(["message" => "Error al preparar la consulta de verificación de CUIT"]);
+            exit();
+        }
+    }
+
+    // Construcción dinámica de UPDATE
+    $query = "UPDATE empresas SET razon_social = ?, domicilio = ?, domicilio_2 = ?, telefono = ?, email = ?, observacion = ?, id_iva = ?";
+    $params = [$razon_social, $domicilio, $domicilio_2, $telefono, $email, $observacion, $id_iva];
+    $types = "sssssss";
+
+    if (!empty($cuit)) {
+        $query .= ", cuit = ?";
+        $params[] = $cuit;
+        $types .= "s";
+    } else {
+        $query .= ", cuit = NULL";
+    }
+
+    if (!empty($idCategoria)) {
+        $query .= ", idCategorias = ?";
+        $params[] = $idCategoria;
+        $types .= "i";
+    } else {
+        $query .= ", idCategorias = NULL";
+    }
+
+    if (!empty($medioPago)) {
+        $query .= ", idMedios_Pago = ?";
+        $params[] = $medioPago;
+        $types .= "i";
+    } else {
+        $query .= ", idMedios_Pago = NULL";
+    }
+
+    $query .= " WHERE idEmp = ?";
+    $params[] = $idEmp;
+    $types .= "i";
+
+    if ($stmt = $conn->prepare($query)) {
+        $stmt->bind_param($types, ...$params);
+        if ($stmt->execute()) {
+            echo json_encode(["message" => "Empresa actualizada correctamente"]);
+        } else {
+            http_response_code(500);
+            echo json_encode(["message" => "Error al actualizar la empresa"]);
+        }
+        $stmt->close();
+    } else {
+        http_response_code(500);
+        echo json_encode(["message" => "Error al preparar la consulta"]);
     }
 } else {
     http_response_code(400);
     echo json_encode(["message" => "Datos no recibidos"]);
 }
 
-// Cerrar la conexión
 $conn->close();
 ?>
