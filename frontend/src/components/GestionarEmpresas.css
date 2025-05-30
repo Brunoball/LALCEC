@@ -305,10 +305,11 @@
 }
 
 /* Contenedor scrollable con el header fijo */
-.scrollable {
+.scrollableE {
   overflow-y: auto;
   flex-grow: 1;
   max-height: 37vh;
+  margin-top: 2rem;
 }
 
 /* Estilo del scrollbar */
@@ -362,7 +363,7 @@
   align-items: center;
   flex-wrap: wrap;
   position: absolute;
-  left: 50%;
+  left: 52%;
   transform: translateX(-50%);
   width: 70%; /* Aumenta el tamaño del contenedor de botones */
 }

@@ -16,7 +16,8 @@ import {
   faTable,
   faListAlt,
   faBuilding,
-  faUser
+  faUser,
+  faArrowLeft // ← agregalo acá
 } from "@fortawesome/free-solid-svg-icons";
 
 export default function DashboardContable() {
@@ -138,7 +139,9 @@ export default function DashboardContable() {
   }, []);
 
 
-
+  const handleVolverAtras = async () => {
+    navigate(-1);
+  };
 
 
 
@@ -261,9 +264,10 @@ export default function DashboardContable() {
             <FontAwesomeIcon icon={faDollarSign} /> 
             Panel Contable
           </h1>
-          <button className="contable-back-button" onClick={volver}>
-            ← Volver
-          </button>
+            <button className="contable-back-button" onClick={handleVolverAtras}>
+              <FontAwesomeIcon icon={faArrowLeft} className="socio-icon-button" />
+              <p>Volver Atrás</p>
+            </button>
         </div>
 
         <div className="contable-summary-cards">
