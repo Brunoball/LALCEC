@@ -582,7 +582,7 @@ const GestionarEmpresas = () => {
             <div className="alphabet-dropdown">
               <select
                 id="alphabet"
-                className="dropdown"
+                className="dropdown" 
                 value={letraSeleccionada || medioPagoSeleccionado || localStorage.getItem("ultimaSeleccion") || "Seleccionar"}
                 onChange={handleSeleccion}
               >

@@ -128,6 +128,7 @@
   background: #f5f5f5;
   border-radius: 8px;
   padding: 5px;
+  outline: none;
   transition: all 0.3s ease-in-out;
 }
 
@@ -144,11 +145,9 @@
   outline: none;
   transition: all 0.3s ease-in-out;
 }
-
-
-
-
-
+#alphabet:focus {
+  outline: none;
+}
 
 
 
@@ -294,9 +293,9 @@
 }
 
 .icon {
-  font-size: 1.6rem;
+  font-size: 1.4rem;
   cursor: pointer;
-  color: #ff6e00;
+  color: #ffffff;
   transition: color 0.3s;
 }
 

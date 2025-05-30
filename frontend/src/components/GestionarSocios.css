@@ -341,6 +341,7 @@
   overflow-y: auto;
   flex-grow: 1;
   max-height: 37vh;
+  margin-top: 2rem;
 }
 
 /* Estilo del scrollbar */
