@@ -137,11 +137,6 @@ export default function DashboardContable() {
     fetchInitialData();
   }, []);
 
-
-
-
-
-
   useEffect(() => {
     if (initialLoadComplete && mesSeleccionado !== "Selecciona un mes") {
       updateMonthData();
@@ -227,12 +222,12 @@ export default function DashboardContable() {
   const handleMesChange = (e) => {
     const nuevoMes = e.target.value;
     setMesSeleccionado(nuevoMes);
-    setMostrarTablaDetalle(false);
+    // Eliminamos la línea que resetearía mostrarTablaDetalle
   };
 
   const handleTipoEntidadChange = (e) => {
     setTipoEntidad(e.target.value);
-    setMostrarTablaDetalle(false);
+    // También eliminamos el reset de mostrarTablaDetalle aquí si quieres que se mantenga al cambiar tipo de entidad
   };
 
   const toggleVistaDetalle = () => {
