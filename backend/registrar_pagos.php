@@ -25,6 +25,7 @@ $nombre = $data['nombre'];
 $apellido = $data['apellido'];
 $mesesSeleccionados = $data['meses']; // Array de IDs de meses seleccionados
 $fechaPago = date('Y-m-d'); // Fecha actual
+$mesContable = date('n'); // Número del mes actual (1-12)
 
 // Verificar que los datos no estén vacíos
 if (!empty($nombre) && !empty($apellido) && !empty($mesesSeleccionados)) {
@@ -44,14 +45,14 @@ if (!empty($nombre) && !empty($apellido) && !empty($mesesSeleccionados)) {
 
     // Iniciar una transacción para asegurar la integridad de los datos
     $conn->begin_transaction();
-    
+
     try {
-        // Preparar la consulta para insertar los pagos
-        $stmt = $conn->prepare("INSERT INTO pagos (idSocios, idMes, fechaPago) VALUES (?, ?, ?)");
+        // Preparar la consulta para insertar los pagos incluyendo mes_contable
+        $stmt = $conn->prepare("INSERT INTO pagos (idSocios, idMes, fechaPago, mes_contable) VALUES (?, ?, ?, ?)");
 
         // Insertar cada mes seleccionado en la base de datos
         foreach ($mesesSeleccionados as $idMes) {
-            $stmt->bind_param("iis", $idSocio, $idMes, $fechaPago);
+            $stmt->bind_param("iisi", $idSocio, $idMes, $fechaPago, $mesContable);
             $stmt->execute();
         }
 

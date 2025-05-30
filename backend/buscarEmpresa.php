@@ -46,6 +46,7 @@ $query = "
         e.domicilio_2,
         e.telefono,
         e.email,
+        e.fechaunion AS Fechaunion,
         e.observacion,
         c.Nombre_categoria AS categoria,
         c.Precio_Categoria AS precio_categoria,

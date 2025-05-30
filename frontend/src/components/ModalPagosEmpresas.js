@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 
 const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
   const [mesesSeleccionados, setMesesSeleccionados] = useState([]);
@@ -6,62 +6,86 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
   const [pagoExitoso, setPagoExitoso] = useState(false);
   const [precioMensual, setPrecioMensual] = useState(0);
   const [modalVisible, setModalVisible] = useState(true);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
   const [mesesPagados, setMesesPagados] = useState([]);
+  const [fechaUnion, setFechaUnion] = useState(null);
+  const [empresaData, setEmpresaData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  // Función para formatear correctamente la fecha
+  const formatDate = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString + 'T00:00:00');
+    return date.toLocaleDateString('es-AR');
+  };
 
   useEffect(() => {
-    const obtenerMontoMensual = async () => {
+    const obtenerDatosEmpresa = async () => {
       try {
         const response = await fetch("http://localhost:3001/Monto_pago_empresas.php", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ razonSocial, tipoEntidad: "empresa" }),
+          body: JSON.stringify({ 
+            razonSocial, 
+            tipoEntidad: "empresa" 
+          })
         });
         const result = await response.json();
+        
         if (result.success) {
-          setPrecioMensual(result.precioMes);
+          setPrecioMensual(result.precioMes || 0);
+          setMesesPagados(result.mesesPagados || []);
+          setFechaUnion(result.fechaUnion || new Date().toISOString().split('T')[0]);
+          setEmpresaData({
+            domicilio: result.domicilio_2 || '',
+            categoria: result.categoria || '',
+            cobrador: result.cobrador || ''
+          });
         } else {
-          setError(result.message);
-          setTimeout(() => setError(""), 3000);
+          setError(result.message || "Error al obtener datos de la empresa");
         }
       } catch (error) {
-        setError("Ocurrió un error al obtener el monto mensual.");
-        setTimeout(() => setError(""), 3000);
+        setError("Ocurrió un error al obtener los datos de la empresa.");
+        console.error(error);
+      } finally {
+        setLoading(false);
       }
     };
-
-    obtenerMontoMensual();
+    
+    obtenerDatosEmpresa();
   }, [razonSocial]);
-
-  useEffect(() => {
-    const obtenerMesesPagados = async () => {
-      try {
-        const response = await fetch("http://localhost:3001/obtener_meses_pagos_empresas.php", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ razonSocial, tipoEntidad: "empresa" })
-        });
-        const result = await response.json();
-        if (result.success) {
-          setMesesPagados(result.mesesPagados);
-        } else {
-          setError(result.message);
-          setTimeout(() => setError(''), 3000);
-        }
-      } catch (error) {
-        setError("Ocurrió un error al obtener los meses pagados.");
-        setTimeout(() => setError(''), 3000);
-      }
-    };
-    obtenerMesesPagados();
-  }, [razonSocial]);
-
-  const meses = [...Array(12)].map((_, i) => ({
-    id: i + 1,
-    nombre: new Date(0, i).toLocaleString("es", { month: "long" }).toUpperCase(),
-  }));
 
   const totalPagar = mesesSeleccionados.length * precioMensual;
+
+  // Función para obtener los meses disponibles basados en la fecha de unión
+  const getMesesDisponibles = () => {
+    if (!fechaUnion) return [];
+    
+    try {
+      const fechaUnionObj = new Date(fechaUnion + 'T00:00:00');
+      const mesUnion = fechaUnionObj.getMonth() + 1; // Los meses en JS van de 0-11
+      const añoActual = new Date().getFullYear();
+      const añoUnion = fechaUnionObj.getFullYear();
+      
+      // Si la empresa se unió en el año actual, solo mostramos desde el mes de unión
+      if (añoUnion === añoActual) {
+        return [...Array(12 - mesUnion + 1)].map((_, i) => ({ 
+          id: mesUnion + i, 
+          nombre: new Date(0, mesUnion + i - 1).toLocaleString('es', { month: 'long' }).toUpperCase() 
+        }));
+      }
+      // Si se unió en un año anterior, mostramos todos los meses
+      return [...Array(12)].map((_, i) => ({ 
+        id: i + 1, 
+        nombre: new Date(0, i).toLocaleString('es', { month: 'long' }).toUpperCase() 
+      }));
+    } catch (e) {
+      console.error("Error al procesar fecha de unión:", e);
+      return [];
+    }
+  };
+
+  const meses = getMesesDisponibles();
 
   const handleSeleccionarMes = (mes) => {
     if (mesesPagados.includes(mes)) return;
@@ -71,18 +95,21 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
   };
 
   const handleSeleccionarTodos = () => {
-    setMesesSeleccionados(todosSeleccionados ? [] : meses.filter(m => !mesesPagados.includes(m.id)).map(m => m.id));
+    const mesesDisponibles = meses.filter(m => !mesesPagados.includes(m.id)).map(m => m.id);
+    setMesesSeleccionados(todosSeleccionados ? [] : mesesDisponibles);
     setTodosSeleccionados(!todosSeleccionados);
   };
 
   const handleRealizarPago = async () => {
+    if (mesesSeleccionados.length === 0) return;
+    
     try {
       const response = await fetch("http://localhost:3001/registrar_pagos_empresas.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
           razonSocial, 
-          meses: mesesSeleccionados, 
+          meses: mesesSeleccionados,
           tipoEntidad: "empresa" 
         })
       });
@@ -90,101 +117,127 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
       if (result.success) {
         setPagoExitoso(true);
         setModalVisible(false);
-        // Notificar al componente padre para actualizar
         if (onPagoRealizado) {
           onPagoRealizado();
         }
       } else {
-        setError(result.message);
-        setTimeout(() => setError(''), 3000);
+        setError(result.message || "Error al registrar el pago");
       }
     } catch (error) {
       setError("Ocurrió un error al realizar el pago.");
-      setTimeout(() => setError(''), 3000);
+      console.error(error);
     }
   };
 
-  const handleImprimirComprobante = async () => {
-    try {
-      const response = await fetch("http://localhost:3001/comprobante_pago_empresa.php", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ razonSocial, tipoEntidad: "empresa" })
-      });
+  const handleImprimirComprobante = () => {
+    if (!empresaData || mesesSeleccionados.length === 0) return;
+    
+    const mesesPagadosStr = meses
+      .filter(m => mesesSeleccionados.includes(m.id))
+      .map(m => m.nombre)
+      .join(", ");
 
-      const result = await response.json();
-
-      if (!result.success) {
-        alert("Error al obtener los datos de la empresa: " + result.message);
-        return;
-      }
-
-      const { domicilio_2, categoria, cobrador, precioCategoria } = result;
-      const mesesPagadosStr = meses
-        .filter(m => mesesSeleccionados.includes(m.id))
-        .map(m => m.nombre)
-        .join(", ");
-
-      const comprobanteHTML = `
-        <html>
-        <head>
+    const comprobanteHTML = `
+      <html>
+      <head>
           <title>Comprobante de Pago</title>
           <style>
-            @page { size: A4 portrait; margin: 0; }
-            body {
-              width: 210mm; height: 297mm; margin: 0; padding: 0;
-              font-family: Arial, sans-serif; font-size: 12px;
-              display: flex; justify-content: center; align-items: center;
-            }
-            .contenedor {
-              width: 210mm; height: 70mm; position: absolute;
-              top: 33%; left: 50%;
-              transform: translate(-50%, -50%) rotate(90deg);
-              transform-origin: center center; box-sizing: border-box;
-            }
-            .comprobante {
-              width: 100%; height: 100%; display: flex; box-sizing: border-box;
-            }
-            .talon-empresa {
-              width: 60%; padding-left: 20mm; padding-top: 13mm;
-            }
-            .talon-cobrador {
-              width: 60mm; padding-left: 10mm; padding-top: 16mm;
-            }
-            p { margin-top: 5px; font-size: 13px; }
+              @page {
+                  size: A4 portrait;
+                  margin: 0;
+              }
+              body {
+                  width: 210mm;
+                  height: 297mm;
+                  margin: 0;
+                  padding: 0;
+                  font-family: Arial, sans-serif;
+                  font-size: 12px;
+                  display: flex;
+                  justify-content: center;
+                  align-items: center;
+              }
+              .contenedor {
+                width: 210mm;
+                height: 70mm;
+                position: absolute;
+                top: 33%;
+                left: 50%;
+                transform: translate(-50%, -50%) rotate(90deg);
+                transform-origin: center center;
+                box-sizing: border-box;
+              }
+              .comprobante {
+                  width: 100%;
+                  height: 100%;
+                  display: flex;
+                  box-sizing: border-box;
+              }
+              .talon-empresa {
+                  width: 60%;
+                  padding-left: 20mm;
+                  padding-top: 13mm;
+              }
+              .talon-cobrador {
+                  width: 60mm;
+                  padding-left: 10mm;
+                  padding-top: 16mm;
+              }
+              p {
+                  margin-top: 5px;
+                  font-size: 13px;
+              }
           </style>
-        </head>
-        <body>
+      </head>
+      <body>
           <div class="contenedor">
-            <div class="comprobante">
-              <div class="talon-empresa">
-                <p><strong>Empresa:</strong> ${razonSocial}</p>
-                <p><strong>Domicilio:</strong> ${domicilio_2}</p>
-                <p><strong>Categoría / Monto:</strong> ${categoria} / $${totalPagar}</p>
-                <p><strong>Período:</strong> ${mesesPagadosStr}</p>
-                <p><strong>Cobrador:</strong> ${cobrador}</p>
-                <p>Por consultas comunicarse al 03564-15205778</p>
+              <div class="comprobante">
+                  <div class="talon-empresa">
+                      <p><strong>Empresa:</strong> ${razonSocial}</p>
+                      <p><strong>Domicilio:</strong> ${empresaData.domicilio}</p>
+                      <p><strong>Categoría / Monto:</strong> ${empresaData.categoria} / $${totalPagar}</p>
+                      <p><strong>Período:</strong> ${mesesPagadosStr}</p>
+                      <p><strong>Cobrador:</strong> ${empresaData.cobrador}</p>
+                      <p>Por consultas comunicarse al 03564-15205778</p>
+                  </div>
+                  <div class="talon-cobrador">
+                      <p><strong>Empresa:</strong> ${razonSocial}</p>
+                      <p><strong>Categoría / Monto:</strong> ${empresaData.categoria} / $${totalPagar}</p>
+                      <p><strong>Período:</strong> ${mesesPagadosStr}</p>
+                      <p><strong>Cobrador:</strong> ${empresaData.cobrador}</p>
+                  </div>
               </div>
-              <div class="talon-cobrador">
-                <p><strong>Empresa:</strong> ${razonSocial}</p>
-                <p><strong>Categoría / Monto:</strong> ${categoria} / $${totalPagar}</p>
-                <p><strong>Período:</strong> ${mesesPagadosStr}</p>
-                <p><strong>Cobrador:</strong> ${cobrador}</p>
-              </div>
-            </div>
           </div>
-        </body>
-        </html>
-      `;
+      </body>
+      </html>
+    `;
 
-      const ventana = window.open('', '', 'width=600,height=400');
-      ventana.document.write(comprobanteHTML);
-      ventana.document.close();
-      ventana.print();
-    } catch (error) {
-      alert("Ocurrió un error al obtener los datos de la empresa.");
-    }
+    const ventana = window.open('', '', 'width=600,height=400');
+    ventana.document.write(comprobanteHTML);
+    ventana.document.close();
+    ventana.print();
   };
+
+  if (loading) {
+    return (
+      <div style={styles.container}>
+        <div style={styles.modalContent}>
+          <p>Cargando datos de la empresa...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div style={styles.container}>
+        <div style={styles.modalContent}>
+          <p style={styles.errorMessage}>{error}</p>
+          <button style={styles.cancelButton} onClick={cerrarModal}>Cerrar</button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={styles.container}>
@@ -192,6 +245,7 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
         <div style={styles.modalContent}>
           <h1 style={styles.title}>Modal de Pagos</h1>
           <p style={styles.subtitle}>Empresa: {razonSocial}</p>
+          {fechaUnion && <p style={styles.subtitle}>Fecha de alta: {formatDate(fechaUnion)}</p>}
 
           {error && <p style={styles.errorMessage}>{error}</p>}
 
@@ -207,7 +261,11 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
                 {meses.map((mes) => (
                   <tr
                     key={mes.id}
-                    style={mesesPagados.includes(mes.id) ? { backgroundColor: '#d3d3d3' } : null}
+                    style={
+                      mesesPagados.includes(mes.id)
+                        ? { backgroundColor: '#d3d3d3' }
+                        : null
+                    }
                   >
                     <td style={styles.td}>{mes.nombre}</td>
                     <td style={styles.td}>
@@ -224,22 +282,26 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
               </tbody>
             </table>
           </div>
-
           <div style={styles.selectAllContainer}>
             <input
               type="checkbox"
               checked={todosSeleccionados}
               onChange={handleSeleccionarTodos}
               style={styles.checkboxInput}
-              disabled={mesesPagados.length === 12}
+              disabled={mesesPagados.length === meses.length}
             />
-            <label style={styles.selectAllLabel}>Todos los meses</label>
+            <label style={styles.selectAllLabel}>Todos los meses disponibles</label>
             <h2 style={styles.totalAmount}>Total a pagar: ${totalPagar}</h2>
           </div>
-
           <div style={styles.buttonsContainer}>
             <button style={styles.cancelButton} onClick={cerrarModal}>Cancelar</button>
-            <button style={styles.payButton} onClick={handleRealizarPago}>Realizar Pago</button>
+            <button 
+              style={styles.payButton} 
+              onClick={handleRealizarPago}
+              disabled={mesesSeleccionados.length === 0}
+            >
+              Realizar Pago
+            </button>
           </div>
         </div>
       ) : (
@@ -247,14 +309,19 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
           <h2 style={styles.successMessageh2}>¡Pago realizado con éxito!</h2>
           <div style={styles.buttonsContainer}>
             <button style={styles.cancelButton} onClick={cerrarModal}>Cerrar</button>
-            <button style={styles.receiptButton} onClick={handleImprimirComprobante}>Generar Comprobante</button>
+            <button 
+              style={styles.receiptButton} 
+              onClick={handleImprimirComprobante}
+              disabled={mesesSeleccionados.length === 0}
+            >
+              Generar Comprobante
+            </button>
           </div>
         </div>
       )}
     </div>
   );
 };
-
 
 
 

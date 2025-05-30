@@ -12,38 +12,53 @@ import {
   faCheckCircle,
   faTimes,
   faUsers,
-  faEye
+  faEye,
+  faTable,
+  faListAlt,
+  faBuilding,
+  faUser
 } from "@fortawesome/free-solid-svg-icons";
 
 export default function DashboardContable() {
   const navigate = useNavigate();
   const [mesSeleccionado, setMesSeleccionado] = useState("Selecciona un mes");
+  const [tipoEntidad, setTipoEntidad] = useState("socio");
   const [meses, setMeses] = useState(["Selecciona un mes"]);
   const [totalRecaudado, setTotalRecaudado] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
   const [cierresMensuales, setCierresMensuales] = useState([]);
-  const [mostrarModalCierre, setMostrarModalCierre] = useState(false);
-  const [mesACerrar, setMesACerrar] = useState(null);
-  const [procesandoCierre, setProcesandoCierre] = useState(false);
-  const [mensajeExito, setMensajeExito] = useState(null);
   const [datosMeses, setDatosMeses] = useState([]);
+  const [datosEmpresas, setDatosEmpresas] = useState([]);
   const [categoriasAgrupadas, setCategoriasAgrupadas] = useState([]);
-  const [mostrarModalDetalle, setMostrarModalDetalle] = useState(false);
-  const [detalleCategoria, setDetalleCategoria] = useState(null);
   const [preciosCategorias, setPreciosCategorias] = useState([]);
+  const [mostrarTablaDetalle, setMostrarTablaDetalle] = useState(false);
+  const [registrosMes, setRegistrosMes] = useState([]);
 
-  // Eliminamos la función safeFetch y usamos fetch directamente sin caché
   const fetchData = async (url) => {
     try {
-      // Agregamos un timestamp para evitar caché del navegador
       const timestamp = new Date().getTime();
       const urlWithCacheBuster = `${url}?timestamp=${timestamp}`;
       
-      const response = await fetch(urlWithCacheBuster);
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-      return await response.json();
+      const response = await fetch(urlWithCacheBuster, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      if (!data) {
+        throw new Error("No data received from server");
+      }
+      
+      return data;
     } catch (error) {
       console.error(`Error fetching ${url}:`, error);
       throw error;
@@ -51,7 +66,6 @@ export default function DashboardContable() {
   };
 
   useEffect(() => {
-    // Limpiamos cualquier caché previa al cargar
     sessionStorage.removeItem("cierres_mensuales");
     sessionStorage.removeItem("datos_contables");
     sessionStorage.removeItem("precios_categorias");
@@ -59,41 +73,62 @@ export default function DashboardContable() {
     const fetchInitialData = async () => {
       try {
         setLoading(true);
-        
-        // Obtener datos de cierres mensuales
-        const dataCierres = await fetchData(
-          "http://localhost:3001/contable/cierres_mensuales.php"
-        );
-        
-        if (dataCierres?.success && Array.isArray(dataCierres.data)) {
+        setError(null);
+
+        // Cargar datos en paralelo
+        const [dataCierres, dataContable, dataEmpresas, dataPrecios] = await Promise.all([
+          fetchData("http://localhost:3001/contable/cierres_mensuales.php"),
+          fetchData("http://localhost:3001/contable/contable.php"),
+          fetchData("http://localhost:3001/contable/contable_emp.php"),
+          fetchData("http://localhost:3001/contable/precios_cat_mes.php")
+        ]);
+
+        console.log("dataCierres:", dataCierres);
+        console.log("dataContable:", dataContable);
+        console.log("dataEmpresas:", dataEmpresas);
+        console.log("dataPrecios:", dataPrecios);
+
+        // Procesar cierres mensuales
+        if (dataCierres && dataCierres.success && Array.isArray(dataCierres.data)) {
           setCierresMensuales(dataCierres.data);
-        }
-
-        // Obtener datos contables
-        const dataContable = await fetchData(
-          "http://localhost:3001/contable/contable.php"
-        );
-
-        // Obtener precios por categoría y mes
-        const dataPrecios = await fetchData(
-          "http://localhost:3001/contable/precios_cat_mes.php"
-        );
-
-        if (dataContable && Array.isArray(dataContable) && dataPrecios) {
-          setDatosMeses(dataContable);
-          setPreciosCategorias(dataPrecios);
-          
-          // Extraer los meses disponibles de los precios
-          const mesesDisponibles = Object.keys(dataPrecios);
-          setMeses(["Selecciona un mes", ...mesesDisponibles]);
+        } else if (Array.isArray(dataCierres)) {
+          setCierresMensuales(dataCierres);
         } else {
-          throw new Error("Error al cargar datos iniciales");
+          console.warn("Formato inesperado en cierres mensuales");
         }
+
+        // Validar datos contables (objeto con .data que es array)
+        if (!dataContable || !dataContable.success || !Array.isArray(dataContable.data)) {
+          throw new Error(`Formato inválido en datos contables: esperado objeto con success=true y data array`);
+        }
+        setDatosMeses(dataContable.data);
+
+        // Validar datos de empresas (objeto con .data que es array)
+        if (!dataEmpresas || !dataEmpresas.success || !Array.isArray(dataEmpresas.data)) {
+          throw new Error(`Formato inválido en datos de empresas: esperado objeto con success=true y data array`);
+        }
+        setDatosEmpresas(dataEmpresas.data);
+
+        // Validar precios de categorías (objeto, no array)
+        if (!dataPrecios || typeof dataPrecios !== 'object' || Array.isArray(dataPrecios)) {
+          throw new Error(`Formato inválido en precios de categorías: esperado objeto`);
+        }
+        setPreciosCategorias(dataPrecios);
+
+        // Obtener meses disponibles (de precios o de datos contables)
+        const mesesDisponibles = Object.keys(dataPrecios).length > 0
+          ? Object.keys(dataPrecios)
+          : [...new Set([
+              ...dataContable.data.map(m => m.nombre),
+              ...dataEmpresas.data.map(m => m.nombre)
+            ])];
+
+        setMeses(["Selecciona un mes", ...mesesDisponibles.filter(Boolean)]);
 
         setInitialLoadComplete(true);
       } catch (error) {
         console.error("Error en carga inicial:", error);
-        setError("Error al cargar datos iniciales. Intente nuevamente.");
+        setError("Error al cargar datos. Verifique la conexión o intente más tarde.");
       } finally {
         setLoading(false);
       }
@@ -102,47 +137,58 @@ export default function DashboardContable() {
     fetchInitialData();
   }, []);
 
-  // ... (el resto del código permanece igual)
+
+
+
+
 
   useEffect(() => {
     if (initialLoadComplete && mesSeleccionado !== "Selecciona un mes") {
       updateMonthData();
     }
-  }, [mesSeleccionado, initialLoadComplete]);
+  }, [mesSeleccionado, tipoEntidad, initialLoadComplete]);
 
   const updateMonthData = () => {
-    // Buscar datos contables para el mes seleccionado
-    const mesData = datosMeses.find(m => m.nombre === mesSeleccionado);
-    
-    // Obtener precios de categorías para el mes seleccionado
-    const preciosMesActual = preciosCategorias[mesSeleccionado] || [];
-    
-    if (mesData || preciosMesActual.length > 0) {
-      // Agrupar los pagos por categoría
-      const pagosAgrupados = agruparPorCategoria(mesData?.pagos || []);
+    try {
+      let mesData;
+      if (tipoEntidad === "socio") {
+        mesData = datosMeses.find(m => m.nombre === mesSeleccionado);
+      } else {
+        mesData = datosEmpresas.find(m => m.nombre === mesSeleccionado);
+      }
       
-      // Combinar con los precios de las categorías
-      const categoriasCombinadas = preciosMesActual.map(catPrecio => {
-        const categoriaPagos = pagosAgrupados.find(cat => cat.nombre === catPrecio.nombreCategoria) || {
-          total: 0,
-          cantidad: 0,
-          registros: []
-        };
+      const preciosMesActual = preciosCategorias[mesSeleccionado] || [];
+      
+      if (mesData || preciosMesActual.length > 0) {
+        const pagosAgrupados = agruparPorCategoria(mesData?.pagos || []);
         
-        return {
-          nombre: catPrecio.nombreCategoria,
-          precio: catPrecio.precio,
-          total: categoriaPagos.total,
-          cantidad: categoriaPagos.cantidad,
-          registros: categoriaPagos.registros
-        };
-      });
-      
-      setCategoriasAgrupadas(categoriasCombinadas);
-      setTotalRecaudado(mesData?.subtotal || 0);
-    } else {
-      setTotalRecaudado(0);
-      setCategoriasAgrupadas([]);
+        const categoriasCombinadas = preciosMesActual.map(catPrecio => {
+          const categoriaPagos = pagosAgrupados.find(cat => cat.nombre === catPrecio.nombreCategoria) || {
+            total: 0,
+            cantidad: 0,
+            registros: []
+          };
+          
+          return {
+            nombre: catPrecio.nombreCategoria,
+            precio: catPrecio.precio,
+            total: categoriaPagos.total,
+            cantidad: categoriaPagos.cantidad,
+            registros: categoriaPagos.registros
+          };
+        });
+        
+        setCategoriasAgrupadas(categoriasCombinadas);
+        setTotalRecaudado(mesData?.subtotal || 0);
+        setRegistrosMes(mesData?.pagos || []);
+      } else {
+        setTotalRecaudado(0);
+        setCategoriasAgrupadas([]);
+        setRegistrosMes([]);
+      }
+    } catch (error) {
+      console.error("Error al actualizar datos del mes:", error);
+      setError("Error al procesar datos del mes seleccionado.");
     }
   };
 
@@ -150,6 +196,8 @@ export default function DashboardContable() {
     const agrupado = {};
     
     pagos.forEach(pago => {
+      if (!pago.Nombre_Categoria) return;
+      
       if (!agrupado[pago.Nombre_Categoria]) {
         agrupado[pago.Nombre_Categoria] = {
           nombre: pago.Nombre_Categoria,
@@ -159,7 +207,8 @@ export default function DashboardContable() {
         };
       }
       
-      agrupado[pago.Nombre_Categoria].total += parseFloat(pago.Precio) || 0;
+      const precio = parseFloat(pago.Precio) || 0;
+      agrupado[pago.Nombre_Categoria].total += precio;
       agrupado[pago.Nombre_Categoria].cantidad += 1;
       agrupado[pago.Nombre_Categoria].registros.push(pago);
     });
@@ -173,61 +222,25 @@ export default function DashboardContable() {
     );
   };
 
-  const handleCierreMes = async () => {
-    if (!mesACerrar) return;
-    
-    setProcesandoCierre(true);
-    
-    try {
-      const response = await fetch("http://localhost:3001/contable/cierres_mensuales.php", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          mes: mesACerrar,
-          anio: new Date().getFullYear(),
-          total_recaudado: totalRecaudado
-        }),
-      });
-      
-      const data = await response.json();
-      
-      if (data.success) {
-        // Usamos fetchData en lugar de safeFetch para obtener los cierres actualizados
-        const updatedCierres = await fetchData(
-          "http://localhost:3001/contable/cierres_mensuales.php"
-        );
-        
-        if (updatedCierres?.success && Array.isArray(updatedCierres.data)) {
-          setCierresMensuales(updatedCierres.data);
-          setMostrarModalCierre(false);
-          setMensajeExito(`El mes de ${mesACerrar} ha sido cerrado correctamente.`);
-          setTimeout(() => setMensajeExito(null), 5000);
-        } else {
-          setError("Error al actualizar los cierres mensuales");
-        }
-      } else {
-        setError(data.message || "Error al cerrar el mes");
-      }
-    } catch (error) {
-      console.error("Error al cerrar mes:", error);
-      setError("Error al cerrar el mes");
-    } finally {
-      setProcesandoCierre(false);
-    }
-  };
-
-  const mostrarDetalleCategoria = (categoria) => {
-    setDetalleCategoria(categoria);
-    setMostrarModalDetalle(true);
-  };
-
   const volver = () => navigate(-1);
 
   const handleMesChange = (e) => {
     const nuevoMes = e.target.value;
     setMesSeleccionado(nuevoMes);
+    setMostrarTablaDetalle(false);
+  };
+
+  const handleTipoEntidadChange = (e) => {
+    setTipoEntidad(e.target.value);
+    setMostrarTablaDetalle(false);
+  };
+
+  const toggleVistaDetalle = () => {
+    setMostrarTablaDetalle(!mostrarTablaDetalle);
+  };
+
+  const calcularTotalRegistros = () => {
+    return registrosMes.length;
   };
 
   return (
@@ -238,16 +251,6 @@ export default function DashboardContable() {
             <FontAwesomeIcon icon={faExclamationTriangle} />
             <span>{error}</span>
             <button onClick={() => setError(null)} className="contable-close-error">
-              <FontAwesomeIcon icon={faTimes} />
-            </button>
-          </div>
-        )}
-
-        {mensajeExito && (
-          <div className="contable-success">
-            <FontAwesomeIcon icon={faCheckCircle} />
-            <span>{mensajeExito}</span>
-            <button onClick={() => setMensajeExito(null)} className="contable-close-success">
               <FontAwesomeIcon icon={faTimes} />
             </button>
           </div>
@@ -289,12 +292,29 @@ export default function DashboardContable() {
               </small>
             </div>
           </div>
+
+          <div className="contable-summary-card">
+            <div className="contable-card-icon">
+              <FontAwesomeIcon icon={faListAlt} />
+            </div>
+            <div className="contable-card-content">
+              <h3>Total registros</h3>
+              <p>{calcularTotalRegistros()}</p>
+              <small className="contable-card-subtext">
+                {mesSeleccionado !== "Selecciona un mes" ? `En ${mesSeleccionado}` : "Seleccione un mes"}
+              </small>
+            </div>
+          </div>
         </div>
 
         <div className="contable-categories-section">
           <div className="contable-section-header">
             <h2>
-              <FontAwesomeIcon icon={faTags} /> Detalle por Mes
+              {mostrarTablaDetalle ? (
+                <><FontAwesomeIcon icon={faTable} /> Detalle de Pagos - {mesSeleccionado} ({tipoEntidad === "socio" ? "Socios" : "Empresas"})</>
+              ) : (
+                <><FontAwesomeIcon icon={faTags} /> Resumen por Categoría - {mesSeleccionado} ({tipoEntidad === "socio" ? "Socios" : "Empresas"})</>
+              )}
             </h2>
             <div className="contable-selectors-container">
               <div className="contable-month-selector">
@@ -312,23 +332,30 @@ export default function DashboardContable() {
                   ))}
                 </select>
               </div>
+              
+              <div className="contable-entity-selector">
+                <FontAwesomeIcon icon={tipoEntidad === "socio" ? faUser : faBuilding} />
+                <select
+                  value={tipoEntidad}
+                  onChange={handleTipoEntidadChange}
+                  className="contable-entity-select"
+                  disabled={loading}
+                >
+                  <option value="socio">Socios</option>
+                  <option value="empresa">Empresas</option>
+                </select>
+              </div>
+
               {mesSeleccionado !== "Selecciona un mes" && (
                 <button 
-                  className={`contable-close-month-button ${
+                  className={`contable-detail-view-button ${
                     mesEstaCerrado(mesSeleccionado) ? 'closed' : ''
                   }`}
-                  onClick={() => {
-                    if (mesEstaCerrado(mesSeleccionado)) {
-                      setError("Este mes ya está cerrado");
-                    } else {
-                      setMesACerrar(mesSeleccionado);
-                      setMostrarModalCierre(true);
-                    }
-                  }}
-                  disabled={mesEstaCerrado(mesSeleccionado) || loading}
+                  onClick={toggleVistaDetalle}
+                  disabled={loading}
                 >
-                  <FontAwesomeIcon icon={mesEstaCerrado(mesSeleccionado) ? faLock : faLockOpen} />
-                  {mesEstaCerrado(mesSeleccionado) ? "Mes Cerrado" : "Cerrar Mes"}
+                  <FontAwesomeIcon icon={mostrarTablaDetalle ? faTags : faTable} />
+                  {mostrarTablaDetalle ? "Ver Resumen" : "Ver Detalle"}
                 </button>
               )}
             </div>
@@ -339,6 +366,43 @@ export default function DashboardContable() {
               <div className="contable-loading-categories">
                 <div className="contable-spinner"></div>
                 <span>Cargando datos...</span>
+              </div>
+            ) : mostrarTablaDetalle ? (
+              <div className="contable-detail-table-container">
+                <table className="contable-detail-table">
+                  <thead>
+                    <tr>
+                      <th>{tipoEntidad === "socio" ? "Socio" : "Empresa"}</th>
+                      <th>Categoría</th>
+                      <th>Monto</th>
+                      <th>Fecha de Pago</th>
+                      <th>Mes Pagado</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {registrosMes.length > 0 ? (
+                      registrosMes.map((registro, index) => (
+                        <tr key={index}>
+                          <td>
+                            {tipoEntidad === "socio" 
+                              ? `${registro.Apellido}, ${registro.Nombre}`
+                              : registro.Razon_Social || registro.Nombre_Empresa}
+                          </td>
+                          <td>{registro.Nombre_Categoria}</td>
+                          <td>${(registro.Precio || 0).toLocaleString('es-AR')}</td>
+                          <td>{registro.fechaPago}</td>
+                          <td>{registro.Mes_Pagado}</td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="5" className="contable-no-data">
+                          No hay registros para mostrar en este mes
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
               </div>
             ) : (
               <div className="contable-categories-cards">
@@ -364,14 +428,6 @@ export default function DashboardContable() {
                           <span className="contable-category-label">Subtotal:</span>
                           <span className="contable-category-value">${categoria.total.toLocaleString('es-AR')}</span>
                         </div>
-                        {categoria.cantidad > 0 && (
-                          <button 
-                            className="contable-detail-button"
-                            onClick={() => mostrarDetalleCategoria(categoria)}
-                          >
-                            <FontAwesomeIcon icon={faEye} /> Ver Detalle
-                          </button>
-                        )}
                       </div>
                     </div>
                   ))
@@ -387,142 +443,6 @@ export default function DashboardContable() {
           </div>
         </div>
       </div>
-
-      {/* Modal de cierre de mes */}
-      {mostrarModalCierre && (
-        <div className="contable-modal-overlay">
-          <div className="contable-modal">
-            <div className="contable-modal-header">
-              <h3>
-                <FontAwesomeIcon icon={faLock} /> Confirmar Cierre de Mes
-              </h3>
-              <button 
-                onClick={() => setMostrarModalCierre(false)}
-                disabled={procesandoCierre}
-                className="contable-modal-close-btn"
-              >
-                <FontAwesomeIcon icon={faTimes} />
-              </button>
-            </div>
-            <div className="contable-modal-body">
-              <div className="contable-modal-icon warning">
-                <FontAwesomeIcon icon={faExclamationTriangle} />
-              </div>
-              <div className="contable-modal-text-content">
-                <p>Estás a punto de cerrar el mes de <strong>{mesACerrar}</strong>.</p>
-                <p>Esta acción es irreversible. ¿Deseas continuar?</p>
-              </div>
-              
-              <div className="contable-modal-summary">
-                <h4>Resumen del Mes:</h4>
-                <div className="contable-modal-summary-grid">
-                  <div className="contable-modal-summary-item">
-                    <span>Total Recaudado:</span>
-                    <strong>${totalRecaudado.toLocaleString('es-AR')}</strong>
-                  </div>
-                  <div className="contable-modal-summary-item">
-                    <span>Cantidad de Categorías:</span>
-                    <strong>{categoriasAgrupadas.length}</strong>
-                  </div>
-                  <div className="contable-modal-summary-item">
-                    <span>Total de Pagos:</span>
-                    <strong>{categoriasAgrupadas.reduce((acc, cat) => acc + cat.cantidad, 0)}</strong>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="contable-modal-footer">
-              <button 
-                onClick={() => setMostrarModalCierre(false)}
-                disabled={procesandoCierre}
-                className="contable-modal-cancel-btn"
-              >
-                Cancelar
-              </button>
-              <button 
-                onClick={handleCierreMes}
-                disabled={procesandoCierre}
-                className="contable-modal-confirm-btn"
-              >
-                {procesandoCierre ? (
-                  <>
-                    <span className="contable-modal-spinner"></span>
-                    Procesando...
-                  </>
-                ) : (
-                  "Confirmar Cierre"
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal de detalle de categoría */}
-      {mostrarModalDetalle && detalleCategoria && (
-        <div className="contable-modal-overlay">
-          <div className="contable-modal contable-detail-modal">
-            <div className="contable-modal-header">
-              <h3>
-                <FontAwesomeIcon icon={faUsers} /> Detalle de Pagos - {detalleCategoria.nombre}
-              </h3>
-              <button 
-                onClick={() => setMostrarModalDetalle(false)}
-                className="contable-modal-close-btn"
-              >
-                <FontAwesomeIcon icon={faTimes} />
-              </button>
-            </div>
-            <div className="contable-modal-body">
-              <div className="contable-detail-summary">
-                <div className="contable-detail-summary-item">
-                  <span>Precio Unitario:</span>
-                  <strong>${detalleCategoria.precio?.toLocaleString('es-AR') || '0'}</strong>
-                </div>
-                <div className="contable-detail-summary-item">
-                  <span>Total Recaudado:</span>
-                  <strong>${detalleCategoria.total.toLocaleString('es-AR')}</strong>
-                </div>
-                <div className="contable-detail-summary-item">
-                  <span>Cantidad de Pagos:</span>
-                  <strong>{detalleCategoria.cantidad}</strong>
-                </div>
-              </div>
-              
-              <div className="contable-detail-table-container">
-                <table className="contable-detail-table">
-                  <thead>
-                    <tr>
-                      <th>Socio</th>
-                      <th>Monto</th>
-                      <th>Fecha de Pago</th>
-                      <th>Mes Pagado</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {detalleCategoria.registros.map((registro, index) => (
-                      <tr key={index}>
-                        <td>{registro.Apellido}, {registro.Nombre}</td>
-                        <td>${(registro.Precio || 0).toLocaleString('es-AR')}</td>
-                        <td>{registro.fechaPago}</td>
-                        <td>{registro.Mes_Pagado}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-            <div className="contable-modal-footer">
-              <button 
-                onClick={() => setMostrarModalDetalle(false)}
-                className="contable-modal-close-detail-btn"
-              >
-                Cerrar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

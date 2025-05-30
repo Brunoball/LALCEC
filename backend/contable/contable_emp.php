@@ -1,4 +1,5 @@
 <?php 
+
 header("Access-Control-Allow-Origin: http://localhost:3000");
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
@@ -10,7 +11,15 @@ header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
 header("Cache-Control: post-check=0, pre-check=0", false);
 header("Pragma: no-cache");
 
+// Manejo del preflight
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
+
 require_once '../db.php';
+
+// ... tu lógica sigue acá
 
 // Manejar errores de conexión
 if ($conn->connect_error) {
@@ -106,24 +115,23 @@ try {
         return $precio_actual;
     }
     
-    // 3. Obtener pagos de socios
-    $sql_pagos = "SELECT 
-                    s.idSocios, 
-                    s.Nombre, 
-                    s.Apellido, 
-                    c.idCategorias, 
-                    c.Nombre_Categoria,
-                    c.fecha_agregado,
-                    p.fechaPago,
-                    p.idMes,
-                    p.idPago,
-                    MONTH(p.fechaPago) as mes_pago
-                  FROM pagos p 
-                  INNER JOIN socios s ON p.idSocios = s.idSocios 
-                  INNER JOIN categorias c ON s.idCategoria = c.idCategorias 
-                  ORDER BY mes_pago, s.Apellido, s.Nombre, p.idMes";
+    // 3. Obtener pagos de empresas
+    $sql_pagos_emp = "SELECT 
+                        e.idEmp, 
+                        e.razon_social, 
+                        c.idCategorias, 
+                        c.Nombre_Categoria,
+                        c.fecha_agregado,
+                        p.fechaPago,
+                        p.idMes,
+                        p.idPago_Emp,
+                        MONTH(p.fechaPago) as mes_pago
+                      FROM pagos_empresas p 
+                      INNER JOIN empresas e ON p.idEmp = e.idEmp 
+                      INNER JOIN categorias c ON e.idCategorias = c.idCategorias 
+                      ORDER BY mes_pago, e.razon_social, p.idMes";
     
-    $result_pagos = $conn->query($sql_pagos);
+    $result_pagos = $conn->query($sql_pagos_emp);
     
     if (!$result_pagos) {
         throw new Exception("Error en consulta de pagos: " . $conn->error);
@@ -149,9 +157,8 @@ try {
         }
         
         $pago = [
-            'idPago' => $row['idPago'],
-            'Apellido' => $row['Apellido'],
-            'Nombre' => $row['Nombre'],
+            'idPago' => $row['idPago_Emp'],
+            'Razon_Social' => $row['razon_social'],
             'Nombre_Categoria' => $row['Nombre_Categoria'],
             'Mes_Pagado' => $nombres_meses[$id_mes_pagado],
             'Precio' => $precio,
