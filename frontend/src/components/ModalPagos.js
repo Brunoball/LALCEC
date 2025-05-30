@@ -338,8 +338,6 @@ const ModalPagos = ({ nombre, apellido, cerrarModal, onPagoRealizado }) => {
 
 
 
-
-
 const styles = {
   container: { 
     display: "flex", 
@@ -355,29 +353,34 @@ const styles = {
   },
   modalContent: { 
     backgroundColor: "#fff", 
-    padding: "2.5rem", 
+    padding: "2rem", 
     borderRadius: "25px", 
     boxShadow: "0 10px 25px rgba(0, 0, 0, 0.2)", 
     width: "90%", 
     maxWidth: "400px", 
-    height:"75vh",
-    minHeight:"70vh",
+    maxHeight: "85vh",
+    minHeight: "auto",
     textAlign: "center",
+    display: "flex",
+    flexDirection: "column",
+    overflow: "hidden"
   },
   title: { 
     fontSize: "1.65rem", 
     fontWeight: "550", 
     color: "#4b4b4b",
-    marginTop:"-15px"
+    margin: "0 0 0.5rem 0"
   },
   subtitle: { 
-    fontSize: "1.2rem", 
+    fontSize: "1rem", 
     color: "#666", 
-    marginBottom: "1rem",
+    marginBottom: "1.5rem",
   },
   tableContainer: { 
-    maxHeight: "64%", 
-    overflowY: "auto", 
+    flex: 1,
+    overflowY: "auto",
+    marginBottom: "1rem",
+    minHeight: "200px"
   },
   table: { 
     width: "100%", 
@@ -386,107 +389,117 @@ const styles = {
   th: { 
     backgroundColor: "#0288d1", 
     color: "#fff", 
-    padding: "12px 15px",
-    textAlign:"center",
+    padding: "10px 12px",
+    textAlign: "center",
+    position: "sticky",
+    top: 0
   },
   td: { 
-    padding: "12px 15px", 
-    textAlign: "center" 
+    padding: "10px 12px", 
+    textAlign: "center",
+    borderBottom: "1px solid #eee"
   },
   checkboxInput: { 
     cursor: "pointer", 
-    width: "20px", 
-    height: "20px" 
+    width: "18px", 
+    height: "18px" 
   },
   selectAllContainer: { 
-    marginTop: "10px", 
+    margin: "0.5rem 0", 
     textAlign: "left",
     display: "flex",
     alignItems: "center",
   },
   selectAllLabel: { 
-    fontSize: "1rem", 
+    fontSize: "0.95rem", 
     color: "#333", 
-    cursor: "pointer" 
+    cursor: "pointer",
+    marginLeft: "8px"
   },
   totalAmount: {
     backgroundColor: "#bff5bd",
     color: "#333",
-    padding: "10px",
-    borderRadius: "10px",
+    padding: "8px 12px",
+    borderRadius: "8px",
     border: "1px solid #ddd",
-    fontSize: "1.1rem",
+    fontSize: "1rem",
     fontWeight: "540",
     marginLeft: "auto",
-    boxShadow: "0 4px 10px rgba(0, 0, 0, 0.1)"
+    boxShadow: "0 2px 5px rgba(0, 0, 0, 0.1)",
+    whiteSpace: "nowrap"
   },
   buttonsContainer: { 
     display: "flex", 
     justifyContent: "space-between", 
+    gap: "10px",
     marginTop: "1rem",
+    width: "100%"
   },
   cancelButton: { 
     backgroundColor: "#e74c3c", 
     color: "#fff", 
-    padding: "10px 20px", 
+    padding: "10px 15px", 
     borderRadius: "8px", 
     cursor: "pointer", 
-    width: "48%", 
+    flex: 1, 
     border: "none", 
-    outline: "none" 
+    outline: "none",
+    fontSize: "0.95rem",
+    minWidth: "120px"
   },
   payButton: { 
     backgroundColor: "#0288d1", 
     color: "#fff", 
-    padding: "10px 20px", 
+    padding: "10px 15px", 
     borderRadius: "8px", 
     cursor: "pointer", 
-    width: "48%", 
+    flex: 1, 
     border: "none", 
-    outline: "none", 
+    outline: "none",
+    fontSize: "0.95rem",
+    minWidth: "120px"
   },
   successMessage: {
-    width: "90%",
-    maxWidth: "420px",
+    width: "100%",
     textAlign: "center",
-    padding: "20px",
+    padding: "1.5rem",
     border: "1px solid #ddd",
     borderRadius: "10px",
     backgroundColor: "#f9f9f9",
     boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)",
-    margin: "auto",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center"
   },
   successMessageh2: {
-    marginBottom: "50px",
-    fontSize: "23px",
+    marginBottom: "1.5rem",
+    fontSize: "1.4rem",
     color: "#2c3e50",
   },
   receiptButton: { 
-      backgroundColor: "#27AE60",
-      color: "#fff",
-      padding: "8px 18px",
-      borderRadius: "6px",
-      cursor: "pointer",
-      width: "48%",
-      border: "none",
-      outline: "none",
-      fontSize: "15px",
-      fontWeight: "400",
-      fontFamily: "'Poppins', sans-serif",
-      transition: "all 0.3s ease",
-      boxShadow: "0px 4px 6px rgba(0, 0, 0, 0.2)",
+    backgroundColor: "#27AE60",
+    color: "#fff",
+    padding: "10px 15px",
+    borderRadius: "6px",
+    cursor: "pointer",
+    flex: 1,
+    border: "none",
+    outline: "none",
+    fontSize: "0.95rem",
+    fontWeight: "500",
+    maxWidth: "200px",
+    marginTop: "1rem"
   },
   errorMessage: {
     backgroundColor: "#f8d7da",
     color: "#721c24",
-    padding: "0.5rem",
+    padding: "0.75rem",
     borderRadius: "8px",
     fontSize: "0.9rem",
     fontWeight: "500",
-    margin: "10px auto",
-    boxShadow: "0 5px 15px rgba(0, 0, 0, 0.2)",
-    width: "90%",
-    marginBottom:"20px"
+    margin: "0 0 1rem 0",
+    boxShadow: "0 2px 5px rgba(0, 0, 0, 0.1)",
+    width: "100%"
   },
 };
 

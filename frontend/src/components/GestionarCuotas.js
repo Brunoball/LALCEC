@@ -499,7 +499,7 @@ const GestionarCuotas = () => {
               </button>
               <button className="gc-button gc-button-export" onClick={handleExportExcel}>
                 <FontAwesomeIcon icon={faFileExcel} />
-                <span>Exportar a Excel</span>
+                <span>Generar Excel</span>
               </button>
               <button className="gc-button gc-button-print" onClick={handleImprimirRegistro}>
                 <FontAwesomeIcon icon={faPrint} />

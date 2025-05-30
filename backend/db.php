@@ -1,5 +1,7 @@
 <?php
 // Configuración de la base de datos
+//brunoball516
+//Gastex2233
 $host = 'localhost';
 $user = 'root';
 $pass = 'brunoball516';

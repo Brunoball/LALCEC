@@ -582,7 +582,7 @@ const GestionarEmpresas = () => {
             <div className="alphabet-dropdown">
               <select
                 id="alphabet"
-                className="dropdown"
+                className="dropdown" 
                 value={letraSeleccionada || medioPagoSeleccionado || localStorage.getItem("ultimaSeleccion") || "Seleccionar"}
                 onChange={handleSeleccion}
               >
@@ -639,7 +639,7 @@ const GestionarEmpresas = () => {
                   </div>
                 </div>
               ) : empresasFiltradas.length > 0 ? (
-                <div className="scrollable">
+                <div className="scrollableE">
                   {empresasFiltradas.map((empresa, index) => {
                     const estadoPago = getEstadoPago(empresa.meses_pagados);
                     const rowClass = filaSeleccionada === index 
