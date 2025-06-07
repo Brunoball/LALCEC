@@ -7,6 +7,9 @@ import ModalEliminar from "./modales_soc/ModalEliminar";
 import ModalInfo from "./modales_soc/ModalInfoSocio";
 import './GestionarSocios.css';
 import BASE_URL from "../../config/config";
+import Toast from "../global/Toast";
+
+
 
 const GestionarSocios = () => {
   const navigate = useNavigate();
@@ -30,12 +33,54 @@ const GestionarSocios = () => {
   const [mesesPagados, setMesesPagados] = useState([]);
   const [valorSeleccionado, setValorSeleccionado] = useState(localStorage.getItem("ultimaSeleccion") || "Seleccionar");
   const [todosLosSocios, setTodosLosSocios] = useState([]);
+  const [mostrandoTodos, setMostrandoTodos] = useState(false);
+  const [animarFilas, setAnimarFilas] = useState(false);
+  const [toastVisible, setToastVisible] = useState(false);
+  const [toastMensaje, setToastMensaje] = useState("");
+  const [toastTipo, setToastTipo] = useState("exito");
+
+  const mostrarToast = (mensaje, tipo = "exito") => {
+    setToastMensaje(mensaje);
+    setToastTipo(tipo);
+    setToastVisible(true); // solo mostramos, sin timeout acá
+  };
+
+
+  // Función para normalizar los datos de los socios
+  const normalizarSocios = (data) => {
+    if (!Array.isArray(data)) return [];
+    return data.map(socio => ({
+      ...socio,
+      id: socio.idSocios || socio.id // Usa idSocios si existe, sino usa id
+    }));
+  };
+
+  // Precargar todos los socios al montar el componente
+  useEffect(() => {
+    const precargarTodosLosSocios = async () => {
+      try {
+        const entidad = localStorage.getItem("ultimaEntidad") || "socios";
+        const response = await fetch(`${BASE_URL}/api.php?action=todos_socios&tipo=${entidad}`);
+        if (response.ok) {
+          const data = await response.json();
+          const lista = normalizarSocios(Array.isArray(data.socios) ? data.socios : []);
+          setTodosLosSocios(lista);
+        }
+      } catch (error) {
+        console.warn("Error al precargar socios:", error);
+      }
+    };
+
+    precargarTodosLosSocios();
+  }, []);
 
   // Restaurar estado al cargar el componente
   useEffect(() => {
-    const restaurarEstado = async () => {
+    const timer = setTimeout(() => {
       setCargando(true);
-      
+    }, 200);
+
+    const restaurarEstado = async () => {
       try {
         // Obtener medios de pago
         const responseMediosPago = await fetch(`${BASE_URL}/api.php?action=obtener_datos`);
@@ -44,6 +89,35 @@ const GestionarSocios = () => {
           if (Array.isArray(data.mediosPago)) {
             setMediosDePago(data.mediosPago);
           }
+        }
+
+        // Si viene de edición, recargar solo el socio editado
+        if (location.state?.desdeEdicion && location.state.socioEditado) {
+          const socioEditado = location.state.socioEditado;
+          const entidad = localStorage.getItem("ultimaEntidad") || "socios";
+          
+          // Actualizar el socio en la lista
+          setSocios(prevSocios => 
+            prevSocios.map(socio => 
+              socio.id === socioEditado.id ? socioEditado : socio
+            )
+          );
+          
+          setSociosFiltrados(prevSocios => 
+            prevSocios.map(socio => 
+              socio.id === socioEditado.id ? socioEditado : socio
+            )
+          );
+          
+          setTodosLosSocios(prevSocios => 
+            prevSocios.map(socio => 
+              socio.id === socioEditado.id ? socioEditado : socio
+            )
+          );
+          
+          mostrarToast("Socio actualizado correctamente");
+          setCargando(false);
+          return;
         }
 
         // Restaurar búsqueda/filtros anteriores
@@ -59,9 +133,11 @@ const GestionarSocios = () => {
           if (ultimaAccion === "busqueda" && ultimaBusqueda) {
             setBusqueda(ultimaBusqueda);
             if (ultimosResultados) {
-              const resultados = JSON.parse(ultimosResultados);
-              setSocios(resultados);
+              const resultados = normalizarSocios(JSON.parse(ultimosResultados));
+              setSocios(resultados.slice(0, 10));
               setSociosFiltrados(resultados);
+              setAnimarFilas(true);
+              mostrarToast("Datos cargados correctamente");
             } else {
               await handleBusqueda(ultimaBusqueda);
             }
@@ -92,9 +168,11 @@ const GestionarSocios = () => {
           if (ultimaAccion === "busqueda" && ultimaBusqueda) {
             setBusqueda(ultimaBusqueda);
             if (ultimosResultados) {
-              const resultados = JSON.parse(ultimosResultados);
-              setSocios(resultados);
+              const resultados = normalizarSocios(JSON.parse(ultimosResultados));
+              setSocios(resultados.slice(0, 10));
               setSociosFiltrados(resultados);
+              setAnimarFilas(true);
+              mostrarToast("Datos cargados correctamente");
             } else {
               await handleBusqueda(ultimaBusqueda);
             }
@@ -118,37 +196,40 @@ const GestionarSocios = () => {
         console.error("Error al restaurar estado:", error);
         setError("Hubo un problema al cargar los datos.");
       } finally {
-        setCargando(false);
+        setTimeout(() => setCargando(false), 500);
       }
     };
 
     restaurarEstado();
+    return () => clearTimeout(timer);
   }, [location.state, tipoEntidad, actualizar]);
 
+  // Resetear animación después de que se complete
   useEffect(() => {
-    const precargarTodosLosSocios = async () => {
-      try {
-        const entidad = localStorage.getItem("ultimaEntidad") || "socios";
-        const response = await fetch(`${BASE_URL}/api.php?action=todos_socios&tipo=${entidad}`);
-        if (response.ok) {
-          const data = await response.json();
-          const lista = Array.isArray(data.socios) ? data.socios : [];
-          setTodosLosSocios(lista);
-        }
-      } catch (error) {
-        console.warn("Error al precargar socios:", error);
-      }
-    };
+    if (animarFilas) {
+      const timer = setTimeout(() => setAnimarFilas(false), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [animarFilas]);
 
-    precargarTodosLosSocios();
-  }, []);
+  // Cargar más registros progresivamente
+  useEffect(() => {
+    if (sociosFiltrados.length > 10 && mostrandoTodos) {
+      const timer = setTimeout(() => {
+        setSocios(sociosFiltrados);
+        setAnimarFilas(true);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [sociosFiltrados, mostrandoTodos]);
 
+  // Búsqueda con debounce
   useEffect(() => {
     const delayDebounce = setTimeout(() => {
       if (busqueda.trim().length > 0) {
         handleBusqueda(busqueda);
       }
-    }); // Espera 500ms desde la última tecla antes de ejecutar
+    }, 300);
 
     return () => clearTimeout(delayDebounce);
   }, [busqueda]);
@@ -168,26 +249,33 @@ const GestionarSocios = () => {
 
       if (response.ok) {
         const data = await response.json();
+        const sociosNormalizados = normalizarSocios(Array.isArray(data) ? data : []);
 
-        if (Array.isArray(data) && data.length > 0) {
-          setSocios(data);
-          setSociosFiltrados(data);
+        if (sociosNormalizados.length > 0) {
+          setSocios(sociosNormalizados.slice(0, 10));
+          setSociosFiltrados(sociosNormalizados);
+          setAnimarFilas(true);
           localStorage.setItem("ultimaAccion", "busqueda");
           localStorage.setItem("ultimaBusqueda", query);
-          localStorage.setItem("ultimosResultados", JSON.stringify(data));
+          localStorage.setItem("ultimosResultados", JSON.stringify(sociosNormalizados));
           setValorSeleccionado("Seleccionar");
+          setMostrandoTodos(false);
+          mostrarToast("Datos cargados correctamente");
         } else {
           setSocios([]);
           setSociosFiltrados([]);
+          mostrarToast("No se encontraron resultados", "info");
         }
       } else {
         setSocios([]);
         setSociosFiltrados([]);
+        mostrarToast("Error al cargar los datos", "error");
       }
     } catch (err) {
       console.error("Error en la búsqueda:", err);
       setSocios([]);
       setSociosFiltrados([]);
+      mostrarToast("Error al realizar la búsqueda", "error");
     }
   };
 
@@ -215,14 +303,17 @@ const GestionarSocios = () => {
           (socio) => socio.apellido && socio.apellido.toUpperCase().startsWith(letra)
         );
 
-        setSocios(filtrados);
+        setSocios(filtrados.slice(0, 10));
         setSociosFiltrados(filtrados);
+        setAnimarFilas(true);
         localStorage.setItem("ultimaAccion", "letra");
         localStorage.setItem("ultimaLetraSeleccionada", letra);
         localStorage.setItem("ultimaSeleccion", letra);
         localStorage.removeItem("ultimaBusqueda");
         localStorage.removeItem("ultimosResultados");
         setError(null);
+        setMostrandoTodos(false);
+        mostrarToast("Datos cargados correctamente");
       } else {
         // Si no hay datos precargados, usar API como antes
         const url = `${BASE_URL}/api.php?action=obtener_letra&letra=${encodeURIComponent(letra)}&tipo=${encodeURIComponent(tipo)}`;
@@ -230,17 +321,22 @@ const GestionarSocios = () => {
 
         if (response.ok) {
           const data = await response.json();
-          setSocios(Array.isArray(data) ? data : []);
-          setSociosFiltrados(Array.isArray(data) ? data : []);
+          const sociosNormalizados = normalizarSocios(Array.isArray(data) ? data : []);
+          setSocios(sociosNormalizados.slice(0, 10));
+          setSociosFiltrados(sociosNormalizados);
+          setAnimarFilas(true);
           localStorage.setItem("ultimaAccion", "letra");
           localStorage.setItem("ultimaLetraSeleccionada", letra);
           localStorage.setItem("ultimaSeleccion", letra);
           localStorage.removeItem("ultimaBusqueda");
           localStorage.removeItem("ultimosResultados");
           setError(null);
+          setMostrandoTodos(false);
+          mostrarToast("Datos cargados correctamente");
         } else {
           setSocios([]);
           setSociosFiltrados([]);
+          mostrarToast("No se encontraron resultados", "info");
         }
       }
     } catch (error) {
@@ -248,6 +344,7 @@ const GestionarSocios = () => {
       setSociosFiltrados([]);
       setError("Error al obtener los socios.");
       console.error("Error al obtener socios:", error);
+      mostrarToast("Error al cargar los datos", "error");
     }
   };
 
@@ -258,33 +355,56 @@ const GestionarSocios = () => {
 
       if (response.ok) {
         const data = await response.json();
+        const sociosNormalizados = normalizarSocios(Array.isArray(data) ? data : []);
 
-        if (Array.isArray(data) && data.length > 0) {
-          setSocios(data);
-          setSociosFiltrados(data);
+        if (sociosNormalizados.length > 0) {
+          setSocios(sociosNormalizados.slice(0, 10));
+          setSociosFiltrados(sociosNormalizados);
+          setAnimarFilas(true);
           localStorage.setItem("ultimaAccion", "medioPago");
           localStorage.setItem("ultimoMedioPagoSeleccionado", medioPago);
           localStorage.setItem("ultimaSeleccion", medioPago);
           localStorage.removeItem("ultimaBusqueda");
           localStorage.removeItem("ultimosResultados");
           setError(null);
+          setMostrandoTodos(false);
+          mostrarToast("Datos cargados correctamente");
         } else {
           setSocios([]);
           setSociosFiltrados([]);
+          mostrarToast("No se encontraron resultados", "info");
         }
       } else {
         setSocios([]);
         setSociosFiltrados([]);
         setError("Error al obtener los socios.");
+        mostrarToast("Error al cargar los datos", "error");
       }
     } catch (error) {
       setSocios([]);
       setSociosFiltrados([]);
       setError("Error al obtener los socios.");
+      mostrarToast("Error al cargar los datos", "error");
     }
   };
 
   const handleMostrarTodos = async () => {
+    setMostrandoTodos(true);
+    setAnimarFilas(true);
+    
+    if (todosLosSocios.length > 0) {
+      setSocios(todosLosSocios.slice(0, 10)); // muestra los primeros 10
+      setSociosFiltrados(todosLosSocios);
+      setError(null);
+      localStorage.setItem("ultimaAccion", "todos");
+      localStorage.setItem("ultimaSeleccion", "todos");
+      localStorage.removeItem("ultimaBusqueda");
+      localStorage.removeItem("ultimosResultados");
+      mostrarToast("Datos cargados correctamente");
+      return;
+    }
+
+    // Si no se precargaron (por alguna razón), hacer fetch
     try {
       const entidad = localStorage.getItem("ultimaEntidad") || "socios";
       const url = `${BASE_URL}/api.php?action=todos_socios&tipo=${entidad}`;
@@ -292,24 +412,22 @@ const GestionarSocios = () => {
 
       if (response.ok) {
         const data = await response.json();
-        const lista = Array.isArray(data.socios) ? data.socios : [];
-        setSocios(lista);
+        const lista = normalizarSocios(Array.isArray(data.socios) ? data.socios : []);
+        setSocios(lista.slice(0, 10));
         setSociosFiltrados(lista);
-        setTodosLosSocios(lista); // ← cachea todos los socios
+        setTodosLosSocios(lista);
         setError(null);
-
         localStorage.setItem("ultimaAccion", "todos");
         localStorage.setItem("ultimaSeleccion", "todos");
         localStorage.removeItem("ultimaBusqueda");
         localStorage.removeItem("ultimosResultados");
-      } else {
-        setSocios([]);
-        setSociosFiltrados([]);
+        mostrarToast("Datos cargados correctamente");
       }
     } catch (error) {
       setSocios([]);
       setSociosFiltrados([]);
       setError("Error al obtener los datos.");
+      mostrarToast("Error al cargar los datos", "error");
     }
   };
 
@@ -333,6 +451,7 @@ const GestionarSocios = () => {
       setLetraSeleccionada("");
       setMedioPagoSeleccionado("");
       localStorage.setItem("ultimaAccion", "seleccionar");
+      setMostrandoTodos(false);
     } else if (selectedValue === "todos") {
       await handleMostrarTodos();
       setLetraSeleccionada("");
@@ -359,12 +478,13 @@ const GestionarSocios = () => {
     }
   };
 
-  const handleEditarSocio = (nombre, apellido) => {
-    navigate(`/editarSocio/${nombre}/${apellido}`, { 
-      state: { 
+  const handleEditarSocio = (id) => {
+    const socio = socios.find(s => s.id === id) || sociosFiltrados.find(s => s.id === id);
+    navigate(`/editarSocio/${id}`, {
+      state: {
         desdeSubpagina: true,
-        socioSeleccionado: JSON.parse(localStorage.getItem("socioSeleccionado"))
-      } 
+        socioSeleccionado: socio
+      }
     });
   };
 
@@ -385,14 +505,18 @@ const GestionarSocios = () => {
             setSociosFiltrados(sociosFiltrados.filter(
               socio => socio.nombre !== socioSeleccionado.nombre || socio.apellido !== socioSeleccionado.apellido
             ));
+            setTodosLosSocios(todosLosSocios.filter(
+              socio => socio.nombre !== socioSeleccionado.nombre || socio.apellido !== socioSeleccionado.apellido
+            ));
             setMostrarModalEliminar(false);
+            mostrarToast("Socio eliminado correctamente");
           } else {
-            alert("Error al eliminar el socio.");
+            mostrarToast("Error al eliminar el socio", "error");
           }
         }
       } catch (error) {
         console.error("Error al eliminar socio:", error);
-        alert("Hubo un problema al eliminar el socio.");
+        mostrarToast("Hubo un problema al eliminar el socio", "error");
       }
     }
   };
@@ -480,8 +604,8 @@ const GestionarSocios = () => {
 
     const nombreArchivo = tipoEntidad === "socios" ? "Socios.xlsx" : "Empresas.xlsx";
   
-    const datosReordenados = sociosFiltrados.map(({ id, nombre, apellido, ...resto }) => ({
-      id,
+    const datosReordenados = sociosFiltrados.map(({ id, idSocios, nombre, apellido, ...resto }) => ({
+      id: id || idSocios, // Asegurarse de incluir el ID correcto
       apellido,
       nombre,
       ...resto,
@@ -494,6 +618,7 @@ const GestionarSocios = () => {
     XLSX.writeFile(wb, nombreArchivo);
   
     setErrorMessage("");
+    mostrarToast("Datos exportados correctamente");
   };
 
   return (
@@ -576,7 +701,7 @@ const GestionarSocios = () => {
                 </div>
               ) : sociosFiltrados.length > 0 ? (
                 <div className="scrollable">
-                  {sociosFiltrados.map((socio, index) => {
+                  {socios.slice(0, mostrandoTodos ? sociosFiltrados.length : 10).map((socio, index) => {
                       const estadoPago = socio.estado_pago || getEstadoPago(socio.meses_pagados, socio.Fechaunion);
                       const rowClass = filaSeleccionada === index 
                         ? `selected-row ${estadoPago}` 
@@ -586,10 +711,12 @@ const GestionarSocios = () => {
                       
                       return (
                         <div
-                          key={index}
-                          className={`row ${rowClass}`}
+                          key={socio.id}
+                          className={`row ${rowClass} ${animarFilas ? "animar" : ""}`}
+                          style={animarFilas ? { animationDelay: `${index * 0.05}s` } : {}}
                           onClick={() => handleFilaSeleccionada(index, socio)}
                         >
+
                           <div className="column column-ape">{socio.apellido}</div>
                           <div className="column column-nom">{socio.nombre}</div>
                           <div className="column column-cat">{socio.categoria} ${socio.precio_categoria || "0"}</div>
@@ -612,7 +739,7 @@ const GestionarSocios = () => {
                                   className="icon"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    handleEditarSocio(socio.nombre, socio.apellido);
+                                    handleEditarSocio(socio.id || socio.idSocios);
                                   }}
                                 />
                                 <FontAwesomeIcon
@@ -697,6 +824,14 @@ const GestionarSocios = () => {
           infoSocio={infoSocio}
           mesesPagados={mesesPagados}
           onCerrar={() => setMostrarModalInfo(false)}
+        />
+      )}
+
+      {toastVisible && (
+        <Toast
+          tipo={toastTipo}
+          mensaje={toastMensaje}
+          onClose={() => setToastVisible(false)}
         />
       )}
     </div>

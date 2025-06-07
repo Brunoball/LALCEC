@@ -5,7 +5,7 @@ import { faSave, faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import BASE_URL from "../../config/config";
 
 const EditarSocio = () => {
-  const { nombre, apellido } = useParams();
+  const { id } = useParams();
   const [dni, setDni] = useState('');
   const [domicilio, setDomicilio] = useState('');
   const [domicilio2, setDomicilio2] = useState('');
@@ -21,16 +21,17 @@ const EditarSocio = () => {
   const [idSocios, setIdSocios] = useState(null);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
-  const [nombreInput, setNombreInput] = useState(nombre);
-  const [apellidoInput, setApellidoInput] = useState(apellido);
+  const [nombreInput, setNombreInput] = useState('');
+  const [apellidoInput, setApellidoInput] = useState('');
   const [mensaje, setMensaje] = useState('');
   const [tipoMensaje, setTipoMensaje] = useState('');
 
   const obtenerSocio = async () => {
     try {
       setCargando(true);
+
       const response = await fetch(
-        `${BASE_URL}/api.php?action=obtener_socio&nombre=${encodeURIComponent(nombre)}&apellido=${encodeURIComponent(apellido)}`
+        `${BASE_URL}/api.php?action=obtener_socio&id=${encodeURIComponent(id)}`
       );
 
       if (!response.ok) {
@@ -38,10 +39,14 @@ const EditarSocio = () => {
       }
 
       const data = await response.json();
+
+      // Extraer datos del backend
       const { categorias, mediosPago, ...socio } = data;
 
-      if (socio) {
+      if (socio && socio.idSocios) {
         setIdSocios(socio.idSocios);
+        setNombreInput(socio.nombre || '');
+        setApellidoInput(socio.apellido || '');
         setDni(socio.DNI || '');
         setDomicilio(socio.domicilio || '');
         setDomicilio2(socio.domicilio_2 || '');
@@ -52,13 +57,19 @@ const EditarSocio = () => {
         setCategoria(socio.idCategoria || '');
         setMedioPago(socio.idMedios_Pago || '');
         setObservacion(socio.observacion || '');
+      } else {
+        setMensaje('No se encontró el socio con ese ID.');
+        setTipoMensaje("error");
+        setTimeout(() => setMensaje(''), 4000);
       }
 
       setCategorias(categorias || []);
       setMediosPago(mediosPago || []);
+
     } catch (error) {
       setMensaje('Hubo un error al obtener los datos del socio: ' + error.message);
-      setTimeout(() => setMensaje(''), 3000);
+      setTipoMensaje("error");
+      setTimeout(() => setMensaje(''), 4000);
     } finally {
       setCargando(false);
     }
@@ -66,10 +77,10 @@ const EditarSocio = () => {
 
 
   useEffect(() => {
-    if (nombre && apellido) {
-      obtenerSocio();
+    if (id) {
+      obtenerSocio(id);
     }
-  }, [nombre, apellido]);
+  }, [id]);
 
   const guardarSocio = async () => {
     try {
@@ -79,7 +90,7 @@ const EditarSocio = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          idSocios,
+          id,
           nombre: nombreInput || '',
           apellido: apellidoInput || '',
           dni: dni || '',
@@ -109,7 +120,6 @@ const EditarSocio = () => {
       setTimeout(() => setMensaje(''), 5000);
     }
   };
-
 
   if (cargando) {
     return (
@@ -422,6 +432,7 @@ const EditarSocio = () => {
     </div>
   );
 };
+
 
 
 

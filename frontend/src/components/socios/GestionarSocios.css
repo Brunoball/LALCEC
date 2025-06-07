@@ -728,3 +728,30 @@ p{
     font-size: 12px;
   }
 }
+
+
+
+/* Agrega esto a tu archivo GestionarSocios.css */
+.row.animar {
+  animation: fadeInUp 0.6s ease-out; /* ⬅️ más lento y suave */
+  animation-fill-mode: both;
+  opacity: 0;
+  background-color: inherit; /* evita flashes si hay background raro */
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px); /* ⬅️ desplazamiento más amplio */
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.row.no-animacion {
+  animation: none;
+  opacity: 1;
+  transform: none;
+}

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCheckCircle,
@@ -10,11 +10,21 @@ import {
 import './Toast.css';
 
 const Toast = ({ tipo, mensaje, onClose }) => {
+  const [desapareciendo, setDesapareciendo] = useState(false);
+
   useEffect(() => {
-    const timer = setTimeout(() => {
+    const mostrarTimer = setTimeout(() => {
+      setDesapareciendo(true);
+    }, 1000); // mostrar solo 1 segundo
+
+    const ocultarTimer = setTimeout(() => {
       onClose();
-    }, 3000);
-    return () => clearTimeout(timer);
+    }, 1500); // animación de salida de 0.5 segundos
+
+    return () => {
+      clearTimeout(mostrarTimer);
+      clearTimeout(ocultarTimer);
+    };
   }, [onClose]);
 
   const iconos = {
@@ -35,7 +45,7 @@ const Toast = ({ tipo, mensaje, onClose }) => {
   const claseSeleccionada = clasesTipo[tipo] || 'toast-info';
 
   return (
-    <div className={`toast-container ${claseSeleccionada}`}>
+    <div className={`toast-container ${claseSeleccionada} ${desapareciendo ? 'desaparecer' : ''}`}>
       <FontAwesomeIcon
         icon={iconoSeleccionado}
         className={`toast-icon ${tipo === 'cargando' ? 'spin' : ''}`}

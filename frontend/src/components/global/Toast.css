@@ -23,7 +23,6 @@
   margin-right: 10px;
 }
 
-/* Colores según tipo */
 .toast-exito .toast-icon {
   color: #28a745;
 }
@@ -59,6 +58,21 @@
   }
 }
 
+@keyframes fadeOutUp {
+  from {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, -30px);
+  }
+}
+
+.desaparecer {
+  animation: fadeOutUp 0.5s ease forwards;
+}
+
 @keyframes spin {
   0% {
     transform: rotate(0deg);
@@ -70,4 +84,8 @@
 
 .spin {
   animation: spin 1s linear infinite;
+}
+
+.desaparecer {
+  animation: fadeOutUp 1.5s ease forwards;
 }

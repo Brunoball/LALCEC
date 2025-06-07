@@ -75,7 +75,7 @@ function validarCampoObservacion($valor) {
 }
 
 // Capturar y limpiar datos desde el request
-$idSocios = isset($data['idSocios']) ? limpiarDato($data['idSocios']) : NULL;
+$idSocios = isset($data['idSocios']) ? limpiarDato($data['idSocios']) : (isset($data['id']) ? limpiarDato($data['id']) : NULL);
 $nombre = isset($data['nombre']) ? limpiarDato($data['nombre']) : NULL;
 $apellido = isset($data['apellido']) ? limpiarDato($data['apellido']) : NULL;
 $dni = isset($data['dni']) ? limpiarDato($data['dni']) : NULL;

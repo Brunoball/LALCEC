@@ -30,7 +30,7 @@ const App = () => {
         <Route path="/DashboardContable" element={<DashboardContable />} />
         <Route path="/AgregarSocio" element={<AgregarSocio />} />
         <Route path="/AgregarEmpresa" element={<AgregarEmpresa />} />
-        <Route path="/editarSocio/:nombre/:apellido" element={<EditarSocio />} />
+        <Route path="/editarSocio/:id" element={<EditarSocio />} />
         <Route path="/editarEmpresa/:razon_social" element={<EditarEmpresa />} />
         <Route path="/modalPagos/:nombre/:apellido" element={<ModalPagos />} />
         <Route path="/ModalPagosEmpresas/:razon_social" element={<ModalPagosEmpresas />} />
