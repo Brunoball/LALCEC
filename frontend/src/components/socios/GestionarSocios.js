@@ -9,8 +9,6 @@ import './GestionarSocios.css';
 import BASE_URL from "../../config/config";
 import Toast from "../global/Toast";
 
-
-
 const GestionarSocios = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -42,20 +40,17 @@ const GestionarSocios = () => {
   const mostrarToast = (mensaje, tipo = "exito") => {
     setToastMensaje(mensaje);
     setToastTipo(tipo);
-    setToastVisible(true); // solo mostramos, sin timeout acá
+    setToastVisible(true);
   };
 
-
-  // Función para normalizar los datos de los socios
   const normalizarSocios = (data) => {
     if (!Array.isArray(data)) return [];
     return data.map(socio => ({
       ...socio,
-      id: socio.idSocios || socio.id // Usa idSocios si existe, sino usa id
+      id: socio.idSocios || socio.id
     }));
   };
 
-  // Precargar todos los socios al montar el componente
   useEffect(() => {
     const precargarTodosLosSocios = async () => {
       try {
@@ -74,7 +69,6 @@ const GestionarSocios = () => {
     precargarTodosLosSocios();
   }, []);
 
-  // Restaurar estado al cargar el componente
   useEffect(() => {
     const timer = setTimeout(() => {
       setCargando(true);
@@ -82,7 +76,6 @@ const GestionarSocios = () => {
 
     const restaurarEstado = async () => {
       try {
-        // Obtener medios de pago
         const responseMediosPago = await fetch(`${BASE_URL}/api.php?action=obtener_datos`);
         if (responseMediosPago.ok) {
           const data = await responseMediosPago.json();
@@ -91,12 +84,10 @@ const GestionarSocios = () => {
           }
         }
 
-        // Si viene de edición, recargar solo el socio editado
         if (location.state?.desdeEdicion && location.state.socioEditado) {
           const socioEditado = location.state.socioEditado;
           const entidad = localStorage.getItem("ultimaEntidad") || "socios";
           
-          // Actualizar el socio en la lista
           setSocios(prevSocios => 
             prevSocios.map(socio => 
               socio.id === socioEditado.id ? socioEditado : socio
@@ -120,7 +111,6 @@ const GestionarSocios = () => {
           return;
         }
 
-        // Restaurar búsqueda/filtros anteriores
         const ultimaAccion = localStorage.getItem("ultimaAccion");
         const ultimaBusqueda = localStorage.getItem("ultimaBusqueda");
         const ultimaLetra = localStorage.getItem("ultimaLetraSeleccionada");
@@ -128,7 +118,6 @@ const GestionarSocios = () => {
         const ultimaSeleccion = localStorage.getItem("ultimaSeleccion");
         const ultimosResultados = localStorage.getItem("ultimosResultados");
 
-        // Si viene de edición o info, restaurar el estado anterior
         if (location.state?.desdeSubpagina) {
           if (ultimaAccion === "busqueda" && ultimaBusqueda) {
             setBusqueda(ultimaBusqueda);
@@ -157,13 +146,11 @@ const GestionarSocios = () => {
             await handleMostrarTodos();
           }
         } 
-        // Si viene de la página principal sin estado previo
         else if (location.state?.desdePrincipal && !ultimaAccion) {
           setSocios([]);
           setSociosFiltrados([]);
           setValorSeleccionado("Seleccionar");
         }
-        // Si hay estado guardado (viene de recarga o navegación normal)
         else if (ultimaAccion) {
           if (ultimaAccion === "busqueda" && ultimaBusqueda) {
             setBusqueda(ultimaBusqueda);
@@ -204,7 +191,6 @@ const GestionarSocios = () => {
     return () => clearTimeout(timer);
   }, [location.state, tipoEntidad, actualizar]);
 
-  // Resetear animación después de que se complete
   useEffect(() => {
     if (animarFilas) {
       const timer = setTimeout(() => setAnimarFilas(false), 1000);
@@ -212,7 +198,6 @@ const GestionarSocios = () => {
     }
   }, [animarFilas]);
 
-  // Cargar más registros progresivamente
   useEffect(() => {
     if (sociosFiltrados.length > 10 && mostrandoTodos) {
       const timer = setTimeout(() => {
@@ -223,7 +208,6 @@ const GestionarSocios = () => {
     }
   }, [sociosFiltrados, mostrandoTodos]);
 
-  // Búsqueda con debounce
   useEffect(() => {
     const delayDebounce = setTimeout(() => {
       if (busqueda.trim().length > 0) {
@@ -234,7 +218,6 @@ const GestionarSocios = () => {
     return () => clearTimeout(delayDebounce);
   }, [busqueda]);
 
-  // Manejar búsqueda
   const handleBusqueda = async (busquedaParam) => {
     let query = busquedaParam || busqueda || "";
 
@@ -298,7 +281,6 @@ const GestionarSocios = () => {
   const handleFiltrarPorLetra = async (letra, tipo) => {
     try {
       if (todosLosSocios.length > 0) {
-        // Filtrar en memoria si los datos ya fueron precargados
         const filtrados = todosLosSocios.filter(
           (socio) => socio.apellido && socio.apellido.toUpperCase().startsWith(letra)
         );
@@ -315,7 +297,6 @@ const GestionarSocios = () => {
         setMostrandoTodos(false);
         mostrarToast("Datos cargados correctamente");
       } else {
-        // Si no hay datos precargados, usar API como antes
         const url = `${BASE_URL}/api.php?action=obtener_letra&letra=${encodeURIComponent(letra)}&tipo=${encodeURIComponent(tipo)}`;
         const response = await fetch(url);
 
@@ -393,7 +374,7 @@ const GestionarSocios = () => {
     setAnimarFilas(true);
     
     if (todosLosSocios.length > 0) {
-      setSocios(todosLosSocios.slice(0, 10)); // muestra los primeros 10
+      setSocios(todosLosSocios.slice(0, 10));
       setSociosFiltrados(todosLosSocios);
       setError(null);
       localStorage.setItem("ultimaAccion", "todos");
@@ -404,7 +385,6 @@ const GestionarSocios = () => {
       return;
     }
 
-    // Si no se precargaron (por alguna razón), hacer fetch
     try {
       const entidad = localStorage.getItem("ultimaEntidad") || "socios";
       const url = `${BASE_URL}/api.php?action=todos_socios&tipo=${entidad}`;
@@ -531,7 +511,7 @@ const GestionarSocios = () => {
   };
 
   const getEstadoPago = (mesesPagados, fechaUnion) => {
-    if (!fechaUnion) return 'rojo';
+    if (!fechaUnion) return 'soc_rojo';
 
     const mesesPagos = (mesesPagados && mesesPagados !== '-') 
       ? mesesPagados.split(',').map(m => m.trim().toUpperCase()) 
@@ -551,7 +531,7 @@ const GestionarSocios = () => {
     const añoHoy = hoy.getFullYear();
 
     if (añoAlta > añoHoy || (añoAlta === añoHoy && mesAlta > mesHoy)) {
-      return 'verde';
+      return 'soc_verde';
     }
 
     const mesesEsperados = [];
@@ -567,9 +547,9 @@ const GestionarSocios = () => {
 
     const impagos = mesesEsperados.filter(mes => !mesesPagos.includes(mes));
 
-    if (impagos.length === 0) return 'verde';
-    if (impagos.length <= 2) return 'amarillo';
-    return 'rojo';
+    if (impagos.length === 0) return 'soc_verde';
+    if (impagos.length <= 2) return 'soc_amarillo';
+    return 'soc_rojo';
   };
 
   const handleMostrarInfoSocio = (socio) => {
@@ -605,7 +585,7 @@ const GestionarSocios = () => {
     const nombreArchivo = tipoEntidad === "socios" ? "Socios.xlsx" : "Empresas.xlsx";
   
     const datosReordenados = sociosFiltrados.map(({ id, idSocios, nombre, apellido, ...resto }) => ({
-      id: id || idSocios, // Asegurarse de incluir el ID correcto
+      id: id || idSocios,
       apellido,
       nombre,
       ...resto,
@@ -622,30 +602,30 @@ const GestionarSocios = () => {
   };
 
   return (
-    <div className="socio-container">
-      <div className="socio-box">
-        <div className="front-row-soc">
-          <h2 className="socio-title">Gestionar Socios</h2>
-          <div className="front-row">
-            <div className="search-bar">
+    <div className="soc_container">
+      <div className="soc_box">
+        <div className="soc_front-row">
+          <h2 className="soc_title">Gestionar Socios</h2>
+          <div className="soc_front-row-inner">
+            <div className="soc_search-bar">
               <input
                 id="search"
                 type="text"
                 placeholder="Buscar por nombre o apellido"
-                className="search-input"
+                className="soc_search-input"
                 value={busqueda}
                 onChange={handleBusquedaInputChange}
                 onKeyDown={(e) => e.key === "Enter" && handleBusqueda(busqueda)}
               />
-              <button className="search-button" onClick={() => handleBusqueda(busqueda)}>
-                <FontAwesomeIcon icon={faSearch} className="icon-button" />
+              <button className="soc_search-button" onClick={() => handleBusqueda(busqueda)}>
+                <FontAwesomeIcon icon={faSearch} className="soc_icon-button" />
               </button>
             </div>
 
-            <div className="alphabet-dropdown">
+            <div className="soc_alphabet-dropdown">
               <select
                 id="alphabet"
-                className="dropdown"
+                className="soc_dropdown"
                 value={valorSeleccionado}
                 onChange={handleSeleccion}
               >
@@ -670,65 +650,65 @@ const GestionarSocios = () => {
               </select>
             </div>
 
-            {error && <p className="error">{error}</p>}
+            {error && <p className="soc_error">{error}</p>}
           </div>
         </div>
 
         {errorMessage && (
-          <div className="error-message-soc">
+          <div className="soc_error-message">
             {errorMessage}
           </div>
         )}
 
-        <div className="socios-list">
-          <div className="box-table">
-            <div className="header">
-              <div className="column-header header-ape">Apellido</div>
-              <div className="column-header header-nom">Nombre</div>
-              <div className="column-header header-cat">Cat/precio</div>
-              <div className="column-header header-mp">Medio de Pago</div>
-              <div className="column-header header-dom">Domicilio Cobro</div>
-              <div className="column-header header-obs">Observacion</div>
-              <div className="column-header icons-column"></div>
+        <div className="soc_list">
+          <div className="soc_box-table">
+            <div className="soc_header">
+              <div className="soc_column-header soc_header-ape">Apellido</div>
+              <div className="soc_column-header soc_header-nom">Nombre</div>
+              <div className="soc_column-header soc_header-cat">Cat/precio</div>
+              <div className="soc_column-header soc_header-mp">Medio de Pago</div>
+              <div className="soc_column-header soc_header-dom">Domicilio Cobro</div>
+              <div className="soc_column-header soc_header-obs">Observacion</div>
+              <div className="soc_column-header soc_icons-column"></div>
             </div>
 
-            <div className="body">
+            <div className="soc_body">
               {cargando ? (
-                <div className="row">
-                  <div className="not_socio" colSpan="5">
+                <div className="soc_row">
+                  <div className="soc_not-socio" colSpan="5">
                     Cargando...
                   </div>
                 </div>
               ) : sociosFiltrados.length > 0 ? (
-                <div className="scrollable">
+                <div className="soc_scrollable">
                   {socios.slice(0, mostrandoTodos ? sociosFiltrados.length : 10).map((socio, index) => {
                       const estadoPago = socio.estado_pago || getEstadoPago(socio.meses_pagados, socio.Fechaunion);
                       const rowClass = filaSeleccionada === index 
-                        ? `selected-row ${estadoPago}` 
+                        ? `soc_selected-row ${estadoPago}` 
                         : index % 2 === 0 
-                          ? `even-row ${estadoPago}` 
-                          : `odd-row ${estadoPago}`;
+                          ? `soc_even-row ${estadoPago}` 
+                          : `soc_odd-row ${estadoPago}`;
                       
                       return (
                         <div
                           key={socio.id}
-                          className={`row ${rowClass} ${animarFilas ? "animar" : ""}`}
+                          className={`soc_row ${rowClass} ${animarFilas ? "soc_animar" : ""}`}
                           style={animarFilas ? { animationDelay: `${index * 0.05}s` } : {}}
                           onClick={() => handleFilaSeleccionada(index, socio)}
                         >
 
-                          <div className="column column-ape">{socio.apellido}</div>
-                          <div className="column column-nom">{socio.nombre}</div>
-                          <div className="column column-cat">{socio.categoria} ${socio.precio_categoria || "0"}</div>
-                          <div className="column column-mp">{socio.medio_pago}</div>
-                          <div className="column column-dom">{socio.domicilio_2}</div>
-                          <div className="column column-obs">{socio.observacion}</div>
-                          <div className="column icons-column">
+                          <div className="soc_column soc_column-ape">{socio.apellido}</div>
+                          <div className="soc_column soc_column-nom">{socio.nombre}</div>
+                          <div className="soc_column soc_column-cat">{socio.categoria} ${socio.precio_categoria || "0"}</div>
+                          <div className="soc_column soc_column-mp">{socio.medio_pago}</div>
+                          <div className="soc_column soc_column-dom">{socio.domicilio_2}</div>
+                          <div className="soc_column soc_column-obs">{socio.observacion}</div>
+                          <div className="soc_column soc_icons-column">
                             {filaSeleccionada === index && (
-                              <div className="icons-container">
+                              <div className="soc_icons-container">
                                 <FontAwesomeIcon
                                   icon={faInfoCircle}
-                                  className="icon"
+                                  className="soc_icon"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     handleMostrarInfoSocio(socio);
@@ -736,7 +716,7 @@ const GestionarSocios = () => {
                                 />
                                 <FontAwesomeIcon
                                   icon={faEdit}
-                                  className="icon"
+                                  className="soc_icon"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     handleEditarSocio(socio.id || socio.idSocios);
@@ -744,7 +724,7 @@ const GestionarSocios = () => {
                                 />
                                 <FontAwesomeIcon
                                   icon={faTrash}
-                                  className="icon"
+                                  className="soc_icon"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     handleConfirmarEliminar(socio);
@@ -758,8 +738,8 @@ const GestionarSocios = () => {
                     })}
                 </div>
               ) : (
-                <div className="row">
-                  <div className="not_socio" colSpan="5">
+                <div className="soc_row">
+                  <div className="soc_not-socio" colSpan="5">
                     {letraSeleccionada || medioPagoSeleccionado || busqueda
                       ? "No hay socios para esta letra, medio de pago o búsqueda."
                       : "Seleccione una opción para mostrar los socios."}
@@ -770,41 +750,41 @@ const GestionarSocios = () => {
           </div>
         </div>
 
-        <div className="down-container">
-          <div className="contador-container">
-            <span className="socios-totales">
+        <div className="soc_down-container">
+          <div className="soc_contador-container">
+            <span className="soc_socios-totales">
               Cant socios: {sociosFiltrados.length}
             </span>
           </div>
 
-          <div className="botones-container">
-            <button className="socio-button" onClick={handleAgregarSocio}>
-              <FontAwesomeIcon icon={faUserPlus} className="socio-icon-button" />
+          <div className="soc_botones-container">
+            <button className="soc_button" onClick={handleAgregarSocio}>
+              <FontAwesomeIcon icon={faUserPlus} className="soc_icon-button" />
               <p>Agregar Socio</p>
             </button>
 
-            <button className="socio-button" onClick={exportarAExcel}>
-              <FontAwesomeIcon icon={faFileExcel} className="socio-icon-button" />
+            <button className="soc_button" onClick={exportarAExcel}>
+              <FontAwesomeIcon icon={faFileExcel} className="soc_icon-button" />
               <p>Exportar a Excel</p>
             </button>
 
-            <button className="socio-button" onClick={handleVolverAtras}>
-              <FontAwesomeIcon icon={faArrowLeft} className="socio-icon-button" />
+            <button className="soc_button" onClick={handleVolverAtras}>
+              <FontAwesomeIcon icon={faArrowLeft} className="soc_icon-button" />
               <p>Volver Atrás</p>
             </button>
           </div>
 
-          <div className="estado-pagos-container">
-            <div className="estado-indicador al-dia">
-              <div className="indicador-color"></div>
+          <div className="soc_estado-pagos-container">
+            <div className="soc_estado-indicador soc_al-dia">
+              <div className="soc_indicador-color"></div>
               <span>Al día</span>
             </div>
-            <div className="estado-indicador debe-1-2">
-              <div className="indicador-color"></div>
+            <div className="soc_estado-indicador soc_debe-1-2">
+              <div className="soc_indicador-color"></div>
               <span>Debe 1-2 meses</span>
             </div>
-            <div className="estado-indicador debe-3-mas">
-              <div className="indicador-color"></div>
+            <div className="soc_estado-indicador soc_debe-3-mas">
+              <div className="soc_indicador-color"></div>
               <span>Debe 3+ meses</span>
             </div>
           </div>
