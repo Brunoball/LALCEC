@@ -1,0 +1,210 @@
+:root {
+  --agregar-cat-primary: #FF6E00;
+  --agregar-cat-primary-dark: #E65100;
+  --agregar-cat-white: #FFFFFF;
+  --agregar-cat-light: #F8F9FA;
+  --agregar-cat-medium: #E0E0E0;
+  --agregar-cat-dark: #424242;
+  --agregar-cat-black: #212121;
+  --agregar-cat-success: #4CAF50;
+  --agregar-cat-error: #C62828;
+}
+
+/* Estructura principal */
+.agregar-cat-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+  background: linear-gradient(135deg, #dcdcdc 30%, #ff6e00 70%);
+}
+
+.agregar-cat-box {
+  background: rgba(255, 255, 255, 0.95);
+  padding: 2.5rem;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  text-align: center;
+  width: 70%;
+  max-width: 450px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+/* Título */
+.agregar-cat-title {
+  font-size: 1.6rem;
+  font-weight: 600;
+  margin-bottom: 1.8rem;
+  color: #4b4b4b;
+}
+
+/* Formulario */
+.agregar-cat-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Inputs */
+.agregar-cat-input-row {
+  margin-bottom: 1.5rem;
+  width: 100%;
+}
+
+.agregar-cat-input-wrapper {
+  position: relative;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.agregar-cat-input {
+  width: 100%;
+  max-width: 400px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+  font-weight: 400;
+  background-color: transparent;
+  transition: border 0.3s ease-in-out, transform 0.2s ease-out;
+}
+
+.agregar-cat-input:focus {
+  outline: none;
+  border-color: var(--agregar-cat-primary);
+  box-shadow: 0 0 0 3px rgba(255, 110, 0, 0.2);
+}
+
+/* Floating Labels */
+.agregar-cat-floating-label {
+  position: absolute;
+  top: 50%;
+  left: 50px;
+  transform: translateY(-50%);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #bbb;
+  pointer-events: none;
+  transition: 0.3s ease-in-out;
+}
+
+.agregar-cat-floating-label-active {
+  top: 0px;
+  left: 50px;
+  font-size: 0.75rem;
+  color: var(--agregar-cat-primary);
+  background-color: var(--agregar-cat-white);
+  padding: 3px;
+}
+
+/* Botones */
+.agregar-cat-buttons-container {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  width: 100%;
+  margin-top: 1rem;
+}
+
+.agregar-cat-save-button {
+  background-color: var(--agregar-cat-primary);
+  color: var(--agregar-cat-white);
+  border: none;
+  padding: 0.8rem 1.5rem;
+  border-radius: 30px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+}
+
+.agregar-cat-save-button:hover {
+  background-color: var(--agregar-cat-primary-dark);
+  transform: translateY(-2px);
+}
+
+.agregar-cat-save-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.agregar-cat-back-button {
+  background-color: transparent;
+  color: var(--agregar-cat-primary);
+  border: 2px solid var(--agregar-cat-primary);
+  padding: 0.8rem 1.5rem;
+  border-radius: 30px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+}
+
+.agregar-cat-back-button:hover {
+  background-color: rgba(255, 110, 0, 0.1);
+}
+
+.agregar-cat-icon-spacing {
+  margin-right: 10px;
+}
+
+/* Mensajes */
+.agregar-cat-success-message {
+  background-color: rgba(76, 175, 80, 0.2);
+  color: var(--agregar-cat-success);
+  padding: 1rem;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  width: 98%;
+  text-align: center;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  margin-top: -2rem;
+  align-self: center;
+  transition: opacity 0.3s ease;
+}
+
+.agregar-cat-error-message {
+  background-color: rgba(198, 40, 40, 0.2);
+  color: var(--agregar-cat-error);
+  padding: 1rem;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  width: 98%;
+  text-align: center;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  margin-top: -2rem;
+  align-self: center;
+  transition: opacity 0.3s ease;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .agregar-cat-box {
+    width: 90%;
+    padding: 1.5rem;
+  }
+
+  .agregar-cat-buttons-container {
+    flex-direction: column;
+    gap: 0.8rem;
+  }
+
+  .agregar-cat-save-button,
+  .agregar-cat-back-button {
+    width: 100%;
+    justify-content: center;
+  }
+}

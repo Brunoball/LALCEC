@@ -1,0 +1,730 @@
+/* Contenedor principal */
+.socio-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+  background: linear-gradient(135deg, #dcdcdc 30%, #ff6e00 70%);
+  overflow: hidden;
+  flex-direction: column;
+}
+
+/* Caja principal */
+.socio-box {
+  background: rgba(255, 255, 255, 0.95);
+  padding: 2.5rem;
+  border-radius: 25px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  width: 85%;
+  height: 75vh;
+  display: grid;
+  grid-template-rows: auto 2fr auto;
+  row-gap: 1rem;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Contenedor principal en fila */
+.front-row-soc {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 97%;
+  position: relative;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 10px;
+  gap: 20px;
+}
+
+/* Título */
+.socio-title {
+  font-size: 1.65rem;
+  font-weight: 550;
+  color: #4b4b4b;
+  margin: 0;
+  white-space: nowrap;
+  width: 30%;
+}
+
+/* Fila de búsqueda y dropdown */
+.front-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-grow: 1;
+}
+
+/* Buscador */
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  width: 50%;
+  margin-right: auto;
+}
+
+.search-input {
+  padding: 0.6rem 1rem;
+  font-size: 1rem;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+  transition: border 0.3s ease;
+}
+
+.search-button {
+  background: #0288d1;
+  color: white;
+  padding: 0.78rem;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.search-button:hover {
+  background: #0277bd;
+}
+
+.icon-button {
+  transform: scale(1.4);
+}
+
+/* Dropdown */
+.alphabet-dropdown {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #f5f5f5;
+  border-radius: 8px;
+  padding: 5px;
+  transition: all 0.3s ease-in-out;
+}
+
+.alphabet-dropdown select {
+  width: 120px;
+  height: 45px;
+  padding: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  border-radius: 10px;
+  background: white;
+  color: #797070;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.3s ease-in-out;
+}
+
+.entity-dropdown {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #f5f5f5;
+  border-radius: 8px;
+  padding: 5px;
+  transition: all 0.3s ease-in-out;
+}
+
+.entity-dropdown select {
+  width: 120px;
+  height: 45px;
+  padding: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  border-radius: 10px;
+  background: white;
+  color: #797070;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.3s ease-in-out;
+}
+
+/* Estilo para la opción "Seleccionar" */
+.default-option {
+  color: #999;
+  font-style: italic;
+}
+
+/* Media queries */
+@media screen and (max-width: 768px) {
+  .socio-box {
+    height: auto; /* o mantener 90vh si prefieres */
+    min-height: 90vh; /* asegura altura mínima */
+    padding: 2rem; /* reducir padding si es necesario */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .front-row-soc {
+      flex-direction: column;
+      margin-top: -30px;
+      width: 100%;
+  }
+
+  .socio-title {
+      width: auto;
+      margin-top: 1.1rem;
+  }
+
+  .search-bar {
+      width: 65%;
+      margin-left: 0; 
+  }
+
+  .alphabet-dropdown {
+      padding: 0;
+      width: 30%;
+  }
+
+  .search-input::placeholder {
+      font-size: 0.85rem;
+      color: #888;
+  }
+}
+
+
+
+
+
+
+
+
+
+
+/* Contenedor general */
+.socios-list {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 85%;
+  overflow: hidden;
+  position: relative;
+  margin-top: 30px;
+  border-radius: 10px;
+}
+
+/* Contenedor de la tabla */
+.box-table {
+  width: 100%;
+  height: auto;
+  display: flex;
+  flex-direction: column;
+  max-width: 100%;
+}
+
+/* Header de la tabla */
+.header {
+  display: flex;
+  flex-wrap: nowrap;
+  background-color: #0288d1;
+  color: #ffffff;
+  font-weight: bold;
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  min-height: 40px;
+  justify-content: space-between;
+  align-items: center;
+  overflow: hidden;
+  white-space: nowrap;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+}
+
+/* Columnas del header */
+.column-header {
+  text-align: center;
+  padding: 10px;
+  font-size: 1rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Ajuste de ancho de columnas */
+.column-header.header-ape,
+.column.column-ape {
+  flex: 0.7;
+}
+
+.column-header.header-nom,
+.column.column-nom {
+  flex: 0.7;
+}
+
+.column-header.header-cat,
+.column.column-cat {
+  flex: 0.6;
+}
+
+.column-header.header-mp,
+.column.column-mp,
+.column-header.header-dom,
+.column.column-dom,
+.column-header.header-obs,
+.column.column-obs {
+  flex: 1;
+}
+
+/* Nueva columna vacía para iconos en el header */
+.column-header.icons-column {
+  flex: 0.3;
+}
+
+/* Nueva columna vacía para iconos en las filas */
+.column.icons-column {
+  flex: 0.3;
+}
+
+/* Filas */
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px;
+  position: relative;
+}
+
+/* Alternar colores de fondo */
+.even-row {
+  background-color: #ffffff;
+}
+
+.odd-row {
+  background-color: #f3f3f3;
+}
+
+.selected-row {
+  background-color: #e0e0e0;
+}
+
+/* Iconos */
+.icons-container {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  visibility: hidden;
+}
+
+.selected-row .icons-container {
+  visibility: visible;
+}
+
+.icon {
+  font-size: 1.6rem;
+  cursor: pointer;
+  color: #ff6e00;
+  transition: color 0.3s;
+}
+
+.not_socio{
+  width: 100%;
+  text-align: center;
+}
+
+/* Contenedor scrollable con el header fijo */
+.scrollable {
+  overflow-y: auto;
+  flex-grow: 1;
+  max-height: 37vh;
+}
+
+/* Estilo del scrollbar */
+.scrollable::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scrollable::-webkit-scrollbar-thumb {
+  background: #aaa;
+  border-radius: 4px;
+}
+
+.scrollable::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+/* Estados normales */
+/* Versión premium con degradados sutiles */
+.row.amarillo {
+  background: linear-gradient(to right, #FFF8E1 0%, #FFF3CD 100%);
+  border-left: 3px solid #FFB300; /* Ámbar Google */
+}
+
+.row.rojo {
+  background: linear-gradient(to right, #FFEBEE 0%, #F8D7DA 100%);
+  border-left: 3px solid #E53935; /* Rojo Material */
+}
+
+.selected-row.amarillo {
+  background: linear-gradient(to right, #FFE082 0%, #FFD54F 100%);
+  border-left: 3px solid #FF8F00; /* Ámbar oscuro */
+}
+
+.selected-row.rojo {
+  background: linear-gradient(to right, #EF9A9A 0%, #E57373 100%);
+  border-left: 3px solid #C62828; /* Rojo vino */
+}
+/* Media queries */
+@media screen and (max-width: 768px) {
+  .socios-list {
+    overflow-x: auto;
+    justify-content: flex-start;
+    width: 100%;
+    max-height: 100%; /* o un valor grande como 1000px */
+    height: auto;
+    margin-top: 1rem;
+  }
+
+  .box-table {
+      width: auto;
+      min-width: 768px;
+  }
+
+  .column-header{
+      flex: 0.85;
+      font-size: 0.8rem;
+  }
+
+  .scrollable {
+      overflow-x: hidden;
+      overflow-y: auto;
+  }
+
+  .header {
+      position: relative;
+      top: 5px;
+      z-index: auto;
+  }
+
+  .column {
+      padding: 6px 0;
+      font-size: 0.7rem;
+      white-space: nowrap;
+  }
+
+  .column.icons-column {
+      flex: none;
+  }
+
+  .row {
+      padding: 8px;
+      height: auto;
+  }
+
+  .selected-row {
+      background-color: #6e6e6e;
+  }
+
+  .header-cat{
+      flex: 0.5;
+  }
+
+  .header-mp{
+      flex: 0.8;
+  }
+
+  .header-nom, .header-ape{
+      flex: 0.5;
+  }
+
+  .column-nom, .column-ape{
+      flex: 0.65;
+  }
+
+  .column-cat{
+      flex: 0.65;
+  }
+
+  .column-header.icons-column {
+      display: none;
+  }
+
+  .not_socio{
+      margin-top: 50px;
+  }
+}
+
+
+
+
+
+
+
+
+/* Estilos para los indicadores de estado activos */
+.estado-indicador.activo {
+  border: 2px solid #333;
+  border-radius: 6px;
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.estado-indicador {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.estado-indicador:hover {
+  transform: scale(1.05);
+}
+
+/* Estilos para el contador cuando hay filtro activo */
+.contador-container {
+  font-weight: bold;
+  color: #333;
+}
+
+/* Estilo para indicar que hay un filtro activo */
+.filtro-activo {
+  font-style: italic;
+  color: #666;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* Contenedor principal - diseño horizontal en web */
+.down-container {
+  display: flex;
+  align-items: center; /* Alineación arriba para mejor manejo de columnas */
+  justify-content: space-between;
+  padding: 10px;
+  margin-bottom: -25px;
+  width: 100%;
+  gap: 20px; /* Espacio entre secciones */
+}
+
+/* Contador */
+.contador-container {
+  flex: 0 0 auto;
+}
+
+.socios-totales {
+  font-size: 16px;
+  font-weight: bold;
+  padding: 10px 15px;
+  background-color: #e3f2fd;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  color: #1976d2;
+  border: 1px solid #90caf9;
+}
+
+/* Botones - centrado.botones-container {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+  position: relative;
+  flex: 1;
+  min-width: 0; /* Permite que se reduzca */
+
+
+
+/* Contenedor de indicadores - en columna */
+.estado-pagos-container {
+  display: flex;
+  flex-direction: column; /* Elementos en columna */
+  gap: 8px;
+  flex: 0 0 auto;
+  background: #f8f9fa;
+  padding: 10px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  margin-left: auto; /* Lo empuja a la derecha */
+}
+
+.estado-indicador {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.indicador-color {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+/* Indicador "Al día" - Verde profesional (similar al éxito en sistemas de diseño) */
+.al-dia .indicador-color {
+  background-color: #fff; /* Verde vibrante pero profesional */
+  border: 1px solid grey;
+}
+
+/* Indicador "Debe 1-2 meses" - Ámbar/amarillo profesional */
+.debe-1-2 .indicador-color {
+  background-color: #FFC107; /* Amarillo ámbar de Material Design */
+}
+
+/* Indicador "Debe 3+ meses" - Rojo profesional (similar a errores en sistemas de diseño) */
+.debe-3-mas .indicador-color {
+  background-color: #F44336; /* Rojo Material Design */
+}
+
+p{
+  padding: 0;
+  margin: 0;
+}
+
+/* Estilos de botones (mantenidos) */
+.socio-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #3498db;
+  color: white;
+  border: none;
+  font-size: 14.5px;
+  font-weight: 600;
+  padding: 14px 19px;
+  border-radius: 30px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease-in-out;
+  cursor: pointer;
+}
+
+.socio-button:nth-child(1) { background: #007aff; }
+.socio-button:nth-child(2) { background: #28a745; }
+.socio-button:nth-child(3) { background: #003366; }
+.socio-button:nth-child(4) { background: #FF6600; }
+
+/* Responsive - todo en columna */
+@media screen and (max-width: 768px) {
+  p{
+    display: none;
+  }
+
+  .down-container {
+    display: flex;
+    flex-direction: column-reverse;
+    align-items: stretch;
+    gap: 15px;
+    width: auto;
+    position: absolute;
+    bottom: 3rem;
+  }
+
+
+  .botones-container{
+    position: relative;
+    transform: none;
+    width: 100%;
+  }
+
+  /* Estilos de botones (mantenidos) */
+  .socio-button {
+    display: flex;
+    align-items: flex-end;
+    gap: 0px;
+    background: #3498db;
+    color: white;
+    border: none;
+    font-size: 14.5px;
+    font-weight: 600;
+    padding: 0;
+    border-radius: 30px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  /* Primera fila - contador + indicadores */
+  .contador-container {
+    order: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  
+  .socios-totales {
+    margin-right: auto; /* Empuja los indicadores a la derecha */
+  }
+  
+
+  /* Tercera fila - indicadores (ahora movidos a la primera fila) */
+  .estado-pagos-container {
+    order: 1; /* Misma order que el contador */
+    flex-direction: row;
+    gap: 15px;
+    background: transparent;
+    padding: 0;
+    box-shadow: none;
+    margin-left: 0;
+  }
+  
+  .socio-button {
+    min-width: 80px;
+    justify-content: center;
+    padding: 12px 15px;
+    font-size: 14px;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  /* Ajustes para pantallas muy pequeñas */
+  .contador-container {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .estado-pagos-container {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .botones-container {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+
+  
+  .estado-indicador {
+    font-size: 12px;
+  }
+}

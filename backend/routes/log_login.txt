@@ -1,0 +1,6 @@
+Usuario: b
+Contraseña ingresada: 1
+Contraseña BD: $2y$12$gU5zfm1iHGVUr/v9Ei0yH.95uImEHFA/TYJGC/cgZt3e8CIUaSvAi
+Usuario: b
+Contraseña ingresada: 1
+Contraseña BD: $2y$12$gU5zfm1iHGVUr/v9Ei0yH.95uImEHFA/TYJGC/cgZt3e8CIUaSvAi

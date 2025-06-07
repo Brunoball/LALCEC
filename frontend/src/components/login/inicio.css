@@ -1,0 +1,132 @@
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: linear-gradient(135deg, #dcdcdc 30%, #ff6e00 70%);
+  font-family: 'Poppins', sans-serif;
+}
+
+.login-box {
+  background: rgba(255, 255, 255, 0.95);
+  padding: 2.5rem;
+  border-radius: 25px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  text-align: center;
+  width: 350px;
+  position: relative;
+}
+
+.login-avatar {
+  background: linear-gradient(135deg, #ff8800, #ff6e00);
+  border-radius: 50%;
+  width: 100px;
+  height: 100px;
+  margin: -70px auto 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+.avatar-img {
+  width: 120%;
+  height: 120%;
+  object-fit: cover;
+}
+
+.login-title {
+  font-size: 1.6rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  color: #4b4b4b;
+}
+
+.input-group {
+  display: flex;
+  align-items: center;
+  background: #f0f0f0;
+  border-radius: 12px;
+  margin-bottom: 1.2rem;
+  padding: 0.8rem;
+}
+
+.input-group input {
+  border: none;
+  background: none;
+  outline: none;
+  width: 100%;
+  font-size: 1rem;
+  padding: 0.5rem;
+  color: #333;
+}
+
+.icon {
+  margin-right: 10px;
+  color: #ff8800;
+  font-size: 1.2rem;
+}
+
+.toggle-password {
+  cursor: pointer;
+  color: #ff8800;
+}
+
+.remember-me {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin-bottom: 1rem;
+  padding-left: 10px;
+}
+
+.remember-me input {
+  margin-right: 8px;
+  accent-color: #ff8800;
+}
+
+.login-btn {
+  background: linear-gradient(135deg, #ff8800, #ff6e00);
+  color: white;
+  padding: 1rem;
+  border-radius: 15px;
+  width: 100%;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  margin-top: 20px;
+}
+
+.animated-message {
+  position: relative;
+  margin: 10px auto 20px;
+  padding: 1rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  width: 90%;
+  animation: fadeSlide 0.4s ease-out;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.animated-message.exito {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.animated-message.error {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+@keyframes fadeSlide {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
