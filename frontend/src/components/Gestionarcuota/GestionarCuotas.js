@@ -29,21 +29,21 @@ const Row = memo(({ index, style, data, selectedRow, viewType, activeTab, onRowC
   return (
     <div
       style={style}
-      className={`gc-virtual-row ${isSelected ? "gc-selected-row" : ""}`}
+      className={`gcuotas-virtual-row ${isSelected ? "gcuotas-selected-row" : ""}`}
       onClick={() => onRowClick(index)}
     >
       {viewType === "socio" ? (
         <>
-          <div className="gc-virtual-cell">{item.apellido}</div>
-          <div className="gc-virtual-cell">{item.nombre}</div>
-          <div className="gc-virtual-cell">{item.domicilio}</div>
-          <div className="gc-virtual-cell">{item.displayCategoriaPrecio}</div>
-          <div className="gc-virtual-cell">{item.medio_pago || '-'}</div>
+          <div className="gcuotas-virtual-cell">{item.apellido}</div>
+          <div className="gcuotas-virtual-cell">{item.nombre}</div>
+          <div className="gcuotas-virtual-cell">{item.domicilio}</div>
+          <div className="gcuotas-virtual-cell">{item.displayCategoriaPrecio}</div>
+          <div className="gcuotas-virtual-cell">{item.medio_pago || '-'}</div>
           {activeTab === "deudores" && (
-            <div className="gc-virtual-cell">
+            <div className="gcuotas-virtual-cell">
               {isSelected && (
                 <button
-                  className="gc-action-button gc-payment-button"
+                  className="gcuotas-action-button gcuotas-payment-button"
                   onClick={(e) => {
                     e.stopPropagation();
                     onPaymentClick(item);
@@ -57,15 +57,15 @@ const Row = memo(({ index, style, data, selectedRow, viewType, activeTab, onRowC
         </>
       ) : (
         <>
-          <div className="gc-virtual-cell">{item.razon_social}</div>
-          <div className="gc-virtual-cell">{item.domicilio}</div>
-          <div className="gc-virtual-cell">{item.displayCategoriaPrecio}</div>
-          <div className="gc-virtual-cell">{item.medio_pago || '-'}</div>
+          <div className="gcuotas-virtual-cell">{item.razon_social}</div>
+          <div className="gcuotas-virtual-cell">{item.domicilio}</div>
+          <div className="gcuotas-virtual-cell">{item.displayCategoriaPrecio}</div>
+          <div className="gcuotas-virtual-cell">{item.medio_pago || '-'}</div>
           {activeTab === "deudores" && (
-            <div className="gc-virtual-cell">
+            <div className="gcuotas-virtual-cell">
               {isSelected && (
                 <button
-                  className="gc-action-button gc-payment-button"
+                  className="gcuotas-action-button gcuotas-payment-button"
                   onClick={(e) => {
                     e.stopPropagation();
                     onPaymentClick(item);
@@ -366,24 +366,24 @@ const GestionarCuotas = () => {
                   left: 70%;
                   top: 0;
               }
-              .contenedor {
+              .gcuotas-contenedor {
                   width: 210mm;
                   margin: 10mm 0;
                   page-break-after: always;
                   box-sizing: border-box;
               }
-              .comprobante {
+              .gcuotas-comprobante {
                   width: 100%;
                   height: 100%;
                   display: flex;
                   box-sizing: border-box;
               }
-              .talon-socio {
+              .gcuotas-talon-socio {
                   width: 60%;
                   padding-left: 20mm;
                   padding-top: 13mm;
               }
-              .talon-cobrador {
+              .gcuotas-talon-cobrador {
                   width: 60mm;
                   padding-left: 10mm;
                   padding-top: 16mm;
@@ -401,9 +401,9 @@ const GestionarCuotas = () => {
       const monto = item.precio_categoria || "N/A";
 
       comprobantesHTML += `
-        <div class="contenedor">
-          <div class="comprobante">
-            <div class="talon-socio">
+        <div class="gcuotas-contenedor">
+          <div class="gcuotas-comprobante">
+            <div class="gcuotas-talon-socio">
               <p><strong>${viewType === "socio" ? "Afiliado:" : "Empresa:"}</strong> ${viewType === "socio" ? `${item.apellido} ${item.nombre}` : item.razon_social}</p>
               <p><strong>Domicilio:</strong> ${item.domicilio || item.domicilio_2 || "N/A"}</p>
               <p><strong>Categoría / Monto:</strong> ${item.categoria} / $${monto}</p>
@@ -414,7 +414,7 @@ const GestionarCuotas = () => {
               <p>Las cuotas adeudadas se cobrarán al valor actualizado al momento del pago.</p>
             </div>
 
-            <div class="talon-cobrador">
+            <div class="gcuotas-talon-cobrador">
               <p><strong>${viewType === "socio" ? "Nombre y Apellido:" : "Empresa:"}</strong> ${viewType === "socio" ? `${item.apellido} ${item.nombre}` : item.razon_social}</p>
               <p><strong>Categoría / Monto:</strong> ${item.categoria} / $${monto}</p>
               <p><strong>Período:</strong> ${mes}</p>
@@ -457,24 +457,24 @@ const GestionarCuotas = () => {
 
   const renderTabla = () => {
     return (
-      <div className="gc-virtual-table">
-        <div className="gc-virtual-header">
+      <div className="gcuotas-virtual-table">
+        <div className="gcuotas-virtual-header">
           {viewType === "socio" ? (
             <>
-              <div className="gc-virtual-cell">Apellido</div>
-              <div className="gc-virtual-cell">Nombre</div>
-              <div className="gc-virtual-cell">Dirección</div>
-              <div className="gc-virtual-cell">Categoría</div>
-              <div className="gc-virtual-cell">Medio Pago</div>
-              {activeTab === "deudores" && <div className="gc-virtual-cell">Acciones</div>}
+              <div className="gcuotas-virtual-cell">Apellido</div>
+              <div className="gcuotas-virtual-cell">Nombre</div>
+              <div className="gcuotas-virtual-cell">Dirección</div>
+              <div className="gcuotas-virtual-cell">Categoría</div>
+              <div className="gcuotas-virtual-cell">Medio Pago</div>
+              {activeTab === "deudores" && <div className="gcuotas-virtual-cell">Acciones</div>}
             </>
           ) : (
             <>
-              <div className="gc-virtual-cell">Razón Social</div>
-              <div className="gc-virtual-cell">Dirección</div>
-              <div className="gc-virtual-cell">Categoría</div>
-              <div className="gc-virtual-cell">Medio Pago</div>
-              {activeTab === "deudores" && <div className="gc-virtual-cell">Acciones</div>}
+              <div className="gcuotas-virtual-cell">Razón Social</div>
+              <div className="gcuotas-virtual-cell">Dirección</div>
+              <div className="gcuotas-virtual-cell">Categoría</div>
+              <div className="gcuotas-virtual-cell">Medio Pago</div>
+              {activeTab === "deudores" && <div className="gcuotas-virtual-cell">Acciones</div>}
             </>
           )}
         </div>
@@ -502,7 +502,7 @@ const GestionarCuotas = () => {
   };
 
   return (
-    <div className="gc-container">
+    <div className="gcuotas-container">
       {mostrarModalMes && (
         <ModalMesCuotas
           mesesSeleccionados={mesesSeleccionadosImpresion}
@@ -547,33 +547,33 @@ const GestionarCuotas = () => {
         />
       )}
 
-      <div className="gc-left-section gc-box">
-        <div className="gc-header-section">
-          <h2 className="gc-title">
-            <FontAwesomeIcon icon={faMoneyCheckAlt} className="gc-title-icon" />
+      <div className="gcuotas-left-section gcuotas-box">
+        <div className="gcuotas-header-section">
+          <h2 className="gcuotas-title">
+            <FontAwesomeIcon icon={faMoneyCheckAlt} className="gcuotas-title-icon" />
             Gestionar Cuotas
           </h2>
-          <div className="gc-divider"></div>
+          <div className="gcuotas-divider"></div>
         </div>
   
-        <div className="gc-scrollable-content">
-          <div className="gc-top-section">
-            <div className="gc-filter-card">
-              <div className="gc-filter-header">
-                <FontAwesomeIcon icon={faFilter} className="gc-filter-icon" />
+        <div className="gcuotas-scrollable-content">
+          <div className="gcuotas-top-section">
+            <div className="gcuotas-filter-card">
+              <div className="gcuotas-filter-header">
+                <FontAwesomeIcon icon={faFilter} className="gcuotas-filter-icon" />
                 <span>Filtros</span>
               </div>
   
-              <div className="gc-select-container">
-                <div className="gc-input-group">
-                  <label htmlFor="meses" className="gc-input-label">
+              <div className="gcuotas-select-container">
+                <div className="gcuotas-input-group">
+                  <label htmlFor="meses" className="gcuotas-input-label">
                     <FontAwesomeIcon icon={faCalendarAlt} /> Mes
                   </label>
                   <select
                     id="meses"
                     value={selectedMonth}
                     onChange={handleMonthChange}
-                    className="gc-dropdown"
+                    className="gcuotas-dropdown"
                   >
                     <option value="">Seleccionar mes</option>
                     {meses.map((mes, index) => (
@@ -582,30 +582,30 @@ const GestionarCuotas = () => {
                   </select>
                 </div>
   
-                <div className="gc-input-group">
-                  <label htmlFor="entidad" className="gc-input-label">
+                <div className="gcuotas-input-group">
+                  <label htmlFor="entidad" className="gcuotas-input-label">
                     <FontAwesomeIcon icon={faUsers} /> Tipo de vista
                   </label>
                   <select
                     id="entidad"
                     value={viewType}
                     onChange={(e) => setViewType(e.target.value)}
-                    className="gc-dropdown"
+                    className="gcuotas-dropdown"
                   >
                     <option value="socio">Socios</option>
                     <option value="empresa">Empresas</option>
                   </select>
                 </div>
 
-                <div className="gc-input-group">
-                  <label htmlFor="medioPago" className="gc-input-label">
+                <div className="gcuotas-input-group">
+                  <label htmlFor="medioPago" className="gcuotas-input-label">
                     <FontAwesomeIcon icon={faCreditCard} /> Medio de Pago
                   </label>
                   <select
                     id="medioPago"
                     value={selectedMedioPago}
                     onChange={handleMedioPagoChange}
-                    className="gc-dropdown"
+                    className="gcuotas-dropdown"
                   >
                     <option value="">Todos</option>
                     {mediosPago.map((medio, index) => (
@@ -614,12 +614,12 @@ const GestionarCuotas = () => {
                   </select>
                 </div>
   
-                <div className="gc-input-group">
-                  <label htmlFor="search" className="gc-input-label">
+                <div className="gcuotas-input-group">
+                  <label htmlFor="search" className="gcuotas-input-label">
                     <FontAwesomeIcon icon={faSearch} /> Buscar
                   </label>
-                  <div className="gc-search-integrated">
-                    <FontAwesomeIcon icon={faSearch} className="gc-search-icon" />
+                  <div className="gcuotas-search-integrated">
+                    <FontAwesomeIcon icon={faSearch} className="gcuotas-search-icon" />
                     <input
                       id="search"
                       type="text"
@@ -632,14 +632,14 @@ const GestionarCuotas = () => {
               </div>
             </div>
   
-            <div className="gc-tabs-card">
-              <div className="gc-tabs-header">
-                <FontAwesomeIcon icon={faList} className="gc-tabs-icon" />
+            <div className="gcuotas-tabs-card">
+              <div className="gcuotas-tabs-header">
+                <FontAwesomeIcon icon={faList} className="gcuotas-tabs-icon" />
                 <span>Estado de cuotas</span>
               </div>
-              <div className="gc-tab-container">
+              <div className="gcuotas-tab-container">
                 <button
-                  className={`gc-tab-button ${activeTab === "pagado" ? "gc-active-tab" : ""}`}
+                  className={`gcuotas-tab-button ${activeTab === "pagado" ? "gcuotas-active-tab" : ""}`}
                   onClick={() => {
                     setActiveTab("pagado");
                     setSelectedRow(null);
@@ -647,12 +647,12 @@ const GestionarCuotas = () => {
                 >
                   <FontAwesomeIcon icon={faCheckCircle} />
                   Pagado
-                  <span className="gc-tab-badge">
+                  <span className="gcuotas-tab-badge">
                     {viewType === "socio" ? (sociosPagados?.length || 0) : (empresasPagadas?.length || 0)}
                   </span>
                 </button>
                 <button
-                  className={`gc-tab-button ${activeTab === "deudores" ? "gc-active-tab" : ""}`}
+                  className={`gcuotas-tab-button ${activeTab === "deudores" ? "gcuotas-active-tab" : ""}`}
                   onClick={() => {
                     setActiveTab("deudores");
                     setSelectedRow(null);
@@ -660,7 +660,7 @@ const GestionarCuotas = () => {
                 >
                   <FontAwesomeIcon icon={faExclamationTriangle} />
                   Deudores
-                  <span className="gc-tab-badge">
+                  <span className="gcuotas-tab-badge">
                     {viewType === "socio" ? (sociosDeudores?.length || 0) : (empresasDeudoras?.length || 0)}
                   </span>
                 </button>
@@ -669,32 +669,32 @@ const GestionarCuotas = () => {
           </div>
   
           {errorMessage && (
-            <div className="gc-alert gc-alert-error">
+            <div className="gcuotas-alert gcuotas-alert-error">
               <FontAwesomeIcon icon={faExclamationCircle} />
               {errorMessage}
             </div>
           )}
   
-          <div className="gc-actions-card">
-            <div className="gc-actions-header">
-              <FontAwesomeIcon icon={faCog} className="gc-actions-icon" />
+          <div className="gcuotas-actions-card">
+            <div className="gcuotas-actions-header">
+              <FontAwesomeIcon icon={faCog} className="gcuotas-actions-icon" />
               <span>Acciones</span>
             </div>
-            <div className="gc-buttons-container">
-              <button className="gc-button gc-button-back" onClick={handleVolverAtras}>
+            <div className="gcuotas-buttons-container">
+              <button className="gcuotas-button gcuotas-button-back" onClick={handleVolverAtras}>
                 <FontAwesomeIcon icon={faArrowLeft} />
                 <span>Volver Atrás</span>
               </button>
-              <button className="gc-button gc-button-export" onClick={handleExportExcel}>
+              <button className="gcuotas-button gcuotas-button-export" onClick={handleExportExcel}>
                 <FontAwesomeIcon icon={faFileExcel} />
                 <span>Generar Excel</span>
               </button>
-              <button className="gc-button gc-button-print" onClick={handleImprimirRegistro}>
+              <button className="gcuotas-button gcuotas-button-print" onClick={handleImprimirRegistro}>
                 <FontAwesomeIcon icon={faPrint} />
                 <span>Registro</span>
               </button>
               <button 
-                className="gc-button gc-button-print-all" 
+                className="gcuotas-button gcuotas-button-print-all" 
                 onClick={handleAbrirModalImpresion}
               >
                 <FontAwesomeIcon icon={faPrint} />
@@ -705,25 +705,25 @@ const GestionarCuotas = () => {
         </div>
       </div>
   
-      <div className="gc-right-section gc-box">
-        <div className="gc-table-header">
+      <div className="gcuotas-right-section gcuotas-box">
+        <div className="gcuotas-table-header">
           <h3>
             <FontAwesomeIcon icon={activeTab === "pagado" ? faCheckCircle : faExclamationTriangle} />
             {activeTab === "pagado" ? "Cuotas Pagadas" : "Cuotas Pendientes"}
           </h3>
-          <div className="gc-summary-info">
-            <span className="gc-summary-item">
+          <div className="gcuotas-summary-info">
+            <span className="gcuotas-summary-item">
               <FontAwesomeIcon icon={faUsers} />
               Total: {viewType === "socio"
                 ? (activeTab === "pagado" ? (sociosPagados?.length || 0) : (sociosDeudores?.length || 0))
                 : (activeTab === "pagado" ? (empresasPagadas?.length || 0) : (empresasDeudoras?.length || 0))}
             </span>
-            <span className="gc-summary-item">
+            <span className="gcuotas-summary-item">
               <FontAwesomeIcon icon={faCalendarAlt} />
               Mes: {selectedMonth || "Todos"}
             </span>
             {activeTab === "pagado" && selectedMedioPago && (
-              <span className="gc-summary-item">
+              <span className="gcuotas-summary-item">
                 <FontAwesomeIcon icon={faCreditCard} />
                 Medio: {selectedMedioPago}
               </span>
@@ -731,7 +731,7 @@ const GestionarCuotas = () => {
           </div>
         </div>
   
-        <div className="gc-table-container">
+        <div className="gcuotas-table-container">
           {renderTabla()}
         </div>
       </div>

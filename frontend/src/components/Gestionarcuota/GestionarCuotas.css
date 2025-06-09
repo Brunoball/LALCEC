@@ -1,6 +1,6 @@
 /* Estilos generales */
 /* Contenedor principal */
-.gc-container {
+.gcuotas-container {
   display: flex;
   flex-direction: row;
   min-height: 100vh;
@@ -11,7 +11,7 @@
   background: linear-gradient(135deg, #dcdcdc 30%, #ff6e00 70%);
 }
 
-.gc-box {
+.gcuotas-box {
   background-color: white;
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
@@ -22,65 +22,19 @@
   overflow: hidden;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /* Sección izquierda - Filtros y controles */
-.gc-left-section {
+.gcuotas-left-section {
   flex: 0 0 360px;
   display: flex;
   flex-direction: column;
   background-color: #f5f5f5;
   height: 95vh;
   padding: 0;
-  overflow: hidden; /* 👈 quitamos scroll general */
+  overflow: hidden;
   position: relative;
 }
 
-.gc-header-section {
+.gcuotas-header-section {
   min-height: 60px;
   padding: 0.8rem;
   background-color: #fa7815;
@@ -95,16 +49,14 @@
   z-index: 10;
 }
 
-.gc-scrollable-content {
+.gcuotas-scrollable-content {
   overflow-y: auto;
   flex-grow: 1;
   padding-bottom: 16px;
   padding-top: 6px;
 }
 
-
-
-.gc-title {
+.gcuotas-title {
   margin: 0;
   font-size: 22px;
   font-weight: 600;
@@ -113,11 +65,11 @@
   gap: 12px;
 }
 
-.gc-title-icon {
+.gcuotas-title-icon {
   font-size: 20px;
 }
 
-.gc-filter-card, .gc-search-card, .gc-tabs-card, .gc-actions-card {
+.gcuotas-filter-card, .gcuotas-tabs-card, .gcuotas-actions-card {
   background: white;
   border-radius: 8px;
   margin: 0 16px;
@@ -126,7 +78,7 @@
   margin-top: 14px;
 }
 
-.gc-filter-header, .gc-search-header, .gc-tabs-header, .gc-actions-header {
+.gcuotas-filter-header, .gcuotas-tabs-header, .gcuotas-actions-header {
   padding: 12px 16px;
   font-weight: 600;
   color: #2b2d42;
@@ -136,29 +88,29 @@
   gap: 8px;
 }
 
-.gc-tabs-header {
+.gcuotas-tabs-header {
   border-bottom: none;
 }
 
-.gc-filter-icon, .gc-search-header-icon, .gc-tabs-icon, .gc-actions-icon {
+.gcuotas-filter-icon, .gcuotas-tabs-icon, .gcuotas-actions-icon {
   color: #4361ee;
   font-size: 14px;
 }
 
-.gc-select-container {
+.gcuotas-select-container {
   padding: 16px;
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
-.gc-input-group {
+.gcuotas-input-group {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
-.gc-input-label {
+.gcuotas-input-label {
   font-size: 13px;
   color: #6c757d;
   font-weight: 500;
@@ -167,7 +119,7 @@
   gap: 6px;
 }
 
-.gc-dropdown {
+.gcuotas-dropdown {
   width: 100%;
   padding: 10px 12px;
   border: 1px solid #e0e3e7;
@@ -184,22 +136,22 @@
   background-size: 10px;
 }
 
-.gc-dropdown:hover {
+.gcuotas-dropdown:hover {
   border-color: #cbd5e0;
 }
 
-.gc-dropdown:focus {
+.gcuotas-dropdown:focus {
   outline: none;
   border-color: #4361ee;
   box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.08);
 }
 
-.gc-search-integrated {
+.gcuotas-search-integrated {
   position: relative;
   width: 100%;
 }
 
-.gc-search-integrated input {
+.gcuotas-search-integrated input {
   width: 100%;
   padding: 10px 12px 10px 36px;
   height: 40px;
@@ -212,13 +164,13 @@
   transition: all 0.3s ease;
 }
 
-.gc-search-integrated input:focus {
+.gcuotas-search-integrated input:focus {
   outline: none;
   border-color: #8fa3fd;
   box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
 }
 
-.gc-search-icon {
+.gcuotas-search-icon {
   position: absolute;
   left: 12px;
   top: 50%;
@@ -229,7 +181,7 @@
 }
 
 /* Pestañas */
-.gc-tab-container {
+.gcuotas-tab-container {
   display: flex;
   border-radius: 6px;
   overflow: hidden;
@@ -238,7 +190,7 @@
   margin: 0 16px 16px;
 }
 
-.gc-tab-button {
+.gcuotas-tab-button {
   flex: 1;
   padding: 12px;
   border: none;
@@ -254,12 +206,12 @@
   color: #6c757d;
 }
 
-.gc-active-tab {
+.gcuotas-active-tab {
   background-color: #4361ee;
   color: white;
 }
 
-.gc-tab-badge {
+.gcuotas-tab-badge {
   background-color: rgba(255, 255, 255, 0.2);
   padding: 2px 8px;
   border-radius: 10px;
@@ -268,7 +220,7 @@
 }
 
 /* Alertas */
-.gc-alert {
+.gcuotas-alert {
   padding: 12px 16px;
   border-radius: 6px;
   margin: 0 16px;
@@ -278,21 +230,21 @@
   gap: 8px;
 }
 
-.gc-alert-error {
+.gcuotas-alert-error {
   background-color: #fff5f5;
   color: #f72585;
   border: 1px solid #fed7d7;
 }
 
 /* Botones */
-.gc-buttons-container {
+.gcuotas-buttons-container {
   padding: 16px;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
 }
 
-.gc-button {
+.gcuotas-button {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -307,88 +259,48 @@
   width: 100%;
 }
 
-.gc-button-back {
+.gcuotas-button-back {
   background-color: #fa7815;
   color: white;
   border: 1px solid #e06c12;
 }
 
-.gc-button-back:hover {
+.gcuotas-button-back:hover {
   background-color: #e06c12;
   border-color: #c85f10;
 }
 
-.gc-button-export {
+.gcuotas-button-export {
   background-color: #38a169;
   color: white;
 }
 
-.gc-button-export:hover {
+.gcuotas-button-export:hover {
   background-color: #2f855a;
 }
 
-.gc-button-print {
+.gcuotas-button-print {
   background-color: #c2c2c2;
   color: #5c4a42;
   border: 1px solid #f0e0d2;
 }
 
-.gc-button-print:hover {
+.gcuotas-button-print:hover {
   background-color: #a9a9a9;
   border-color: #d0c0b0;
 }
 
-.gc-button-print-all {
+.gcuotas-button-print-all {
   background-color: #4361ee;
   color: white;
 }
 
-.gc-button-print-all:hover {
+.gcuotas-button-print-all:hover {
   background-color: #3a56d4;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /* Sección derecha - Tabla */
-.gc-right-section {
+.gcuotas-right-section {
   flex: 1;
   height: 95vh;
   display: flex;
@@ -396,7 +308,7 @@
   padding: 0;
 }
 
-.gc-table-header {
+.gcuotas-table-header {
   padding: 20px 24px;
   border-bottom: 1px solid #e0e3e7;
   display: flex;
@@ -404,7 +316,7 @@
   align-items: center;
 }
 
-.gc-table-header h3 {
+.gcuotas-table-header h3 {
   margin: 0;
   font-size: 18px;
   font-weight: 600;
@@ -414,12 +326,12 @@
   gap: 8px;
 }
 
-.gc-summary-info {
+.gcuotas-summary-info {
   display: flex;
   gap: 16px;
 }
 
-.gc-summary-item {
+.gcuotas-summary-item {
   font-size: 14px;
   color: #6c757d;
   display: flex;
@@ -427,98 +339,96 @@
   gap: 6px;
 }
 
-.gc-table-container {
+.gcuotas-table-container {
   flex: 1;
   overflow-y: auto;
   padding: 0 24px;
 }
 
-
-/* Estilos para la tabla - FIXED COLUMNS */
-.gc-table {
+/* Estilos para la tabla virtual */
+.gcuotas-virtual-table {
   width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
   font-size: 14px;
   margin: 16px 0;
-  table-layout: fixed;
 }
 
-.gc-table th {
+.gcuotas-virtual-header {
+  display: flex;
+  background-color: #f8f9fa;
+  font-weight: 600;
+  color: #2b2d42;
+  border-bottom: 1px solid #e0e3e7;
   position: sticky;
   top: 0;
-  background-color: white;
   z-index: 10;
 }
 
-.gc-table th, .gc-table td {
+.gcuotas-virtual-cell {
   padding: 12px 16px;
-  text-align: center;
+  text-align: left;
   vertical-align: middle;
-  border-bottom: 1px solid #e0e3e7;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.gc-table th {
-  font-weight: 600;
-  color: #2b2d42;
-  background-color: #f8f9fa;
-}
-
 /* Anchos fijos para columnas - SOCIOS */
-.gc-view-socio .gc-table th:nth-child(1), 
-.gc-view-socio .gc-table td:nth-child(1) {
-  width: 25%; /* Apellido */
-}
-
-.gc-view-socio .gc-table th:nth-child(2), 
-.gc-view-socio .gc-table td:nth-child(2) {
-  width: 25%; /* Nombre */
-}
-
-.gc-view-socio .gc-table th:nth-child(3), 
-.gc-view-socio .gc-table td:nth-child(3) {
-  width: 35%; /* Dirección */
-}
-
-.gc-view-socio .gc-table th:nth-child(4), 
-.gc-view-socio .gc-table td:nth-child(4) {
-  width: 15%; /* Categoría */
-}
+.gcuotas-virtual-header > .gcuotas-virtual-cell:nth-child(1) { width: 25%; } /* Apellido */
+.gcuotas-virtual-header > .gcuotas-virtual-cell:nth-child(2) { width: 25%; } /* Nombre */
+.gcuotas-virtual-header > .gcuotas-virtual-cell:nth-child(3) { width: 35%; } /* Dirección */
+.gcuotas-virtual-header > .gcuotas-virtual-cell:nth-child(4) { width: 15%; } /* Categoría */
+.gcuotas-virtual-header > .gcuotas-virtual-cell:nth-child(5) { width: 15%; } /* Medio Pago */
+.gcuotas-virtual-header > .gcuotas-virtual-cell:nth-child(6) { width: 10%; } /* Acciones */
 
 /* Anchos fijos para columnas - EMPRESAS */
-.gc-view-empresa .gc-table th:nth-child(1), 
-.gc-view-empresa .gc-table td:nth-child(1) {
-  width: 30%; /* Razón Social */
+.gcuotas-virtual-header > .gcuotas-virtual-cell:nth-child(1) { width: 30%; } /* Razón Social */
+.gcuotas-virtual-header > .gcuotas-virtual-cell:nth-child(2) { width: 40%; } /* Dirección */
+.gcuotas-virtual-header > .gcuotas-virtual-cell:nth-child(3) { width: 20%; } /* Categoría */
+.gcuotas-virtual-header > .gcuotas-virtual-cell:nth-child(4) { width: 15%; } /* Medio Pago */
+.gcuotas-virtual-header > .gcuotas-virtual-cell:nth-child(5) { width: 10%; } /* Acciones */
+
+/* Filas */
+.gcuotas-virtual-row {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid #e0e3e7;
+  cursor: pointer;
+  transition: background-color 0.2s;
 }
 
-.gc-view-empresa .gc-table th:nth-child(2), 
-.gc-view-empresa .gc-table td:nth-child(2) {
-  width: 50%; /* Dirección */
-}
-
-.gc-view-empresa .gc-table th:nth-child(3), 
-.gc-view-empresa .gc-table td:nth-child(3) {
-  width: 20%; /* Categoría */
-}
-
-/* Filas alternadas */
-.gc-table tr:nth-child(even) {
-  background-color: #f8f9fa;
-}
-
-.gc-table tr:nth-child(odd) {
-  background-color: white;
-}
-
-.gc-table tr:hover {
+.gcuotas-virtual-row:hover {
   background-color: #eef2ff;
 }
 
+.gcuotas-virtual-row > .gcuotas-virtual-cell {
+  padding: 12px 16px;
+}
+
+.gcuotas-selected-row {
+  background-color: #e0e7ff !important;
+}
+
+/* Botón de pago */
+.gcuotas-action-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.gcuotas-payment-button {
+  color: #38a169;
+}
+
+.gcuotas-payment-button:hover {
+  background-color: #38a169;
+  color: white;
+}
+
 /* Modal */
-.gc-modal-overlay {
+.gcuotas-modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -532,7 +442,7 @@
   backdrop-filter: blur(2px);
 }
 
-.gc-modal {
+.gcuotas-modal {
   background-color: white;
   border-radius: 12px;
   width: 100%;
@@ -541,7 +451,7 @@
   overflow: hidden;
 }
 
-.gc-modal-header {
+.gcuotas-modal-header {
   padding: 16px 24px;
   border-bottom: 1px solid #e0e3e7;
   display: flex;
@@ -549,7 +459,7 @@
   align-items: center;
 }
 
-.gc-modal-title {
+.gcuotas-modal-title {
   margin: 0;
   font-size: 18px;
   font-weight: 600;
@@ -559,7 +469,7 @@
   gap: 8px;
 }
 
-.gc-modal-close {
+.gcuotas-modal-close {
   background: none;
   border: none;
   cursor: pointer;
@@ -568,25 +478,25 @@
   padding: 4px;
 }
 
-.gc-modal-body {
+.gcuotas-modal-body {
   padding: 24px;
   text-align: center;
 }
 
-.gc-modal-icon {
+.gcuotas-modal-icon {
   font-size: 48px;
   color: #4361ee;
   margin-bottom: 16px;
 }
 
-.gc-modal-text {
+.gcuotas-modal-text {
   margin-bottom: 16px;
   color: #2b2d42;
   line-height: 1.5;
   font-size: 15px;
 }
 
-.gc-modal-details {
+.gcuotas-modal-details {
   background-color: #f8f9fa;
   border-radius: 8px;
   padding: 12px;
@@ -594,7 +504,7 @@
   text-align: left;
 }
 
-.gc-detail-item {
+.gcuotas-detail-item {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -602,7 +512,7 @@
   font-size: 14px;
 }
 
-.gc-modal-footer {
+.gcuotas-modal-footer {
   padding: 16px 24px;
   border-top: 1px solid #e0e3e7;
   display: flex;
@@ -610,7 +520,7 @@
   gap: 12px;
 }
 
-.gc-modal-button {
+.gcuotas-modal-button {
   padding: 10px 20px;
   border-radius: 6px;
   font-weight: 500;
@@ -622,98 +532,108 @@
   gap: 8px;
 }
 
-.gc-modal-button.secondary {
+.gcuotas-modal-button.secondary {
   background-color: #f8f9fa;
   color: #6c757d;
   border: 1px solid #e0e3e7;
 }
 
-.gc-modal-button.secondary:hover {
+.gcuotas-modal-button.secondary:hover {
   background-color: #f1f3f5;
 }
 
-.gc-modal-button.primary {
+.gcuotas-modal-button.primary {
   background-color: #4361ee;
   color: white;
   border: none;
 }
 
-.gc-modal-button.primary:hover {
+.gcuotas-modal-button.primary:hover {
   background-color: #3f37c9;
 }
 
 /* Diseño responsive */
 @media (max-width: 1024px) {
-  .gc-container {
+  .gcuotas-container {
     flex-direction: column;
     height: auto;
   }
   
-  .gc-left-section, .gc-right-section {
+  .gcuotas-left-section, .gcuotas-right-section {
     width: 100%;
     height: auto;
   }
   
-  .gc-right-section {
+  .gcuotas-right-section {
     height: auto;
     max-height: none;
   }
   
-  .gc-buttons-container {
+  .gcuotas-buttons-container {
     grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 768px) {
-  .gc-container {
+  .gcuotas-container {
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     height: 100vh;
   }
   
-  .gc-left-section, 
-  .gc-right-section {
+  .gcuotas-left-section, 
+  .gcuotas-right-section {
     overflow: visible;
   }
   
-  .gc-left-section {
+  .gcuotas-left-section {
     flex: 1;
     height: auto;
   }
   
-  .gc-right-section {
+  .gcuotas-right-section {
     flex: 1;
     height: auto;
   }
 
-  /* Ajustes para tabla en móviles */
-  .gc-table {
+  /* Ajustes para tabla virtual en móviles */
+  .gcuotas-virtual-table {
     display: block;
     overflow-x: auto;
-    white-space: nowrap;
   }
   
-  .gc-table th, 
-  .gc-table td {
-    min-width: 120px;
+  .gcuotas-virtual-header {
+    display: none; /* Ocultar encabezado en móviles */
   }
   
-  /* Ajustes específicos para móviles */
-  .gc-view-socio .gc-table th:nth-child(1), 
-  .gc-view-socio .gc-table td:nth-child(1),
-  .gc-view-socio .gc-table th:nth-child(2), 
-  .gc-view-socio .gc-table td:nth-child(2),
-  .gc-view-socio .gc-table th:nth-child(3), 
-  .gc-view-socio .gc-table td:nth-child(3),
-  .gc-view-socio .gc-table th:nth-child(4), 
-  .gc-view-socio .gc-table td:nth-child(4),
-  .gc-view-empresa .gc-table th:nth-child(1), 
-  .gc-view-empresa .gc-table td:nth-child(1),
-  .gc-view-empresa .gc-table th:nth-child(2), 
-  .gc-view-empresa .gc-table td:nth-child(2),
-  .gc-view-empresa .gc-table th:nth-child(3), 
-  .gc-view-empresa .gc-table td:nth-child(3) {
-    width: auto;
-    min-width: 120px;
+  .gcuotas-virtual-row {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 12px;
+  }
+  
+  .gcuotas-virtual-row > .gcuotas-virtual-cell {
+    width: 100% !important;
+    padding: 4px 0;
+    border-bottom: none;
+  }
+  
+  /* Mostrar etiquetas antes de cada celda en móviles */
+  .gcuotas-virtual-row > .gcuotas-virtual-cell::before {
+    content: attr(data-label);
+    font-weight: bold;
+    display: inline-block;
+    width: 100px;
+    color: #6c757d;
+  }
+  
+  .gcuotas-virtual-row > .gcuotas-virtual-cell {
+    display: flex;
+    gap: 8px;
+  }
+  
+  /* Ajustar botones de acción */
+  .gcuotas-action-button {
+    margin-top: 8px;
   }
 }

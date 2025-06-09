@@ -6,6 +6,18 @@ import BASE_URL from "../../config/config";
 import "./GestionarCategorias.css";
 import Toast from "../global/Toast";
 
+// Componente de precarga (skeleton)
+const CategoriaSkeleton = () => (
+  <div className="gc-categoria-item-skeleton">
+    <div className="gc-categoria-text-skeleton"></div>
+    <div className="gc-categoria-price-skeleton"></div>
+    <div className="gc-categoria-actions-skeleton">
+      <div className="gc-edit-button-skeleton"></div>
+      <div className="gc-delete-button-skeleton"></div>
+    </div>
+  </div>
+);
+
 const GestionarCategorias = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -16,33 +28,36 @@ const GestionarCategorias = () => {
   const [toastVisible, setToastVisible] = useState(false);
   const [toastMensaje, setToastMensaje] = useState("");
   const [toastTipo, setToastTipo] = useState("");
+  const [animationKey, setAnimationKey] = useState(0);
 
   const obtenerCategorias = () => {
     setIsLoading(true);
-    fetch(`${BASE_URL}/api.php?action=obtener_categoria`)
-      .then((response) => response.json())
-      .then((data) => {
-        if (Array.isArray(data)) {
-          setCategorias(data);
-        } else {
-          console.error("Los datos recibidos no son un array válido.");
-        }
-      })
-      .catch((error) => console.error("Error al obtener categorías:", error))
-      .finally(() => setIsLoading(false));
+    // Simular un pequeño retraso para que se vea el skeleton
+    setTimeout(() => {
+      fetch(`${BASE_URL}/api.php?action=obtener_categoria`)
+        .then((response) => response.json())
+        .then((data) => {
+          if (Array.isArray(data)) {
+            setCategorias(data);
+            setAnimationKey(prevKey => prevKey + 1);
+          } else {
+            console.error("Los datos recibidos no son un array válido.");
+          }
+        })
+        .catch((error) => console.error("Error al obtener categorías:", error))
+        .finally(() => setIsLoading(false));
+    }, 500); // Retraso mínimo para mostrar el skeleton
   };
 
   useEffect(() => {
     obtenerCategorias();
   }, []);
 
-  // Mostrar toast si venimos desde AgregarCategoria con éxito
   useEffect(() => {
     if (location.state?.success) {
       setToastTipo("exito");
       setToastMensaje("Categoría agregada. Cargando tabla...");
       setToastVisible(true);
-      // Limpiar el estado para que no vuelva a mostrarse
       window.history.replaceState({}, document.title);
     }
   }, [location.state]);
@@ -79,6 +94,7 @@ const GestionarCategorias = () => {
               )
             );
             setModalOpen(false);
+            setAnimationKey(prevKey => prevKey + 1);
           } else {
             alert(data.message || "No se pudo eliminar la categoría.");
           }
@@ -106,12 +122,21 @@ const GestionarCategorias = () => {
       <div className="gc-box">
         <h2 className="gc-title">Gestionar Categorías</h2>
 
-        <div className="gc-categorias-list">
+        <div className="gc-categorias-list" key={animationKey}>
           {isLoading ? (
-            <p className="gc-loading-message">Cargando categorías...</p>
+            <>
+              <CategoriaSkeleton />
+              <CategoriaSkeleton />
+              <CategoriaSkeleton />
+              <CategoriaSkeleton />
+            </>
           ) : categorias.length > 0 ? (
-            categorias.map((categoria) => (
-              <div key={categoria.Nombre_Categoria} className="gc-categoria-item hover-effect">
+            categorias.map((categoria, index) => (
+              <div 
+                key={`${categoria.Nombre_Categoria}-${index}`}
+                className="gc-categoria-item hover-effect"
+                style={{ animationDelay: `${index * 0.1}s` }}
+              >
                 <span className="gc-categoria-text">{categoria.Nombre_Categoria}</span>
                 <span className="gc-categoria-price">
                   ${parseFloat(categoria.Precio_Categoria).toFixed(2)}
@@ -147,7 +172,10 @@ const GestionarCategorias = () => {
             <FontAwesomeIcon icon={faPlus} className="gc-icon-button" />
             Agregar Categoría
           </button>
-          <button className="gc-button-back hover-effect" onClick={() => navigate(-1)}>
+          <button 
+            className="gc-button-back hover-effect" 
+            onClick={() => navigate("/PaginaPrincipal")} // Cambio realizado aquí
+          >
             <FontAwesomeIcon icon={faArrowLeft} className="gc-icon-button" />
             Volver Atrás
           </button>

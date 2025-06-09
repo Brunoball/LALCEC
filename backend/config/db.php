@@ -4,7 +4,7 @@
 //Gastex2233
 $host = 'localhost';
 $user = 'root';
-$pass = 'brunoball516';
+$pass = 'Gastex2233';
 $db = 'agenda';
 
 // Crear la conexión

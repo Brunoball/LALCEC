@@ -4,31 +4,33 @@ import { faSave, faArrowLeft, faHistory, faTimes } from "@fortawesome/free-solid
 import { useParams, useNavigate } from "react-router-dom";
 import BASE_URL from "../../config/config";
 import "./EditarCategoria.css";
+import Toast from "../global/Toast";
 
 const EditarCategoria = () => {
   const { nombre_categoria } = useParams();
   const navigate = useNavigate();
   const [categoria, setCategoria] = useState(null);
-  const [error, setError] = useState(null);
-  const [cargando, setCargando] = useState(true);
   const [nombre, setNombre] = useState('');
   const [precio, setPrecio] = useState('');
-  const [mensaje, setMensaje] = useState("");
   const [historicoPrecios, setHistoricoPrecios] = useState([]);
   const [showHistorico, setShowHistorico] = useState(false);
+  
+  // Estados para Toast
+  const [toastVisible, setToastVisible] = useState(false);
+  const [toastTipo, setToastTipo] = useState("");
+  const [toastMensaje, setToastMensaje] = useState("");
 
   useEffect(() => {
     const obtenerCategoria = async () => {
       try {
-        setCargando(true);
-        setError(null);
+const response = await fetch(
+  `${BASE_URL}/api.php?action=obtener_categoria&nombre_categoria=${encodeURIComponent(nombre_categoria)}`
+);
 
-        const response = await fetch(
-          `${BASE_URL}/api.php?action=obtener_categoria&nombre_categoria=${encodeURIComponent(nombre_categoria)}`
-        );
 
         if (!response.ok) {
           throw new Error(`Error HTTP: ${response.status}`);
+
         }
 
         const data = await response.json();
@@ -47,9 +49,9 @@ const EditarCategoria = () => {
 
       } catch (error) {
         console.error("Error al obtener categoría:", error);
-        setError(error.message);
-      } finally {
-        setCargando(false);
+        setToastTipo("error");
+        setToastMensaje(error.message);
+        setToastVisible(true);
       }
     };
 
@@ -62,13 +64,22 @@ const EditarCategoria = () => {
     event.preventDefault();
 
     if (!nombre || !precio) {
-      setMensaje("Por favor complete todos los campos");
-      setTimeout(() => setMensaje(""), 3000);
+      setToastTipo("error");
+      setToastMensaje("Por favor complete todos los campos");
+      setToastVisible(true);
+      return;
+    }
+
+    if (nombre.length > 1) {
+      setToastTipo("error");
+      setToastMensaje("El nombre de la categoría debe ser solo una letra.");
+      setToastVisible(true);
       return;
     }
 
     try {
-      const response = await fetch(`${BASE_URL}/api.php?action=editar_categoria`, {
+     const response = await fetch(`${BASE_URL}/api.php?action=editar_categoria`, {
+
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -82,26 +93,30 @@ const EditarCategoria = () => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || `Error HTTP: ${response.status}`);
+      throw new Error(errorData.error || `Error HTTP: ${response.status}`);
+
       }
 
       const data = await response.json();
 
       if (data.success) {
-        setMensaje("✅ Categoría actualizada correctamente");
-        setCategoria(prev => ({
-          ...prev,
-          Nombre_Categoria: nombre,
-          Precio_Categoria: precio
-        }));
+        setToastTipo("exito");
+        setToastMensaje("Categoría actualizada correctamente");
+        setToastVisible(true);
+        
+        // Redirigir después de 1 segundo
+        setTimeout(() => {
+          navigate("/GestionarCategorias", { state: { success: true } });
+        }, 1000);
+        
       } else {
         throw new Error(data.error || "Error al actualizar la categoría");
       }
     } catch (error) {
       console.error("Error completo:", error);
-      setMensaje(`❌ ${error.message}`);
-    } finally {
-      setTimeout(() => setMensaje(""), 5000);
+      setToastTipo("error");
+      setToastMensaje(error.message);
+      setToastVisible(true);
     }
   };
 
@@ -109,73 +124,82 @@ const EditarCategoria = () => {
     navigate(-1);
   };
 
+  const handleToggleHistorico = () => {
+    setShowHistorico(!showHistorico);
+  };
+
+  const handleToastClose = () => {
+    setToastVisible(false);
+  };
+
   const isFieldFilled = (field) => field?.length > 0;
 
-  const HistoricoModal = () => (
-    <div className={`edit-cat-modal-overlay ${showHistorico ? 'active' : ''}`} onClick={() => setShowHistorico(false)}>
-      <div className="edit-cat-modal-container" onClick={(e) => e.stopPropagation()}>
-        <div className="edit-cat-modal-header">
-          <h3 className="edit-cat-modal-title">Histórico de Precios</h3>
-          <button 
-            className="edit-cat-modal-close"
-            onClick={() => setShowHistorico(false)}
-          >
-            <FontAwesomeIcon icon={faTimes} />
-          </button>
-        </div>
-        
-        <div className="edit-cat-historico-container">
-          {historicoPrecios.length > 0 ? (
-            <table className="edit-cat-historico-table">
-              <thead>
-                <tr>
-                  <th className="edit-cat-table-header">Fecha</th>
-                  <th className="edit-cat-table-header">Precio Anterior</th>
-                  <th className="edit-cat-table-header">Precio Nuevo</th>
-                </tr>
-              </thead>
-              <tbody>
-                {historicoPrecios.map((item, index) => (
-                  <tr key={index} className={index % 2 === 0 ? "edit-cat-even-row" : "edit-cat-odd-row"}>
-                    <td className="edit-cat-table-cell">
-                      {new Date(item.fecha_cambio).toLocaleDateString('es-AR')}
-                    </td>
-                    <td className="edit-cat-table-cell">${parseFloat(item.precio_anterior).toFixed(2)}</td>
-                    <td className="edit-cat-table-cell">${parseFloat(item.precio_nuevo).toFixed(2)}</td>
+  const HistoricoModal = () => {
+    const [isClosing, setIsClosing] = useState(false);
+
+    const handleClose = () => {
+      setIsClosing(true);
+      setTimeout(() => {
+        setShowHistorico(false);
+        setIsClosing(false);
+      }, 3);
+    };
+
+    if (!showHistorico && !isClosing) return null;
+
+    return (
+      <div 
+        className={`edit-cat-modal-overlay ${showHistorico && !isClosing ? 'active' : ''}`}
+
+        onClick={handleClose}
+      >
+        <div 
+          className={`edit-cat-modal-container edit-cat-animate ${
+            isClosing ? 'edit-cat-fadeOutDown' : 'edit-cat-fadeInUp'
+          }`}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="edit-cat-modal-header">
+            <h3 className="edit-cat-modal-title">Histórico de Precios</h3>
+            <button 
+              className="edit-cat-modal-close"
+              onClick={handleClose}
+            >
+              <FontAwesomeIcon icon={faTimes} />
+            </button>
+          </div>
+          
+         <div className="edit-cat-historico-container edit-cat-animate edit-cat-fadeInUp edit-cat-animate-faster">
+
+            {historicoPrecios.length > 0 ? (
+              <table className="edit-cat-historico-table">
+                <thead>
+                  <tr>
+                    <th className="edit-cat-table-header">Fecha</th>
+                    <th className="edit-cat-table-header">Precio Anterior</th>
+                    <th className="edit-cat-table-header">Precio Nuevo</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : (
-            <p className="edit-cat-no-history-text">No hay registros históricos</p>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-
-  if (cargando) {
-    return (
-      <div className="edit-cat-loader-container">
-        <div className="edit-cat-loader"></div>
-        <p className="edit-cat-loading-text">Cargando...</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="edit-cat-container">
-        <div className="edit-cat-box">
-          <p className="edit-cat-error-text">Error: {error}</p>
-          <button className="edit-cat-back-button" onClick={handleGoBack}>
-            <FontAwesomeIcon icon={faArrowLeft} className="edit-cat-icon-spacing" />
-            Volver Atrás
-          </button>
+                </thead>
+                <tbody>
+                  {historicoPrecios.map((item, index) => (
+                    <tr key={index} className={index % 2 === 0 ? "edit-cat-even-row" : "edit-cat-odd-row"}>
+                      <td className="edit-cat-table-cell">
+                        {new Date(item.fecha_cambio).toLocaleDateString('es-AR')}
+                      </td>
+                      <td className="edit-cat-table-cell">${parseFloat(item.precio_anterior).toFixed(2)}</td>
+                      <td className="edit-cat-table-cell">${parseFloat(item.precio_nuevo).toFixed(2)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <p className="edit-cat-no-history-text">No hay registros históricos</p>
+            )}
+          </div>
         </div>
       </div>
     );
-  }
+  };
 
   if (!categoria) {
     return (
@@ -193,13 +217,15 @@ const EditarCategoria = () => {
 
   return (
     <div className="edit-cat-container">
+      {toastVisible && (
+        <Toast
+          tipo={toastTipo}
+          mensaje={toastMensaje}
+          onClose={handleToastClose}
+        />
+      )}
+
       <div className="edit-cat-box">
-        {mensaje && (
-          <div className={mensaje.includes("Error") ? "edit-cat-error-message" : "edit-cat-success-message"}>
-            {mensaje}
-          </div>
-        )}
-        
         <h2 className="edit-cat-title">Editar Categoría</h2>
         
         <form onSubmit={guardarCategoria} className="edit-cat-form">
@@ -234,7 +260,7 @@ const EditarCategoria = () => {
                 placeholder=" "
                 required
                 min="0"
-                step="0.01"
+                step="50"
               />
               <label
                 htmlFor="precio_categoria"
@@ -262,8 +288,9 @@ const EditarCategoria = () => {
         </form>
 
         <button 
-          className="edit-cat-view-history-button"
-          onClick={() => setShowHistorico(!showHistorico)}
+         className={`edit-cat-view-history-button ${showHistorico ? 'edit-cat-animate edit-cat-pulse' : ''}`}
+
+          onClick={handleToggleHistorico}
           disabled={historicoPrecios.length === 0}
         >
           <FontAwesomeIcon icon={faHistory} className="edit-cat-icon-spacing" />

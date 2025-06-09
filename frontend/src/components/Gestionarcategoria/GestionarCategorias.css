@@ -56,6 +56,7 @@
   display: flex  ;
   gap: 25px;
   width: 100%;
+  margin: 12px;
 }
 /* Botones principales */
 .gc-button {
@@ -63,7 +64,7 @@
   color: var(--gc-white);
   border: none;
   padding: 0.8rem !important;
-  border-radius: 12px;
+  border-radius: 6px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -107,21 +108,28 @@
 /* Lista de categorías */
 .gc-categorias-list {
   width: 100%;
+  border-radius: 6px;
   margin-top: 1rem;
-  max-height: 350px;
+  min-height: 350px;
+  max-height: 351px;
   overflow-y: auto;
   padding-right: 5px;
+  background-color: rgba(240, 240, 240, 0.9);
+}
+.gc-categorias-list::-webkit-scrollbar{
+  width: 4px;
+  padding: 1px;
+  margin: 0;
 }
 
 .gc-categoria-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin: 12px 6px 12px 12px;
   padding: 12px 15px;
   border-radius: 10px;
   background: rgba(240, 240, 240, 0.9);
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
   transition: all 0.2s ease;
 }
 
@@ -287,4 +295,94 @@
 
 ::-webkit-scrollbar-thumb:hover {
   background: #a8a8a8;
+}
+/* Animación de entrada en cascada */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Clase para aplicar la animación */
+.gc-categoria-item {
+  animation: fadeInUp 0.5s ease forwards;
+  opacity: 0; /* Inicialmente invisible */
+}
+
+/* Retrasos para el efecto cascada */
+.gc-categoria-item:nth-child(1) { animation-delay: 0.1s; }
+.gc-categoria-item:nth-child(2) { animation-delay: 0.2s; }
+.gc-categoria-item:nth-child(3) { animation-delay: 0.3s; }
+.gc-categoria-item:nth-child(4) { animation-delay: 0.4s; }
+.gc-categoria-item:nth-child(5) { animation-delay: 0.5s; }
+.gc-categoria-item:nth-child(6) { animation-delay: 0.6s; }
+.gc-categoria-item:nth-child(7) { animation-delay: 0.7s; }
+.gc-categoria-item:nth-child(8) { animation-delay: 0.8s; }
+.gc-categoria-item:nth-child(9) { animation-delay: 0.9s; }
+.gc-categoria-item:nth-child(10) { animation-delay: 1.0s; }
+
+/* Animación para el mensaje de "No hay categorías" */
+.gc-empty-message {
+  animation: fadeInUp 0.5s ease 0.3s forwards;
+  opacity: 0;
+}
+
+
+
+/* Estilos para el skeleton loading */
+.gc-categoria-item-skeleton {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 12px 6px 12px 12px;
+  padding: 12px 15px;
+  border-radius: 10px;
+  background: rgba(240, 240, 240, 0.9);
+}
+
+.gc-categoria-text-skeleton {
+  width: 120px;
+  height: 20px;
+  background: linear-gradient(90deg, #f0f0f0, #e0e0e0, #f0f0f0);
+  background-size: 200% 100%;
+  border-radius: 4px;
+  animation: shimmer 1.5s infinite;
+}
+
+.gc-categoria-price-skeleton {
+  width: 60px;
+  height: 20px;
+  background: linear-gradient(90deg, #f0f0f0, #e0e0e0, #f0f0f0);
+  background-size: 200% 100%;
+  border-radius: 4px;
+  animation: shimmer 1s infinite;
+}
+
+.gc-categoria-actions-skeleton {
+  display: flex;
+  gap: 8px;
+}
+
+.gc-edit-button-skeleton,
+.gc-delete-button-skeleton {
+  width: 34px;
+  height: 34px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #f0f0f0, #e0e0e0, #f0f0f0);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
 }

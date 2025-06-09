@@ -1,16 +1,31 @@
 :root {
-  --edit-cat-primary: #FF6E00;     /* Naranja principal */
-  --edit-cat-primary-dark: #E65100; /* Naranja oscuro */
-  --edit-cat-primary-light: #FFA040; /* Naranja claro */
-  --edit-cat-white: #FFFFFF;       /* Blanco */
-  --edit-cat-light: #F8F9FA;       /* Gris muy claro */
-  --edit-cat-medium: #E0E0E0;      /* Gris medio */
-  --edit-cat-dark: #424242;        /* Gris oscuro */
-  --edit-cat-black: #212121;       /* Negro suave */
-  --edit-cat-success: #2E7D32;     /* Verde para éxito */
-  --edit-cat-error: #C62828;       /* Rojo para errores */
-  --edit-cat-text-dark: #212121;   /* Added from second file */
-  --edit-cat-dark-gray: #757575;   /* Added from second file */
+  /* Colores principales */
+  --edit-cat-primary: #FF6E00;
+  --edit-cat-primary-dark: #E65100;
+  --edit-cat-primary-light: #FFA040;
+  
+  /* Escala de grises */
+  --edit-cat-white: #FFFFFF;
+  --edit-cat-light: #F8F9FA;
+  --edit-cat-medium: #E0E0E0;
+  --edit-cat-dark: #424242;
+  --edit-cat-black: #212121;
+  --edit-cat-dark-gray: #757575;
+  
+  /* Colores de estado */
+  --edit-cat-success: #2E7D32;
+  --edit-cat-error: #C62828;
+  
+  /* Sombras */
+  --edit-cat-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --edit-cat-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --edit-cat-shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.1);
+  --edit-cat-shadow-primary: 0 4px 6px rgba(255, 110, 0, 0.2);
+  
+  /* Transiciones */
+  --edit-cat-transition: all 0.3s ease;
+  --edit-cat-transition-slow: all 0.4s ease;
+  --edit-cat-transition-fast: all 0.2s ease;
 }
 
 /* Estructura principal */
@@ -19,39 +34,30 @@
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background: linear-gradient(135deg, #cccccc 30%, #ff6e00 70%);
+  background: linear-gradient(135deg, #dcdcdc 30%, #ff6e00 70%) ;
+  padding: 1rem;
 }
 
 .edit-cat-box {
   background-color: var(--edit-cat-white);
   border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--edit-cat-shadow-lg);
   width: 100%;
-  height: 80%;
-  max-width: 450px;
-  padding: 0 1rem;
+  max-width: 600px;
+  padding: 2rem 1.5rem;
   position: relative;
   overflow: hidden;
-  transition: all 0.3s ease; /* Added from second file */
+  transition: var(--edit-cat-transition);
 }
 
 .edit-cat-box:hover {
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15); /* Added from second file */
-}
-
-.edit-cat-box::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 6px;
-  background: linear-gradient(90deg, var(--edit-cat-primary), var(--edit-cat-primary-dark));
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
 }
 
 /* Título */
 .edit-cat-title {
   color: var(--edit-cat-black);
+  margin: 0;
   font-size: 2rem;
   font-weight: 700;
   margin-bottom: 2rem;
@@ -72,8 +78,7 @@
   border-radius: 2px;
 }
 
-/* Formulario */
-.edit-cat-form {
+/* Formulario */.edit-cat-form {
   display: flex;
   flex-direction: column;
   gap: 1.8rem;
@@ -129,54 +134,65 @@
   font-weight: 600;
   z-index: 1;
 }
-
 /* Botones */
 .edit-cat-buttons-container {
   display: flex;
   justify-content: center;
-  gap: 1.2rem;
+  gap: 1rem;
   margin-top: 0.5rem;
 }
 
-.edit-cat-save-button {
-  background-color: var(--edit-cat-primary);
-  color: var(--edit-cat-white);
-  border: none;
-  padding: 0.5rem;
+.edit-cat-button {
+  padding: 0.8rem;
   width: 100%;
   border-radius: 8px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: var(--edit-cat-transition);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 6px rgba(255, 110, 0, 0.2);
+}
+
+.edit-cat-save-button {
+    background: var(--edit-cat-white);
+    color: var(--edit-cat-primary-dark);
+    border: 1px solid var(--edit-cat-primary-dark);
+    padding: 0.8rem 0;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    font-size: 1rem;
 }
 
 .edit-cat-save-button:hover {
-  background-color: var(--edit-cat-primary-dark);
   transform: translateY(-2px);
   box-shadow: 0 6px 12px rgba(255, 110, 0, 0.3);
 }
 
 .edit-cat-back-button {
-  background-color: transparent;
-  color: var(--edit-cat-primary);
-  border: 2px solid var(--edit-cat-primary);
-  border-radius: 8px;
-  padding: 0.5rem;
-  width: 100%;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+    background: var(--gc-secondary);
+    color: var(--gc-white);
+    border: none;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    font-size: 1rem;
 }
 
 .edit-cat-back-button:hover {
-  background-color: rgba(255, 110, 0, 0.1);
   transform: translateY(-2px);
 }
 
@@ -195,12 +211,11 @@
   font-size: 0.95rem;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: var(--edit-cat-transition);
   display: flex;
   align-items: center;
-  margin: 2rem auto;
-  z-index: 1; /* Added from second file */
-  position: relative; /* Added from second file */
+  margin: 1rem auto 0;
+  position: relative;
 }
 
 .edit-cat-view-history-button:hover {
@@ -215,67 +230,44 @@
 }
 
 /* Mensajes */
+.edit-cat-message {
+  padding: 1.2rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  font-weight: 500;
+  border-left: 4px solid transparent;
+  animation: fadeIn 0.5s ease-in-out;
+}
+
 .edit-cat-success-message {
   background-color: rgba(46, 125, 50, 0.1);
   color: var(--edit-cat-success);
-  padding: 1.2rem;
-  border-radius: 8px;
-  margin-bottom: 1.8rem;
-  text-align: center;
-  border-left: 4px solid var(--edit-cat-success);
-  font-weight: 500;
-  animation: fadeIn 0.5s ease-in-out;
+  border-left-color: var(--edit-cat-success);
 }
 
 .edit-cat-error-message {
   background-color: rgba(198, 40, 40, 0.1);
   color: var(--edit-cat-error);
-  padding: 1.2rem;
-  border-radius: 8px;
-  margin-bottom: 1.8rem;
+  border-left-color: var(--edit-cat-error);
+}
+
+.edit-cat-error-text,
+.edit-cat-no-categoria-text,
+.edit-cat-no-history-text {
   text-align: center;
-  border-left: 4px solid var(--edit-cat-error);
   font-weight: 500;
-  animation: fadeIn 0.5s ease-in-out;
 }
 
 .edit-cat-error-text {
   color: var(--edit-cat-error);
-  text-align: center;
-  font-weight: 500;
 }
 
 .edit-cat-no-categoria-text {
-  text-align: center;
   color: var(--edit-cat-dark);
-  font-weight: 500;
 }
 
 /* Loader */
-.edit-cat-loader-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
-  background-color: rgba(255, 255, 255, 0.8);
-}
-
-.edit-cat-loader {
-  border: 5px solid var(--edit-cat-light);
-  border-top: 5px solid var(--edit-cat-primary);
-  border-radius: 50%;
-  width: 60px;
-  height: 60px;
-  animation: spin 1s linear infinite;
-  margin-bottom: 1.5rem;
-}
-
-.edit-cat-loading-text {
-  color: var(--edit-cat-dark);
-  font-size: 1.1rem;
-  font-weight: 500;
-}
 
 /* Modal */
 .edit-cat-modal-overlay {
@@ -292,7 +284,7 @@
   z-index: 1000;
   opacity: 0;
   visibility: hidden;
-  transition: all 0.4s ease;
+  transition: var(--edit-cat-transition-slow);
 }
 
 .edit-cat-modal-overlay.active {
@@ -303,26 +295,19 @@
 .edit-cat-modal-container {
   background-color: var(--edit-cat-white);
   border-radius: 16px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--edit-cat-shadow-lg);
   width: 90%;
   max-width: 800px;
   max-height: 80vh;
   overflow-y: auto;
   padding: 2rem;
-  transform: translateY(100%);
   opacity: 0;
-  transition: all 0.4s cubic-bezier(0.33, 1, 0.68, 1);
+  transform: translateY(20px);
 }
 
 .edit-cat-modal-overlay.active .edit-cat-modal-container {
-  transform: translateY(0);
   opacity: 1;
-}
-
-.edit-cat-modal-overlay:not(.active) .edit-cat-modal-container {
-  transform: translateY(-100%);
-  opacity: 0;
-  transition: all 0.3s cubic-bezier(0.32, 0, 0.67, 0);
+  transform: translateY(0);
 }
 
 .edit-cat-modal-header {
@@ -333,7 +318,7 @@
 }
 
 .edit-cat-modal-title {
-  color: var(--edit-cat-text-dark);
+  color: var(--edit-cat-black);
   font-size: 1.5rem;
   font-weight: 600;
   margin: 0;
@@ -345,7 +330,7 @@
   font-size: 1.5rem;
   cursor: pointer;
   color: var(--edit-cat-dark-gray);
-  transition: color 0.3s ease;
+  transition: var(--edit-cat-transition-fast);
 }
 
 .edit-cat-modal-close:hover {
@@ -357,7 +342,6 @@
   background-color: var(--edit-cat-white);
   border-radius: 12px;
   padding: 1.5rem;
-  box-shadow: none;
 }
 
 .edit-cat-historico-table {
@@ -377,7 +361,7 @@
 .edit-cat-table-cell {
   padding: 0.75rem;
   border-bottom: 1px solid var(--edit-cat-medium);
-  color: var(--edit-cat-text-dark);
+  color: var(--edit-cat-black);
 }
 
 .edit-cat-even-row {
@@ -388,54 +372,102 @@
   background-color: var(--edit-cat-light);
 }
 
-.edit-cat-no-history-text {
-  text-align: center;
-  color: var(--edit-cat-dark);
-  padding: 1rem;
-}
-
 /* Animaciones */
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeOutDown {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Clases para las animaciones */
+.edit-cat-animate {
+  animation-duration: 0.3s;
+  animation-fill-mode: both;
+}
+
+.edit-cat-animate-faster {
+  animation-duration: 0.2s;
+}
+
+.edit-cat-fadeInUp {
+  animation-name: fadeInUp;
+}
+
+.edit-cat-fadeOutDown {
+  animation-name: fadeOutDown;
+}
+
+.edit-cat-pulse {
+  animation-name: pulse;
 }
 
 /* Responsive */
 @media (max-width: 768px) {
-  .edit-cat-container {
-    padding: 1.5rem;
-  }
-  
-  .edit-cat-box {
-    padding: 2rem 1.5rem;
-  }
-  
   .edit-cat-title {
     font-size: 1.8rem;
   }
   
   .edit-cat-buttons-container {
     flex-direction: column;
-    gap: 1rem;
   }
   
-  .edit-cat-save-button, 
-  .edit-cat-back-button {
-    width: 100%;
-    justify-content: center;
+  .edit-cat-button {
     padding: 1rem;
   }
   
   .edit-cat-input {
-    padding: 1.1rem 1rem;
+    padding: 1rem;
   }
   
   .edit-cat-floating-label {
-    top: 1.1rem;
+    top: 1rem;
   }
 }
