@@ -1,0 +1,385 @@
+/* Contenedor principal que centra todo */
+.pagina-principal-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 0 28px;
+  font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+  background: linear-gradient(135deg, #cccccc 30%, #ff6e00 70%);
+  box-sizing: border-box;
+}
+
+/* Tarjeta principal con scroll interno */
+.pagina-principal-card {
+  width: 100%;
+  max-width: 900px;
+  background-color: #ffffff;
+  padding: 1rem;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  margin: auto;
+  max-height: 95vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  position: relative; /* Para el posicionamiento del logo */
+}
+
+.pagina-principal-card::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.pagina-principal-card::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 8px;
+}
+
+.pagina-principal-card::-webkit-scrollbar-thumb {
+  background-color: #ff6e00;
+  border-radius: 8px;
+  border: 2px solid #ffffff;
+  box-sizing: border-box;
+  height: 50px;
+}
+
+/* Firefox */
+.pagina-principal-card {
+  scrollbar-width: thin;
+  scrollbar-color: #ff6e00 #f1f1f1;
+}
+
+/* Encabezado */
+.pagina-principal-header {
+  text-align: center;
+  margin-top: 10px; /* Ajuste para el logo */
+}
+
+/* Logo circular */
+.logo-container {
+  width: 120px;
+  height: 120px;
+  margin: -60px auto 20px; /* Empuja la mitad hacia arriba */
+  border-radius: 50%;
+  background-color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15); /* Sombra más pronunciada */
+  border: 3px solid #ff6e00;
+  overflow: hidden;
+  position: relative;
+  z-index: 10; /* Asegura que esté por encima */
+}
+
+.logo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.title {
+  font-size: 28px;
+  font-weight: 600;
+  color: #2d3748;
+  margin-top: 10px;
+}
+
+.subtitle {
+  font-size: 16px;
+  color: #718096;
+  margin: 0;
+}
+
+/* Grid de botones */
+.menu-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(250px, 1fr));
+  gap: 20px;
+  padding: 10px 0 0;
+  width: 100%;
+  overflow-y: auto;
+}
+
+/* Botones del menú */
+.menu-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding:  1rem;
+  background-color: #ffffff;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  color: #4a5568;
+  text-decoration: none;
+}
+
+.menu-button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-color: #ff6e00;
+  background-color: #fffaf5;
+}
+
+.button-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background-color: #fff4e6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 15px;
+  color: #ff6e00;
+  font-size: 20px;
+}
+
+.button-text {
+  font-size: 16px;
+  font-weight: 500;
+  text-align: center;
+}
+
+/* Botón de cerrar sesión */
+.logout-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 90%;
+  padding: 12px;
+  background-color: #fff;
+  border: 1px solid #e53e3e;
+  border-radius: 8px;
+  color: #e53e3e;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.logout-button:hover {
+  background-color: #fff5f5;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(229, 62, 62, 0.2);
+}
+
+.logout-icon {
+  font-size: 16px;
+}
+
+/* Overlay específico para logout */
+.logout-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: logout-modal-fadeIn 0.3s ease-out;
+}
+
+/* Contenedor principal */
+.logout-modal-container {
+  background-color: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 400px;
+  padding: 28px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  text-align: center;
+}
+
+/* Animación específica */
+@keyframes logout-modal-fadeIn {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Título */
+.logout-modal-title {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: #2d3748;
+  margin-bottom: 16px;
+  line-height: 1.4;
+}
+
+/* Texto */
+.logout-modal-text {
+  font-size: 1rem;
+  color: #4a5568;
+  margin-bottom: 24px;
+  line-height: 1.5;
+}
+
+/* Contenedor de botones */
+.logout-modal-buttons {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+}
+
+/* Estilo base para botones */
+.logout-modal-cancel-btn,
+.logout-modal-confirm-btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex: 1;
+  max-width: 120px;
+  border: none;
+}
+
+/* Botón Cancelar */
+.logout-modal-cancel-btn {
+  background-color: #f0f0f0;
+  color: #4a5568;
+}
+
+.logout-modal-cancel-btn:hover {
+  background-color: #e2e8f0;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Botón Confirmar */
+.logout-modal-confirm-btn {
+  background-color: #e53e3e;
+  color: white;
+}
+
+.logout-modal-confirm-btn:hover {
+  background-color: #c53030;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(229, 62, 62, 0.2);
+}
+
+/* Media queries para responsividad */
+@media (max-width: 768px) {
+  .menu-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .menu-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .pagina-principal-container {
+    padding: 0 15px;
+  }
+  
+  .pagina-principal-card {
+    padding-top: 60px;
+  }
+  
+  .logo-container {
+    width: 100px;
+    height: 100px;
+    margin: -50px auto 15px;
+  }
+}
+/* Media queries para vista de celular (max-width: 480px) */
+@media (max-width: 480px) {
+  .pagina-principal-container {
+    padding: 0 10px;
+    background: linear-gradient(135deg, #cccccc 20%, #ff6e00 80%);
+  }
+
+  .pagina-principal-card {
+    padding: 1rem 0.5rem;
+    max-height: 90vh;
+    width: 100%;
+    border-radius: 8px;
+    margin: 20px 0;
+  }
+
+  .logo-container {
+    width: 80px;
+    height: 80px;
+    margin: -40px auto 10px;
+    border-width: 2px;
+  }
+
+  .title {
+    font-size: 22px;
+    margin-top: 5px;
+  }
+
+  .subtitle {
+    font-size: 14px;
+  }
+
+  .menu-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 0 10px;
+  }
+
+  .menu-button {
+    padding: 0.8rem;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 15px;
+  }
+
+  .button-icon {
+    width: 40px;
+    height: 40px;
+    margin-bottom: 0;
+    font-size: 16px;
+  }
+
+  .button-text {
+    font-size: 14px;
+    text-align: left;
+    flex-grow: 1;
+  }
+
+  .logout-button {
+    width: 85%;
+    padding: 10px;
+    font-size: 14px;
+    margin-top: 10px;
+  }
+
+  .logout-modal-container {
+    width: 85%;
+    padding: 20px;
+  }
+
+  .logout-modal-title {
+    font-size: 1.2rem;
+  }
+
+  .logout-modal-text {
+    font-size: 0.9rem;
+    margin-bottom: 20px;
+  }
+
+  .logout-modal-buttons {
+    gap: 10px;
+  }
+
+  .logout-modal-cancel-btn,
+  .logout-modal-confirm-btn {
+    padding: 8px 15px;
+    font-size: 0.85rem;
+    max-width: 110px;
+  }
+}

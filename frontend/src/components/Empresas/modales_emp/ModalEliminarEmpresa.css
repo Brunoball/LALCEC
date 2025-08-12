@@ -1,0 +1,95 @@
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    padding: 1rem;
+    backdrop-filter: blur(5px);
+}
+
+.modal-content {
+    background-color: #fff;
+    padding: 1.8rem;
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    width: 600px;
+    height: max-content;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    animation: fadeIn 0.25s ease-in-out;
+}
+
+.modal-title {
+    font-size: 1.5rem;
+    color: #444;
+    font-weight: bold;
+}
+
+.modal-text {
+    font-size: 1rem;
+    margin: 1.5rem;
+    color: #444;
+}
+
+.modal-buttons {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    width: 100%;
+}
+
+.modal-button {
+    flex: 1;
+    padding: 0.7rem 1.5rem;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.modal-button.accept-button {
+    background: #e53e3e;
+    color: white;
+}
+
+.modal-button.accept-button:hover {
+    background: #c53030;
+}
+
+.modal-button.cancel-button {
+    background: #f0f0f0;
+    color: #4a5568;
+}
+
+.modal-button.cancel-button:hover {
+    background:  #e2e8f0;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@media (max-width: 768px) {
+    .modal-content {
+        width: 90%;
+        padding: 1.2rem;
+    }
+    
+    .modal-title {
+        font-size: 1.3rem;
+    }
+    
+    .modal-text {
+        margin-bottom: 40px;
+    }
+}

@@ -1,0 +1,353 @@
+@keyframes cat_fadeSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes cat_pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes cat_subtleCascade {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.cat_container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 0 20px;
+  font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+  background: linear-gradient(135deg, #f5f5f5 30%, #ff6e00 70%);
+}
+
+.cat_box {
+  background: white;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 600px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: cat_fadeSlideIn 0.5s ease forwards;
+}
+
+.cat_title {
+  font-size: 1.7rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  color: #333;
+}
+
+.cat_button {
+  background: #4a6bff;
+  color: white;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+  width: 100%;
+  font-size: 1rem;
+}
+
+.cat_buttonBack {
+  background: #ff6e00;
+  color: white;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1rem;
+  width: 100%;
+  font-size: 1rem;
+}
+
+.cat_button:hover {
+  background: #3b58d1;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+}
+
+.cat_buttonBack:hover {
+  background: #e65c00;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+}
+
+.cat_iconButton {
+  margin-right: 10px;
+  font-size: 1rem;
+}
+
+.cat_categoriasList {
+  width: 100%;
+  margin-top: 1rem;
+  max-height: 350px;
+  overflow-y: auto;
+  padding-right: 5px;
+}
+
+.cat_categoriaItem {
+  opacity: 0;
+  animation: cat_subtleCascade 0.3s ease forwards;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding: 15px;
+  border-radius: 8px;
+  background: #f9f9f9;
+  border: 1px solid #e0e0e0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+}
+
+.cat_categoriaItem:hover {
+  border-color: #d0d0d0;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+}
+
+.cat_categoriaText {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #333;
+  flex: 1;
+  text-align: left;
+}
+
+.cat_categoriaPrice {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #333;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.cat_categoriaActions {
+  display: flex;
+  gap: 8px;
+}
+
+.cat_editButton {
+  background: rgba(74, 107, 255, 0.1);
+  color: #4a6bff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cat_editButton:hover {
+  background: rgba(74, 107, 255, 0.2);
+}
+
+.cat_deleteButton {
+  background: rgba(229, 62, 62, 0.1);
+  color: #e53e3e;
+  border: none;
+  border-radius: 6px;
+  padding: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cat_deleteButton:hover {
+  background: rgba(229, 62, 62, 0.2);
+}
+
+.cat_emptyMessage {
+  color: #666;
+  font-size: 1rem;
+  padding: 20px 0;
+  text-align: center;
+}
+
+.cat_modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.cat_modalContent {
+  background-color: #fff;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  width: 100%;
+  max-width: 450px;
+  text-align: center;
+}
+
+.cat_modalTitle {
+  font-size: 1.4rem;
+  color: #333;
+  font-weight: 600;
+  margin-bottom: 15px;
+}
+
+.cat_modalText {
+  font-size: 1rem;
+  margin-bottom: 15px;
+  color: #555;
+  line-height: 1.5;
+}
+
+.cat_modalButtons {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  width: 100%;
+}
+
+.cat_modalButton {
+  flex: 1;
+  padding: 10px 15px;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.95rem;
+}
+
+.cat_modalButton:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.cat_acceptButton {
+  background: #e53e3e;
+  color: white;
+}
+
+.cat_acceptButton:hover:not(:disabled) {
+  background: #c53030;
+}
+
+.cat_cancelButton {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.cat_cancelButton:hover:not(:disabled) {
+  background: #e0e0e0;
+}
+
+.cat_hover-effect {
+  transition: all 0.2s ease;
+}
+.cat_hover-effect:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+/* Skeleton Loader Styles */
+.cat_skeleton {
+  background: #f0f0f0;
+  animation: cat_pulse 1.2s ease-in-out infinite;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  padding: 15px;
+}
+
+.cat_skeleton-text {
+  background: #e0e0e0;
+  border-radius: 4px;
+  height: 16px;
+  width: 80px;
+  display: inline-block;
+}
+
+.cat_skeleton-icon {
+  background: #e0e0e0;
+  border-radius: 6px;
+  width: 34px;
+  height: 34px;
+  display: inline-block;
+}
+
+/* Scrollbar Styles */
+.cat_categoriasList::-webkit-scrollbar {
+  width: 6px;
+}
+
+.cat_categoriasList::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.cat_categoriasList::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.cat_categoriasList::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Eliminar efecto de focus en los botones */
+button:focus,
+.cat_button:focus,
+.cat_buttonBack:focus,
+.cat_editButton:focus,
+.cat_deleteButton:focus,
+.cat_modalButton:focus {
+  outline: none;
+  box-shadow: none;
+}

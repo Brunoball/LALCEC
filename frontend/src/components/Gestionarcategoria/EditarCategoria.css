@@ -1,0 +1,560 @@
+:root {
+  /* Colores principales */
+  --edit-cat-primary: #FF6E00;
+  --edit-cat-primary-dark: #E65100;
+  --edit-cat-primary-light: #FFA040;
+  
+  /* Escala de grises */
+  --edit-cat-white: #FFFFFF;
+  --edit-cat-light: #F8F9FA;
+  --edit-cat-medium: #E0E0E0;
+  --edit-cat-dark: #424242;
+  --edit-cat-black: #212121;
+  --edit-cat-dark-gray: #757575;
+  
+  /* Colores de estado */
+  --edit-cat-success: #2E7D32;
+  --edit-cat-error: #C62828;
+  
+  /* Sombras */
+  --edit-cat-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --edit-cat-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --edit-cat-shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.1);
+  --edit-cat-shadow-primary: 0 4px 6px rgba(255, 110, 0, 0.2);
+  
+  /* Transiciones */
+  --edit-cat-transition: all 0.3s ease;
+  --edit-cat-transition-slow: all 0.4s ease;
+  --edit-cat-transition-fast: all 0.2s ease;
+}
+
+/* Estructura principal */
+.edit-cat-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #dcdcdc 30%, #ff6e00 70%);
+  padding: 1rem;
+}
+
+.edit-cat-box {
+  background-color: var(--edit-cat-white);
+  border-radius: 12px;
+  box-shadow: var(--edit-cat-shadow-lg);
+  width: 100%;
+  max-width: 500px;
+  padding: 2rem 1.5rem;
+  position: relative;
+  overflow: hidden;
+  transition: var(--edit-cat-transition);
+  opacity: 0;
+  transform: translateY(20px);
+  animation: fadeInClean 0.4s ease forwards;
+}
+
+@keyframes fadeInClean {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.edit-cat-box:hover {
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+}
+
+/* Skeleton loaders */
+.skeleton {
+  background: linear-gradient(90deg, #eeeeee 25%, #dddddd 37%, #eeeeee 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.2s ease-in-out infinite;
+  border-radius: 8px;
+  margin-bottom: 1.2rem;
+}
+
+.skeleton-title {
+  width: 60%;
+  height: 32px;
+  margin: 0 auto 2rem;
+}
+
+.skeleton-input {
+  width: 100%;
+  height: 48px;
+}
+
+.skeleton-button {
+  width: 100%;
+  height: 45px;
+  margin-top: 2rem;
+}
+
+@keyframes shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+.edit-cat-loading-box {
+  padding: 2rem;
+  max-width: 500px;
+  margin: 0 auto;
+  background: var(--edit-cat-white);
+  box-shadow: var(--edit-cat-shadow-lg);
+  border-radius: 12px;
+}
+
+/* Título mejorado - más clean y moderno */
+.edit-cat-title {
+  color: var(--edit-cat-black);
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 500;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+  margin-bottom: 2.5rem;
+  text-align: center;
+  position: relative;
+  padding-bottom: 1.5rem;
+}
+
+/* Línea decorativa más sutil */
+.edit-cat-title::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 2px;
+  background: linear-gradient(90deg, var(--edit-cat-primary), var(--edit-cat-primary-light));
+  border-radius: 1px;
+  opacity: 0.8;
+}
+
+/* Formulario */
+.edit-cat-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.8rem;
+}
+
+.edit-cat-input-row {
+  position: relative;
+}
+
+.edit-cat-input-wrapper {
+  display: flex;
+  justify-content: center;
+  position: relative;
+}
+
+.edit-cat-input {
+  width: 100%;
+  padding: 1.2rem 1rem;
+  font-size: 1rem;
+  border: 2px solid var(--edit-cat-medium);
+  border-radius: 8px;
+  background-color: var(--edit-cat-light);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  color: var(--edit-cat-black);
+  font-weight: 500;
+}
+
+.edit-cat-input:focus {
+  outline: none;
+  border-color: var(--edit-cat-primary);
+  box-shadow: 0 0 0 3px rgba(255, 110, 0, 0.2);
+  background-color: var(--edit-cat-white);
+}
+
+.edit-cat-floating-label {
+  position: absolute;
+  top: 1.2rem;
+  left: 1rem;
+  color: var(--edit-cat-dark);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+  background-color: transparent;
+  padding: 0 0.5rem;
+  font-size: 1rem;
+}
+
+.edit-cat-floating-label-active {
+  top: -0.6rem;
+  left: 0.8rem;
+  font-size: 0.85rem;
+  background-color: var(--edit-cat-white);
+  color: var(--edit-cat-primary);
+  font-weight: 600;
+  z-index: 1;
+}
+
+/* Botones */
+.edit-cat-buttons-container {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.edit-cat-button {
+  padding: 0.8rem;
+  width: 100%;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--edit-cat-transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.edit-cat-save-button {
+    background: var(--edit-cat-white);
+    color:  var(--edit-cat-primary-dark);
+    border: 2px solid #ff7b25;
+    padding: 0.8rem 0;
+    border-radius: 10px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    font-size: 1rem;
+}
+
+.edit-cat-save-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(255, 110, 0, 0.3);
+}
+
+.edit-cat-back-button {
+    background: var(--gc-secondary);
+    color: var(--gc-white);
+    border: none;
+    border-radius: 10px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    font-size: 1rem;
+}
+
+.edit-cat-back-button:hover {
+  transform: translateY(-2px);
+}
+
+.edit-cat-icon-spacing {
+  margin-right: 0.8rem;
+  font-size: 1.1rem;
+}
+
+/* Botón de histórico */
+.edit-cat-view-history-button {
+  background-color: transparent;
+  color: var(--edit-cat-dark);
+  border: 2px solid var(--edit-cat-medium);
+  padding: 0.8rem 1.5rem;
+  border-radius: 30px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--edit-cat-transition);
+  display: flex;
+  align-items: center;
+  margin: 1rem auto 0;
+  position: relative;
+}
+
+.edit-cat-view-history-button:hover {
+  background-color: var(--edit-cat-light);
+  border-color: var(--edit-cat-dark);
+  color: var(--edit-cat-black);
+}
+
+.edit-cat-view-history-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Mensajes */
+.edit-cat-message {
+  padding: 1.2rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  font-weight: 500;
+  border-left: 4px solid transparent;
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+.edit-cat-success-message {
+  background-color: rgba(46, 125, 50, 0.1);
+  color: var(--edit-cat-success);
+  border-left-color: var(--edit-cat-success);
+}
+
+.edit-cat-error-message {
+  background-color: rgba(198, 40, 40, 0.1);
+  color: var(--edit-cat-error);
+  border-left-color: var(--edit-cat-error);
+}
+
+.edit-cat-error-text,
+.edit-cat-no-categoria-text,
+.edit-cat-no-history-text {
+  text-align: center;
+  font-weight: 500;
+}
+
+.edit-cat-error-text {
+  color: var(--edit-cat-error);
+}
+
+.edit-cat-no-categoria-text {
+  color: var(--edit-cat-dark);
+}
+
+/* Modal */
+.edit-cat-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(5px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transition: var(--edit-cat-transition-slow);
+}
+
+.edit-cat-modal-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.edit-cat-modal-container {
+  background-color: var(--edit-cat-white);
+  border-radius: 16px;
+  box-shadow: var(--edit-cat-shadow-lg);
+  width: 90%;
+  max-width: 800px;
+  max-height: 80vh;
+  overflow-y: auto;
+  padding: 2rem;
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.edit-cat-modal-overlay.active .edit-cat-modal-container {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.edit-cat-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+/* Título del modal también mejorado */
+.edit-cat-modal-title {
+  color: var(--edit-cat-black);
+  font-size: 1.25rem;
+  font-weight: 500;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.edit-cat-modal-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--edit-cat-dark-gray);
+  transition: var(--edit-cat-transition-fast);
+}
+
+.edit-cat-modal-close:hover {
+  color: var(--edit-cat-primary);
+}
+
+.edit-cat-historico-container {
+  margin-top: 0;
+  background-color: var(--edit-cat-white);
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+.edit-cat-historico-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.edit-cat-table-header {
+  background-color: var(--edit-cat-primary);
+  color: var(--edit-cat-white);
+  padding: 0.75rem;
+  text-align: left;
+  font-weight: 500;
+}
+
+.edit-cat-table-cell {
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--edit-cat-medium);
+  color: var(--edit-cat-black);
+}
+
+.edit-cat-even-row {
+  background-color: var(--edit-cat-white);
+}
+
+.edit-cat-odd-row {
+  background-color: var(--edit-cat-light);
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeOutDown {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Clases para las animaciones */
+.edit-cat-animate {
+  animation-duration: 0.3s;
+  animation-fill-mode: both;
+}
+
+.edit-cat-animate-faster {
+  animation-duration: 0.2s;
+}
+
+.edit-cat-fadeInUp {
+  animation-name: fadeInUp;
+}
+
+.edit-cat-fadeOutDown {
+  animation-name: fadeOutDown;
+}
+
+.edit-cat-pulse {
+  animation-name: pulse;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .edit-cat-title {
+    font-size: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  
+  .edit-cat-buttons-container {
+    flex-direction: column;
+  }
+  
+  .edit-cat-button {
+    padding: 1rem;
+  }
+  
+  .edit-cat-input {
+    padding: 1rem;
+  }
+  
+  .edit-cat-floating-label {
+    top: 1rem;
+  }
+}
+
+.edit-cat-box::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 8px;
+  background: linear-gradient(90deg, var(--edit-cat-primary), var(--edit-cat-primary-light));
+}
+
+/* Agregar al final del archivo CSS existente */
+
+.edit-cat-disabled-input {
+  background-color: #f1f1f1;
+  color: #888;
+  cursor: not-allowed;
+  border-color: #e0e0e0;
+}
+
+.edit-cat-disabled-input + .edit-cat-floating-label {
+  color: #888;
+}
+
+.edit-cat-disabled-input + .edit-cat-floating-label-active {
+  background-color: #f1f1f1;
+  color: #666;
+}

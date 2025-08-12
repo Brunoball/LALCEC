@@ -1,0 +1,819 @@
+/* Estilos generales */
+.gcuotas-container {
+  display: flex;
+  flex-direction: row;
+  min-height: 100vh;
+  width: 100%;
+  box-sizing: border-box;
+  background: linear-gradient(135deg, #dcdcdc 30%, #ff6e00 70%);
+}
+
+.gcuotas-box {
+  background-color: white;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  padding: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Sección izquierda - Filtros y controles */
+.gcuotas-left-section {
+  flex: 0 0 340px; /* Reducido de 360px a 340px */
+  display: flex;
+  flex-direction: column;
+  background-color: #f5f5f5;
+  height: 100vh;
+  padding: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.gcuotas-header-section {
+  min-height: 60px;
+  padding: 0.8rem;
+  background-color: #fa7815;
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-sizing: border-box;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.gcuotas-scrollable-content {
+  overflow-y: auto;
+  flex-grow: 1;
+  padding-bottom: 16px;
+  padding-top: 6px;
+}
+
+.gcuotas-title {
+  margin: 0;
+  font-size: 1.65rem;
+  font-weight: 550;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.gcuotas-title-icon {
+  font-size: 20px;
+}
+
+.gcuotas-filter-card, .gcuotas-tabs-card, .gcuotas-actions-card {
+  background: white;
+  border-radius: 8px;
+  margin: 0 12px; /* Reducido de 16px a 12px */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e0e3e7;
+  margin-top: 12px; /* Reducido de 14px a 12px */
+}
+
+.gcuotas-filter-header, .gcuotas-tabs-header, .gcuotas-actions-header {
+  padding: 12px 14px; /* Reducido de 16px a 14px */
+  font-weight: 550;
+  color: #2b2d42;
+  border-bottom: 1px solid #e0e3e7;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gcuotas-tabs-header {
+  border-bottom: none;
+}
+
+.gcuotas-filter-icon, .gcuotas-tabs-icon, .gcuotas-actions-icon {
+  color: #4361ee;
+  font-size: 14px;
+}
+
+.gcuotas-select-container {
+  padding: 14px; /* Reducido de 16px a 14px */
+  display: flex;
+  flex-direction: column;
+  gap: 14px; /* Reducido de 16px a 14px */
+}
+
+.gcuotas-input-group {
+  min-width: 280px; /* Reducido de 300px a 280px */
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.gcuotas-input-label {
+  font-size: 13px;
+  color: #6c757d;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.gcuotas-dropdown {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #e0e3e7;
+  border-radius: 6px;
+  background-color: white;
+  cursor: pointer;
+  font-size: 14px;
+  color: #2b2d42;
+  transition: all 0.3s ease;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%234a5568%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 10px;
+}
+
+.gcuotas-dropdown:hover {
+  border-color: #cbd5e0;
+}
+
+.gcuotas-dropdown:focus {
+  outline: none;
+  border-color: #4361ee;
+  box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.08);
+}
+
+.gcuotas-search-integrated {
+  position: relative;
+  width: 100%;
+}
+
+.gcuotas-search-integrated input {
+  width: 100%;
+  padding: 10px 12px 10px 36px;
+  height: 40px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  font-size: 14px;
+  color: #2b2d42;
+  background-color: white;
+  box-sizing: border-box;
+  transition: all 0.3s ease;
+}
+
+.gcuotas-search-integrated input:focus {
+  outline: none;
+  border-color: var(--primary-orange);
+  box-shadow: 0 0 0 3px rgba(255, 123, 37, 0.2);
+}
+
+.gcuotas-search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #888;
+  font-size: 16px;
+  pointer-events: none;
+}
+
+/* Pestañas */
+.gcuotas-tab-container {
+  display: flex;
+  border-radius: 6px;
+  overflow: hidden;
+  background-color: #f8f9fa;
+  border: 1px solid #e0e3e7;
+  margin: 0 12px 12px; /* Reducido de 16px a 12px */
+}
+
+.gcuotas-tab-button {
+  flex: 1;
+  padding: 12px;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background-color: transparent;
+  color: #6c757d;
+}
+
+.gcuotas-active-tab {
+  background-color: #4361ee;
+  color: white;
+}
+
+.gcuotas-tab-badge {
+  background-color: rgba(255, 255, 255, 0.2);
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* Alertas */
+.gcuotas-alert {
+  padding: 12px 16px;
+  border-radius: 6px;
+  margin: 0 16px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gcuotas-alert-error {
+  background-color: #fff5f5;
+  color: #f72585;
+  border: 1px solid #fed7d7;
+}
+
+/* Botones */
+.gcuotas-buttons-container {
+  padding: 14px; /* Reducido de 16px a 14px */
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px; /* Reducido de 12px a 10px */
+}
+
+.gcuotas-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  width: 100%;
+}
+
+.gcuotas-button-back {
+  background-color: #fa7815;
+  color: white;
+  border: 1px solid #e06c12;
+}
+
+.gcuotas-button-back:hover {
+  background-color: #e06c12;
+  border-color: #c85f10;
+}
+
+.gcuotas-button-export {
+  background-color: #38a169;
+  color: white;
+}
+
+.gcuotas-button-export:hover {
+  background-color: #2f855a;
+}
+
+.gcuotas-button-print {
+  background-color: #c2c2c2;
+  color: #5c4a42;
+  border: 1px solid #f0e0d2;
+}
+
+.gcuotas-button-print:hover {
+  background-color: #a9a9a9;
+  border-color: #d0c0b0;
+}
+
+.gcuotas-button-print-all {
+  background-color: #4361ee;
+  color: white;
+}
+
+.gcuotas-button-print-all:hover {
+  background-color: #3a56d4;
+}
+
+/* Sección derecha - Tabla */
+.gcuotas-right-section {
+  flex: 1;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+}
+
+.gcuotas-table-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid #e0e3e7;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.gcuotas-table-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 550;
+  color: #2b2d42;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gcuotas-summary-info {
+  display: flex;
+  gap: 16px;
+}
+
+.gcuotas-summary-item {
+  font-size: 14px;
+  color: #6c757d;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.gcuotas-table-container {
+  flex: 1;
+  padding: 0 24px;
+}
+
+/* Estilos para la tabla virtual */
+.gcuotas-virtual-table {
+  width: 100%;
+  font-size: 14px;
+  margin: 16px 0;
+}
+
+.gcuotas-virtual-header {
+  font-weight: 400;
+  display: flex;
+  background-color: #f8f9fa;
+  color: #2b2d42;
+  border-bottom: 1px solid #e0e3e7;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.gcuotas-virtual-cell {
+  padding: 12px 16px;
+  text-align: left;
+  vertical-align: middle;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Anchos fijos para columnas - SOCIOS */
+.gcuotas-virtual-header > .gcuotas-virtual-cell:nth-child(1) { width: 25%; } /* Apellido */
+.gcuotas-virtual-header > .gcuotas-virtual-cell:nth-child(2) { width: 25%; } /* Nombre */
+.gcuotas-virtual-header > .gcuotas-virtual-cell:nth-child(3) { width: 35%; } /* Dirección */
+.gcuotas-virtual-header > .gcuotas-virtual-cell:nth-child(4) { width: 15%; } /* Categoría */
+.gcuotas-virtual-header > .gcuotas-virtual-cell:nth-child(5) { width: 15%; } /* Medio Pago */
+.gcuotas-virtual-header > .gcuotas-virtual-cell:nth-child(6) { width: 10%; } /* Acciones */
+
+/* Anchos fijos para columnas - EMPRESAS */
+.gcuotas-virtual-header > .gcuotas-virtual-cell:nth-child(1) { width: 20%; } /* Razón Social */
+.gcuotas-virtual-header > .gcuotas-virtual-cell:nth-child(2) { width: 20%; } /* Dirección */
+.gcuotas-virtual-header > .gcuotas-virtual-cell:nth-child(3) { width: 20%; } /* Categoría */
+.gcuotas-virtual-header > .gcuotas-virtual-cell:nth-child(4) { width: 20%; } /* Medio Pago */
+.gcuotas-virtual-header > .gcuotas-virtual-cell:nth-child(5) { width: 20%; } /* Acciones */
+
+/* Filas */
+.gcuotas-virtual-row {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid #e0e3e7;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.gcuotas-virtual-row:hover {
+  background-color: #eef2ff;
+}
+
+.gcuotas-virtual-row > .gcuotas-virtual-cell {
+  padding: 12px 16px;
+  font-weight: 300;
+}
+.gcuotas-virtual-row > .gcuotas-virtual-cell:nth-child(1) {width: 20%;}
+.gcuotas-virtual-row > .gcuotas-virtual-cell:nth-child(2) {width: 20%;}
+.gcuotas-virtual-row > .gcuotas-virtual-cell:nth-child(3) {width: 20%;}
+.gcuotas-virtual-row > .gcuotas-virtual-cell:nth-child(4) {width: 20%;}
+.gcuotas-virtual-row > .gcuotas-virtual-cell:nth-child(5) {width: 20%;}
+.gcuotas-virtual-row > .gcuotas-virtual-cell:nth-child(6) {width: 10%; text-align: center;}
+.gcuotas-selected-row {
+  background-color: #e0e7ff !important;
+}
+
+/* Botón de pago */
+.gcuotas-action-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.gcuotas-payment-button {
+  color: #38a169;
+}
+
+.gcuotas-payment-button:hover {
+  background-color: #38a169;
+  color: white;
+}
+
+/* Modal */
+.gcuotas-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(2px);
+}
+
+.gcuotas-modal {
+  background-color: white;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 480px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.gcuotas-modal-header {
+  padding: 16px 24px;
+  border-bottom: 1px solid #e0e3e7;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.gcuotas-modal-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #2b2d42;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gcuotas-modal-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #6c757d;
+  font-size: 16px;
+  padding: 4px;
+}
+
+.gcuotas-modal-body {
+  padding: 24px;
+  text-align: center;
+}
+
+.gcuotas-modal-icon {
+  font-size: 48px;
+  color: #4361ee;
+  margin-bottom: 16px;
+}
+
+.gcuotas-modal-text {
+  margin-bottom: 16px;
+  color: #2b2d42;
+  line-height: 1.5;
+  font-size: 15px;
+}
+
+.gcuotas-modal-details {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 12px;
+  margin: 16px 0;
+  text-align: left;
+}
+
+.gcuotas-detail-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  font-size: 14px;
+}
+
+.gcuotas-modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid #e0e3e7;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.gcuotas-modal-button {
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gcuotas-modal-button.secondary {
+  background-color: #f8f9fa;
+  color: #6c757d;
+  border: 1px solid #e0e3e7;
+}
+
+.gcuotas-modal-button.secondary:hover {
+  background-color: #f1f3f5;
+}
+
+.gcuotas-modal-button.primary {
+  background-color: #4361ee;
+  color: white;
+  border: none;
+}
+
+.gcuotas-modal-button.primary:hover {
+  background-color: #3f37c9;
+}
+
+/* Mejorar el mensaje de selección de mes */
+.gcuotas-info-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 20px;
+  text-align: center;
+  color: #6c757d;
+}
+
+.gcuotas-info-message svg {
+  margin-bottom: 15px;
+  color: #adb5bd;
+}
+
+.gcuotas-info-message p {
+  font-size: 16px;
+  margin-top: 10px;
+}
+
+/* Estilos para el loading inicial */
+.gcuotas-loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.gcuotas-loading-spinner {
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  border-top: 4px solid #c85f10;
+  width: 40px;
+  height: 40px;
+  animation: spin 0.3s linear infinite;
+  margin-bottom: 15px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Estilos para la lista móvil */
+.gcuotas-mobile-list {
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.gcuotas-mobile-card {
+  background: white;
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  border: 1px solid #eee;
+}
+
+.gcuotas-selected-card {
+  border: 1px solid #fa7815;
+  background-color: #fff8f2;
+}
+
+.gcuotas-mobile-row {
+  display: flex;
+  margin-bottom: 6px;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.gcuotas-mobile-label {
+  font-weight: 500;
+  color: #666;
+  min-width: 100px;
+  display: inline-block;
+}
+
+.gcuotas-mobile-payment-button {
+  width: 100%;
+  background: #38a169;
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 6px;
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+/* Diseño responsive */
+@media (max-width: 1024px) {
+  .gcuotas-container {
+    flex-direction: column;
+    height: auto;
+  }
+  
+  .gcuotas-left-section, .gcuotas-right-section {
+    width: 100%;
+    height: auto;
+  }
+  
+  .gcuotas-right-section {
+    height: auto;
+    max-height: none;
+  }
+  
+  .gcuotas-buttons-container {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .gcuotas-container {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    height: 100vh;
+    background: #f5f5f5;
+  }
+  
+  .gcuotas-left-section, 
+  .gcuotas-right-section {
+    overflow: visible;
+  }
+  
+  .gcuotas-left-section {
+    flex: 1;
+    height: auto;
+    order: 2;
+    margin-top: 0;
+    padding: 0 12px;
+    background: transparent;
+  }
+  
+  .gcuotas-right-section {
+    flex: 1;
+    height: auto;
+    order: 1;
+    background: white;
+    border-radius: 0 0 16px 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    margin-bottom: 12px;
+  }
+  
+  .gcuotas-header-section {
+    border-radius: 0;
+    padding: 12px;
+  }
+  
+  .gcuotas-title {
+    font-size: 1.4rem;
+  }
+  
+  .gcuotas-filter-card, 
+  .gcuotas-tabs-card, 
+  .gcuotas-actions-card {
+    margin: 8px 0;
+    border-radius: 8px;
+  }
+  
+  .gcuotas-buttons-container {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  
+  .gcuotas-button {
+    padding: 12px;
+    font-size: 15px;
+  }
+  
+  .gcuotas-table-header {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 12px;
+    gap: 12px;
+  }
+  
+  .gcuotas-summary-info {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  
+  .gcuotas-summary-item {
+    font-size: 13px;
+    background: #f5f5f5;
+    padding: 4px 8px;
+    border-radius: 4px;
+  }
+  
+  .gcuotas-search-integrated {
+    width: 100%;
+  }
+  
+  /* Ocultar elementos no esenciales en móvil */
+  .gcuotas-divider,
+  .gcuotas-tabs-icon,
+  .gcuotas-filter-icon,
+  .gcuotas-actions-icon {
+    display: none;
+  }
+  
+  .gcuotas-filter-header, 
+  .gcuotas-tabs-header, 
+  .gcuotas-actions-header {
+    padding: 12px;
+    font-size: 15px;
+  }
+  
+  .gcuotas-tab-container {
+    margin: 0 0 12px 0;
+  }
+  
+  .gcuotas-tab-button {
+    padding: 10px;
+    font-size: 13px;
+  }
+
+  /* Ajustes para modales en móvil */
+  .gcuotas-modal {
+    width: 95%;
+    max-width: none;
+    margin: 0 auto;
+  }
+  
+  .gcuotas-modal-body {
+    padding: 16px;
+  }
+  
+  .gcuotas-modal-footer {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .gcuotas-modal-button {
+    width: 100%;
+  }
+}
+
+/* Ajustes para la animación en móviles */
+@media (max-width: 768px) {
+  .gcuotas-virtual-row {
+    animation: none !important;
+  }
+}
+
+.gcuotas-success-message {
+  background-color: #f0fff4;
+  color: #38a169;
+  padding: 12px 16px;
+  border-radius: 6px;
+  margin: 0 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  border: 1px solid #c6f6d5;
+}

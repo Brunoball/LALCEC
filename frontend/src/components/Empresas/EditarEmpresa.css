@@ -1,0 +1,284 @@
+/* Variables CSS para consistencia de diseño */
+:root {
+  --primary-color: #ff6e00;
+  --primary-hover: #ff8800;
+  --secondary-color: #0288d1;
+  --success-color: #4CAF50;
+  --danger-color: #F44336;
+  --background-color: #f5f5f5;
+  --surface-color: #ffffff;
+  --border-color: #ccc;
+  --text-primary: #4b4b4b;
+  --text-secondary: #888;
+  --border-radius: 15px;
+  --transition: all 0.3s ease;
+}
+
+/* ===== RESET Y BASE ===== */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Poppins', sans-serif;
+  margin: 0;
+  padding: 0;
+  background: linear-gradient(135deg, #dcdcdc 30%, #ff6e00 70%);
+}
+
+/* ===== CONTENEDOR PRINCIPAL ===== */
+.edit-empresa-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+.edit-empresa-box {
+  background: rgba(255, 255, 255, 0.95);
+  padding: 0 2.5rem 2rem;
+  border-radius: 25px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  max-width: 900px;
+  position: relative;
+}
+
+/* ===== TÍTULO ===== */
+.edit-empresa-title {
+  font-size: 1.8rem;
+  font-weight: 600;
+  margin: 1rem;
+  color: var(--text-primary);
+  text-align: center;
+  position: relative;
+}
+
+
+
+/* ===== FORMULARIO ===== */
+.edit-empresa-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.edit-empresa-input-group {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .edit-empresa-input-group {
+    grid-template-columns: 1fr 1fr;
+  }
+  
+  .edit-empresa-input-group:has(.edit-empresa-id-campo) {
+    grid-template-columns: 120px 1fr;
+  }
+}
+
+/* ===== CAMPOS CON FLOATING LABELS ===== */
+.edit-empresa-floating-label-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.edit-empresa-input {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  font-size: 1rem;
+  background: var(--surface-color);
+  color: var(--text-primary);
+  transition: var(--transition);
+  outline: none;
+  height: 50px;
+  font-family: 'Poppins', sans-serif;
+}
+
+.edit-empresa-input:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(255, 110, 0, 0.2);
+}
+
+.edit-empresa-floating-label {
+  position: absolute;
+  top: 50%;
+  left: 13px;
+  font-size: 1rem;
+  color: var(--text-secondary);
+  pointer-events: none;
+  transform: translateY(-50%);
+  transition: var(--transition);
+}
+
+.edit-empresa-input:focus + .edit-empresa-floating-label,
+.edit-empresa-input:not(:placeholder-shown) + .edit-empresa-floating-label,
+.edit-empresa-floating-label-filled {
+  top: 0;
+  font-size: 0.85rem;
+  color: var(--secondary-color);
+  background-color: var(--surface-color);
+  padding: 0 5px;
+  border-radius: 5px;
+  transform: translateY(-50%);
+}
+
+/* ===== CAMPOS ESPECIALES ===== */
+.edit-empresa-disabled-input {
+  background: #e9ecef !important;
+  color: var(--text-secondary) !important;
+  cursor: not-allowed;
+}
+
+.edit-empresa-id-campo .edit-empresa-floating-label-filled {
+  color: var(--text-secondary) !important;
+}
+
+/* ===== SELECTS ===== */
+select.edit-empresa-input {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23888' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 1rem center;
+  background-repeat: no-repeat;
+  background-size: 1.5em 1.5em;
+  padding-right: 3rem;
+  cursor: pointer;
+}
+
+select.edit-empresa-input:focus {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%230288d1' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+}
+
+/* ===== BOTONES ===== */
+.edit-empresa-buttons-container {
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+}
+
+.edit-empresa-button,
+.edit-empresa-back-button {
+  padding: 1rem;
+  border: none;
+  border-radius: var(--border-radius);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48%;
+  height: 50px;
+}
+
+.edit-empresa-button {
+     background: linear-gradient(135deg, #0288D1, #01579B);
+  color: white;
+}
+
+.edit-empresa-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(255, 110, 0, 0.3);
+}
+
+.edit-empresa-back-button {
+  background: linear-gradient(135deg, #f97316, #c2410c);
+  color: white;
+}
+
+.edit-empresa-back-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(2, 136, 209, 0.3);
+}
+
+.edit-empresa-icon-button {
+  margin-right: 0.5rem;
+}
+
+/* ===== MENSAJES ===== */
+.edit-empresa-message {
+  padding: 1rem;
+  border-radius: 10px;
+  font-weight: 600;
+  width: 98%;
+  text-align: center;
+  margin: -1rem auto 1rem auto;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.edit-empresa-success-message {
+  background-color: rgba(76, 175, 80, 0.2);
+  color: var(--success-color);
+}
+
+.edit-empresa-error-message {
+  background-color: rgba(244, 67, 54, 0.2);
+  color: var(--danger-color);
+}
+
+/* ===== LOADER ===== */
+.edit-empresa-loader-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+}
+
+.edit-empresa-loader {
+  border: 8px solid #f3f3f3;
+  border-top: 8px solid var(--secondary-color);
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  animation: spin 1s linear infinite;
+}
+
+.edit-empresa-loading-text {
+  margin-top: 1rem;
+  font-size: 1rem;
+  color: var(--text-primary);
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .edit-empresa-container {
+    padding: 1rem;
+  }
+  
+  .edit-empresa-box {
+    padding: 1.5rem;
+  }
+  
+  .edit-empresa-title {
+    font-size: 1.5rem;
+  }
+  
+  .edit-empresa-buttons-container {
+    flex-direction: column;
+  }
+  
+  .edit-empresa-button,
+  .edit-empresa-back-button {
+    width: 100%;
+  }
+}
+
+/* ===== VALIDACIÓN ===== */
+.edit-empresa-input:invalid:not(:placeholder-shown) {
+  border-color: var(--danger-color);
+}
+
+.edit-empresa-input:invalid:not(:placeholder-shown) + .edit-empresa-floating-label {
+  color: var(--danger-color);
+}
