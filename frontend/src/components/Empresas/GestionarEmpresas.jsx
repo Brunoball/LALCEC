@@ -97,25 +97,15 @@ const GestionarEmpresas = () => {
 
   // Util pago
   const getEstadoPago = (mesesPagadosStr, fechaUnionStr) => {
-    if (!fechaUnionStr) return "rojo";
+    if (!fechaUnionStr) return "emp_rojo";
     const mesesPagadosArr =
       mesesPagadosStr?.split(",").map((m) => m.trim().toUpperCase()) || [];
     const MESES_ANIO = [
-      "ENERO",
-      "FEBRERO",
-      "MARZO",
-      "ABRIL",
-      "MAYO",
-      "JUNIO",
-      "JULIO",
-      "AGOSTO",
-      "SEPTIEMBRE",
-      "OCTUBRE",
-      "NOVIEMBRE",
-      "DICIEMBRE",
+      "ENERO","FEBRERO","MARZO","ABRIL","MAYO","JUNIO",
+      "JULIO","AGOSTO","SEPTIEMBRE","OCTUBRE","NOVIEMBRE","DICIEMBRE",
     ];
     const fechaUnion = new Date(
-      fechaUnionStr.includes("T")
+      fechaUnionStr?.includes?.("T")
         ? fechaUnionStr
         : `${fechaUnionStr}T00:00:00-03:00`
     );
@@ -134,9 +124,9 @@ const GestionarEmpresas = () => {
       }
     }
     const deuda = mesesEsperados.filter((mes) => !mesesPagadosArr.includes(mes)).length;
-    if (deuda === 0) return "verde";
-    if (deuda <= 2) return "amarillo";
-    return "rojo";
+    if (deuda === 0) return "emp_verde";
+    if (deuda <= 2) return "emp_amarillo";
+    return "emp_rojo";
   };
 
   // Cargar filtros guardados
@@ -156,7 +146,7 @@ const GestionarEmpresas = () => {
     }
   }, [actualizar, primeraCarga]);
 
-  // Carga inicial: **solo** traemos datos completos una vez (empresas + medios). Todo lo demás se filtra local.
+  // Carga inicial
   useEffect(() => {
     const cargarDatosIniciales = async () => {
       try {
@@ -177,7 +167,7 @@ const GestionarEmpresas = () => {
           : [];
         setEmpresas(lista);
 
-        // Restaurar filtros/búsqueda, pero usando **solo** filtrado local
+        // Restaurar filtros/búsqueda (solo local)
         const savedFilters = localStorage.getItem("empresasFilters");
         const savedSearch = localStorage.getItem("empresasSearchTerm");
 
@@ -189,9 +179,7 @@ const GestionarEmpresas = () => {
           if (parsed.letras.length > 0) {
             base = base.filter((empresa) =>
               parsed.letras.some((letra) =>
-                (empresa.razon_social || "")
-                  .toUpperCase()
-                  .startsWith(letra)
+                (empresa.razon_social || "").toUpperCase().startsWith(letra)
               )
             );
           }
@@ -227,11 +215,9 @@ const GestionarEmpresas = () => {
   }, [actualizar]);
 
   // ======== FILTRADO LOCAL ========
-
   const aplicarFiltradoLocal = (listaBase, filtros, textoBusqueda) => {
     let resultado = [...listaBase];
 
-    // Filtro por letras
     if (filtros.letras.length > 0) {
       resultado = resultado.filter((empresa) =>
         filtros.letras.some((letra) =>
@@ -239,13 +225,11 @@ const GestionarEmpresas = () => {
         )
       );
     }
-    // Filtro por medios de pago
     if (filtros.mediosPago.length > 0) {
       resultado = resultado.filter((empresa) =>
         filtros.mediosPago.includes(empresa.medio_pago)
       );
     }
-    // Búsqueda por texto
     if ((textoBusqueda || "").trim() !== "") {
       const q = textoBusqueda.toLowerCase();
       resultado = resultado.filter((empresa) =>
@@ -255,7 +239,7 @@ const GestionarEmpresas = () => {
     return resultado;
   };
 
-  // Reaplicar filtros cada vez que cambian
+  // Reaplicar filtros
   useEffect(() => {
     if (!datosCargados) return;
     const res = aplicarFiltradoLocal(empresas, filtrosActivos, busqueda);
@@ -292,17 +276,13 @@ const GestionarEmpresas = () => {
     setAnimacionCascada(true);
     setTimeout(() => setAnimacionCascada(false), 600);
   };
-
   const handleBusqueda = () => {
-    // Nada que hacer: ya filtramos por estado; forzamos animación
     setAnimacionCascada(true);
     setTimeout(() => setAnimacionCascada(false), 600);
   };
-
   const handleClearSearch = () => {
     setBusqueda("");
     localStorage.removeItem("empresasSearchTerm");
-    // No limpiamos filtros, solo la búsqueda
     const res = aplicarFiltradoLocal(empresas, filtrosActivos, "");
     setEmpresasFiltradas(res);
   };
@@ -394,7 +374,7 @@ const GestionarEmpresas = () => {
     setActualizar((p) => !p);
   };
 
-  // Tabla acciones
+  // Tabla / tarjetas acciones
   const handleFilaSeleccionada = (index, empresa) => {
     setFilaSeleccionada(filaSeleccionada === index ? null : index);
     setEmpresaSeleccionada(empresa);
@@ -539,7 +519,6 @@ const GestionarEmpresas = () => {
     setMostrarToast(true);
   };
 
-  // UI helpers
   const aplicarFiltroAlfabetico = (letra) => {
     handleFiltrarPorLetra(letra);
     setMostrarSubmenuAlfabetico(false);
@@ -558,18 +537,19 @@ const GestionarEmpresas = () => {
       : 0;
 
   return (
-    <div className="empresa-container">
-      <div className="empresa-box">
-        <div className="front-row-emp">
-          <span className="empresa-title">Gestionar Empresas</span>
+    <div className="emp_empresa-container">
+      <div className="emp_empresa-box">
+        {/* HEADER */}
+        <div className="emp_front-row-emp">
+          <span className="emp_empresa-title">Gestionar Empresas</span>
 
-          {/* Búsqueda local */}
-          <div className="search-input-container">
+          {/* Búsqueda */}
+          <div className="emp_search-input-container">
             <input
               id="search"
               type="text"
               placeholder="Buscar por nombre"
-              className="search-input"
+              className="emp_search-input"
               value={busqueda}
               onChange={handleBusquedaInputChange}
               onKeyDown={(e) => e.key === "Enter" && handleBusqueda()}
@@ -577,50 +557,50 @@ const GestionarEmpresas = () => {
             {busqueda && (
               <FontAwesomeIcon
                 icon={faTimes}
-                className="clear-search-icon"
+                className="emp_clear-search-icon"
                 onClick={handleClearSearch}
                 title="Limpiar búsqueda"
               />
             )}
-            <button className="search-button" onClick={handleBusqueda} title="Buscar">
-              <FontAwesomeIcon icon={faMagnifyingGlass} className="search-icon" />
+            <button className="emp_search-button" onClick={handleBusqueda} title="Buscar">
+              <FontAwesomeIcon icon={faMagnifyingGlass} className="emp_search-icon" />
             </button>
           </div>
 
-          {/* Filtros (front-only) */}
-          <div className="filtros-container" ref={filtrosRef}>
-            <button className="filtros-button" onClick={toggleMenuFiltros}>
-              <FontAwesomeIcon icon={faFilter} className="icon-button" />
+          {/* Filtros */}
+          <div className="emp_filtros-container" ref={filtrosRef}>
+            <button className="emp_filtros-button" onClick={toggleMenuFiltros}>
+              <FontAwesomeIcon icon={faFilter} className="emp_icon-button" />
               <span>Aplicar Filtros</span>
               <FontAwesomeIcon
                 icon={faChevronDown}
-                className={`chevron-icon ${mostrarMenuFiltros ? "rotate" : ""}`}
+                className={`emp_chevron-icon ${mostrarMenuFiltros ? "emp_rotate" : ""}`}
               />
             </button>
 
             {mostrarMenuFiltros && (
-              <div className="filtros-menu">
+              <div className="emp_filtros-menu">
                 <div
-                  className="filtros-menu-item"
+                  className="emp_filtros-menu-item"
                   onClick={() => toggleSubmenu("alfabetico")}
                 >
                   <span>Filtrar de la A a la Z</span>
                   <FontAwesomeIcon
                     icon={faChevronDown}
-                    className={`chevron-icon ${
-                      mostrarSubmenuAlfabetico ? "rotate" : ""
+                    className={`emp_chevron-icon ${
+                      mostrarSubmenuAlfabetico ? "emp_rotate" : ""
                     }`}
                   />
                 </div>
 
                 {mostrarSubmenuAlfabetico && (
-                  <div className="filtros-submenu">
-                    <div className="alfabeto-filtros">
+                  <div className="emp_filtros-submenu">
+                    <div className="emp_alfabeto-filtros">
                       {"ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").map((letra) => (
                         <button
                           key={letra}
-                          className={`letra-filtro ${
-                            filtrosActivos.letras.includes(letra) ? "active" : ""
+                          className={`emp_letra-filtro ${
+                            filtrosActivos.letras.includes(letra) ? "emp_active" : ""
                           }`}
                           onClick={() => aplicarFiltroAlfabetico(letra)}
                           title={`Filtrar por ${letra}`}
@@ -633,27 +613,27 @@ const GestionarEmpresas = () => {
                 )}
 
                 <div
-                  className="filtros-menu-item"
+                  className="emp_filtros-menu-item"
                   onClick={() => toggleSubmenu("transferencia")}
                 >
                   <span>Medios de Pago</span>
                   <FontAwesomeIcon
                     icon={faChevronDown}
-                    className={`chevron-icon ${
-                      mostrarSubmenuTransferencia ? "rotate" : ""
+                    className={`emp_chevron-icon ${
+                      mostrarSubmenuTransferencia ? "emp_rotate" : ""
                     }`}
                   />
                 </div>
 
                 {mostrarSubmenuTransferencia && (
-                  <div className="filtros-submenu">
+                  <div className="emp_filtros-submenu">
                     {mediosDePago.map((medio) => {
                       const label = medio.Medio_Pago || String(medio);
                       return (
                         <div
                           key={label}
-                          className={`filtros-submenu-item ${
-                            filtrosActivos.mediosPago.includes(label) ? "active" : ""
+                          className={`emp_filtros-submenu-item ${
+                            filtrosActivos.mediosPago.includes(label) ? "emp_active" : ""
                           }`}
                           onClick={() => aplicarFiltroTransferencia(label)}
                           title={`Filtrar por ${label}`}
@@ -666,7 +646,7 @@ const GestionarEmpresas = () => {
                 )}
 
                 <div
-                  className="filtros-menu-item mostrar-todas"
+                  className="emp_filtros-menu-item emp_mostrar-todas"
                   onClick={() => {
                     handleMostrarTodos();
                     setMostrarMenuFiltros(false);
@@ -678,101 +658,106 @@ const GestionarEmpresas = () => {
             )}
           </div>
 
-          <div className="front-row">{error && <p className="error">{error}</p>}</div>
+          <div className="emp_front-row">{error && <p className="emp_error">{error}</p>}</div>
+
+          {/* Resumen filtros */}
+          <div
+            className={`emp_filtros-activos-container ${
+              filtrosActivos.letras.length > 0 || filtrosActivos.mediosPago.length > 0
+                ? "emp_show"
+                : ""
+            }`}
+          >
+            {(filtrosActivos.letras.length > 0 ||
+              filtrosActivos.mediosPago.length > 0) && (
+              <div className="emp_filtros-activos">
+                <div className="emp_filtros-activos-header">
+                  <span>Filtros aplicados:</span>
+                </div>
+
+                <button className="emp_limpiar-filtros-btn" onClick={limpiarFiltros}>
+                  Limpiar todos
+                </button>
+
+                <div className="emp_filtros-activos-chips">
+                  {filtrosActivos.letras.map((letra, index) => (
+                    <div key={`letra-${index}`} className="emp_filtro-chip">
+                      <span>Letra: {letra}</span>
+                      <FontAwesomeIcon
+                        icon={faTimes}
+                        className="emp_filtro-chip-close"
+                        onClick={() => eliminarFiltroLetra(letra)}
+                      />
+                    </div>
+                  ))}
+
+                  {filtrosActivos.mediosPago.map((medio, index) => (
+                    <div key={`medio-${index}`} className="emp_filtro-chip">
+                      <span>Medio: {medio}</span>
+                      <FontAwesomeIcon
+                        icon={faTimes}
+                        className="emp_filtro-chip-close"
+                        onClick={() => eliminarFiltroMedioPago(medio)}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* FILTROS ACTIVOS */}
-        <div
-          className={`filtros-activos-container ${
-            filtrosActivos.letras.length > 0 || filtrosActivos.mediosPago.length > 0
-              ? "show"
-              : ""
-          }`}
-        >
-          {(filtrosActivos.letras.length > 0 ||
-            filtrosActivos.mediosPago.length > 0) && (
-            <div className="filtros-activos">
-              <div className="filtros-activos-header">
-                <span>Filtros aplicados:</span>
-              </div>
+        {errorMessage && <div className="emp_error-message-emp">{errorMessage}</div>}
 
-              <button className="limpiar-filtros-btn" onClick={limpiarFiltros}>
-                Limpiar todos
-              </button>
-
-              <div className="filtros-activos-chips">
-                {filtrosActivos.letras.map((letra, index) => (
-                  <div key={`letra-${index}`} className="filtro-chip">
-                    <span>Letra: {letra}</span>
-                    <FontAwesomeIcon
-                      icon={faTimes}
-                      className="filtro-chip-close"
-                      onClick={() => eliminarFiltroLetra(letra)}
-                    />
-                  </div>
-                ))}
-
-                {filtrosActivos.mediosPago.map((medio, index) => (
-                  <div key={`medio-${index}`} className="filtro-chip">
-                    <span>Medio: {medio}</span>
-                    <FontAwesomeIcon
-                      icon={faTimes}
-                      className="filtro-chip-close"
-                      onClick={() => eliminarFiltroMedioPago(medio)}
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {errorMessage && <div className="error-message-emp">{errorMessage}</div>}
-
-        {/* TABLA */}
-        <div className="empresas-list">
-          <div className="contenedor-list-items">
-            <div className="contador-container">
-              <span className="socios-totales">
+        {/* CONTADOR + LEYENDA + LISTADO */}
+        <div className="emp_empresas-list">
+          <div className="emp_contenedor-list-items">
+            <div className="emp_contador-container">
+              {/* Desktop: "Cant empresas: N"  |  Mobile: "Emp: N" */}
+              <span className="emp_socios-totales emp_socios-desktop">
                 Cant empresas: {cantidadVisibles}
-                <FontAwesomeIcon icon={faBuilding} className="icono-empresa" />
               </span>
+              <span className="emp_socios-totales emp_socios-mobile">
+                Emp: {cantidadVisibles}
+              </span>
+              <FontAwesomeIcon icon={faBuilding} className="emp_icono-empresa" />
             </div>
-            <div className="estado-pagos-container">
-              <div className="estado-indicador al-dia">
-                <div className="indicador-color"></div>
+            <div className="emp_estado-pagos-container">
+              <div className="emp_estado-indicador emp_al-dia">
+                <div className="emp_indicador-color"></div>
                 <span>Al día</span>
               </div>
-              <div className="estado-indicador debe-1-2">
-                <div className="indicador-color"></div>
+              <div className="emp_estado-indicador emp_debe-1-2">
+                <div className="emp_indicador-color"></div>
                 <span>Debe 1-2 meses</span>
               </div>
-              <div className="estado-indicador debe-3-mas">
-                <div className="indicador-color"></div>
+              <div className="emp_estado-indicador emp_debe-3-mas">
+                <div className="emp_indicador-color"></div>
                 <span>Debe 3+ meses</span>
               </div>
             </div>
           </div>
 
-          <div className="box-table">
-            <div className="header">
-              <div className="column-header header-razon">Razón Social</div>
-              <div className="column-header header-cuit">CUIT</div>
-              <div className="column-header header-iva">Cond. IVA</div>
-              <div className="column-header header-dom">Domicilio cobro</div>
-              <div className="column-header header-obs">Observaciones</div>
-              <div className="column-header header-medio">Medio de Pago</div>
-              <div className="column-header icons-column">Acciones</div>
+          {/* ======= TABLA (Desktop / por defecto) ======= */}
+          <div className="emp_box-table">
+            <div className="emp_header">
+              <div className="emp_column-header emp_header-razon">Razón Social</div>
+              <div className="emp_column-header emp_header-cuit">CUIT</div>
+              <div className="emp_column-header emp_header-iva">Cond. IVA</div>
+              <div className="emp_column-header emp_header-dom">Domicilio cobro</div>
+              <div className="emp_column-header emp_header-obs">Observaciones</div>
+              <div className="emp_column-header emp_header-medio">Medio de Pago</div>
+              <div className="emp_column-header emp_icons-column">Acciones</div>
             </div>
 
-            <div className="body">
+            <div className="emp_body">
               {cargando ? (
-                <div className="loading-spinner-container">
-                  <div className="loading-spinner"></div>
+                <div className="emp_loading-spinner-container">
+                  <div className="emp_loading-spinner"></div>
                 </div>
               ) : !datosCargados ? (
-                <div className="no-data-message">
-                  <div className="message-content">
+                <div className="emp_no-data-message">
+                  <div className="emp_message-content">
                     <p>Cargando datos iniciales...</p>
                   </div>
                 </div>
@@ -782,7 +767,7 @@ const GestionarEmpresas = () => {
                   busqueda.trim() !== "") &&
                 empresasFiltradas.length > 0 ? (
                 <div
-                  className={`scrollableE ${animacionCascada ? "cascade-animation" : ""}`}
+                  className={`emp_scrollableE ${animacionCascada ? "emp_cascade-animation" : ""}`}
                 >
                   {empresasFiltradas.map((empresa, index) => {
                     const estadoPago = getEstadoPago(
@@ -791,39 +776,39 @@ const GestionarEmpresas = () => {
                     );
                     const rowClass =
                       filaSeleccionada === index
-                        ? `selected-row ${estadoPago}`
+                        ? `emp_selected-row ${estadoPago}`
                         : index % 2 === 0
-                        ? `even-row ${estadoPago}`
-                        : `odd-row ${estadoPago}`;
+                        ? `emp_even-row ${estadoPago}`
+                        : `emp_odd-row ${estadoPago}`;
 
                     return (
                       <div
                         key={`${empresa.idEmp || empresa.cuit || index}`}
-                        className={`row ${rowClass}`}
+                        className={`emp_row ${rowClass}`}
                         onClick={() => handleFilaSeleccionada(index, empresa)}
                         style={{ animationDelay: `${index * 0.05}s` }}
                       >
-                        <div className="column column-razon">
+                        <div className="emp_column emp_column-razon">
                           {empresa.razon_social}
                         </div>
-                        <div className="column column-cuit">{empresa.cuit}</div>
-                        <div className="column column-iva">
+                        <div className="emp_column emp_column-cuit">{empresa.cuit}</div>
+                        <div className="emp_column emp_column-iva">
                           {empresa.descripcion_iva}
                         </div>
-                        <div className="column column-dom">
+                        <div className="emp_column emp_column-dom">
                           {empresa.domicilio_2}
                         </div>
-                        <div className="column column-obs">
+                        <div className="emp_column emp_column-obs">
                           {empresa.observacion}
                         </div>
-                        <div className="column column-medio">
+                        <div className="emp_column emp_column-medio">
                           {empresa.medio_pago}
                         </div>
-                        <div className="column icons-column">
+                        <div className="emp_column emp_icons-column">
                           {filaSeleccionada === index && (
-                            <div className="icons-container">
+                            <div className="emp_icons-container">
                               <button
-                                className="icon btn-info"
+                                className="emp_icon emp_btn-info"
                                 title="Ver información"
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -834,7 +819,7 @@ const GestionarEmpresas = () => {
                               </button>
 
                               <button
-                                className="icon btn-edit"
+                                className="emp_icon emp_btn-edit"
                                 title="Editar empresa"
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -845,7 +830,7 @@ const GestionarEmpresas = () => {
                               </button>
 
                               <button
-                                className="icon btn-delete"
+                                className="emp_icon emp_btn-delete"
                                 title="Eliminar empresa"
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -855,9 +840,8 @@ const GestionarEmpresas = () => {
                                 <FontAwesomeIcon icon={faTrash} />
                               </button>
 
-                              {/* Dar de baja (estética mejorada) */}
                               <button
-                                className="icon btn-baja"
+                                className="emp_icon emp_btn-baja"
                                 title="Dar de baja"
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -865,7 +849,7 @@ const GestionarEmpresas = () => {
                                 }}
                               >
                                 <FontAwesomeIcon icon={faUserMinus} />
-                                <span className="btn-baja-text">Baja</span>
+                                <span className="emp_btn-baja-text"></span>
                               </button>
                             </div>
                           )}
@@ -875,10 +859,10 @@ const GestionarEmpresas = () => {
                   })}
                 </div>
               ) : (
-                <div className="no-data-message">
-                  <div className="message-content">
+                <div className="emp_no-data-message">
+                  <div className="emp_message-content">
                     <p>Por favor aplicá búsqueda o filtros para ver las empresas</p>
-                    <button className="btn-show-all" onClick={handleMostrarTodos}>
+                    <button className="emp_btn-show-all" onClick={handleMostrarTodos}>
                       Mostrar todas las empresas
                     </button>
                   </div>
@@ -886,40 +870,186 @@ const GestionarEmpresas = () => {
               )}
             </div>
           </div>
+
+          {/* ======= TARJETAS (Mobile — ocultas en desktop por CSS) ======= */}
+          <div className={`emp_cards-wrapper ${animacionCascada ? "emp_cascade-animation" : ""}`}>
+            {cargando ? (
+              <div className="emp_no-data-message emp_no-data-mobile">
+                <div className="emp_message-content">
+                  <p>Cargando datos iniciales...</p>
+                </div>
+              </div>
+            ) : !datosCargados ? (
+              <div className="emp_no-data-message emp_no-data-mobile">
+                <div className="emp_message-content">
+                  <p>Cargando datos iniciales...</p>
+                </div>
+              </div>
+            ) : (filtrosActivos.todos ||
+                filtrosActivos.letras.length > 0 ||
+                filtrosActivos.mediosPago.length > 0 ||
+                busqueda.trim() !== "") &&
+              empresasFiltradas.length > 0 ? (
+              empresasFiltradas.map((empresa, index) => {
+                const estadoPago = getEstadoPago(
+                  empresa.meses_pagados,
+                  empresa.Fechaunion
+                );
+                return (
+                  <div
+                    className={`emp_card ${estadoPago}`}
+                    key={`card-${empresa.idEmp || empresa.cuit || index}`}
+                    style={{ animationDelay: `${index * 0.05}s` }}
+                    onClick={() => handleFilaSeleccionada(index, empresa)}
+                  >
+                    <div className="emp_card-status-strip" />
+                    <div className="emp_card-header">
+                      <h3 className="emp_card-title">{empresa.razon_social}</h3>
+                      <span
+                        className={`emp_badge ${
+                          estadoPago === "emp_verde"
+                            ? "emp_badge-success"
+                            : estadoPago === "emp_amarillo"
+                            ? "emp_badge-warn"
+                            : "emp_badge-danger"
+                        }`}
+                      >
+                        {estadoPago === "emp_verde"
+                          ? "Al día"
+                          : estadoPago === "emp_amarillo"
+                          ? "Debe 1-2"
+                          : "Debe 3+"}
+                      </span>
+                    </div>
+
+                    <div className="emp_card-body">
+                      <div className="emp_card-row">
+                        <span className="emp_card-label">CUIT</span>
+                        <span className="emp_card-value emp_mono">{empresa.cuit}</span>
+                      </div>
+                      <div className="emp_card-row">
+                        <span className="emp_card-label">Cond. IVA</span>
+                        <span className="emp_card-value">{empresa.descripcion_iva}</span>
+                      </div>
+                      <div className="emp_card-row">
+                        <span className="emp_card-label">Domicilio cobro</span>
+                        <span className="emp_card-value">{empresa.domicilio_2}</span>
+                      </div>
+                      {empresa.observacion && (
+                        <div className="emp_card-row">
+                          <span className="emp_card-label">Obs.</span>
+                          <span className="emp_card-value">{empresa.observacion}</span>
+                        </div>
+                      )}
+                      <div className="emp_card-row">
+                        <span className="emp_card-label">Medio de Pago</span>
+                        <span className="emp_card-value">{empresa.medio_pago}</span>
+                      </div>
+                    </div>
+
+                    <div className="emp_card-actions">
+                      <button
+                        className="emp_action-btn"
+                        title="Información"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleMostrarInfoEmpresa(empresa);
+                        }}
+                      >
+                        <FontAwesomeIcon icon={faInfoCircle} />
+                      </button>
+                      <button
+                        className="emp_action-btn"
+                        title="Editar"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditarEmpresa(empresa.razon_social);
+                        }}
+                      >
+                        <FontAwesomeIcon icon={faEdit} />
+                      </button>
+                      <button
+                        className="emp_action-btn"
+                        title="Eliminar"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleConfirmarEliminar(empresa);
+                        }}
+                      >
+                        <FontAwesomeIcon icon={faTrash} />
+                      </button>
+                      <button
+                        className="emp_action-btn emp_action-danger"
+                        title="Dar de baja"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleConfirmarBajaEmpresa(empresa);
+                        }}
+                      >
+                        <FontAwesomeIcon icon={faUserMinus} />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="emp_no-data-message emp_no-data-mobile">
+                <div className="emp_message-content">
+                  <p>Usá la búsqueda o aplica filtros para ver resultados</p>
+                  <button className="emp_btn-show-all" onClick={handleMostrarTodos}>
+                    Mostrar todas
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* BOTONERA INFERIOR */}
-        <div className="down-container">
+        <div className="emp_down-container">
           <button
-            className="socio-button hover-effect volver-atras"
+            className="emp_socio-button emp_hover-effect emp_volver-atras"
             onClick={handleVolverAtras}
             id="Backnow"
+            aria-label="Volver"
+            title="Volver"
           >
-            <FontAwesomeIcon icon={faArrowLeft} className="socio-icon-button" />
+            <FontAwesomeIcon icon={faArrowLeft} className="emp_socio-icon-button" />
             <p>Volver Atrás</p>
           </button>
 
-          <div className="botones-container">
-            <button className="socio-button hover-effect" onClick={handleAgregarEmpresa}>
-              <FontAwesomeIcon icon={faPlus} className="socio-icon-button" />
+          <div className="emp_botones-container">
+            <button
+              className="emp_socio-button emp_hover-effect"
+              onClick={handleAgregarEmpresa}
+              aria-label="Agregar"
+              title="Agregar empresa"
+            >
+              <FontAwesomeIcon icon={faPlus} className="emp_socio-icon-button" />
               <FontAwesomeIcon
                 icon={faBuilding}
-                className="icono-empresa icono-celular-empresa"
+                className="emp_icono-empresa emp_icono-celular-empresa"
               />
               <p>Agregar Empresa</p>
             </button>
 
-            <button className="socio-button hover-effect" onClick={exportarAExcel}>
-              <FontAwesomeIcon icon={faFileExcel} className="socio-icon-button" />
+            <button
+              className="emp_socio-button emp_hover-effect"
+              onClick={exportarAExcel}
+              aria-label="Exportar"
+              title="Exportar a Excel"
+            >
+              <FontAwesomeIcon icon={faFileExcel} className="emp_socio-icon-button" />
               <p>Exportar a Excel</p>
             </button>
 
             <button
-              className="socio-button hover-effect btn-baja-nav"
+              className="emp_socio-button emp_hover-effect emp_btn-baja-nav"
               onClick={() => navigate("/empresas_baja")}
-              title="Ir a empresas dadas de baja"
+              title="Dados de Baja"
+              aria-label="Dados de Baja"
             >
-              <FontAwesomeIcon icon={faUserMinus} className="socio-icon-button" />
+              <FontAwesomeIcon icon={faUserMinus} className="emp_socio-icon-button" />
               <p>Dados de Baja</p>
             </button>
           </div>

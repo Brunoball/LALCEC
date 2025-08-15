@@ -1,54 +1,80 @@
 <?php
-header("Access-Control-Allow-Origin: http://localhost:3000"); // Permitir solicitudes desde localhost:3000
-header("Access-Control-Allow-Methods: GET, POST, OPTIONS"); // Métodos permitidos
-header("Access-Control-Allow-Headers: Content-Type, Authorization"); // Headers permitidos
+header("Access-Control-Allow-Origin: http://localhost:3000");
+header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization");
+header('Content-Type: application/json');
 
-// Incluir la conexión a la base de datos
-include_once(__DIR__ . '/../../config/db.php');
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(204);
+    exit;
+}
 
-// Obtener los parámetros GET (nombre y apellido)
-$nombre = $_GET['nombre'] ?? null;
-$apellido = $_GET['apellido'] ?? null;
+include_once(__DIR__ . '/../../config/db.php'); // $conn = new mysqli(...)
 
-header('Content-Type: application/json'); // Asegurar respuesta en formato JSON
+$action = $_GET['action'] ?? null;
 
-if ($nombre && $apellido) {
-    // Preparar la consulta para eliminar el socio por nombre y apellido
-    $query = "
-        DELETE FROM socios 
-        WHERE nombre = ? AND apellido = ?
-    ";
+// Lee JSON si viene
+$input = json_decode(file_get_contents('php://input'), true) ?: [];
 
-    // Preparar la consulta
-    $stmt = $conn->prepare($query);
+// Normaliza posibles nombres de parámetros
+$id_socio = $input['id_socio'] ?? $_POST['id_socio'] ?? $_GET['idSoc'] ?? null;
+$nombre   = $input['nombre']   ?? $_POST['nombre']   ?? $_GET['nombre'] ?? null;
+$apellido = $input['apellido'] ?? $_POST['apellido'] ?? $_GET['apellido'] ?? null;
 
-    if ($stmt) {
-        // Vincular los parámetros y ejecutar la consulta
+if ($action === 'eliminar_socio') {
+
+    // 1) Prioriza eliminar por ID (recomendado)
+    if (!empty($id_socio)) {
+        $stmt = $conn->prepare("DELETE FROM socios WHERE idSocios = ?");
+        if (!$stmt) {
+            http_response_code(500);
+            echo json_encode(["exito" => false, "mensaje" => "Error al preparar la consulta"]);
+            exit;
+        }
+        $stmt->bind_param('i', $id_socio);
+        $stmt->execute();
+
+        if ($stmt->affected_rows > 0) {
+            echo json_encode(["exito" => true, "mensaje" => "Socio eliminado correctamente"]);
+        } else {
+            http_response_code(404);
+            echo json_encode(["exito" => false, "mensaje" => "Socio no encontrado"]);
+        }
+        $stmt->close();
+        $conn->close();
+        exit;
+    }
+
+    // 2) Fallback: eliminar por nombre y apellido si así lo necesitás
+    if (!empty($nombre) && !empty($apellido)) {
+        $stmt = $conn->prepare("DELETE FROM socios WHERE nombre = ? AND apellido = ?");
+        if (!$stmt) {
+            http_response_code(500);
+            echo json_encode(["exito" => false, "mensaje" => "Error al preparar la consulta"]);
+            exit;
+        }
         $stmt->bind_param('ss', $nombre, $apellido);
         $stmt->execute();
 
-        // Verificar si se eliminó un registro
         if ($stmt->affected_rows > 0) {
-            echo json_encode(["message" => "Socio eliminado correctamente"]);
+            echo json_encode(["exito" => true, "mensaje" => "Socio eliminado por nombre y apellido"]);
         } else {
-            http_response_code(404); // No encontrado
-            echo json_encode(["message" => "Socio no encontrado para eliminar"]);
+            http_response_code(404);
+            echo json_encode(["exito" => false, "mensaje" => "Socio no encontrado para eliminar"]);
         }
-
-        // Liberar el statement
         $stmt->close();
-    } else {
-        // Manejo de error en la preparación de la consulta
-        error_log("Error al preparar la consulta: " . $conn->error); // Log detallado
-        http_response_code(500);
-        echo json_encode(["message" => "Error al preparar la consulta"]);
+        $conn->close();
+        exit;
     }
-} else {
-    // Manejo de caso: faltan los parámetros nombre o apellido
-    http_response_code(400); // Solicitud incorrecta
-    echo json_encode(["message" => "Faltan los parámetros nombre o apellido"]);
+
+    // Si no vino ni id_socio ni (nombre+apellido), es 400
+    http_response_code(400);
+    echo json_encode(["exito" => false, "mensaje" => "Falta id_socio o nombre y apellido"]);
+    $conn->close();
+    exit;
 }
 
-// Cerrar la conexión a la base de datos
+// Si llega otra acción
+http_response_code(400);
+echo json_encode(["exito" => false, "mensaje" => "Acción inválida"]);
 $conn->close();
-?>

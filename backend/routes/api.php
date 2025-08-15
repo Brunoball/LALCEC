@@ -49,6 +49,10 @@ switch ($action) {
         require_once(__DIR__ . '/../modules/contable/precios_cat_mes.php');
         break;
 
+    case 'obtener_medios_pago':
+        require_once(__DIR__ . '/../modules/contable/obtener_medios_pago.php');
+        break;
+
     // Cuotas
     case 'cuotas':
         require_once(__DIR__ . '/../modules/cuotas/cuotas.php');

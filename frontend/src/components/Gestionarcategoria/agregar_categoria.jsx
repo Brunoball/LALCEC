@@ -26,8 +26,11 @@ const AgregarCategoria = () => {
     setCategoria({ ...categoria, [name]: value });
   };
 
+  // Permite usarse como onSubmit (con event) y como onClick (sin event)
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    if (e && typeof e.preventDefault === "function") {
+      e.preventDefault();
+    }
 
     if (categoria.nombre_categoria.length > 1) {
       setToastTipo("error");
@@ -103,85 +106,111 @@ const AgregarCategoria = () => {
       )}
 
       <div className="agregar-cat-box">
-        <h2 className="agregar-cat-title">Agregar Categoría</h2>
+        {/* Contenido que crece y empuja los botones al fondo en mobile */}
+        <div className="agregar-cat-content">
+          <h2 className="agregar-cat-title">Agregar Categoría</h2>
 
-        <form onSubmit={handleSubmit} className="agregar-cat-form">
-          <div className="agregar-cat-input-row">
-            <div className="agregar-cat-input-wrapper">
-              <input
-                ref={nombreInputRef}
-                id="nombre_categoria"
-                type="text"
-                name="nombre_categoria"
-                value={categoria.nombre_categoria}
-                onChange={handleInputChange}
-                className="agregar-cat-input"
-                placeholder=" "
-                required
-                maxLength="1"
-              />
-              <label
-                htmlFor="nombre_categoria"
-                className={
-                  isFieldFilled(categoria.nombre_categoria)
-                    ? "agregar-cat-floating-label agregar-cat-floating-label-active"
-                    : "agregar-cat-floating-label"
-                }
-              >
-                Nombre de la categoría (1 letra)
-              </label>
+          <form onSubmit={handleSubmit} className="agregar-cat-form">
+            <div className="agregar-cat-input-row">
+              <div className="agregar-cat-input-wrapper">
+                <input
+                  ref={nombreInputRef}
+                  id="nombre_categoria"
+                  type="text"
+                  name="nombre_categoria"
+                  value={categoria.nombre_categoria}
+                  onChange={handleInputChange}
+                  className="agregar-cat-input"
+                  placeholder=" "
+                  required
+                  maxLength="1"
+                />
+                <label
+                  htmlFor="nombre_categoria"
+                  className={
+                    isFieldFilled(categoria.nombre_categoria)
+                      ? "agregar-cat-floating-label agregar-cat-floating-label-active"
+                      : "agregar-cat-floating-label"
+                  }
+                >
+                  Nombre de la categoría (1 letra)
+                </label>
+              </div>
             </div>
-          </div>
 
-          <div className="agregar-cat-input-row">
-            <div className="agregar-cat-input-wrapper">
-              <input
-                ref={precioInputRef}
-                id="precio_categoria"
-                type="number"
-                name="precio_categoria"
-                value={categoria.precio_categoria}
-                onChange={handleInputChange}
-                className="agregar-cat-input"
-                placeholder=" "
-                required
-                min="0"
-                max="10000"
-                step="50"
-              />
-              <label
-                htmlFor="precio_categoria"
-                className={
-                  isFieldFilled(categoria.precio_categoria)
-                    ? "agregar-cat-floating-label agregar-cat-floating-label-active"
-                    : "agregar-cat-floating-label"
-                }
-              >
-                Precio de la categoría
-              </label>
+            <div className="agregar-cat-input-row">
+              <div className="agregar-cat-input-wrapper">
+                <input
+                  ref={precioInputRef}
+                  id="precio_categoria"
+                  type="number"
+                  name="precio_categoria"
+                  value={categoria.precio_categoria}
+                  onChange={handleInputChange}
+                  className="agregar-cat-input"
+                  placeholder=" "
+                  required
+                  min="0"
+                  max="10000"
+                  step="50"
+                />
+                <label
+                  htmlFor="precio_categoria"
+                  className={
+                    isFieldFilled(categoria.precio_categoria)
+                      ? "agregar-cat-floating-label agregar-cat-floating-label-active"
+                      : "agregar-cat-floating-label"
+                  }
+                >
+                  Precio de la categoría
+                </label>
+              </div>
             </div>
-          </div>
 
-          <div className="agregar-cat-buttons-container">
-            <button
-              type="submit"
-              className="agregar-cat-save-button"
-              disabled={cargando}
-            >
-              <FontAwesomeIcon icon={faSave} className="agregar-cat-icon-spacing" />
-              {cargando ? "Agregando..." : "Agregar Categoría"}
-            </button>
+            {/* Botones (web/desktop: visibles con texto largo) */}
+            <div className="agregar-cat-buttons-container">
+              <button
+                type="submit"
+                className="agregar-cat-save-button"
+                disabled={cargando}
+              >
+                <FontAwesomeIcon icon={faSave} className="agregar-cat-icon-spacing" />
+                <span className="btn-text">{cargando ? "Agregando..." : "Agregar Categoría"}</span>
+              </button>
 
-            <button
-              type="button"
-              onClick={handleGoBack}
-              className="agregar-cat-back-button"
-            >
-              <FontAwesomeIcon icon={faArrowLeft} className="agregar-cat-icon-spacing" />
-              Volver Atrás
-            </button>
-          </div>
-        </form>
+              <button
+                type="button"
+                onClick={handleGoBack}
+                className="agregar-cat-back-button"
+              >
+                <FontAwesomeIcon icon={faArrowLeft} className="agregar-cat-icon-spacing" />
+                <span className="btn-text">Volver Atrás</span>
+              </button>
+            </div>
+          </form>
+        </div>
+
+        {/* Botones AL FONDO, DENTRO DEL CONTENEDOR (solo iconos en mobile) */}
+        <div className="mobile-bottom-buttons">
+          <button
+            type="button"
+            onClick={handleGoBack}
+            className="agregar-cat-back-button"
+            aria-label="Volver"
+          >
+            <FontAwesomeIcon icon={faArrowLeft} className="agregar-cat-icon-spacing" />
+          </button>
+
+          <button
+            type="button"
+            onClick={handleSubmit}
+            className="agregar-cat-save-button"
+            aria-label="Guardar"
+            disabled={cargando}
+          >
+            <FontAwesomeIcon icon={faSave} className="agregar-cat-icon-spacing" />
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -1,15 +1,20 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import BASE_URL from "../../config/config";
-import { FaUserCheck } from "react-icons/fa";
+import { FaUserCheck, FaTrash } from "react-icons/fa";
 import Toast from "../global/Toast";
 import "./EmpresasBaja.css";
 
 const EmpresasBaja = () => {
   const [empresas, setEmpresas] = useState([]);
   const [loading, setLoading] = useState(true);
+
   const [empresaSeleccionada, setEmpresaSeleccionada] = useState(null);
   const [mostrarConfirmacion, setMostrarConfirmacion] = useState(false);
+
+  const [empresaAEliminar, setEmpresaAEliminar] = useState(null);
+  const [mostrarEliminar, setMostrarEliminar] = useState(false);
+
   const [toast, setToast] = useState({ show: false, tipo: "", mensaje: "" });
   const [busqueda, setBusqueda] = useState("");
   const [accionando, setAccionando] = useState(false);
@@ -51,6 +56,8 @@ const EmpresasBaja = () => {
     });
   }, [empresas, busqueda]);
 
+  const idFrom = (e) => e?.idEmp ?? e?.id_empresa ?? e?.id;
+
   const darAltaEmpresa = async (id) => {
     if (accionando) return;
     setAccionando(true);
@@ -65,7 +72,7 @@ const EmpresasBaja = () => {
       );
       const data = await response.json();
       if (response.ok && (data.success || data.exito)) {
-        setEmpresas((prev) => prev.filter((e) => e.id_empresa !== id));
+        setEmpresas((prev) => prev.filter((e) => idFrom(e) !== id));
         setMostrarConfirmacion(false);
         setEmpresaSeleccionada(null);
         setToast({
@@ -87,9 +94,50 @@ const EmpresasBaja = () => {
     }
   };
 
+  const eliminarEmpresa = async (empresa) => {
+    if (accionando || !empresa) return;
+    setAccionando(true);
+    try {
+      const idEmp = idFrom(empresa);
+      const razon_social = empresa?.razon_social ?? "";
+
+      const qs = new URLSearchParams({
+        idEmp: String(idEmp),
+        razon_social,
+      }).toString();
+
+      const resp = await fetch(
+        `${BASE_URL}/api.php?action=eliminar_empresa&${qs}`,
+        { method: "GET" }
+      );
+
+      const data = await resp.json();
+
+      if (resp.ok && (data.success || data.exito)) {
+        setEmpresas((prev) => prev.filter((e) => idFrom(e) !== idEmp));
+        setMostrarEliminar(false);
+        setEmpresaAEliminar(null);
+        setToast({
+          show: true,
+          tipo: "exito",
+          mensaje: data?.message || data?.mensaje || "Empresa eliminada correctamente",
+        });
+      } else {
+        throw new Error(data?.message || data?.mensaje || "No se pudo eliminar");
+      }
+    } catch (err) {
+      setToast({
+        show: true,
+        tipo: "error",
+        mensaje: err.message || "Error de red al eliminar",
+      });
+    } finally {
+      setAccionando(false);
+    }
+  };
+
   const closeToast = () => setToast({ ...toast, show: false });
 
-  // Si tu backend guarda fecha como DATE (YYYY-MM-DD)
   const formatearFecha = (yyyy_mm_dd) => {
     if (!yyyy_mm_dd) return "-";
     const [y, m, d] = String(yyyy_mm_dd).split("-");
@@ -136,12 +184,7 @@ const EmpresasBaja = () => {
       </div>
 
       {toast.show && (
-        <Toast
-          tipo={toast.tipo}
-          mensaje={toast.mensaje}
-          onClose={closeToast}
-          duracion={3000}
-        />
+        <Toast tipo={toast.tipo} mensaje={toast.mensaje} onClose={closeToast} duracion={3000} />
       )}
 
       {loading ? (
@@ -170,8 +213,8 @@ const EmpresasBaja = () => {
               </div>
             ) : (
               empresasFiltradas.map((e) => (
-                <div className="emp-baja-fila" key={e.id_empresa}>
-                  <div className="emp-baja-col-id">{e.id_empresa}</div>
+                <div className="emp-baja-fila" key={idFrom(e)}>
+                  <div className="emp-baja-col-id">{idFrom(e)}</div>
                   <div className="emp-baja-col-nombre">{e.razon_social || "-"}</div>
                   <div className="emp-baja-col-fecha">{formatearFecha(e.fecha_baja)}</div>
                   <div className="emp-baja-col-motivo">{e.motivo || "-"}</div>
@@ -187,6 +230,18 @@ const EmpresasBaja = () => {
                           }
                         }}
                       />
+                      <FaTrash
+                        title="Eliminar definitivamente"
+                        className={`emp-baja-icono emp-baja-icono-danger${
+                          accionando ? " emp-baja-disabled" : ""
+                        }`}
+                        onClick={() => {
+                          if (!accionando) {
+                            setEmpresaAEliminar(e);
+                            setMostrarEliminar(true);
+                          }
+                        }}
+                      />
                     </div>
                   </div>
                 </div>
@@ -196,23 +251,31 @@ const EmpresasBaja = () => {
         </div>
       )}
 
+      {/* Modal DAR ALTA (misma estética) */}
       {mostrarConfirmacion && empresaSeleccionada && (
-        <div className="emp-baja-modal-overlay">
-          <div className="emp-baja-modal">
-            <h3>
+        <div
+          className="emp-baja-modal-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="modal-alta-title"
+        >
+          <div className="emp-baja-modal emp-baja-modal--success">
+            <div className="emp-baja-modal__icon" aria-hidden="true">
+              <FaUserCheck />
+            </div>
+
+            <h3 id="modal-alta-title" className="emp-baja-modal__title emp-baja-modal__title--success">
+              Reactivar empresa
+            </h3>
+
+            <p className="emp-baja-modal__body">
               ¿Deseás dar de alta nuevamente a{" "}
               <strong>{empresaSeleccionada.razon_social || "-"}</strong>?
-            </h3>
-            <div className="emp-baja-modal-botones">
+            </p>
+
+            <div className="emp-baja-modal__actions">
               <button
-                className="emp-baja-btn-confirmar"
-                onClick={() => darAltaEmpresa(empresaSeleccionada.id_empresa)}
-                disabled={accionando}
-              >
-                {accionando ? "Procesando..." : "Sí, dar de alta"}
-              </button>
-              <button
-                className="emp-baja-btn-cancelar"
+                className="emp-baja-btn emp-baja-btn--ghost"
                 onClick={() => {
                   if (!accionando) {
                     setMostrarConfirmacion(false);
@@ -222,6 +285,61 @@ const EmpresasBaja = () => {
                 disabled={accionando}
               >
                 Cancelar
+              </button>
+
+              <button
+                className="emp-baja-btn emp-baja-btn--solid-success"
+                onClick={() => darAltaEmpresa(idFrom(empresaSeleccionada))}
+                disabled={accionando}
+              >
+                {accionando ? "Procesando..." : "Sí, dar de alta"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal ELIMINAR DEFINITIVAMENTE (misma estética) */}
+      {mostrarEliminar && empresaAEliminar && (
+        <div
+          className="emp-baja-modal-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="modal-eliminar-title"
+        >
+          <div className="emp-baja-modal emp-baja-modal--danger">
+            <div className="emp-baja-modal__icon emp-baja-modal__icon--danger" aria-hidden="true">
+              <FaTrash />
+            </div>
+
+            <h3 id="modal-eliminar-title" className="emp-baja-modal__title emp-baja-modal__title--danger">
+              Eliminar permanentemente
+            </h3>
+
+            <p className="emp-baja-modal__body">
+              ¿Estás seguro que deseas eliminar a la empresa <strong>{empresaAEliminar?.razon_social || "-"}</strong>?
+            </p>
+
+            <div className="emp-baja-modal__actions">
+              <button
+                className="emp-baja-btn emp-baja-btn--ghost"
+                onClick={() => {
+                  if (!accionando) {
+                    setMostrarEliminar(false);
+                    setEmpresaAEliminar(null);
+                  }
+                }}
+                disabled={accionando}
+              >
+                Cancelar
+              </button>
+
+              <button
+                className="emp-baja-btn emp-baja-btn--solid-danger"
+                onClick={() => eliminarEmpresa(empresaAEliminar)}
+                disabled={accionando}
+              >
+                {accionando ? "Eliminando..." : "Sí, eliminar"}
               </button>
             </div>
           </div>

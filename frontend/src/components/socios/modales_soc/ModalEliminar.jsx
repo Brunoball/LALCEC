@@ -1,18 +1,49 @@
 import React from "react";
+import { FaTrash } from "react-icons/fa";
 import "./ModalEliminar.css";
 
 const ModalEliminar = ({ socioSeleccionado, onCancelar, onEliminar }) => {
+  if (!socioSeleccionado) return null;
+
   return (
-    <div className="modal">
-      <div className="modal-content">
-        <h3 className="modal-title">¿Deseas eliminar este socio?</h3>
-        <p className="modal-text">{`${socioSeleccionado.nombre} ${socioSeleccionado.apellido}`}</p>
-        <div className="modal-buttons">
-          <button className="modal-button cancel-button" onClick={onCancelar}>
+    <div
+      className="socdel-modal-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="socdel-title"
+    >
+      <div className="socdel-modal socdel-modal--danger" role="document">
+        <div className="socdel-modal__icon" aria-hidden="true">
+          <FaTrash />
+        </div>
+
+        <h3 id="socdel-title" className="socdel-modal__title">
+          Eliminar permanentemente
+        </h3>
+
+        <p className="socdel-modal__body">
+          ¿Estás seguro que deseas eliminar al socio{" "}
+          <strong>
+            {socioSeleccionado?.nombre} {socioSeleccionado?.apellido}
+          </strong>
+          ?
+        </p>
+
+        <div className="socdel-modal__actions">
+          <button
+            type="button"
+            className="socdel-btn socdel-btn--ghost"
+            onClick={onCancelar}
+          >
             Cancelar
           </button>
-          <button className="modal-button accept-button" onClick={onEliminar}>
-            Aceptar
+
+          <button
+            type="button"
+            className="socdel-btn socdel-btn--solid-danger"
+            onClick={onEliminar}
+          >
+            Eliminar
           </button>
         </div>
       </div>

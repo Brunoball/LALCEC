@@ -1,31 +1,42 @@
-import React, { useState } from "react";
+// src/components/.../Registro.jsx
+import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import BASE_URL from "../../config/config";
 import logoLalcec from "../../assets/logo_lalcec.jpeg";
+import Toast from "../global/Toast";
 import "./Registro.css";
+
+const REDIRECT_DELAY_MS = 1200; // tiempo para que se vea el toast antes de navegar
 
 const Registro = () => {
   const [usuario, setUsuario] = useState("");
   const [contrasena, setContrasena] = useState("");
   const [confirmarContrasena, setConfirmarContrasena] = useState("");
-  const [mensaje, setMensaje] = useState("");
-  const [mensajeTipo, setMensajeTipo] = useState(""); // "success" | "warning" | "error"
   const [cargando, setCargando] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [toast, setToast] = useState({
+    show: false,
+    tipo: "",
+    mensaje: "",
+    duracion: 3000,
+  });
+
   const navigate = useNavigate();
+  const redirectTimerRef = useRef(null);
 
-  const togglePasswordVisibility = () => setShowPassword(v => !v);
-  const toggleConfirmVisibility  = () => setShowConfirm(v => !v);
+  useEffect(() => {
+    return () => {
+      if (redirectTimerRef.current) clearTimeout(redirectTimerRef.current);
+    };
+  }, []);
 
-  const showMessage = (text, type) => {
-    setMensaje(text);
-    setMensajeTipo(type);
-    setTimeout(() => {
-      setMensaje("");
-      setMensajeTipo("");
-    }, 3000);
-  };
+  const togglePasswordVisibility = () => setShowPassword((v) => !v);
+  const toggleConfirmVisibility = () => setShowConfirm((v) => !v);
+
+  const showToast = (tipo, mensaje, duracion = 3000) =>
+    setToast({ show: true, tipo, mensaje, duracion });
+  const hideToast = () => setToast((t) => ({ ...t, show: false }));
 
   const clearFields = () => {
     setUsuario("");
@@ -36,8 +47,16 @@ const Registro = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (!usuario.trim()) {
+      showToast("advertencia", "Ingresá un nombre de usuario.");
+      return;
+    }
+    if (!contrasena.trim()) {
+      showToast("advertencia", "Ingresá una contraseña.");
+      return;
+    }
     if (contrasena !== confirmarContrasena) {
-      showMessage("Las contraseñas no coinciden.", "warning");
+      showToast("advertencia", "Las contraseñas no coinciden.");
       return;
     }
 
@@ -58,17 +77,22 @@ const Registro = () => {
 
       if (data?.error) {
         if (data.error === "Usuario ya existe") {
-          showMessage("El usuario ya existe. Intenta con otro.", "warning");
+          showToast("advertencia", "El usuario ya existe. Intenta con otro.");
         } else {
-          showMessage(data.error, "error");
+          showToast("error", data.error || "Error inesperado.");
         }
       } else {
-        showMessage("¡Registro exitoso!", "success");
+        showToast("exito", "¡Registro exitoso!");
         clearFields();
+
+        // Redirección automática para volver a la página principal
+        redirectTimerRef.current = setTimeout(() => {
+          navigate("/PaginaPrincipal");
+        }, REDIRECT_DELAY_MS);
       }
     } catch (err) {
       console.error("Error de registro:", err);
-      showMessage("Error al registrar el usuario. Intenta de nuevo.", "error");
+      showToast("error", "Error al registrar el usuario. Intenta de nuevo.");
     } finally {
       setCargando(false);
     }
@@ -76,28 +100,22 @@ const Registro = () => {
 
   return (
     <div className="ini_contenedor-principal">
+      {/* Toast global */}
+      {toast.show && (
+        <Toast
+          tipo={toast.tipo}
+          mensaje={toast.mensaje}
+          duracion={toast.duracion}
+          onClose={hideToast}
+        />
+      )}
+
       <div className="ini_contenedor">
         <div className="ini_encabezado">
           <img src={logoLalcec} alt="Logo LALCEC" className="ini_logo" />
           <h1 className="ini_titulo">Crear Cuenta</h1>
           <p className="ini_subtitulo">Completa los datos para registrarte</p>
         </div>
-
-        {mensaje && (
-          <p
-            className="ini_mensaje"
-            style={{
-              color:
-                mensajeTipo === "success"
-                  ? "#10B981"
-                  : mensajeTipo === "warning"
-                  ? "#F59E0B"
-                  : "var(--princ-accent)",
-            }}
-          >
-            {mensaje}
-          </p>
-        )}
 
         <form onSubmit={handleSubmit} className="ini_formulario">
           {/* Usuario */}

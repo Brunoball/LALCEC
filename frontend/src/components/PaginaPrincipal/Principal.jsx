@@ -1,18 +1,19 @@
-// PaginaPrincipal.js (Código React con clases CSS)
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faUsers, faDollarSign, faTags, faSignOutAlt, faBuilding, faUserPlus, faFileInvoiceDollar } from "@fortawesome/free-solid-svg-icons";
+import {
+  faUsers, faDollarSign, faTags, faSignOutAlt,
+  faBuilding, faUserPlus, faFileInvoiceDollar, faRobot
+} from "@fortawesome/free-solid-svg-icons";
 import logoLalcec from "../../assets/logo_lalcec.jpeg";
-import "./Principal.css"; // Importa el archivo CSS
+import "./Principal.css";
 
 const PaginaPrincipal = () => {
   const navigate = useNavigate();
   const [showModal, setShowModal] = useState(false);
-  
+  const [isExiting, setIsExiting] = useState(false);
 
   useEffect(() => {
-    // Reiniciar todas las búsquedas y selecciones almacenadas
     localStorage.removeItem("ultimaBusqueda");
     localStorage.removeItem("ultimosResultados");
     localStorage.removeItem("socioSeleccionado");
@@ -20,45 +21,38 @@ const PaginaPrincipal = () => {
     localStorage.removeItem("ultimaLetraSeleccionada");
     localStorage.removeItem("ultimoMedioPagoSeleccionado");
     localStorage.removeItem("ultimaAccion");
-
-    // Asegurar que la opción inicial sea "Seleccionar"
     localStorage.setItem("ultimaSeleccion", "Seleccionar");
   }, []);
-
-  const handleRedireccionarSocios = () => {
-    navigate("/GestionarSocios", {
-      state: { desdePrincipal: true }
-    });
-  };
-
-  const handleRedireccionarEmpresas = () => navigate("/GestionarEmpresas");
-  const handleRedireccionarCuotas = () => navigate("/GestionarCuotas");
-  const handleRedireccionarCategorias = () => navigate("/GestionarCategorias");
-  const handleRedireccionarRegistro = () => navigate("/registro");
-  const handleRedireccionarContable = () => navigate("/DashboardContable");
 
   const handleCerrarSesion = () => setShowModal(true);
 
   const confirmarCierreSesion = () => {
-    sessionStorage.clear();
-    window.history.pushState(null, null, "/");
-    window.onpopstate = function() {
-      window.history.go(1);
-    };
-    window.location.href = "/";
+    setIsExiting(true);
+    setTimeout(() => {
+      sessionStorage.clear();
+      setShowModal(false);
+      navigate("/", { replace: true });
+    }, 400); // Coincide con la duración de la animación CSS
   };
 
   const menuItems = [
-    { icon: faUsers, text: "Gestionar Socios", action: handleRedireccionarSocios },
-    { icon: faBuilding, text: "Gestionar Empresas", action: handleRedireccionarEmpresas },
-    { icon: faDollarSign, text: "Gestionar Cuotas", action: handleRedireccionarCuotas },
-    { icon: faTags, text: "Gestionar Categorías", action: handleRedireccionarCategorias },
-    { icon: faUserPlus, text: "Registro", action: handleRedireccionarRegistro },
-    { icon: faFileInvoiceDollar, text: "Contable", action: handleRedireccionarContable }
+    { icon: faUsers, text: "Gestionar Socios", ruta: "/GestionarSocios" },
+    { icon: faBuilding, text: "Gestionar Empresas", ruta: "/GestionarEmpresas" },
+    { icon: faDollarSign, text: "Gestionar Cuotas", ruta: "/GestionarCuotas" },
+    { icon: faTags, text: "Gestionar Categorías", ruta: "/GestionarCategorias" },
+    { icon: faUserPlus, text: "Registro", ruta: "/registro" },
+    { icon: faFileInvoiceDollar, text: "Contable", ruta: "/DashboardContable" },
+    {
+      icon: faRobot,
+      text: "Panel del Bot",
+      ruta: "https://lalcec.3devsnet.com/api/bot_wp/mensajeria_interna/panel_control.php",
+      externa: true,
+      className: "bot-panel"
+    }
   ];
 
   return (
-    <div className="pagina-principal-container">
+    <div className={`pagina-principal-container ${isExiting ? "slide-fade-out" : ""}`}>
       <div className="pagina-principal-card">
         <div className="pagina-principal-header">
           <div className="logo-container">
@@ -68,19 +62,25 @@ const PaginaPrincipal = () => {
           <p className="subtitle">Panel de administración</p>
         </div>
 
-        <div className="menu-grid">
-          {menuItems.map((item, index) => (
-            <button
-              key={index}
-              className="menu-button"
-              onClick={item.action}
-            >
-              <div className="button-icon">
-                <FontAwesomeIcon icon={item.icon} size="lg" />
-              </div>
-              <span className="button-text">{item.text}</span>
-            </button>
-          ))}
+        <div className="menu-container">
+          <div className="menu-grid">
+            {menuItems.map((item, index) => (
+              <button
+                key={index}
+                className={`menu-button ${item.className || ""}`}
+                onClick={() =>
+                  item.externa
+                    ? window.open(item.ruta, "_blank")
+                    : navigate(item.ruta)
+                }
+              >
+                <div className="button-icon">
+                  <FontAwesomeIcon icon={item.icon} size="lg" />
+                </div>
+                <span className="button-text">{item.text}</span>
+              </button>
+            ))}
+          </div>
         </div>
 
         <button className="logout-button" onClick={handleCerrarSesion}>
@@ -90,19 +90,34 @@ const PaginaPrincipal = () => {
       </div>
 
       {showModal && (
-        <div className="logout-modal-overlay">
-          <div className="logout-modal-container">
-            <h3 className="logout-modal-title">Confirmar cierre de sesión</h3>
-            <p className="logout-modal-text">¿Estás seguro de que deseas cerrar la sesión?</p>
+        <div
+          className="logout-modal-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="logout-modal-title"
+        >
+          <div className="logout-modal-container logout-modal--danger">
+            <div className="logout-modal__icon" aria-hidden="true">
+              <FontAwesomeIcon icon={faSignOutAlt} />
+            </div>
+
+            <h3 id="logout-modal-title" className="logout-modal-title logout-modal-title--danger">
+              Confirmar cierre de sesión
+            </h3>
+
+            <p className="logout-modal-text">
+              ¿Estás seguro de que deseas cerrar la sesión?
+            </p>
+
             <div className="logout-modal-buttons">
-              <button 
-                className="logout-modal-cancel-btn" 
+              <button
+                className="logout-btn logout-btn--ghost"
                 onClick={() => setShowModal(false)}
               >
                 Cancelar
               </button>
-              <button 
-                className="logout-modal-confirm-btn" 
+              <button
+                className="logout-btn logout-btn--solid-danger"
                 onClick={confirmarCierreSesion}
               >
                 Confirmar
@@ -111,7 +126,6 @@ const PaginaPrincipal = () => {
           </div>
         </div>
       )}
-
     </div>
   );
 };

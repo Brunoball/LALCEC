@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import BASE_URL from '../../config/config';
 import './inicio.css';
@@ -10,11 +10,20 @@ const Inicio = () => {
   const [mensaje, setMensaje] = useState('');
   const [cargando, setCargando] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [recordar, setRecordar] = useState(() => localStorage.getItem('recordarCuenta') === '1');
   const navigate = useNavigate();
 
-  const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
-  };
+  // Prefill si estaba recordado
+  useEffect(() => {
+    if (recordar) {
+      const u = localStorage.getItem('usuarioRecordado') || '';
+      const p = localStorage.getItem('passRecordada') || '';
+      if (u) setNombre(u);
+      if (p) setContrasena(p);
+    }
+  }, [recordar]);
+
+  const togglePasswordVisibility = () => setShowPassword(!showPassword);
 
   const manejarEnvio = async (e) => {
     e.preventDefault();
@@ -31,11 +40,9 @@ const Inicio = () => {
       const respuesta = await fetch(`${BASE_URL}/api.php?action=inicio`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        // El backend acepta ambas variantes; aquí mandamos la oficial:
         body: JSON.stringify({ usuario: nombre, contraseña: contrasena })
       });
 
-      // Manejo de HTTP != 200
       if (!respuesta.ok) {
         const txt = await respuesta.text().catch(() => '');
         throw new Error(txt || `HTTP ${respuesta.status}`);
@@ -44,9 +51,20 @@ const Inicio = () => {
       const data = await respuesta.json();
 
       if (data.exito) {
-        // Guardar lo que devuelve el backend
         if (data.usuario) localStorage.setItem('usuario', JSON.stringify(data.usuario));
         if (data.token) localStorage.setItem('token', data.token);
+
+        // Persistencia del recordatorio (usuario + contraseña en texto plano)
+        if (recordar) {
+          localStorage.setItem('recordarCuenta', '1');
+          localStorage.setItem('usuarioRecordado', nombre);
+          localStorage.setItem('passRecordada', contrasena);
+        } else {
+          localStorage.removeItem('recordarCuenta');
+          localStorage.removeItem('usuarioRecordado');
+          localStorage.removeItem('passRecordada');
+        }
+
         navigate('/panel');
       } else {
         setMensaje(data.mensaje || 'Credenciales incorrectas');
@@ -71,7 +89,7 @@ const Inicio = () => {
 
         {mensaje && <p className="ini_mensaje">{mensaje}</p>}
 
-        <form onSubmit={manejarEnvio} className="ini_formulario">
+        <form onSubmit={manejarEnvio} className="ini_formulario" autoComplete="on">
           <div className="ini_campo">
             <input
               type="text"
@@ -114,6 +132,18 @@ const Inicio = () => {
                 )}
               </svg>
             </button>
+          </div>
+
+          {/* Checkbox Recordar cuenta (usuario + contraseña) */}
+          <div className="ini_check-row">
+            <input
+              id="recordar"
+              type="checkbox"
+              className="ini_checkbox"
+              checked={recordar}
+              onChange={(e) => setRecordar(e.target.checked)}
+            />
+            <label htmlFor="recordar" className="ini_check-label">Recordar cuenta</label>
           </div>
 
           <div className="ini_footer">

@@ -36,6 +36,7 @@
   min-height: 100vh;
   background: linear-gradient(135deg, #dcdcdc 30%, #ff6e00 70%);
   padding: 1rem;
+  box-sizing: border-box;
 }
 
 .edit-cat-box {
@@ -51,17 +52,22 @@
   opacity: 0;
   transform: translateY(20px);
   animation: fadeInClean 0.4s ease forwards;
+  margin: 1rem;
+
+  /* 🔹 Para poder pegar los botones al fondo dentro del contenedor en mobile */
+  display: flex;
+  flex-direction: column;
+}
+
+/* Contenido que debe ocupar el espacio disponible */
+.edit-cat-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
 }
 
 @keyframes fadeInClean {
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.edit-cat-box:hover {
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* Skeleton loaders */
@@ -73,53 +79,27 @@
   margin-bottom: 1.2rem;
 }
 
-.skeleton-title {
-  width: 60%;
-  height: 32px;
-  margin: 0 auto 2rem;
-}
-
-.skeleton-input {
-  width: 100%;
-  height: 48px;
-}
-
-.skeleton-button {
-  width: 100%;
-  height: 45px;
-  margin-top: 2rem;
-}
+.skeleton-title { width: 60%; height: 32px; margin: 0 auto 2rem; }
+.skeleton-input { width: 100%; height: 48px; }
+.skeleton-button { width: 100%; height: 45px; margin-top: 2rem; }
 
 @keyframes shimmer {
   0% { background-position: -400px 0; }
   100% { background-position: 400px 0; }
 }
 
-.edit-cat-loading-box {
-  padding: 2rem;
-  max-width: 500px;
-  margin: 0 auto;
-  background: var(--edit-cat-white);
-  box-shadow: var(--edit-cat-shadow-lg);
-  border-radius: 12px;
-}
-
-/* Título mejorado - más clean y moderno */
+/* Título */
 .edit-cat-title {
   color: var(--edit-cat-black);
-  margin: 0;
-  font-size: 1.75rem;
+  margin: 0 0 1.5rem 0;
+  font-size: 1.5rem;
   font-weight: 500;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  letter-spacing: -0.025em;
   line-height: 1.2;
-  margin-bottom: 2.5rem;
   text-align: center;
   position: relative;
-  padding-bottom: 1.5rem;
+  padding-bottom: 1rem;
 }
 
-/* Línea decorativa más sutil */
 .edit-cat-title::after {
   content: '';
   position: absolute;
@@ -134,25 +114,13 @@
 }
 
 /* Formulario */
-.edit-cat-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1.8rem;
-}
-
-.edit-cat-input-row {
-  position: relative;
-}
-
-.edit-cat-input-wrapper {
-  display: flex;
-  justify-content: center;
-  position: relative;
-}
+.edit-cat-form { display: flex; flex-direction: column; gap: 1.5rem; }
+.edit-cat-input-row { position: relative; }
+.edit-cat-input-wrapper { position: relative; }
 
 .edit-cat-input {
   width: 100%;
-  padding: 1.2rem 1rem;
+  padding: 1rem;
   font-size: 1rem;
   border: 2px solid var(--edit-cat-medium);
   border-radius: 8px;
@@ -160,6 +128,7 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   color: var(--edit-cat-black);
   font-weight: 500;
+  box-sizing: border-box;
 }
 
 .edit-cat-input:focus {
@@ -171,7 +140,7 @@
 
 .edit-cat-floating-label {
   position: absolute;
-  top: 1.2rem;
+  top: 1rem;
   left: 1rem;
   color: var(--edit-cat-dark);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -191,74 +160,53 @@
   z-index: 1;
 }
 
-/* Botones */
+/* Botones (desktop/web) */
 .edit-cat-buttons-container {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
   gap: 1rem;
   margin-top: 0.5rem;
 }
 
-.edit-cat-button {
-  padding: 0.8rem;
-  width: 100%;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: var(--edit-cat-transition);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
 .edit-cat-save-button {
-    background: var(--edit-cat-white);
-    color:  var(--edit-cat-primary-dark);
-    border: 2px solid #ff7b25;
-    padding: 0.8rem 0;
-    border-radius: 10px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    font-size: 1rem;
+  background: var(--edit-cat-white);
+  color: var(--edit-cat-primary-dark);
+  border: 2px solid #ff7b25;
+  padding: 0.8rem;
+  border-radius: 10px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  display: flex; align-items: center; justify-content: center;
+  width: 100%; font-size: 1rem;
 }
 
-.edit-cat-save-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(255, 110, 0, 0.3);
-}
+.edit-cat-save-button:hover { transform: translateY(-2px); box-shadow: 0 6px 12px rgba(255, 110, 0, 0.3); }
 
 .edit-cat-back-button {
-    background: var(--gc-secondary);
-    color: var(--gc-white);
-    border: none;
-    border-radius: 10px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    font-size: 1rem;
+  background: var(--edit-cat-primary);
+  color: var(--edit-cat-white);
+  border: none;
+  padding: 0.8rem;
+  border-radius: 10px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  display: flex; align-items: center; justify-content: center;
+  width: 100%; font-size: 1rem;
 }
 
-.edit-cat-back-button:hover {
-  transform: translateY(-2px);
-}
+.edit-cat-back-button:hover { transform: translateY(-2px); background: var(--edit-cat-primary-dark); }
+.edit-cat-icon-spacing { margin-right: 0.8rem; font-size: 1.1rem; }
 
-.edit-cat-icon-spacing {
-  margin-right: 0.8rem;
-  font-size: 1.1rem;
-}
+/* Texto de botones (web/desktop visible; mobile se oculta) */
+.btn-text { display: inline; }
 
-/* Botón de histórico */
+/* Botón de histórico (debajo del formulario / arriba en mobile) */
+.history-btn-wrapper { margin-top: 1rem; }
+
 .edit-cat-view-history-button {
   background-color: transparent;
   color: var(--edit-cat-dark);
@@ -269,10 +217,9 @@
   font-weight: 500;
   cursor: pointer;
   transition: var(--edit-cat-transition);
-  display: flex;
-  align-items: center;
-  margin: 1rem auto 0;
-  position: relative;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto;
+  width: 100%; max-width: 300px;
 }
 
 .edit-cat-view-history-button:hover {
@@ -280,281 +227,268 @@
   border-color: var(--edit-cat-dark);
   color: var(--edit-cat-black);
 }
+.edit-cat-view-history-button:disabled { opacity: 0.5; cursor: not-allowed; }
 
-.edit-cat-view-history-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* Mensajes */
-.edit-cat-message {
-  padding: 1.2rem;
-  border-radius: 8px;
-  margin-bottom: 1.5rem;
-  text-align: center;
-  font-weight: 500;
-  border-left: 4px solid transparent;
-  animation: fadeIn 0.5s ease-in-out;
-}
-
-.edit-cat-success-message {
-  background-color: rgba(46, 125, 50, 0.1);
-  color: var(--edit-cat-success);
-  border-left-color: var(--edit-cat-success);
-}
-
-.edit-cat-error-message {
-  background-color: rgba(198, 40, 40, 0.1);
-  color: var(--edit-cat-error);
-  border-left-color: var(--edit-cat-error);
-}
-
-.edit-cat-error-text,
-.edit-cat-no-categoria-text,
-.edit-cat-no-history-text {
-  text-align: center;
-  font-weight: 500;
-}
-
-.edit-cat-error-text {
-  color: var(--edit-cat-error);
-}
-
-.edit-cat-no-categoria-text {
-  color: var(--edit-cat-dark);
-}
-
-/* Modal */
+/* =========================
+   Modal
+   ========================= */
 .edit-cat-modal-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(5px);
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
   z-index: 1000;
   opacity: 0;
   visibility: hidden;
   transition: var(--edit-cat-transition-slow);
+  padding-top: 5vh;
 }
 
-.edit-cat-modal-overlay.active {
-  opacity: 1;
-  visibility: visible;
-}
+.edit-cat-modal-overlay.active { opacity: 1; visibility: visible; }
 
 .edit-cat-modal-container {
   background-color: var(--edit-cat-white);
-  border-radius: 16px;
-  box-shadow: var(--edit-cat-shadow-lg);
+  border-radius: 12px;
+  box-shadow: 0 10px 50px rgba(0, 0, 0, 0.3);
   width: 90%;
   max-width: 800px;
   max-height: 80vh;
-  overflow-y: auto;
+  overflow: hidden;
   padding: 2rem;
+  margin: 2rem auto;
   opacity: 0;
-  transform: translateY(20px);
+  transform: translateY(-20px);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  display: flex;
+  flex-direction: column;
 }
 
 .edit-cat-modal-overlay.active .edit-cat-modal-container {
-  opacity: 1;
-  transform: translateY(0);
+  opacity: 1; transform: translateY(0);
 }
 
 .edit-cat-modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 1rem; padding-bottom: 1rem;
+  border-bottom: 1px solid var(--edit-cat-medium);
+  flex: 0 0 auto;
 }
 
-/* Título del modal también mejorado */
 .edit-cat-modal-title {
-  color: var(--edit-cat-black);
-  font-size: 1.25rem;
-  font-weight: 500;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  letter-spacing: -0.02em;
-  margin: 0;
+  color: var(--edit-cat-primary-dark);
+  font-size: 1.5rem; font-weight: 600; margin: 0;
 }
 
 .edit-cat-modal-close {
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  cursor: pointer;
-  color: var(--edit-cat-dark-gray);
-  transition: var(--edit-cat-transition-fast);
+  background: none; border: none; font-size: 1.5rem; cursor: pointer;
+  color: var(--edit-cat-dark-gray); transition: var(--edit-cat-transition-fast);
+  width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
+  border-radius: 50%;
 }
-
-.edit-cat-modal-close:hover {
-  color: var(--edit-cat-primary);
-}
+.edit-cat-modal-close:hover { color: var(--edit-cat-primary); background-color: rgba(0, 0, 0, 0.05); }
 
 .edit-cat-historico-container {
-  margin-top: 0;
-  background-color: var(--edit-cat-white);
-  border-radius: 12px;
-  padding: 1.5rem;
+  margin-top: 0.5rem;
+  flex: 1 1 auto;
+  display: flex;
+  min-height: 0;
 }
 
-.edit-cat-historico-table {
+.edit-cat-table-responsive {
   width: 100%;
-  border-collapse: collapse;
-  margin-top: 1rem;
+  max-height: 60vh;
+  overflow: auto;
+  border: 1px solid var(--edit-cat-medium);
+  border-radius: 8px;
+  background: var(--edit-cat-white);
 }
 
+.edit-cat-historico-table { width: 100%; border-collapse: collapse; box-shadow: var(--edit-cat-shadow-sm); }
 .edit-cat-table-header {
   background-color: var(--edit-cat-primary);
   color: var(--edit-cat-white);
-  padding: 0.75rem;
+  padding: 1rem;
   text-align: left;
   font-weight: 500;
+  font-size: 0.95rem;
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
-
 .edit-cat-table-cell {
-  padding: 0.75rem;
+  padding: 1rem;
   border-bottom: 1px solid var(--edit-cat-medium);
   color: var(--edit-cat-black);
+  font-size: 0.95rem;
+  background: var(--edit-cat-white);
+}
+.edit-cat-even-row { background-color: var(--edit-cat-white); }
+.edit-cat-odd-row { background-color: var(--edit-cat-light); }
+
+.edit-cat-no-history-text {
+  text-align: center;
+  color: var(--edit-cat-dark);
+  padding: 2rem;
+  font-size: 1.1rem;
 }
 
-.edit-cat-even-row {
-  background-color: var(--edit-cat-white);
+.edit-cat-disabled-input {
+  background-color: #f1f1f1; color: #555;
+  cursor: not-allowed; border-color: #e0e0e0;
 }
+.edit-cat-disabled-input + .edit-cat-floating-label { color: #555; }
+.edit-cat-disabled-input + .edit-cat-floating-label-active { background-color: #f1f1f1; color: #555; }
 
-.edit-cat-odd-row {
-  background-color: var(--edit-cat-light);
-}
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(20px);} to { opacity: 1; transform: translateY(0);} }
+@keyframes fadeOutDown { from { opacity: 1; transform: translateY(0);} to { opacity: 0; transform: translateY(20px);} }
+.edit-cat-animate { animation-duration: 0.4s; animation-fill-mode: both; }
+.edit-cat-fadeInUp { animation-name: fadeInUp; }
+.edit-cat-fadeOutDown { animation-name: fadeOutDown; }
+.edit-cat-animate-faster { animation-duration: 0.3s; }
 
-/* Animaciones */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
+/* =========================
+   MOBILE
+   ========================= */
+@media (max-width: 480px) {
+  .edit-cat-box { padding: 1.5rem 1rem; margin: 0.5rem; }
+  .edit-cat-title { font-size: 1.3rem; margin-bottom: 1.2rem; }
+  .edit-cat-input { padding: 0.9rem; }
+  .edit-cat-floating-label { top: 0.9rem; font-size: 0.9rem; }
+  .edit-cat-floating-label-active { font-size: 0.8rem; top: -0.5rem; }
 
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
+  /* Ocultar botones del formulario en mobile (usaremos los del fondo) */
+  .edit-cat-buttons-container { display: none; }
 
-@keyframes fadeOutDown {
-  from {
-    opacity: 1;
-    transform: translateY(0);
+  /* Oculta el texto de los botones en mobile (solo iconos) */
+  .btn-text { display: none; }
+  .edit-cat-icon-spacing {
+    margin-right: 0; /* sin espacio si no hay texto */
+    font-size: 1.25rem;
   }
-  to {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-}
 
-@keyframes pulse {
-  0% {
-    transform: scale(1);
+  /* Centrar verticalmente el modal del histórico y permitir scroll interno */
+  .edit-cat-modal-overlay {
+    align-items: center;   /* centrado vertical */
+    padding-top: 0;        /* sin offset superior */
   }
-  50% {
-    transform: scale(1.05);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
 
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
-/* Clases para las animaciones */
-.edit-cat-animate {
-  animation-duration: 0.3s;
-  animation-fill-mode: both;
-}
-
-.edit-cat-animate-faster {
-  animation-duration: 0.2s;
-}
-
-.edit-cat-fadeInUp {
-  animation-name: fadeInUp;
-}
-
-.edit-cat-fadeOutDown {
-  animation-name: fadeOutDown;
-}
-
-.edit-cat-pulse {
-  animation-name: pulse;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .edit-cat-title {
-    font-size: 1.5rem;
-    margin-bottom: 2rem;
-  }
-  
-  .edit-cat-buttons-container {
-    flex-direction: column;
-  }
-  
-  .edit-cat-button {
+  .edit-cat-modal-container {
     padding: 1rem;
+    width: 95%;
+    margin: 0 auto;
+    max-height: 85vh;      /* un poco más alto */
+    overflow-y: auto;      /* scroll vertical interno */
+    -webkit-overflow-scrolling: touch; /* inercia iOS */
   }
-  
-  .edit-cat-input {
-    padding: 1rem;
+
+  .edit-cat-modal-title { font-size: 1.2rem; }
+
+  /* Historial como tarjetas */
+  .edit-cat-table-responsive {
+    max-height: none;
+    overflow: visible;
+    border: none;
+    border-radius: 0;
   }
-  
-  .edit-cat-floating-label {
-    top: 1rem;
+
+  .edit-cat-historico-table,
+  .edit-cat-historico-table thead,
+  .edit-cat-historico-table tbody,
+  .edit-cat-historico-table tr,
+  .edit-cat-historico-table th,
+  .edit-cat-historico-table td {
+    display: block;
+    width: 100%;
   }
+
+  .edit-cat-historico-table thead { display: none; }
+
+  .edit-cat-historico-table tbody tr {
+    background: var(--edit-cat-white);
+    border: 1px solid var(--edit-cat-medium);
+    border-radius: 12px;
+    box-shadow: var(--edit-cat-shadow-sm);
+    margin: 0 0 12px 0;
+    padding: 12px 12px 8px 12px;
+  }
+
+  .edit-cat-even-row, .edit-cat-odd-row { background: transparent; }
+
+  .edit-cat-historico-table td {
+    border: none;
+    padding: 8px 0;
+    position: relative;
+    font-size: 0.95rem;
+    display: flex;
+    gap: 8px;
+    align-items: baseline;
+  }
+
+  .edit-cat-historico-table td:nth-child(1)::before { content: "Fecha"; }
+  .edit-cat-historico-table td:nth-child(2)::before { content: "Precio Anterior"; }
+  .edit-cat-historico-table td:nth-child(3)::before { content: "Precio Nuevo"; }
+  .edit-cat-historico-table td:nth-child(4)::before { content: "Cambio"; }
+
+  .edit-cat-historico-table td::before {
+    flex: 0 0 auto;
+    min-width: 120px;
+    font-weight: 600;
+    color: var(--edit-cat-dark);
+  }
+
+  .edit-cat-historico-table td { color: var(--edit-cat-black); }
+
+  .edit-cat-historico-table tbody tr td:first-child {
+    padding-top: 2px;
+    font-weight: 600;
+    color: var(--edit-cat-primary-dark);
+  }
+
+  .edit-cat-historico-table tbody tr td + td {
+    border-top: 1px dashed var(--edit-cat-medium);
+    padding-top: 10px;
+    margin-top: 8px;
+  }
+
+  /* 🔹 Botones DENTRO del contenedor, pegados abajo en mobile */
+  .mobile-bottom-buttons {
+    margin-top: auto;              /* empuja este bloque al fondo del contenedor */
+    display: flex;
+    gap: 0.6rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--edit-cat-medium);
+    background: var(--edit-cat-white);
+  }
+  .mobile-bottom-buttons .edit-cat-back-button,
+  .mobile-bottom-buttons .edit-cat-save-button {
+    flex: 1;
+  }
+}
+
+/* =========================
+   TABLET
+   ========================= */
+@media (min-width: 481px) and (max-width: 768px) {
+  .edit-cat-box { max-width: 450px; }
+  .edit-cat-modal-container { max-width: 90%; }
+}
+
+/* =========================
+   DESKTOP
+   ========================= */
+@media (min-width: 769px) {
+  .edit-cat-buttons-container { flex-direction: row; }
+  .edit-cat-view-history-button { width: auto; }
+  .mobile-bottom-buttons { display: none; } /* solo mobile */
 }
 
 .edit-cat-box::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 8px;
+  top: 0; left: 0;
+  width: 100%; height: 6px;
   background: linear-gradient(90deg, var(--edit-cat-primary), var(--edit-cat-primary-light));
-}
-
-/* Agregar al final del archivo CSS existente */
-
-.edit-cat-disabled-input {
-  background-color: #f1f1f1;
-  color: #888;
-  cursor: not-allowed;
-  border-color: #e0e0e0;
-}
-
-.edit-cat-disabled-input + .edit-cat-floating-label {
-  color: #888;
-}
-
-.edit-cat-disabled-input + .edit-cat-floating-label-active {
-  background-color: #f1f1f1;
-  color: #666;
 }

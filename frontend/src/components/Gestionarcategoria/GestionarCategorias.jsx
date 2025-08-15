@@ -23,7 +23,6 @@ const GestionarCategorias = () => {
         setIsLoading(true);
         const response = await fetch(`${BASE_URL}/api.php?action=obtener_categoria`);
         const data = await response.json();
-        
         if (Array.isArray(data)) {
           setCategorias(data);
         } else {
@@ -35,35 +34,24 @@ const GestionarCategorias = () => {
         setIsLoading(false);
       }
     };
-
     fetchCategorias();
   }, []);
 
-  const handleAgregarCategoria = () => {
-    navigate("/agregar_categoria");
-  };
-
-  const handleEditarCategoria = (nombreCategoria) => {
-    navigate(`/editar_categoria/${nombreCategoria}`);
-  };
+  const handleAgregarCategoria = () => navigate("/agregar_categoria");
+  const handleEditarCategoria = (nombreCategoria) => navigate(`/editar_categoria/${nombreCategoria}`);
 
   const handleEliminarCategoria = async () => {
     if (!categoriaAEliminar) return;
-
     try {
       setIsDeleting(true);
       const response = await fetch(`${BASE_URL}/api.php?action=eliminar_categoria`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ nombre_categoria: categoriaAEliminar }),
       });
-      
       const data = await response.json();
-      
       if (data.success) {
-        setCategorias(prev => prev.filter(cat => cat.Nombre_Categoria !== categoriaAEliminar));
+        setCategorias((prev) => prev.filter((cat) => cat.Nombre_Categoria !== categoriaAEliminar));
         setModalOpen(false);
         setToastTipo("exito");
         setToastMensaje("Categoría eliminada correctamente");
@@ -83,9 +71,7 @@ const GestionarCategorias = () => {
     }
   };
 
-  const handleVolverAtras = () => {
-    navigate("/PaginaPrincipal");
-  };
+  const handleVolverAtras = () => navigate("/PaginaPrincipal");
 
   return (
     <>
@@ -97,7 +83,7 @@ const GestionarCategorias = () => {
           duracion={3000}
         />
       )}
-      
+
       <div className="cat_container">
         <div className="cat_box">
           <h2 className="cat_title">Gestionar Categorías</h2>
@@ -107,10 +93,7 @@ const GestionarCategorias = () => {
             Agregar Categoría
           </button>
 
-          <div 
-            key={categorias.length}
-            className={`cat_categoriasList ${isLoading ? '' : 'cat_loaded'}`}
-          >
+          <div key={categorias.length} className={`cat_categoriasList ${isLoading ? "" : "cat_loaded"}`}>
             {isLoading ? (
               <>
                 {[...Array(3)].map((_, index) => (
@@ -126,8 +109,8 @@ const GestionarCategorias = () => {
               </>
             ) : categorias.length > 0 ? (
               categorias.map((categoria, index) => (
-                <div 
-                  key={categoria.Nombre_Categoria} 
+                <div
+                  key={categoria.Nombre_Categoria}
                   className="cat_categoriaItem cat_hover-effect"
                   style={{
                     animation: `cat_subtleCascade 0.3s ease forwards`,
@@ -170,33 +153,50 @@ const GestionarCategorias = () => {
           </button>
         </div>
 
+        {/* MODAL de eliminación con estética unificada */}
         {modalOpen && (
-          <div className="cat_modal">
-            <div className="cat_modalContent">
-              <h3 className="cat_modalTitle">Confirmar Eliminación</h3>
+          <div
+            className="cat_modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="cat_modal_title"
+          >
+            <div className="cat_modalContent cat_modal--danger">
+              <div className="cat_modalIcon" aria-hidden="true">
+                <FontAwesomeIcon icon={faTrash} />
+              </div>
+
+              <h3 id="cat_modal_title" className="cat_modalTitle cat_modalTitle--danger">
+                Eliminar permanentemente
+              </h3>
+
               <p className="cat_modalText">
-                ¿Estás seguro de que deseas eliminar permanentemente la categoría:<br />
-                <strong>"{categoriaAEliminar}"</strong>?
+                ¿Estás seguro de que deseas eliminar permanentemente la categoría:
+                <strong> "{categoriaAEliminar}"</strong>?
               </p>
+
               <div className="cat_modalButtons">
-                <button 
-                  className="cat_modalButton cat_cancelButton cat_hover-effect" 
+                <button
+                  className="cat_btn cat_btn--ghost"
                   onClick={() => setModalOpen(false)}
                   disabled={isDeleting}
                 >
                   Cancelar
                 </button>
-                <button 
-                  className="cat_modalButton cat_acceptButton cat_hover-effect" 
+
+                <button
+                  className="cat_btn cat_btn--solid-danger"
                   onClick={handleEliminarCategoria}
                   disabled={isDeleting}
                 >
                   {isDeleting ? (
                     <>
-                      <FontAwesomeIcon icon={faSpinner} spin style={{marginRight: '8px'}} />
+                      <FontAwesomeIcon icon={faSpinner} spin style={{ marginRight: "8px" }} />
                       Eliminando...
                     </>
-                  ) : 'Confirmar Eliminación'}
+                  ) : (
+                    "Eliminar"
+                  )}
                 </button>
               </div>
             </div>

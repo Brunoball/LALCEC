@@ -25,7 +25,7 @@ import ModalPagosEmpresas from "./ModalPagosEmpresas";
 import BASE_URL from "../../config/config";
 import Toast from "../global/Toast";
 
-// ⬇️ NUEVO: importar util de impresión
+// util de impresión
 import {
   printComprobantesLote,
   printComprobanteItem
@@ -44,6 +44,7 @@ api.interceptors.response.use(
   }
 );
 
+// ===== Row =====
 const Row = memo(({ index, style, data, selectedRow, viewType, activeTab, onRowClick, onPaymentClick, onPrintClick }) => {
   const item = data[index];
   const isSelected = selectedRow === index;
@@ -54,7 +55,7 @@ const Row = memo(({ index, style, data, selectedRow, viewType, activeTab, onRowC
 
     return (
       <div className="gcuotas-actions-inline">
-        {/* Botón Imprimir Fila (siempre visible al seleccionar la fila) */}
+        {/* Imprimir Fila */}
         <button
           className="gcuotas-action-button gcuotas-print-button"
           onClick={(e) => {
@@ -66,7 +67,7 @@ const Row = memo(({ index, style, data, selectedRow, viewType, activeTab, onRowC
           <FontAwesomeIcon icon={faPrint} />
         </button>
 
-        {/* Botón Registrar Pago (solo en deudores) */}
+        {/* Registrar Pago (solo deudores) */}
         {activeTab === "deudores" && (
           <button
             className="gcuotas-action-button gcuotas-payment-button"
@@ -85,7 +86,7 @@ const Row = memo(({ index, style, data, selectedRow, viewType, activeTab, onRowC
 
   if (!item || (!item.apellido && !item.razon_social)) {
     return (
-      <div style={style} className={`gcuotas-virtual-row gcuotas-loading-row ${rowClass}`}>
+      <div style={style} className={`gcuotas-virtual-row gcuotas-loading-row ${rowClass} ${viewType === 'empresa' ? 'gempresas' : 'gsocios'}`}>
         <div className="gcuotas-virtual-cell">Cargando...</div>
         <div className="gcuotas-virtual-cell"></div>
         <div className="gcuotas-virtual-cell"></div>
@@ -99,7 +100,7 @@ const Row = memo(({ index, style, data, selectedRow, viewType, activeTab, onRowC
   return (
     <div
       style={style}
-      className={`gcuotas-virtual-row ${rowClass}`}
+      className={`gcuotas-virtual-row ${rowClass} ${viewType === 'empresa' ? 'gempresas' : 'gsocios'}`}
       onClick={() => onRowClick(index)}
     >
       {viewType === "socio" ? (
@@ -174,7 +175,7 @@ const GestionarCuotas = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [viewType, setViewType] = useState("socio");
 
-  // ⬇️ NUEVO: estado para impresión individual y meses elegidos en modal
+  // impresión
   const [mostrarModalMes, setMostrarModalMes] = useState(false);
   const [mesesSeleccionadosImpresion, setMesesSeleccionadosImpresion] = useState([]);
   const [modoImpresionIndividual, setModoImpresionIndividual] = useState(false);
@@ -218,17 +219,21 @@ const GestionarCuotas = () => {
     mediosPago: [],
     cacheDuration: 30 * 60 * 1000 // 30 minutos
   });
-  const isMobileRef = useRef(window.innerWidth <= 768);
 
+  // Detección de móvil
+  const isMobileRef = useRef(window.innerWidth <= 768);
+  const [isMobile, setIsMobile] = useState(isMobileRef.current);
   useEffect(() => {
     const handleResize = () => {
-      isMobileRef.current = window.innerWidth <= 768;
+      const mobile = window.innerWidth <= 768;
+      isMobileRef.current = mobile;
+      setIsMobile(mobile);
     };
-    
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Toasts
   const showToast = useCallback((tipo, mensaje, duracion = 3000) => {
     setToast({ show: true, tipo, mensaje, duracion });
   }, []);
@@ -237,7 +242,7 @@ const GestionarCuotas = () => {
   const showSuccessToast = useCallback((m) => showToast('exito', m), [showToast]);
   const showWarningToast = useCallback((m) => showToast('advertencia', m), [showToast]);
 
-  // ⬇️ Cambiado: cuando falta info, mostrar "-"
+  // Formateo
   const formatData = useCallback((data) => {
     return data.map(item => {
       const categoria = item.categoria ? item.categoria : '-';
@@ -249,6 +254,27 @@ const GestionarCuotas = () => {
     });
   }, []);
 
+  // === Helper de filtrado reutilizable (para lista principal y para badges) ===
+  const filterDataGeneric = useCallback((arr) => {
+    if (!arr || arr.length === 0) return [];
+    let filtered = [...arr];
+
+    if (selectedMedioPago) {
+      const medioLower = selectedMedioPago.toLowerCase();
+      filtered = filtered.filter(item => item.medio_pago?.toLowerCase() === medioLower);
+    }
+    if (searchTerm) {
+      const t = searchTerm.toLowerCase();
+      filtered = filtered.filter(item =>
+        viewType === "socio"
+          ? (item.apellido?.toLowerCase().includes(t) || item.nombre?.toLowerCase().includes(t))
+          : (item.razon_social?.toLowerCase().includes(t))
+      );
+    }
+    return filtered;
+  }, [selectedMedioPago, searchTerm, viewType]);
+
+  // === Datos filtrados (según activeTab) para la lista mostrada ===
   const datosFiltrados = useMemo(() => {
     let datosCrudos = [];
     if (viewType === "socio") {
@@ -260,35 +286,34 @@ const GestionarCuotas = () => {
     if (!selectedMonth && !selectedMedioPago && !searchTerm) return [];
     if (datosCrudos.length === 0) return [];
 
-    let filtered = [...datosCrudos];
-
-    if (selectedMedioPago) {
-      const medioLower = selectedMedioPago.toLowerCase();
-      filtered = filtered.filter(item => item.medio_pago?.toLowerCase() === medioLower);
-    }
-
-    if (searchTerm) {
-      const t = searchTerm.toLowerCase();
-      filtered = filtered.filter(item =>
-        viewType === "socio"
-          ? item.apellido?.toLowerCase().includes(t) || item.nombre?.toLowerCase().includes(t)
-          : item.razon_social?.toLowerCase().includes(t)
-      );
-    }
-
-    return filtered;
+    return filterDataGeneric(datosCrudos);
   }, [
-    viewType, 
-    activeTab, 
-    sociosPagados, 
-    sociosDeudores, 
-    empresasPagadas, 
+    viewType,
+    activeTab,
+    sociosPagados,
+    sociosDeudores,
+    empresasPagadas,
     empresasDeudoras,
     selectedMedioPago,
     searchTerm,
-    selectedMonth
+    selectedMonth,
+    filterDataGeneric
   ]);
 
+  // === Badges: contadores por pestaña con los mismos filtros (¡buscador incluido!) ===
+  const countPagados = useMemo(() => {
+    if (!selectedMonth && !selectedMedioPago && !searchTerm) return 0;
+    const base = viewType === "socio" ? sociosPagados : empresasPagadas;
+    return filterDataGeneric(base).length;
+  }, [selectedMonth, selectedMedioPago, searchTerm, viewType, sociosPagados, empresasPagadas, filterDataGeneric]);
+
+  const countDeudores = useMemo(() => {
+    if (!selectedMonth && !selectedMedioPago && !searchTerm) return 0;
+    const base = viewType === "socio" ? sociosDeudores : empresasDeudoras;
+    return filterDataGeneric(base).length;
+  }, [selectedMonth, selectedMedioPago, searchTerm, viewType, sociosDeudores, empresasDeudoras, filterDataGeneric]);
+
+  // Paginación/infinite
   const datosFiltradosPaginated = useMemo(() => {
     return datosFiltrados.slice(0, offset + limit);
   }, [datosFiltrados, offset, limit]);
@@ -321,6 +346,7 @@ const GestionarCuotas = () => {
     if (listRef.current) listRef.current.scrollTo(0);
   }, [selectedMonth, selectedMedioPago, searchTerm, viewType, activeTab]);
 
+  // Carga Meses
   useEffect(() => {
     const fetchMeses = async () => {
       if (cacheRef.current.meses.length > 1) {
@@ -342,6 +368,7 @@ const GestionarCuotas = () => {
     fetchMeses();
   }, [showErrorToast]);
 
+  // Carga Medios de pago
   useEffect(() => {
     const fetchMediosPago = async () => {
       if (cacheRef.current.mediosPago.length > 0) {
@@ -367,6 +394,7 @@ const GestionarCuotas = () => {
     fetchMediosPago();
   }, [showErrorToast]);
 
+  // Carga Socios por mes o todos
   const cargarDatosPorMes = useCallback(async (mes, forceRefresh = false) => {
     if (loading.socios) return;
     const now = Date.now();
@@ -510,6 +538,7 @@ const GestionarCuotas = () => {
     }
   }, [formatData, loading.socios, showErrorToast]);
 
+  // Efectos de carga según selección
   useEffect(() => {
     if (viewType !== "socio") return;
     const shouldLoad = selectedMonth || selectedMedioPago || searchTerm;
@@ -537,6 +566,7 @@ const GestionarCuotas = () => {
     cargarDatosEmpresasPorMes(selectedMonth || "");
   }, [selectedMonth, viewType, selectedMedioPago, searchTerm, cargarDatosEmpresasPorMes]);
 
+  // Handlers UI
   const handleVolverAtras = useCallback(() => navigate(-1), [navigate]);
 
   const handleMonthChange = useCallback((e) => {
@@ -549,25 +579,36 @@ const GestionarCuotas = () => {
   }, []);
 
   const handleSearchChange = useCallback((e) => {
-    if (!selectedMonth) return;
+    if (!selectedMonth) return; // según tu lógica actual
     setSearchTerm(e.target.value);
   }, [selectedMonth]);
 
   const handleRowClick = useCallback((index) => {
-    setSelectedRow(prev => prev === index ? null : index);
+    if (typeof index !== "number" || index < 0) return;
+    setSelectedRow(prev => (prev === index ? null : index));
   }, []);
 
-  // ⬇️ CAMBIO: validar categoría antes de abrir modal de socio
+  useEffect(() => {
+    if (selectedRow === null) return;
+    if (selectedRow >= datosFiltradosPaginated.length) {
+      setSelectedRow(null);
+    }
+  }, [datosFiltradosPaginated.length, selectedRow]);
+
   const handlePaymentClick = useCallback((item) => {
     setSelectedItemData(item);
+
+    const hasCategoria = !!item?.categoria && String(item.categoria).trim() !== "";
+    const hasPrecioCategoria = !!item?.precio_categoria && Number(item.precio_categoria) > 0;
+
+    if (!hasCategoria || !hasPrecioCategoria) {
+      const sujeto = viewType === "socio" ? "El socio" : "La empresa";
+      showErrorToast(`${sujeto} no tiene categoría asignada. No se puede registrar el pago.`);
+      setSelectedItemData(null);
+      return;
+    }
+
     if (viewType === "socio") {
-      const hasCategoria = !!item?.categoria;
-      const hasPrecioCategoria = !!item?.precio_categoria;
-      if (!hasCategoria || !hasPrecioCategoria) {
-        showErrorToast("El socio no tiene categoría asignada. No se puede registrar el pago.");
-        setSelectedItemData(null);
-        return;
-      }
       setMostrarModalPagoSocio(true);
     } else {
       setMostrarModalPagoEmpresa(true);
@@ -704,7 +745,7 @@ const GestionarCuotas = () => {
     showWarningToast
   ]);
 
-  // ⬇️ NUEVO: abrir modal para lote o individual
+  // abrir modal para lote o individual
   const handleAbrirModalImpresion = useCallback(() => {
     if (!selectedMonth && !selectedMedioPago && !searchTerm) {
       showWarningToast("Por favor aplique filtros antes de imprimir");
@@ -732,7 +773,7 @@ const GestionarCuotas = () => {
     loading.socios, loading.empresas, datosFiltrados, showWarningToast
   ]);
 
-  // ⬇️ NUEVO: click de imprimir fila única
+  // click de imprimir fila única
   const handlePrintClick = useCallback((item) => {
     setSelectedItemData(item);
     setModoImpresionIndividual(true);
@@ -740,7 +781,7 @@ const GestionarCuotas = () => {
     setMostrarModalMes(true);
   }, [selectedMonth]);
 
-  // ⬇️ NUEVO: imprimir lote según meses del modal
+  // imprimir lote según meses
   const handleImprimirTodosComprobantes = useCallback((mesesSeleccionados) => {
     if (!Array.isArray(mesesSeleccionados) || mesesSeleccionados.length === 0) {
       showWarningToast("Debe seleccionar al menos un mes");
@@ -750,7 +791,7 @@ const GestionarCuotas = () => {
     setMostrarModalMes(false);
   }, [datosFiltrados, viewType, activeTab, showWarningToast]);
 
-  // ⬇️ NUEVO: imprimir una fila con meses del modal
+  // imprimir una fila con meses
   const handleImprimirUnoConMeses = useCallback((item, mesesSeleccionados) => {
     if (!Array.isArray(mesesSeleccionados) || mesesSeleccionados.length === 0) {
       showWarningToast("Debe seleccionar al menos un mes");
@@ -863,7 +904,7 @@ const GestionarCuotas = () => {
     
     return (
       <div className="gcuotas-virtual-table" style={{ height: "85vh" }}>
-        <div className="gcuotas-virtual-header">
+        <div className={`gcuotas-virtual-header ${viewType === 'empresa' ? 'gempresas' : 'gsocios'}`}>
           {viewType === "socio" ? (
             <>
               <div className="gcuotas-virtual-cell">Apellido</div>
@@ -901,9 +942,7 @@ const GestionarCuotas = () => {
           {(props) => {
             if (props.index >= datosFiltradosPaginated.length) {
               return (
-                <div style={props.style} className="gcuotas-loading-row">
-
-                </div>
+                <div style={props.style} className="gcuotas-loading-row"></div>
               );
             }
             return (
@@ -952,7 +991,7 @@ const GestionarCuotas = () => {
         />
       )}
 
-      {/* ⬇️ Modal de Meses: ahora soporta selección múltiple */}
+      {/* Modal de Meses */}
       {mostrarModalMes && (
         <ModalMesCuotas
           mesesSeleccionados={mesesSeleccionadosImpresion}
@@ -1001,17 +1040,20 @@ const GestionarCuotas = () => {
             <FontAwesomeIcon icon={faMoneyCheckAlt} className="gcuotas-title-icon" />
             Gestionar Cuotas
           </h2>
-            <div className="gcuotas-divider"></div>
+          <div className="gcuotas-divider"></div>
         </div>
-  
+
         <div className="gcuotas-scrollable-content">
           <div className="gcuotas-top-section">
             <div className="gcuotas-filter-card">
               <div className="gcuotas-filter-header">
-                <FontAwesomeIcon icon={faFilter} className="gcuotas-filter-icon" />
-                <span>Filtros</span>
+                <div className="gcuotas-filter-header-left">
+                  <FontAwesomeIcon icon={faFilter} className="gcuotas-filter-icon" />
+                  <span>Filtros</span>
+                </div>
               </div>
-  
+
+              {/* GRID para filtros: en móvil, Mes + Tipo a la par, Medio debajo */}
               <div className="gcuotas-select-container">
                 <div className="gcuotas-input-group">
                   <label htmlFor="meses" className="gcuotas-input-label">
@@ -1030,7 +1072,7 @@ const GestionarCuotas = () => {
                     ))}
                   </select>
                 </div>
-  
+
                 <div className="gcuotas-input-group">
                   <label htmlFor="entidad" className="gcuotas-input-label">
                     <FontAwesomeIcon icon={faUsers} /> Tipo de vista
@@ -1050,7 +1092,7 @@ const GestionarCuotas = () => {
                   </select>
                 </div>
 
-                <div className="gcuotas-input-group">
+                <div className="gcuotas-input-group gcuotas-input-full">
                   <label htmlFor="medioPago" className="gcuotas-input-label">
                     <FontAwesomeIcon icon={faCreditCard} /> Medio de Pago
                   </label>
@@ -1069,7 +1111,7 @@ const GestionarCuotas = () => {
                 </div>
               </div>
             </div>
-  
+
             <div className="gcuotas-tabs-card">
               <div className="gcuotas-tabs-header">
                 <FontAwesomeIcon icon={faList} className="gcuotas-tabs-icon" />
@@ -1086,9 +1128,7 @@ const GestionarCuotas = () => {
                 >
                   <FontAwesomeIcon icon={faCheckCircle} />
                   Pagado
-                  <span className="gcuotas-tab-badge">
-                    {selectedMonth ? (viewType === "socio" ? sociosPagados.length : empresasPagadas.length) : 0}
-                  </span>
+                  <span className="gcuotas-tab-badge">{countPagados}</span>
                 </button>
                 <button
                   className={`gcuotas-tab-button ${activeTab === "deudores" ? "gcuotas-active-tab" : ""}`}
@@ -1100,14 +1140,13 @@ const GestionarCuotas = () => {
                 >
                   <FontAwesomeIcon icon={faExclamationTriangle} />
                   Deudores
-                  <span className="gcuotas-tab-badge">
-                    {selectedMonth ? (viewType === "socio" ? sociosDeudores.length : empresasDeudoras.length) : 0}
-                  </span>
+                  <span className="gcuotas-tab-badge">{countDeudores}</span>
                 </button>
               </div>
             </div>
           </div>
-  
+
+          {/* En escritorio la caja de acciones sigue arriba; en móvil se reemplaza por bottom bar */}
           <div className="gcuotas-actions-card">
             <div className="gcuotas-actions-header">
               <FontAwesomeIcon icon={faCog} className="gcuotas-actions-icon" />
@@ -1150,14 +1189,14 @@ const GestionarCuotas = () => {
           </div>
         </div>
       </div>
-  
-      <div className="gcuotas-right-section gcuotas-box">
+
+      <div className={`gcuotas-right-section gcuotas-box ${isMobile ? 'gcuotas-has-bottombar' : ''}`}>
         <div className="gcuotas-table-header">
           <h3>
             <FontAwesomeIcon icon={activeTab === "pagado" ? faCheckCircle : faExclamationTriangle} />
             {activeTab === "pagado" ? "Cuotas Pagadas" : "Cuotas Pendientes"}
           </h3>
-          <div className="gcuotas-input-group">
+          <div className="gcuotas-input-group gcuotas-search-group">
             <div className="gcuotas-search-integrated">
               <FontAwesomeIcon icon={faSearch} className="gcuotas-search-icon" />
               <input
@@ -1173,7 +1212,7 @@ const GestionarCuotas = () => {
           <div className="gcuotas-summary-info">
             <span className="gcuotas-summary-item">
               <FontAwesomeIcon icon={faUsers} />
-              Total: {selectedMonth ? datosFiltrados.length : 0}
+              Total: {selectedMonth || selectedMedioPago || searchTerm ? datosFiltrados.length : 0}
             </span>
             {selectedMonth && (
               <span className="gcuotas-summary-item">
@@ -1189,11 +1228,53 @@ const GestionarCuotas = () => {
             )}
           </div>
         </div>
-  
+
+        {/* Scroll propio para lista / tabla */}
         <div className="gcuotas-table-container">
           {renderTabla}
         </div>
       </div>
+
+      {/* Barra de acciones fija en móvil */}
+      {isMobile && (
+        <div className="gcuotas-mobile-bottombar">
+          <button 
+            className="gcuotas-mbar-btn mbar-back" 
+            onClick={handleVolverAtras}
+            disabled={loading.socios || loading.empresas}
+          >
+            <FontAwesomeIcon icon={faArrowLeft} />
+            <span>Volver</span>
+          </button>
+
+          <button 
+            className="gcuotas-mbar-btn mbar-excel" 
+            onClick={handleExportExcel}
+            disabled={loading.socios || loading.empresas}
+          >
+            <FontAwesomeIcon icon={faFileExcel} />
+            <span>Excel</span>
+          </button>
+
+          <button 
+            className="gcuotas-mbar-btn mbar-registro" 
+            onClick={handleImprimirRegistro}
+            disabled={loading.socios || loading.empresas}
+          >
+            <FontAwesomeIcon icon={faPrint} />
+            <span>Registro</span>
+          </button>
+
+          <button 
+            className="gcuotas-mbar-btn mbar-imprimir" 
+            onClick={handleAbrirModalImpresion}
+            disabled={loading.socios || loading.empresas}
+          >
+            <FontAwesomeIcon icon={faPrint} />
+            <span>Imprimir</span>
+          </button>
+        </div>
+      )}
     </div>
   );
 };

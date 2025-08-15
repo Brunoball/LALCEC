@@ -1,12 +1,17 @@
-// src/components/socios/modales_soc/ModalBaja.jsx
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
+import { FaUserMinus } from "react-icons/fa";
 import "./ModalBaja.css";
+
+const MAX_LEN = 250;
 
 const ModalBaja = ({ socio, onCancelar, onConfirmar }) => {
   const [motivo, setMotivo] = useState("");
   const [enviando, setEnviando] = useState(false);
 
-  const puedeConfirmar = motivo.trim().length > 0 && !enviando;
+  const puedeConfirmar = useMemo(
+    () => motivo.trim().length > 0 && !enviando,
+    [motivo, enviando]
+  );
 
   const handleConfirmarClick = async () => {
     if (!puedeConfirmar) return;
@@ -18,44 +23,75 @@ const ModalBaja = ({ socio, onCancelar, onConfirmar }) => {
     }
   };
 
+  if (!socio) return null;
+
   return (
-    <div className="socio-modal-overlay">
-      <div className="socio-modal-content">
-        <h3>Confirmar Baja de Socio</h3>
-        <p>
+    <div
+      className="socbaja-modal-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="socbaja-title"
+    >
+      <div className="socbaja-modal socbaja-modal--danger" role="document">
+        <div className="socbaja-modal__icon" aria-hidden="true">
+          <FaUserMinus />
+        </div>
+
+        <h3 id="socbaja-title" className="socbaja-modal__title">
+          Confirmar baja de socio
+        </h3>
+
+        <p className="socbaja-modal__body">
           ¿Estás seguro que deseas dar de baja a{" "}
-          <strong>{socio?.nombre} {socio?.apellido}</strong>?
+          <strong>
+            {socio?.nombre} {socio?.apellido}
+          </strong>
+          ?
         </p>
 
-        <div className="socio-field">
-          <label htmlFor="motivo" className="socio-label">
-            Motivo de la baja <span style={{ color: "red" }}>*</span>
+        <div className="socbaja-field">
+          <label htmlFor="socbaja-motivo" className="socbaja-label">
+            Motivo de la baja <span className="socbaja-asterisk">*</span>
           </label>
+
           <textarea
-            id="motivo"
-            className="socio-textarea"
-            maxLength={250}
+            id="socbaja-motivo"
+            className="socbaja-textarea"
+            maxLength={MAX_LEN}
             rows={4}
             value={motivo}
             onChange={(e) => setMotivo(e.target.value)}
             placeholder="Escribí el motivo (obligatorio)"
           />
-          <div className="socio-helper">
-            {motivo.length}/250
+          <div className="socbaja-helper">
+            {motivo.length}/{MAX_LEN}
           </div>
         </div>
 
-        <div className="socio-modal-buttons">
-          <button className="socio-btn-cancelar" onClick={onCancelar} disabled={enviando}>
+        <div className="socbaja-modal__actions">
+          <button
+            type="button"
+            className="socbaja-btn socbaja-btn--ghost"
+            onClick={onCancelar}
+            disabled={enviando}
+          >
             Cancelar
           </button>
+
           <button
-            className={`socio-btn-confirmar ${!puedeConfirmar ? "disabled" : ""}`}
+            type="button"
+            className={`socbaja-btn socbaja-btn--solid-danger ${
+              !puedeConfirmar ? "is-disabled" : ""
+            }`}
             onClick={handleConfirmarClick}
             disabled={!puedeConfirmar}
-            title={!puedeConfirmar ? "Ingresá un motivo para continuar" : "Confirmar Baja"}
+            title={
+              !puedeConfirmar
+                ? "Ingresá un motivo para continuar"
+                : "Confirmar baja"
+            }
           >
-            {enviando ? "Procesando..." : "Confirmar Baja"}
+            {enviando ? "Procesando..." : "Confirmar baja"}
           </button>
         </div>
       </div>

@@ -1,6 +1,8 @@
-/* Variables y estilos base */
+/* ================================
+   Variables y base
+==================================*/
 :root {
-  /* COLORES PRIMARIOS NARANJA */
+  /* ===== COLORES PRIMARIOS NARANJA ===== */
   --primary-50: #fff7ed;
   --primary-100: #ffedd5;
   --primary-200: #fed7aa;
@@ -13,28 +15,29 @@
   --primary-900: #7c2d12;
   --primary-950: #431407;
 
-  /* COLORES PRIMARIOS ALIASES */
+  /* ===== ALIASES ===== */
   --primary-color: var(--primary-500);
   --primary-hover: var(--primary-600);
   --primary-light: var(--primary-100);
   --primary-dark: var(--primary-700);
   --primary-accent: var(--primary-400);
 
-  /* COLORES COMPLEMENTARIOS */
+  /* ===== COMPLEMENTARIOS ===== */
   --secondary-50: #eff6ff;
   --secondary-100: #dbeafe;
   --secondary-200: #bfdbfe;
   --secondary-300: #93c5fd;
   --secondary-400: #60a5fa;
-  --secondary-500: #3b82f6;       
+  --secondary-500: #3b82f6;
   --secondary-600: #2563eb;
   --secondary-700: #1d4ed8;
   --secondary-800: #1e40af;
   --secondary-900: #1e3a8a;
+
   --secondary-color: var(--secondary-500);
   --secondary-hover: var(--secondary-600);
 
-  /* COLORES DE ESTADO */
+  /* ===== ESTADO ===== */
   --success-50: #ecfdf5;
   --success-100: #d1fae5;
   --success-200: #a7f3d0;
@@ -43,9 +46,6 @@
   --success-500: #10b981;
   --success-600: #059669;
   --success-700: #047857;
-  --success-800: #065f46;
-  --success-900: #064e3b;
-  --success-color: var(--success-500);
 
   --warning-50: #fffbeb;
   --warning-100: #fef3c7;
@@ -53,11 +53,6 @@
   --warning-300: #fcd34d;
   --warning-400: #fbbf24;
   --warning-500: #f59e0b;
-  --warning-600: #d97706;
-  --warning-700: #b45309;
-  --warning-800: #92400e;
-  --warning-900: #78350f;
-  --warning-color: var(--warning-500);
 
   --danger-50: #fef2f2;
   --danger-100: #fee2e2;
@@ -66,12 +61,8 @@
   --danger-400: #f87171;
   --danger-500: #ef4444;
   --danger-600: #dc2626;
-  --danger-700: #b91c1c;
-  --danger-800: #991b1b;
-  --danger-900: #7f1d1d;
-  --danger-color: var(--danger-500);
 
-  /* COLORES NEUTROS */
+  /* ===== NEUTROS / SUPERFICIES ===== */
   --gray-50: #f8fafc;
   --gray-100: #f1f5f9;
   --gray-200: #e2e8f0;
@@ -83,40 +74,28 @@
   --gray-800: #1e293b;
   --gray-900: #0f172a;
 
-  /* COLORES DE SUPERFICIE */
   --background-color: var(--gray-50);
   --surface-color: #ffffff;
   --surface-secondary: var(--gray-100);
   --border-color: var(--gray-200);
   --border-focus: var(--primary-400);
-
-  /* COLORES DE TEXTO */
   --text-primary: var(--gray-900);
   --text-secondary: var(--gray-600);
   --text-muted: var(--gray-400);
-  --text-inverse: #ffffff;
   --text-on-primary: #ffffff;
-  --text-on-secondary: #ffffff;
 
-  /* GRADIENTES */
+  /* ===== GRADIENTES ===== */
   --gradient-primary: linear-gradient(135deg, var(--primary-500), var(--primary-700));
-  --gradient-primary-light: linear-gradient(135deg, var(--primary-300), var(--primary-500));
-  --gradient-primary-dark: linear-gradient(135deg, var(--primary-600), var(--primary-900));
-  --gradient-sunset: linear-gradient(135deg, var(--primary-400), var(--warning-500));
-  --gradient-warm: linear-gradient(135deg, var(--primary-200), var(--primary-600));
   --gradient-hero: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-700) 50%, var(--primary-900) 100%);
   --gradient-background: linear-gradient(135deg, var(--gray-100) 30%, var(--primary-500) 70%);
 
-  /* SOMBRAS */
+  /* ===== SOMBRAS ===== */
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
   --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-  --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
-  --shadow-primary: 0 4px 14px 0 rgb(249 115 22 / 0.39);
-  --shadow-primary-lg: 0 10px 25px -3px rgb(249 115 22 / 0.3), 0 4px 6px -4px rgb(249 115 22 / 0.1);
 
-  /* MEDIDAS */
+  /* ===== RADIOS / SPACINGS / TRANSICIONES ===== */
   --border-radius: 8px;
   --border-radius-sm: 4px;
   --border-radius-md: 6px;
@@ -129,21 +108,14 @@
   --spacing-md: 1rem;
   --spacing-lg: 1.5rem;
   --spacing-xl: 2rem;
-  --spacing-2xl: 3rem;
 
-  /* TRANSICIONES */
   --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   --transition-normal: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-bounce: 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
   --transition-smooth: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Reset y estilos base */
-* {
-  box-sizing: border-box;
-}
-
+/* Reset y base */
+* { box-sizing: border-box; }
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   line-height: 1.6;
@@ -151,35 +123,39 @@ body {
   background-color: var(--background-color);
 }
 
-/* Contenedor principal */
-.gestionarsocios-container {
+input:-webkit-autofill { background-color: transparent !important; }
+
+/* ================================
+   Layout general (Desktop intacto)
+==================================*/
+.gessoc_empresa-container {
   min-height: 100vh;
   background: var(--gradient-background);
   display: flex;
   justify-content: center;
   align-items: center;
 }
-
-.gestionarsocios-box {
+.gessoc_empresa-box {
   width: 100%;
   min-height: 100vh;
   background: var(--surface-color);
   box-shadow: var(--shadow-lg);
   overflow: hidden;
+  /* 🔸 Antes tenía animación de entrada: la removemos para que quede fija */
+  animation: none !important;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
 }
 
-/* Header */
-.gestionarsocios-front-row-inner {
-  display: flex;
-  width: 100%;
-  max-width: 800px;
-  justify-content: space-between;
+/* (dejamos la keyframe por si se usa en otros lados) */
+@keyframes gessoc_slideInUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-.gestionarsocios-front-row {
+/* Header */
+.gessoc_front-row-emp {
   background: linear-gradient(90deg, #fa7815, #ee6914);
   padding: 1.2rem 2rem;
   display: flex;
@@ -188,35 +164,36 @@ body {
   flex-wrap: wrap;
   gap: 1.5rem;
   position: relative;
+  z-index: 60;
 }
-
-.gestionarsocios-title {
+.gessoc_contenedor-list-items{
+  display: flex;
+  width: 100%;
+  height: 10vh;
+  justify-content: space-between;
+}
+.gessoc_empresa-title {
   color: var(--text-on-primary);
   font-size: 1.6rem;
   margin: 0 0 0 1rem;
   font-weight: 550;
   text-align: center;
+  display: flex;
+  justify-content: flex-start;
+  flex: 1 1;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-/* Barra de búsqueda */
-.gestionarsocios-search-bar {
-  width: auto;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  position: relative;
-}
-
-.gestionarsocios-search-input-container {
+/* Búsqueda */
+.gessoc_search-input-container {
   position: relative;
   flex: 1;
   max-width: 500px;
+  display: flex;
+  align-items: center;
 }
-
-.gestionarsocios-search-input {
-  width: 400px;
+.gessoc_search-input {
+  width: 100%;
   padding: 0.75rem 2.5rem 0.75rem 1rem;
   background: rgba(255, 255, 255, 0.2);
   border: 1px solid rgba(255, 255, 255, 0.3);
@@ -226,19 +203,14 @@ body {
   transition: var(--transition-normal);
   backdrop-filter: blur(5px);
 }
-
-.gestionarsocios-search-input::placeholder {
-  color: rgba(255, 255, 255, 0.7);
-}
-
-.gestionarsocios-search-input:focus {
+.gessoc_search-input::placeholder { color: rgba(255, 255, 255, 0.7); }
+.gessoc_search-input:focus {
   outline: none;
   background: rgba(255, 255, 255, 0.3);
   border-color: white;
   box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.2);
 }
-
-.gestionarsocios-search-button {
+.gessoc_search-button {
   position: absolute;
   right: 0.75rem;
   top: 50%;
@@ -249,71 +221,24 @@ body {
   padding: 0.25rem;
   color: rgba(255, 255, 255, 0.7);
   transition: var(--transition-fast);
+  z-index: 1;
 }
+.gessoc_search-button:hover { color: white; transform: translateY(-50%) scale(1.1); }
+.gessoc_search-icon { width: 16px; height: 16px; }
 
-.gestionarsocios-search-button:hover {
-  color: white;
-  transform: translateY(-50%) scale(1.1);
-}
-
-.gestionarsocios-search-icon {
-  width: 16px;
-  height: 16px;
-}
-
-.gestionarsocios-clear-search-icon {
+.gessoc_clear-search-icon {
   position: absolute;
   right: 40px;
-  top: 50%;
-  transform: translateY(-50%);
   cursor: pointer;
-  color: rgba(255, 255, 255, 0.7);
+  color: #ffffff;
   padding: 0 5px;
   transition: all 0.2s;
 }
-
-.gestionarsocios-clear-search-icon:hover {
-  color: white;
-  transform: translateY(-50%) scale(1.1);
-}
-
-/* Dropdown */
-.gestionarsocios-alphabet-dropdown {
-  position: relative;
-}
-
-.gestionarsocios-dropdown {
-  padding: 0.75rem 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: var(--border-radius);
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: var(--transition-normal);
-  backdrop-filter: blur(10px);
-  min-width: 200px;
-}
-
-.gestionarsocios-dropdown:hover,
-.gestionarsocios-dropdown:focus {
-  background: rgba(255, 255, 255, 0.2);
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
-}
-
-.gestionarsocios-dropdown option {
-  background: var(--surface-color);
-  color: var(--text-primary);
-  padding: 0.5rem;
-}
+.gessoc_clear-search-icon:hover { color: #ffffff; transform: translateY(-5%) scale(1.1); }
 
 /* Filtros */
-.gestionarsocios-filtros-container {
-  position: relative;
-}
-
-.gestionarsocios-filtros-button {
+.gessoc_filtros-container { position: relative; display: flex; justify-content: flex-end; flex: 1; }
+.gessoc_filtros-button {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -329,21 +254,11 @@ body {
   white-space: nowrap;
   backdrop-filter: blur(5px);
 }
+.gessoc_filtros-button:hover { background: rgba(255, 255, 255, 0.3); transform: translateY(-1px); }
+.gessoc_chevron-icon { transition: transform var(--transition-normal); }
+.gessoc_chevron-icon.gessoc_rotate { transform: rotate(180deg); }
 
-.gestionarsocios-filtros-button:hover {
-  background: rgba(255, 255, 255, 0.3);
-  transform: translateY(-1px);
-}
-
-.gestionarsocios-chevron-icon {
-  transition: transform var(--transition-normal);
-}
-
-.gestionarsocios-chevron-icon.rotate {
-  transform: rotate(180deg);
-}
-
-.gestionarsocios-filtros-menu {
+.gessoc_filtros-menu {
   position: absolute;
   top: 100%;
   right: 0;
@@ -354,21 +269,15 @@ body {
   box-shadow: var(--shadow-xl);
   z-index: 1000;
   margin-top: var(--spacing-xs);
-  animation: dropDown 0.3s ease-out;
+  animation: gessoc_dropDown 0.3s ease-out;
+  max-height: 70vh;
+  overflow: auto;
 }
-
-@keyframes dropDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+@keyframes gessoc_dropDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
-
-.gestionarsocios-filtros-menu-item {
+.gessoc_filtros-menu-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -377,12 +286,8 @@ body {
   transition: background-color var(--transition-fast);
   border-bottom: 1px solid var(--gray-100);
 }
-
-.gestionarsocios-filtros-menu-item:hover {
-  background-color: var(--gray-50);
-}
-
-.gestionarsocios-filtros-menu-item.gestionarsocios-mostrar-todas {
+.gessoc_filtros-menu-item:hover { background-color: var(--gray-50); }
+.gessoc_filtros-menu-item.gessoc_mostrar-todas {
   background-color: white;
   color: var(--primary-color);
   font-weight: 500;
@@ -390,25 +295,21 @@ body {
   border-bottom-left-radius: 7px;
   border-bottom-right-radius: 7px;
 }
-
-.gestionarsocios-filtros-menu-item.gestionarsocios-mostrar-todas:hover {
+.gessoc_filtros-menu-item.gessoc_mostrar-todas:hover {
   background-color: var(--primary-color);
   color: white;
 }
-
-.gestionarsocios-filtros-submenu {
+.gessoc_filtros-submenu {
   background: var(--gray-50);
   padding: 1rem;
   border-top: 1px solid var(--gray-200);
 }
-
-.gestionarsocios-alfabeto-filtros {
+.gessoc_alfabeto-filtros {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
   gap: 0.5rem;
 }
-
-.gestionarsocios-letra-filtro {
+.gessoc_letra-filtro {
   padding: 0.5rem;
   border: 1px solid var(--gray-300);
   background: white;
@@ -419,64 +320,36 @@ body {
   font-weight: 500;
   font-size: 0.85rem;
 }
-
-.gestionarsocios-letra-filtro:hover {
+.gessoc_letra-filtro:hover {
   background: var(--primary-color);
   color: white;
   transform: translateY(-1px);
   box-shadow: var(--shadow-sm);
 }
-
-.gestionarsocios-letra-filtro.active {
+.gessoc_letra-filtro.gessoc_active {
   background: var(--primary-color);
   color: white;
   border-color: var(--primary-color);
 }
 
-.gestionarsocios-filtros-submenu-item {
-  padding: 0.5rem 0.75rem;
-  cursor: pointer;
-  border-radius: var(--border-radius-sm);
-  transition: background-color var(--transition-fast);
-  font-size: 0.85rem;
-}
-
-.gestionarsocios-filtros-submenu-item:hover {
-  background-color: var(--primary-color);
-  color: white;
-}
-
-/* Filtros activos */
-.gestionarsocios-filtros-activos-container {
+/* ===== FILTROS ACTIVOS ===== */
+.gessoc_filtros-activos-container {
   width: 100%;
   margin: 0;
   padding: 0 2rem;
   display: contents;
   box-sizing: border-box;
-  animation: fadeIn 0.3s ease-out;
+  animation: gessoc_fadeIn 0.3s ease-out;
   transition: all 0.3s ease;
   overflow: hidden;
   max-height: 0;
   opacity: 0;
 }
+.gessoc_filtros-activos-container.gessoc_show { max-height: 100px; opacity: 1; margin: 0.5rem 0; }
 
-.gestionarsocios-filtros-activos-container.show {
-  max-height: 100px;
-  opacity: 1;
-  margin: 0.5rem 0;
-}
+.gessoc_empresas-list { padding: 1rem 2rem 0; }
 
-.gestionarsocios-list {
-  padding: 0rem 2rem 0;
-}
-
-.gestionarsocios-contenedor-contadorYiconos {
-  display: flex;
-  width: 100%;
-  justify-content: space-between;
-}
-
-.gestionarsocios-filtros-activos {
+.gessoc_filtros-activos {
   display: grid;
   grid-template-columns: auto 1fr 1fr;
   background-color: #f2f2f2;
@@ -484,45 +357,23 @@ body {
   padding: 10px 15px;
   margin: 10px;
   box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
-  border: none;
+  border:none;
 }
-
-.gestionarsocios-filtros-activos-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 14px;
-  color: #555;
-  font-weight: 500;
-  padding: 0 1rem 0 0;
-}
-
-.gestionarsocios-limpiar-filtros-btn {
+.gessoc_filtros-activos-header { display: flex; align-items: center; font-size: 14px; color: #555; font-weight: 500; padding-right: 1rem; }
+.gessoc_limpiar-filtros-btn {
   background: transparent;
   border: none;
-  color: var(--danger-color);
+  color: var(--danger-500);
   font-size: 0.85rem;
   cursor: pointer;
   padding: 0.25rem 0.5rem;
-  border-radius: var(--border-radius-sm);
+  border-radius: 10px;
   transition: var(--transition-fast);
   margin-left: auto;
-  border-radius: 10px;
 }
-
-.gestionarsocios-limpiar-filtros-btn:hover {
-  background-color: #ef444430;
-}
-
-.gestionarsocios-filtros-activos-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  grid-column: 2/3;
-  grid-row: 1/2;
-}
-
-.gestionarsocios-filtro-chip {
+.gessoc_limpiar-filtros-btn:hover { background-color: #ef444430; }
+.gessoc_filtros-activos-chips { display: flex; flex-wrap: wrap; gap: 8px; grid-column: 2/3; grid-row: 1/2; }
+.gessoc_filtro-chip {
   display: flex;
   align-items: center;
   background-color: #e9ecef;
@@ -530,322 +381,196 @@ body {
   border-radius: 60vh;
   font-size: 13px;
   color: #495057;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-sm);
   transition: all var(--transition-fast);
 }
-
-.gestionarsocios-filtro-chip:hover {
-  box-shadow: 0 1px 2px rgb(0 0 0 / 31%);
-  transform: translateY(-2px);
-}
-
-.gestionarsocios-filtro-chip-close {
-  margin-left: 6px;
-  cursor: pointer;
-  color: #6c757d;
-  font-size: 12px;
-  transition: color 0.2s;
-}
-
-.gestionarsocios-filtro-chip-close:hover {
-  color: #dc3545;
-}
+.gessoc_filtro-chip:hover{ transform: translateY(-2px); }
+.gessoc_filtro-chip-close { margin-left: 6px; cursor: pointer; color: #6c757d; font-size: 12px; transition: color 0.2s; }
+.gessoc_filtro-chip-close:hover { color: #dc3545; }
 
 /* Mensajes de error */
-.gestionarsocios-error {
+.gessoc_error {
   color: #fecaca;
   font-size: 0.875rem;
   text-align: center;
   margin-top: 0.5rem;
 }
-
-.gestionarsocios-error-message {
-  background: var(--alert-danger-bg);
-  border: 1px solid var(--alert-danger-border);
-  color: var(--alert-danger-text);
+.gessoc_error-message-emp {
+  background: var(--danger-50);
+  border: 1px solid var(--danger-200);
+  color: #b91c1c;
   padding: 1rem;
   margin: 1rem 2rem;
   border-radius: var(--border-radius);
   font-size: 0.875rem;
-  animation: slideInDown 0.3s ease-out;
+  animation: gessoc_slideInDown 0.3s ease-out;
+}
+@keyframes gessoc_slideInDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes slideInDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Tabla */
-.gestionarsocios-box-table {
-  display: flex;
-  flex-direction: column;
-  max-height: 60vh;
-  overflow: auto;
+/* ================================
+   Tabla (Desktop por defecto)
+==================================*/
+.gessoc_box-table {
+  border-radius: var(--border-radius);
+  overflow: hidden;
   border: 1px solid var(--border-color);
   background: var(--surface-color);
-  border-radius: var(--border-radius);
 }
-
-.gestionarsocios-header {
-  display: grid;
-  grid-template-columns: minmax(120px, 1.2fr) minmax(120px, 1.2fr) minmax(100px, 1fr) minmax(100px, 1fr) minmax(150px, 1.2fr) minmax(150px, 1.2fr) minmax(100px, 1fr);
+.gessoc_header {
+  display: flex;
   background: linear-gradient(90deg, #fa7815, #ef6a14);
+  border-bottom: 2px solid var(--border-color);
   position: sticky;
   top: 0;
   z-index: 10;
-  width: 100%;
 }
-
-.gestionarsocios-column-header {
-  padding: 4px 8px;
+.gessoc_column-header {
+  padding: 0.5rem;
   font-weight: 400;
   color: var(--text-on-primary);
-  font-size: 0.8rem;
+  font-size: 0.875rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   border-right: 1px solid var(--primary-color);
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 40px;
 }
+.gessoc_column-header { text-align: center; padding: 10px 5px; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 
-.gestionarsocios-body {
-  display: block;
-  min-height: auto;
-  overflow-y: auto;
-  overflow-x: hidden;
-  scroll-behavior: smooth;
-}
-
-.gestionarsocios-row {
-  display: grid;
-  grid-template-columns: minmax(120px, 1.2fr) minmax(120px, 1.2fr) minmax(100px, 1fr) minmax(100px, 1fr) minmax(150px, 1.2fr) minmax(150px, 1.2fr) minmax(100px, 1fr);
-  border-bottom: 1px solid var(--border-color);
-  transition: 
-    background-color var(--transition-fast),
-    transform var(--transition-bounce),
-    box-shadow var(--transition-fast);
-  position: relative;
-  min-height: 40px;
-  width: 100%;
-}
-
-.gestionarsocios-selected-row {
-  background-color: #ffedd59e;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
-}
-
-/* Estados de pago */
-.gestionarsocios-row {
-  border-left: 4px solid transparent;
-}
-
-.gestionarsocios-al-dia {
-  border-left-color: var(--success-color);
-}
-
-.gestionarsocios-debe-1-2 {
-  border-left-color: var(--warning-color);
-}
-
-.gestionarsocios-debe-3-mas {
-  border-left-color: var(--danger-color);
-}
-
-.gestionarsocios-even-row {
-  background-color: var(--gray-50);
-}
-
-.gestionarsocios-odd-row {
-  background-color: var(--surface-color);
-}
-
-.gestionarsocios-column {
-  padding: 4px 8px;
-  font-size: 0.85rem;
-  white-space: normal;
-  overflow: visible;
-  text-overflow: clip;
-  word-break: break-word;
+.gessoc_body {
   display: flex;
-  align-items: center;
-  max-height: 40px;
-  border-right: 1px solid var(--border-color);
-}
-
-.gestionarsocios-column:last-child {
-  border-right: none;
-  justify-content: flex-end;
-}
-
-.gestionarsocios-column-nom {
-  font-weight: 500;
-  color: var(--text-primary);
-  padding: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  justify-content: center;
-}
-
-.gestionarsocios-column-ape {
-  font-weight: 500;
-  color: var(--text-primary);
-  padding: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  justify-content: center;
-}
-
-/* Iconos de acciones */
-.gestionarsocios-icons-column {
-  min-width: 120px;
-  justify-content: center;
-}
-
-.gestionarsocios-icons-container {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-  justify-content: center;
   flex-wrap: nowrap;
-  color: var(--primary-500);
-  font-size: 0.875rem !important;
+  justify-content: center;
+  overflow-y: auto;
+  min-height: 54vh;
+  transition: min-height 0.3s ease, max-height 0.3s ease;
+}
+.gessoc_scrollableE {
+  min-width: 100%;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 50vh;
+  max-height: 55vh;
+  transition: min-height 0.3s ease, max-height 0.3s ease;
 }
 
-.gestionarsocios-icon {
-font-size: 1rem;
+/* 🔸 Cascada para filas de tabla (desktop) */
+@keyframes gessoc_fadeIn { from {opacity:0} to {opacity:1} }
+.gessoc_cascade-animation .gessoc_row {
+  opacity: 0;
+  animation:
+    gessoc_fadeIn 0.35s ease-out forwards,
+    gessoc_slideInUp 0.45s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
+}
+
+.gessoc_row {
+  display: flex;
+  align-items: center;
+  padding: 0;
+  position: relative;
+  transition: background-color var(--transition-fast), box-shadow var(--transition-fast);
+  border-bottom: 1px solid var(--border-color);
   cursor: pointer;
-  transition: 
-    transform var(--transition-bounce),
-    color var(--transition-fast),
-    background-color var(--transition-fast);
-  padding: 0.1rem;
-  border-radius: 4px;
+}
+.gessoc_row:hover { background-color: var(--primary-50); box-shadow: var(--shadow-sm); }
+.gessoc_row.gessoc_selected-row { background-color: #ffedd59e; border-color: var(--primary-color); box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1); }
+.gessoc_row.gessoc_verde { border-left: 4px solid var(--success-500); }
+.gessoc_row.gessoc_amarillo { border-left: 4px solid var(--warning-500); }
+.gessoc_row.gessoc_rojo { border-left: 4px solid var(--danger-500); }
+.gessoc_row.gessoc_even-row { background-color: #fafafa; }
+.gessoc_row.gessoc_odd-row { background-color: var(--surface-color); }
+
+.gessoc_column {
+  text-align: center;
+  padding: 12px 8px;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  flex: 1;
+}
+.gessoc_column-razon { font-weight: 500; color: var(--text-primary); }
+.gessoc_column-cuit { font-family: 'JetBrains Mono', monospace; color: var(--text-secondary); }
+
+.gessoc_icons-column { justify-content: center; }
+.gessoc_icons-container {
+  display: flex;
+  gap: 0.9rem;
+  align-items: center;
+  justify-content: center;
 }
 
-.gestionarsocios-icon:hover {
-  transform: scale(1.15);
+/* 🔸 Íconos de la tabla: naranja y un poco más chicos */
+.gessoc_icon {
+  font-size: 18px;              /* antes 20px */
+  color: var(--primary-500);    /* naranja */
+  cursor: pointer;
+  transition: transform 0.18s ease, color 0.18s ease;
+  background: none;
+  border: none;
+  padding: 0;
 }
+.gessoc_icon:hover { transform: scale(1.1); color: var(--primary-600); }
 
-.gestionarsocios-icons-container .gestionarsocios-icon:hover {
-  background-color: rgba(239, 68, 68, 0.1);
-}
-
-/* Loading spinner */
-.gestionarsocios-loading-spinner-container {
+/* Loading */
+.gessoc_loading-spinner-container {
   display: flex;
   justify-content: center;
   align-items: center;
   height: 200px;
   width: 100%;
 }
-
-.gestionarsocios-loading-spinner {
+.gessoc_loading-spinner {
   width: 50px;
   height: 50px;
   border: 5px solid var(--primary-200);
   border-radius: 50%;
   border-top-color: var(--primary-500);
-  animation: spin 1s ease-in-out infinite;
+  animation: gessoc_spin 1s ease-in-out infinite;
 }
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
+@keyframes gessoc_spin { to { transform: rotate(360deg); } }
 
 /* Mensaje sin datos */
-.gestionarsocios-no-data-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-  padding: 2rem;
-  grid-column: 1 / -1;
-}
-
-.gestionarsocios-row .gestionarsocios-no-data-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-  height: 40vh;
-}
-
-.gestionarsocios-message-content {
-  max-width: 400px;
-}
-
-.gestionarsocios-message-content p {
-  font-size: 1.125rem;
-  color: var(--text-secondary);
-  margin-bottom: 1rem;
-}
-
-/* Contenedor inferior */
-.gestionarsocios-down-container {
-  width: 95%;
-  height: 60px;
-  background: var(--surface-secondary);
-  margin: 0 auto;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.gestionarsocios-contador-container {
-  outline: 2px solid var(--btn-outline-text);
-  background: white;
-  padding: 0.5rem 1rem;
-  margin: 8px 0;
+.gessoc_no-data-message { display: flex; align-items: center; justify-content: center; text-align: center; }
+.gessoc_message-content { max-width: 400px; }
+.gessoc_message-content p { font-size: 1.125rem; color: var(--text-secondary); margin-bottom: 1rem; }
+.gessoc_btn-show-all {
+  background: var(--primary-500);
+  color: var(--text-on-primary);
+  border: none;
+  padding: 0.75rem 1.5rem;
   border-radius: var(--border-radius);
-  box-shadow: var(--shadow-sm);
-  font-size: 0.9rem;
+  font-size: 0.875rem;
   font-weight: 500;
+  cursor: pointer;
+  transition:
+    transform var(--transition-fast),
+    background-color var(--transition-fast),
+    box-shadow var(--transition-fast);
 }
+.gessoc_btn-show-all:hover { background: var(--primary-600); transform: translateY(-1px); }
 
-/* Botones */
-.gestionarsocios-botones-container {
-  display: flex;
+/* ================================
+   Botonera inferior (Desktop intacto)
+==================================*/
+.gessoc_down-container {
   width: 100%;
-  justify-content: space-between;
-  gap: 0;
-  flex-wrap: nowrap;
-}
-
-.gestionarsocios-conedor-botones {
+  height: 70px;
+  background: var(--surface-secondary);
+  padding: 0 2.5%;
   display: flex;
-  gap: 1rem;
+  justify-content: space-between;
+  align-items: center;
+  box-sizing: border-box;
 }
-
-.gestionarsocios-volver-atras { 
-  background: linear-gradient(135deg,#fa7815, #ee6914 ) !important;
-}
-
-.gestionarsocios-button:nth-child(1) { 
-  background: linear-gradient(135deg, #0288D1, #01579B);
-}
-
-.gestionarsocios-button:nth-child(2) { 
-  background: linear-gradient(135deg, #38a169, #2f855a);
-}
-
-.gestionarsocios-button:nth-child(3) {
-  background: linear-gradient(135deg, #4a5568, #2d3748);
-}
-
-.gestionarsocios-button {
+.gessoc_botones-container { display: flex; gap: 1rem; flex-wrap: wrap; }
+.gessoc_socio-button {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -857,74 +582,42 @@ font-size: 1rem;
   font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
-  transition: 
+  transition:
     transform var(--transition-fast),
     background-color var(--transition-fast),
     box-shadow var(--transition-fast);
   text-decoration: none;
   box-shadow: var(--shadow-sm);
 }
+.gessoc_socio-button:hover { transform: translateY(-2px); }
+.gessoc_socio-button p { margin: 0; display: inline; }
+.gessoc_volver-atras { background: linear-gradient(135deg,#fa7815, #ee6914 ) !important; }
+.gessoc_socio-button:nth-child(1) { background: linear-gradient(135deg, #0288D1, #01579B); }
+.gessoc_socio-button:nth-child(2) { background: linear-gradient(135deg, #38a169, #2f855a); }
+.gessoc_btn-baja-nav { background: linear-gradient(135deg, #e53935, #b71c1c) !important; }
+.gessoc_socio-icon-button { width: 16px; height: 16px; }
+.gessoc_icono-empresa{ padding-left: 10px; color: var(--primary-500); }
+.gessoc_icono-celular-empresa{ display: none; }
 
-.gestionarsocios-button:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
+.gessoc_contador-container {
+  outline: 2px solid var(--primary-500);
+  background: white;
+  padding: 0.5rem 1rem;
+  margin: auto 0;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-sm);
+  font-size: 0.9rem;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
 }
 
-.gestionarsocios-button p {
-  margin: 0;
-  display: inline;
-}
+/* Mostrar etiqueta desktop por defecto, ocultar móvil */
+.gessoc_socios-desktop { display: inline; }
+.gessoc_socios-mobile { display: none; }
 
-/* Efecto cascada para filas */
-.gestionarsocios-cascade-animation .gestionarsocios-row {
-  opacity: 0;
-  animation: 
-    fadeIn 0.4s ease-out forwards,
-    slideInUp 0.5s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes slideInUp {
-  from {
-    transform: translateY(20px);
-  }
-  to {
-    transform: translateY(0);
-  }
-}
-
-/* Retrasos para cada fila */
-.gestionarsocios-cascade-animation .gestionarsocios-row:nth-child(1) { animation-delay: 0.05s; }
-.gestionarsocios-cascade-animation .gestionarsocios-row:nth-child(2) { animation-delay: 0.1s; }
-.gestionarsocios-cascade-animation .gestionarsocios-row:nth-child(3) { animation-delay: 0.15s; }
-.gestionarsocios-cascade-animation .gestionarsocios-row:nth-child(4) { animation-delay: 0.2s; }
-.gestionarsocios-cascade-animation .gestionarsocios-row:nth-child(5) { animation-delay: 0.25s; }
-.gestionarsocios-cascade-animation .gestionarsocios-row:nth-child(6) { animation-delay: 0.3s; }
-.gestionarsocios-cascade-animation .gestionarsocios-row:nth-child(7) { animation-delay: 0.35s; }
-.gestionarsocios-cascade-animation .gestionarsocios-row:nth-child(8) { animation-delay: 0.4s; }
-.gestionarsocios-cascade-animation .gestionarsocios-row:nth-child(9) { animation-delay: 0.45s; }
-.gestionarsocios-cascade-animation .gestionarsocios-row:nth-child(10) { animation-delay: 0.5s; }
-
-/* Elimina la animación después de la carga inicial */
-.gestionarsocios-row:not(.gestionarsocios-cascade-animation .gestionarsocios-row) {
-  animation: none !important;
-  opacity: 1 !important;
-  transform: none !important;
-}
-
-/* Estado pagos */
-.gestionarsocios-estado-pagos-container {
-  display: flex;
-  flex-wrap: wrap;
-  align-content: flex-end;
-  gap: 1rem;
-}
-
-.gestionarsocios-estado-indicador {
+.gessoc_estado-pagos-container { display: flex; flex-wrap: wrap; align-content: flex-end; gap: 1rem; }
+.gessoc_estado-indicador {
   height: fit-content;
   display: flex;
   align-items: center;
@@ -935,459 +628,281 @@ font-size: 1rem;
   box-shadow: var(--shadow-sm);
   font-size: 0.8rem;
 }
+.gessoc_indicador-color { width: 12px; height: 12px; border-radius: 50%; }
+.gessoc_al-dia .gessoc_indicador-color { background-color: var(--success-500); }
+.gessoc_debe-1-2 .gessoc_indicador-color { background-color: var(--warning-500); }
+.gessoc_debe-3-mas .gessoc_indicador-color { background-color: var(--danger-500); }
 
-.gestionarsocios-indicador-color {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-}
+/* ================================
+   IMPORTANTES PARA NO ROMPER WEB
+==================================*/
+.gessoc_cards-wrapper { display: none; } /* oculto en desktop */
 
-.gestionarsocios-al-dia .gestionarsocios-indicador-color {
-  background-color: var(--success-color);
-}
-
-.gestionarsocios-debe-1-2 .gestionarsocios-indicador-color {
-  background-color: var(--warning-color);
-}
-
-.gestionarsocios-debe-3-mas .gestionarsocios-indicador-color {
-  background-color: var(--danger-color);
-}
-
-/* Mensaje inicial */
-.gestionarsocios-mensaje-inicial {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 300px;
-  width: 100%;
-  text-align: center;
-}
-
-.gestionarsocios-mensaje-contenido {
-  max-width: 400px;
-  padding: 2rem;
-  background-color: var(--gray-50);
-  border-radius: var(--border-radius);
-}
-
-.gestionarsocios-mensaje-contenido p {
-  font-size: 1.1rem;
-  color: var(--text-secondary);
-  margin-bottom: 1.5rem;
-}
-
-.gestionarsocios-show-all-button {
-  background: linear-gradient(135deg, var(--primary-400), var(--primary-600));
-  color: white;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: var(--border-radius);
-  font-size: 1rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all var(--transition-normal);
-  box-shadow: var(--shadow-md);
-}
-
-.gestionarsocios-show-all-button:hover {
-  background: linear-gradient(135deg, var(--primary-500), var(--primary-700));
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
-}
-
-.gestionarsocios-show-all-button:active {
-  transform: translateY(0);
-  box-shadow: var(--shadow-md);
-}
-
-/* Scrollbar */
-.gestionarsocios-body::-webkit-scrollbar {
-  width: 4px;
-}
-
-.gestionarsocios-body::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.gestionarsocios-body::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 2px;
-}
-
-.gestionarsocios-body::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.3);
-}
-
-.gestionarsocios-body {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
-}
-
-.gestionarsocios-box-table::-webkit-scrollbar {
-  height: 4px;
-}
-
-.gestionarsocios-box-table::-webkit-scrollbar-track {
-  background: transparent;
-  margin: 0;
-}
-
-.gestionarsocios-box-table::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 2px;
-}
-
-.gestionarsocios-box-table::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.3);
-}
-
-.gestionarsocios-box-table {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
-}
-
-/* Responsive Design */
+/* ================================
+   Responsive Desktop ancho fijo
+==================================*/
 @media (max-width: 1200px) {
-  .gestionarsocios-header,
-  .gestionarsocios-row {
-    width: 100%;
-  }
+  .gessoc_header, .gessoc_row { width: 1000px; }
 }
 
-@media (max-width: 1024px) {
-  .gestionarsocios-container {
-    padding: 0;
-  }
-  
-  .gestionarsocios-front-row {
-    padding: 1.5rem;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 1rem;
-  }
-  
-  .gestionarsocios-title {
-    font-size: 1.5rem;
-    margin: 0 auto;
-  }
-  
-  .gestionarsocios-search-input-container {
-    width: 100%;
-    max-width: none;
-  }
-  
-  .gestionarsocios-filtros-container {
-    width: 100%;
-  }
-  
-  .gestionarsocios-filtros-button {
-    width: 100%;
-    justify-content: center;
-  }
-  
-  .gestionarsocios-filtros-menu {
-    width: 100%;
-    right: auto;
-    left: 0;
-  }
-  
-  .gestionarsocios-down-container {
-    height: auto;
-    width: auto;
-    padding: 0.7rem;
-  }
-  
-  .gestionarsocios-botones-container {
-    width: 100%;
-    justify-content: center;
-    margin-left: 1rem;
-  }
-}
-
+/* ================================
+   MOBILE — tarjetas + navbar fija
+==================================*/
 @media (max-width: 768px) {
-  .gestionarsocios-list {
-    padding: 0;
-    height: auto;
-    overflow: visible;
+  .gessoc_empresa-box {
+    min-height: unset;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
   }
-  
-  .gestionarsocios-box-table {
-    min-width: 600px;
-    width: 100%;
-    height: 40vh;
-    overflow-x: auto;
-    overflow-y: visible;
+
+  .gessoc_front-row-emp {
+    position: sticky;
+    top: 0;
+    z-index: 80;
+    padding: max(12px, env(safe-area-inset-top)) 16px 12px;
+    gap: 10px;
+  }
+  .gessoc_empresa-title { font-size: 1.3rem; margin: 0; flex: 1 0 auto; }
+
+  .gessoc_empresas-list {
+    flex: 1 1 auto;
+    overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    display: block;
-    position: relative;
-    top: auto;
-    z-index: 1;
-    padding-top: 6rem;
+    padding: 8px 12px 90px;
   }
-  
-  .gestionarsocios-scrollable {
-    overflow-x: auto;
-    overflow-y: visible;
-    max-height: none;
-  }
-  
-  .gestionarsocios-body {
-    min-height: 1000px;
-    max-height: none;
-    overflow: visible;
-  }
-  
-  .gestionarsocios-row {
-    display: grid;
-    grid-template-columns: 1.2fr 1.2fr 1fr 1fr 1.2fr 1.2fr 1fr;
-    min-width: 100%;
-  }
-  
-  .gestionarsocios-column {
-    min-width: 120px;
-    text-align: left;
-    white-space: normal;
-    overflow: visible;
-    justify-content: flex-start;
-    padding: 8px;
-  }
-  
-  /* Botones en móviles */
-  .gestionarsocios-button {
-    padding: 0.75rem;
+
+  .gessoc_search-input-container { width: 100%; max-width: none; order: 3; }
+  .gessoc_search-input { padding: 0.7rem 2.5rem 0.7rem 0.9rem; font-size: 0.95rem; }
+
+  .gessoc_filtros-container { width: 100%; order: 4; position: relative; }
+  .gessoc_filtros-button {
+    width: 100%;
     justify-content: center;
-    min-width: 44px;
-    height: 44px;
+    border: 1px dashed rgba(255,255,255,0.45);
+    background: rgba(255,255,255,0.18);
   }
-  
-  .gestionarsocios-button p {
-    display: none;
-  }
-  
-  .gestionarsocios-icon-button {
+
+  .gessoc_filtros-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: -16px;
+    right: -16px;
     margin: 0;
+    border-radius: 12px;
+    width: auto;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    z-index: 1000;
+    max-height: 60vh;
+    overflow: auto;
   }
 
-  .gestionarsocios-button {
-    gap: 0;
+  .gessoc_filtros-submenu { padding: 0.75rem; }
+  .gessoc_alfabeto-filtros { grid-template-columns: repeat(6, 1fr); }
+  .gessoc_letra-filtro { padding: 0.4rem; font-size: 0.85rem; }
+
+  .gessoc_filtros-activos-container { display: block; padding: 0 16px; }
+  .gessoc_filtros-activos {
+    margin: 10px 0 0 0; padding: 8px 10px;
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+    background: rgba(255,255,255,0.9);
+  }
+  .gessoc_filtros-activos-header { padding: 0; font-size: 12px; color: var(--text-secondary); }
+  .gessoc_filtros-activos-chips { grid-column: 1 / -1; gap: 6px; }
+  .gessoc_filtro-chip { padding: 4px 9px; font-size: 12px; }
+
+  .gessoc_contenedor-list-items {
+    height: auto;
+    gap: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    overflow: visible;
+    margin-bottom: 6px;
+    padding-bottom: 2px;
+  }
+  .gessoc_contador-container {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.95rem;
+    padding: 0.45rem 0.75rem;
+    max-width: none;
+    overflow: visible;
+  }
+  .gessoc_contador-container .gessoc_icono-empresa {
+    width: 16px; height: 16px;
+    color: var(--primary-500);
+    padding-left: 6px;
   }
 
-  .gestionarsocios-volver-atras {
-    min-width: 44px;
-    height: 44px;
-    padding: 0.75rem;
+  .gessoc_estado-pagos-container {
+    flex: 0 0 auto;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    white-space: nowrap;
   }
-  
-  .gestionarsocios-volver-atras p {
-    display: none;
-  }
-  
-  /* Columnas en móviles */
-  .gestionarsocios-column-nom,
-  .gestionarsocios-column-ape {
-    max-width: 100px;
-  }
-  
-  .gestionarsocios-icons-container {
+  .gessoc_estado-indicador {
+    padding: 6px 10px;
+    font-size: 12px;
     gap: 6px;
+    flex: 0 0 auto;
   }
-  
-  .gestionarsocios-icon {
-    width: 14px;
-    height: 14px;
+  .gessoc_indicador-color { width: 10px; height: 10px; }
+
+  .gessoc_socios-desktop { display: none; }
+  .gessoc_socios-mobile { display: inline; }
+
+  .gessoc_box-table { display: none !important; }
+  .gessoc_cards-wrapper {
+    display: grid !important;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-top: 8px;
   }
-  
-  .gestionarsocios-header,
-  .gestionarsocios-row {
-    grid-template-columns: 
-      minmax(100px, 1fr) 
-      minmax(100px, 1fr) 
-      minmax(80px, 0.8fr) 
-      minmax(80px, 0.8fr) 
-      minmax(100px, 1fr) 
-      minmax(100px, 1fr) 
-      minmax(80px, 0.8fr);
+
+  .gessoc_card {
+    position: relative;
+    background: #fff;
+    border: 1px solid var(--gray-200);
+    border-radius: 14px;
+    box-shadow: var(--shadow-sm);
+    padding: 12px 12px 8px 12px;
+    overflow: hidden;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    opacity: 1;
   }
-  
-  .gestionarsocios-column {
-    padding: 8px 4px;
-    font-size: 0.8rem;
+  .gessoc_card:active { transform: scale(0.997); }
+  .gessoc_card.gessoc_verde { border-left: 4px solid var(--success-500); }
+  .gessoc_card.gessoc_amarillo { border-left: 4px solid var(--warning-500); }
+  .gessoc_card.gessoc_rojo { border-left: 4px solid var(--danger-500); }
+
+  .gessoc_card-status-strip {
+    position: absolute; inset: 0 auto 0 0; width: 3px; opacity: 0; pointer-events: none;
+  }
+  .gessoc_card.gessoc_verde .gessoc_card-status-strip { background: var(--success-500); opacity: 1; }
+  .gessoc_card.gessoc_amarillo .gessoc_card-status-strip { background: var(--warning-500); opacity: 1; }
+  .gessoc_card.gessoc_rojo .gessoc_card-status-strip { background: var(--danger-500); opacity: 1; }
+
+  .gessoc_card-header {
+    display: flex; align-items: center; gap: 8px;
+    justify-content: space-between;
+    margin-bottom: 6px;
+  }
+  .gessoc_card-title { margin: 0; font-size: 1rem; font-weight: 650; color: var(--text-primary); }
+  .gessoc_badge {
+    font-size: 11px; font-weight: 600; border-radius: 999px;
+    padding: 4px 8px; border: 1px solid transparent;
+  }
+  .gessoc_badge-success { background: #10b9811a; color: #065f46; border-color: #10b98140; }
+  .gessoc_badge-warn { background: #f59e0b1a; color: #92400e; border-color: #f59e0b40; }
+  .gessoc_badge-danger { background: #ef44441a; color: #991b1b; border-color: #ef444440; }
+
+  .gessoc_card-body { display: grid; gap: 6px; margin: 6px 0 10px 0; }
+  .gessoc_card-row { display: flex; justify-content: space-between; gap: 10px; }
+  .gessoc_card-label { font-size: 12px; color: var(--text-muted); }
+  .gessoc_card-value { font-size: 13px; color: var(--text-primary); text-align: right; }
+  .gessoc_mono { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+  .gessoc_card-actions { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .gessoc_action-btn {
+    height: 40px; border-radius: 10px; border: 1px solid var(--gray-200);
+    background: #fff; box-shadow: var(--shadow-sm);
+    display: grid; place-items: center; font-size: 18px; color: var(--gray-700);
+    transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+  }
+  .gessoc_action-btn:active { transform: translateY(1px); }
+  .gessoc_action-danger { color: var(--danger-600); border-color: #fecaca; background: #fff5f5; }
+
+  /* Cascada también para tarjetas móviles (ya presente en JSX) */
+  .gessoc_cascade-animation .gessoc_card {
+    opacity: 0;
+    animation:
+      gessoc_fadeIn 0.4s ease-out forwards,
+      gessoc_slideInUp 0.5s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
+  }
+
+  .gessoc_down-container {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    height: 60px;
+    padding: 6px calc(12px + env(safe-area-inset-right)) calc(6px + env(safe-area-inset-bottom)) calc(12px + env(safe-area-inset-left));
+    background: rgba(255,255,255,0.96);
+    backdrop-filter: saturate(150%) blur(10px);
+    border-top: 1px solid var(--gray-200);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 70;
+  }
+  .gessoc_volver-atras {
+    flex: 0 0 auto;
+    height: 44px;
+    min-width: 44px;
+    padding: 0 12px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .gessoc_volver-atras p { display: none !important; }
+  .gessoc_volver-atras .gessoc_socio-icon-button { width: 20px; height: 20px; }
+
+  .gessoc_botones-container {
+    flex: 1 1 auto;
+    display: flex; justify-content: flex-end; align-items: center;
+    gap: 8px;
+  }
+  .gessoc_botones-container .gessoc_socio-button {
+    height: 44px;
+    min-width: 44px;
+    width: 44px;
+    padding: 0;
+    border-radius: 12px;
+    display: grid; place-items: center;
+    color: #fff; border: none;
+    box-shadow: var(--shadow-sm);
+  }
+  .gessoc_botones-container .gessoc_socio-button p { display: none !important; }
+  .gessoc_socio-icon-button { width: 20px; height: 20px; }
+  .gessoc_icono-celular-empresa{ display: none; }
+
+  .gessoc_body { min-height: unset; max-height: none; }
+  .gessoc_scrollableE { min-height: unset; max-height: none; }
+
+  .gessoc_no-data-message.gessoc_no-data-mobile {
+    min-height: calc(100dvh - 180px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 }
 
-@media (min-width: 769px) {
-  .gestionarsocios-button p {
-    display: inline;
-  }
-}
-
+/* XS */
 @media (max-width: 480px) {
-  .gestionarsocios-box-table {
-    min-width: 100%;
-  }
-  
-  .gestionarsocios-column {
-    min-width: 100px;
-    font-size: 0.8rem;
-  }
-  
-  .gestionarsocios-column-header {
-    font-size: 0.7rem;
-    padding: 0.5rem 0.3rem;
-  }
-  
-  .gestionarsocios-button {
-    padding: 0.5rem;
-    min-width: 40px;
-    height: 40px;
-  }
-  
-  .gestionarsocios-icon-button {
-    width: 14px;
-    height: 14px;
-  }
-  
-  .gestionarsocios-search-input {
-    font-size: 0.9rem;
-    padding: 0.6rem 1rem;
-  }
+  .gessoc_card { border-radius: 12px; padding: 10px 10px 8px 10px; }
+  .gessoc_card-title { font-size: 0.95rem; }
+  .gessoc_card-value { font-size: 12.5px; }
 }
-
-@media (max-width: 576px) {
-  .gestionarsocios-box {
-    min-height: 100vh;
-  }
-  
-  .gestionarsocios-front-row {
-    padding: 1rem 1rem 0;
-  }
-  
-  .gestionarsocios-title {
-    font-size: 1.3rem;
-  }
-  
-  .gestionarsocios-search-input {
-    padding: 0.75rem 1rem;
-    font-size: 0.9rem;
-  }
-  
-  .gestionarsocios-filtros-submenu {
-    padding: 0.5rem;
-  }
-  
-  .gestionarsocios-alfabeto-filtros {
-    grid-template-columns: repeat(4, 1fr);
-  }
-  
-  .gestionarsocios-letra-filtro {
-    padding: 0.3rem;
-    font-size: 0.8rem;
-  }
-  
-  .gestionarsocios-filtros-submenu-item {
-    padding: 0.3rem 0.5rem;
-    font-size: 0.8rem;
-  }
-  
-  .gestionarsocios-filtro-chip {
-    font-size: 0.75rem;
-    padding: 0.25rem 0.5rem;
-  }
-  
-  .gestionarsocios-button {
-    padding: 0.75rem 1rem;
-    font-size: 0.8rem;
-  }
-  
-  .gestionarsocios-icon-button {
-    width: 14px;
-    height: 14px;
-  }
-}
-
-@media (max-width: 768px) and (orientation: landscape) {
-  .gestionarsocios-body {
-    min-height: 30vh;
-    max-height: 40vh;
-  }
-  
-  .gestionarsocios-scrollable {
-    max-height: 35vh;
-  }
-}
-
-
 
 /* Accesibilidad */
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
+  *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
 }
 
-/* Estados de focus */
-.gestionarsocios-search-input:focus,
-.gestionarsocios-dropdown:focus,
-.gestionarsocios-btn-show-all:focus,
-.gestionarsocios-button:focus {
+/* Focus */
+.gessoc_search-input:focus,
+.gessoc_btn-show-all:focus,
+.gessoc_socio-button:focus {
   outline: 2px solid white;
   outline-offset: 2px;
-  transition: 
-    outline var(--transition-fast),
-    box-shadow var(--transition-fast);
-}
-
-/* Transiciones */
-button,
-input,
-select,
-.gestionarsocios-row,
-.gestionarsocios-icon {
-  transition: var(--transition);
-}
-
-/* Cuando hay filtros activos */
-.gestionarsocios-filtros-activos-container:not(:empty) ~ .gestionarsocios-list .gestionarsocios-body {
-  min-height: 45vh;
-  max-height: 45vh;
-}
-
-.gestionarsocios-filtros-activos-container:not(:empty) ~ .gestionarsocios-list .gestionarsocios-scrollable {
-  min-height: 40vh;
-  max-height: 45vh;
-}
-
-.gestionarsocios-disabled-button {
-  opacity: 0.6;
-  cursor: not-allowed;
-  pointer-events: none;
-}
-
-/* Lazy loading */
-.lazy-load-container {
-  overflow-y: auto;
-  height: calc(100% - 40px);
-}
-
-.gestionarsocios-load-more {
-  padding: 10px;
-  text-align: center;
-  background-color: #f5f5f5;
-  color: #666;
-  font-style: italic;
-}
-
-.gestionarsocios-loading-more {
-  padding: 1rem;
-  text-align: center;
-  background-color: var(--gray-50);
-  color: var(--text-secondary);
-  font-style: italic;
-  border-top: 1px solid var(--border-color);
-  animation: fadeIn 0.3s ease-out;
+  transition: outline var(--transition-fast), box-shadow var(--transition-fast);
 }

@@ -1,0 +1,204 @@
+/* ===== Tokens (alineados con tu sistema --soc-*) ===== */
+:root {
+  --soc-primary: #2563EB;
+  --soc-primary-dark: #1D4ED8;
+  --soc-success: #10B981;
+  --soc-danger: #EF4444;
+  --soc-gray-50: #F8FAFC;
+  --soc-gray-100: #F1F5F9;
+  --soc-gray-200: #E2E8F0;
+  --soc-gray-300: #CBD5E1;
+  --soc-gray-500: #64748B;
+  --soc-gray-700: #334155;
+  --soc-dark: #0F172A;
+
+  --soc-border-radius: 12px;
+  --soc-border-radius-lg: 16px;
+  --soc-shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.1),
+                   0 10px 10px -5px rgba(0,0,0,0.04);
+  --soc-shadow-md: 0 10px 18px rgba(0,0,0,0.12);
+  --soc-transition: all .3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ===== Overlay ===== */
+.empbaja-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1.25rem;
+  z-index: 1000;
+  backdrop-filter: blur(5px);
+  animation: empbaja-fadeIn .2s ease-out;
+}
+
+/* ===== Caja del modal (misma estética) ===== */
+.empbaja-modal {
+  width: 100%;
+  max-width: 500px;
+  background: #fff;
+  border-radius: var(--soc-border-radius-lg);
+  box-shadow: var(--soc-shadow-xl);
+  padding: 2rem;
+  text-align: center;
+  position: relative;
+  animation: empbaja-pop .18s ease-out;
+}
+
+/* Variante semántica danger: banda superior */
+.empbaja-modal--danger {
+  border-top: 4px solid var(--soc-danger);
+}
+
+/* ===== Header con icono grande ===== */
+.empbaja-modal__icon {
+  font-size: 2.5rem;
+  color: var(--soc-danger);
+  margin-bottom: 1rem;
+}
+
+.empbaja-modal__title {
+  margin: 0 0 1rem 0;
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--soc-danger);
+}
+
+/* ===== Cuerpo ===== */
+.empbaja-modal__body {
+  color: var(--soc-gray-700);
+  line-height: 1.5;
+  margin: 0 0 1.5rem 0;
+}
+
+.empbaja-modal__body strong {
+  color: var(--soc-dark);
+}
+
+/* ===== Campo Motivo ===== */
+.empbaja-field {
+  text-align: left;
+  margin-bottom: 1.25rem;
+}
+
+.empbaja-label {
+  display: block;
+  font-size: .9rem;
+  font-weight: 500;
+  color: var(--soc-gray-500);
+  margin-bottom: .5rem;
+}
+
+.empbaja-asterisk { color: var(--soc-danger); }
+
+.empbaja-textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--soc-gray-300);
+  border-radius: 10px;
+  font-size: .95rem;
+  color: var(--soc-dark);
+  background: var(--soc-gray-50);
+  resize: none;
+  transition: var(--soc-transition);
+  line-height: 1.5;
+}
+
+.empbaja-textarea::placeholder {
+  color: #9ca3af;
+}
+
+.empbaja-textarea:focus {
+  outline: none;
+  border-color: var(--soc-danger);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.18);
+}
+
+.empbaja-helper {
+  font-size: .75rem;
+  color: var(--soc-gray-500);
+  text-align: right;
+  margin-top: .4rem;
+}
+
+/* ===== Acciones ===== */
+.empbaja-modal__actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 1.25rem;
+}
+
+.empbaja-btn {
+  flex: 1;
+  max-width: 200px;
+  padding: .75rem 1.25rem;
+  border-radius: var(--soc-border-radius);
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--soc-transition);
+  border: 1px solid transparent;
+}
+
+/* Primario peligro (solid) */
+.empbaja-btn--solid-danger {
+  background: var(--soc-danger);
+  color: #fff;
+  border-color: var(--soc-danger);
+}
+
+.empbaja-btn--solid-danger:hover:not(.is-disabled) {
+  transform: translateY(-2px);
+  box-shadow: var(--soc-shadow-md);
+  filter: brightness(.95);
+}
+
+/* Secundario (ghost) */
+.empbaja-btn--ghost {
+  background: #fff;
+  color: var(--soc-gray-700);
+  border-color: var(--soc-gray-300);
+}
+
+.empbaja-btn--ghost:hover {
+  background: var(--soc-gray-100);
+  transform: translateY(-2px);
+  box-shadow: var(--soc-shadow-md);
+}
+
+/* Disabled */
+.is-disabled,
+.empbaja-btn:disabled {
+  opacity: .7;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* ===== Animaciones ===== */
+@keyframes empbaja-fadeIn {
+  from { opacity: 0 }
+  to   { opacity: 1 }
+}
+
+@keyframes empbaja-pop {
+  from { transform: translateY(4px); opacity: .98 }
+  to   { transform: translateY(0);   opacity: 1 }
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 576px) {
+  .empbaja-modal {
+    padding: 1.25rem;
+  }
+  .empbaja-modal__actions {
+    flex-direction: column-reverse;
+  }
+  .empbaja-btn {
+    max-width: 100%;
+    width: 100%;
+  }
+}

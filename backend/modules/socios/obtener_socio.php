@@ -1,110 +1,108 @@
 <?php
+// CORS + JSON
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
+header("Content-Type: application/json; charset=utf-8");
 
-include_once(__DIR__ . '/../../config/db.php');
-header('Content-Type: application/json');
-
-$id = isset($_GET['id']) ? intval($_GET['id']) : null;
-$nombre = $_GET['nombre'] ?? null;
-$apellido = $_GET['apellido'] ?? null;
-
-if ($id !== null) {
-    $query = "
-        SELECT 
-            s.idSocios,
-            s.nombre,
-            s.apellido,
-            s.DNI,
-            s.domicilio,
-            s.domicilio_2,
-            s.numero,
-            s.observacion,
-            s.localidad,
-            s.telefono,
-            s.email,
-            s.idCategoria, 
-            s.idMedios_Pago,
-            c.Nombre_categoria AS categoria,
-            m.Medio_Pago AS medio_pago
-        FROM 
-            socios s
-        LEFT JOIN 
-            categorias c ON s.idCategoria = c.idCategorias
-        LEFT JOIN 
-            mediospago m ON s.idMedios_Pago = m.IdMedios_pago
-        WHERE 
-            s.idSocios = ?
-    ";
-
-    $stmt = $conn->prepare($query);
-    $stmt->bind_param('i', $id);
-} elseif ($nombre && $apellido) {
-    $query = "
-        SELECT 
-            s.idSocios,
-            s.nombre,
-            s.apellido,
-            s.DNI,
-            s.domicilio,
-            s.domicilio_2,
-            s.numero,
-            s.observacion,
-            s.localidad,
-            s.telefono,
-            s.email,
-            s.idCategoria, 
-            s.idMedios_Pago,
-            c.Nombre_categoria AS categoria,
-            m.Medio_Pago AS medio_pago
-        FROM 
-            socios s
-        LEFT JOIN 
-            categorias c ON s.idCategoria = c.idCategorias
-        LEFT JOIN 
-            mediospago m ON s.idMedios_Pago = m.IdMedios_pago
-        WHERE 
-            s.nombre = ? AND s.apellido = ?
-    ";
-
-    $stmt = $conn->prepare($query);
-    $stmt->bind_param('ss', $nombre, $apellido);
-} else {
-    http_response_code(400);
-    echo json_encode(["message" => "Faltan parámetros requeridos"]);
+// Responder preflight
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(204);
     exit;
 }
 
-if ($stmt) {
+include_once(__DIR__ . '/../../config/db.php');
+
+// Forzar utf8mb4 si aplica
+if (isset($conn) && $conn instanceof mysqli) {
+    $conn->set_charset('utf8mb4');
+}
+
+$id       = isset($_GET['id']) ? intval($_GET['id']) : null;
+$nombre   = isset($_GET['nombre'])   ? trim($_GET['nombre'])   : null;
+$apellido = isset($_GET['apellido']) ? trim($_GET['apellido']) : null;
+
+// SELECT base (mismas columnas en ambos caminos)
+$selectBase = "
+    SELECT 
+        s.idSocios,
+        s.nombre,
+        s.apellido,
+        s.DNI,
+        s.domicilio,
+        s.domicilio_2,
+        s.numero,
+        s.observacion,
+        s.localidad,
+        s.telefono,
+        s.email,
+        DATE_FORMAT(s.Fechaunion, '%Y-%m-%d') AS Fechaunion,
+        s.idCategoria, 
+        s.idMedios_Pago,
+        c.Nombre_categoria AS categoria,
+        c.Precio_Categoria AS precio_categoria,
+        m.Medio_Pago AS medio_pago
+    FROM socios s
+    LEFT JOIN categorias c ON s.idCategoria = c.idCategorias
+    LEFT JOIN mediospago m ON s.idMedios_Pago = m.IdMedios_pago
+";
+
+$stmt = null;
+
+if ($id !== null) {
+    $query = $selectBase . " WHERE s.idSocios = ? LIMIT 1";
+    $stmt  = $conn->prepare($query);
+    if ($stmt) $stmt->bind_param('i', $id);
+} elseif ($nombre && $apellido) {
+    $query = $selectBase . " WHERE s.nombre = ? AND s.apellido = ? LIMIT 1";
+    $stmt  = $conn->prepare($query);
+    if ($stmt) $stmt->bind_param('ss', $nombre, $apellido);
+} else {
+    http_response_code(400);
+    echo json_encode(["success" => false, "message" => "Faltan parámetros requeridos (id) o (nombre y apellido)."]);
+    exit;
+}
+
+if (!$stmt) {
+    http_response_code(500);
+    echo json_encode(["success" => false, "message" => "Error al preparar la consulta."]);
+    exit;
+}
+
+try {
     $stmt->execute();
     $result = $stmt->get_result();
 
-    if ($result->num_rows > 0) {
+    if ($result && $result->num_rows > 0) {
         $socio = $result->fetch_assoc();
 
-        // Obtener categorías
-        $categoriasResult = $conn->query("SELECT idCategorias, Nombre_categoria, Precio_Categoria FROM categorias");
-        $categorias = $categoriasResult->fetch_all(MYSQLI_ASSOC);
+        // Catálogos (categorías y medios de pago)
+        $categorias = [];
+        $mediosPago = [];
 
-        // Obtener medios de pago
-        $mediosPagoResult = $conn->query("SELECT IdMedios_pago, Medio_Pago FROM mediospago");
-        $mediosPago = $mediosPagoResult->fetch_all(MYSQLI_ASSOC);
+        if ($catRes = $conn->query("SELECT idCategorias, Nombre_categoria, Precio_Categoria FROM categorias ORDER BY Nombre_categoria")) {
+            $categorias = $catRes->fetch_all(MYSQLI_ASSOC);
+            $catRes->free();
+        }
 
+        if ($mpRes = $conn->query("SELECT IdMedios_pago, Medio_Pago FROM mediospago ORDER BY Medio_Pago")) {
+            $mediosPago = $mpRes->fetch_all(MYSQLI_ASSOC);
+            $mpRes->free();
+        }
+
+        // Adjuntar catálogos en el mismo JSON
         $socio['categorias'] = $categorias;
         $socio['mediosPago'] = $mediosPago;
 
-        echo json_encode($socio);
+        echo json_encode($socio, JSON_UNESCAPED_UNICODE);
     } else {
         http_response_code(404);
-        echo json_encode(["message" => "Socio no encontrado"]);
+        echo json_encode(["success" => false, "message" => "Socio no encontrado."]);
     }
-
-    $stmt->close();
-} else {
+} catch (Throwable $e) {
     http_response_code(500);
-    echo json_encode(["message" => "Error al preparar la consulta"]);
+    echo json_encode(["success" => false, "message" => "Error al ejecutar la consulta.", "error" => $e->getMessage()]);
+} finally {
+    if ($stmt) { $stmt->close(); }
+    if (isset($conn) && $conn instanceof mysqli) { $conn->close(); }
 }
-
-$conn->close();
-?>

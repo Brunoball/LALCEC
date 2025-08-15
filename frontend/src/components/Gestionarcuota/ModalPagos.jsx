@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { FaCoins } from 'react-icons/fa';
 import BASE_URL from "../../config/config";
 import './ModalPagos.css';
 
@@ -36,6 +37,7 @@ const ModalPagos = ({ nombre, apellido, cerrarModal, onPagoRealizado }) => {
           setFechaUnion(result.fechaUnion || new Date().toISOString().split('T')[0]);
           setSocioData({
             domicilio: result.domicilio || '',
+            domicilio_2: result.domicilio_2 || '',
             categoria: result.categoria || '',
             cobrador: result.cobrador || ''
           });
@@ -53,8 +55,6 @@ const ModalPagos = ({ nombre, apellido, cerrarModal, onPagoRealizado }) => {
     obtenerDatosSocio();
   }, [nombre, apellido]);
 
-  const totalPagar = mesesSeleccionados.length * precioMensual;
-
   const getMesesDisponibles = () => {
     if (!fechaUnion) return [];
     try {
@@ -63,16 +63,15 @@ const ModalPagos = ({ nombre, apellido, cerrarModal, onPagoRealizado }) => {
       const añoActual = new Date().getFullYear();
       const añoUnion = fechaUnionObj.getFullYear();
 
+      const makeMes = (id) => ({
+        id,
+        nombre: new Date(0, id - 1).toLocaleString('es', { month: 'long' }).toUpperCase()
+      });
+
       if (añoUnion === añoActual) {
-        return [...Array(12 - mesUnion + 1)].map((_, i) => ({
-          id: mesUnion + i,
-          nombre: new Date(0, mesUnion + i - 1).toLocaleString('es', { month: 'long' }).toUpperCase()
-        }));
+        return [...Array(12 - mesUnion + 1)].map((_, i) => makeMes(mesUnion + i));
       }
-      return [...Array(12)].map((_, i) => ({
-        id: i + 1,
-        nombre: new Date(0, i).toLocaleString('es', { month: 'long' }).toUpperCase()
-      }));
+      return [...Array(12)].map((_, i) => makeMes(i + 1));
     } catch (e) {
       console.error("Error al procesar fecha de unión:", e);
       return [];
@@ -80,19 +79,33 @@ const ModalPagos = ({ nombre, apellido, cerrarModal, onPagoRealizado }) => {
   };
 
   const meses = getMesesDisponibles();
+  const totalPagar = mesesSeleccionados.length * precioMensual;
 
-  const handleSeleccionarMes = (mes) => {
-    if (mesesPagados.includes(mes)) return;
+  const handleSeleccionarMes = (mesId, yaPagado) => {
+    if (yaPagado) return;
     setMesesSeleccionados(prev =>
-      prev.includes(mes) ? prev.filter(m => m !== mes) : [...prev, mes]
+      prev.includes(mesId) ? prev.filter(m => m !== mesId) : [...prev, mesId]
     );
   };
 
   const handleSeleccionarTodos = () => {
-    const mesesDisponibles = meses.filter(m => !mesesPagados.includes(m.id)).map(m => m.id);
-    setMesesSeleccionados(todosSeleccionados ? [] : mesesDisponibles);
+    const disponibles = meses
+      .filter(m => !mesesPagados.includes(m.id))
+      .map(m => m.id);
+
+    if (todosSeleccionados) {
+      setMesesSeleccionados([]);
+    } else {
+      setMesesSeleccionados(disponibles);
+    }
     setTodosSeleccionados(!todosSeleccionados);
   };
+
+  useEffect(() => {
+    const disponibles = meses.filter(m => !mesesPagados.includes(m.id)).map(m => m.id);
+    const todos = disponibles.length > 0 && disponibles.every(id => mesesSeleccionados.includes(id));
+    setTodosSeleccionados(todos);
+  }, [mesesSeleccionados, mesesPagados, fechaUnion]);
 
   const handleRealizarPago = async () => {
     if (mesesSeleccionados.length === 0) return;
@@ -125,7 +138,6 @@ const ModalPagos = ({ nombre, apellido, cerrarModal, onPagoRealizado }) => {
     if (!socioData || mesesSeleccionados.length === 0) return;
 
     const domicilioMostrar = socioData.domicilio_2 || socioData.domicilio || 'Domicilio no registrado';
-    
     const mesesPagadosStr = meses
       .filter(m => mesesSeleccionados.includes(m.id))
       .map(m => m.nombre)
@@ -198,9 +210,27 @@ const ModalPagos = ({ nombre, apellido, cerrarModal, onPagoRealizado }) => {
 
   if (loading) {
     return (
-      <div className="modal-s-container">
-        <div className="modal-s-content">
-          <p>Cargando datos del socio...</p>
+      <div className="modpag_overlay">
+        <div className="modpag_contenido">
+          <div className="modpag_header">
+            <div className="modpag_header-left">
+              <div className="modpag_icon-circle"><FaCoins size={20} /></div>
+              <div className="modpag_header-texts">
+                <h2 className="modpag_title">Registro de Pagos</h2>
+              </div>
+            </div>
+            <button className="modpag_close-btn" disabled>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M12 4L4 12M4 4L12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+          </div>
+          <div className="modpag_body">
+            <div className="modpag_loading-state">
+              <div className="modpag_spinner"></div>
+              <span>Cargando datos del socio...</span>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -208,97 +238,215 @@ const ModalPagos = ({ nombre, apellido, cerrarModal, onPagoRealizado }) => {
 
   if (error) {
     return (
-      <div className="modal-s-container">
-        <div className="modal-s-content">
-          <p className="modal-s-error-message">{error}</p>
-          <button className="modal-s-cancel-button" onClick={cerrarModal}>Cerrar</button>
+      <div className="modpag_overlay">
+        <div className="modpag_contenido">
+          <div className="modpag_header">
+            <div className="modpag_header-left">
+              <div className="modpag_icon-circle"><FaCoins size={20} /></div>
+              <div className="modpag_header-texts">
+                <h2 className="modpag_title">Registro de Pagos</h2>
+              </div>
+            </div>
+            <button className="modpag_close-btn" onClick={cerrarModal}>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M12 4L4 12M4 4L12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+          </div>
+          <div className="modpag_body">
+            <div className="modpag_info-summary">
+              <div className="modpag_info-row">
+                <div className="modpag_info-item">
+                  <span className="modpag_info-label">Socio</span>
+                  <span className="modpag_info-value">{nombre} {apellido}</span>
+                </div>
+                {fechaUnion && (
+                  <div className="modpag_info-item">
+                    <span className="modpag_info-label">Fecha de alta</span>
+                    <span className="modpag_info-value">{formatDate(fechaUnion)}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <p className="modpag_error-banner">{error}</p>
+          </div>
+          <div className="modpag_footer modpag_footer-sides">
+            <div className="modpag_footer-left" />
+            <div className="modpag_footer-right">
+              <button className="modpag_btn modpag_btn-secondary" onClick={cerrarModal}>Cerrar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (pagoExitoso) {
+    return (
+      <div className="modpag_overlay">
+        <div className="modpag_contenido">
+          <div className="modpag_header">
+            <div className="modpag_header-left">
+              <div className="modpag_icon-circle"><FaCoins size={20} /></div>
+              <div className="modpag_header-texts">
+                <h2 className="modpag_title">Registro de Pagos</h2>
+              </div>
+            </div>
+            <button className="modpag_close-btn" onClick={() => { if (onPagoRealizado) onPagoRealizado(); cerrarModal(); }}>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M12 4L4 12M4 4L12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+          </div>
+
+          <div className="modpag_body">
+            <div className="modpag_info-summary">
+              <div className="modpag_info-row">
+                <div className="modpag_info-item">
+                  <span className="modpag_info-label">Socio</span>
+                  <span className="modpag_info-value">{nombre} {apellido}</span>
+                </div>
+                {fechaUnion && (
+                  <div className="modpag_info-item">
+                    <span className="modpag_info-label">Fecha de alta</span>
+                    <span className="modpag_info-value">{formatDate(fechaUnion)}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="modpag_success">
+              <h2 className="modpag_success-title">¡Pago realizado con éxito!</h2>
+              <p className="modpag_success-subtitle">Podés generar el comprobante ahora mismo.</p>
+            </div>
+          </div>
+
+          <div className="modpag_footer modpag_footer-sides">
+            <div className="modpag_footer-left">
+              <div className="modpag_total-pill modpag_total-pill-inline">Total: ${totalPagar}</div>
+            </div>
+            <div className="modpag_footer-right">
+              <button
+                className="modpag_btn modpag_btn-secondary"
+                onClick={() => { if (onPagoRealizado) onPagoRealizado(); cerrarModal(); }}
+              >
+                Cerrar
+              </button>
+              <button
+                className="modpag_btn modpag_btn-success"
+                onClick={handleImprimirComprobante}
+                disabled={mesesSeleccionados.length === 0}
+              >
+                Comprobante
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="modal-s-container">
-      {pagoExitoso ? (
-        <div className="modal-s-success-message">
-          <h2 className="modal-s-success-title">¡Pago realizado con éxito!</h2>
-          <div className="modal-s-buttons-container">
-            <button 
-              className="modal-s-cancel-button" 
-              onClick={() => {
-                if (onPagoRealizado) onPagoRealizado();
-                cerrarModal();
-              }}
-            >
-              Cerrar
-            </button>
-            <button 
-              className="modal-s-receipt-button" 
-              onClick={handleImprimirComprobante}
-              disabled={mesesSeleccionados.length === 0}
-            >
-              Generar Comprobante
-            </button>
+    <div className="modpag_overlay">
+      <div className="modpag_contenido">
+        <div className="modpag_header">
+          <div className="modpag_header-left">
+            <div className="modpag_icon-circle"><FaCoins size={20} /></div>
+            <div className="modpag_header-texts">
+              <h2 className="modpag_title">Registro de Pagos</h2>
+            </div>
+          </div>
+          <button className="modpag_close-btn" onClick={cerrarModal}>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M12 4L4 12M4 4L12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+        </div>
+
+        <div className="modpag_body">
+          {error && <p className="modpag_error-banner">{error}</p>}
+
+          <div className="modpag_info-summary">
+            <div className="modpag_info-row">
+              <div className="modpag_info-item">
+                <span className="modpag_info-label">Socio</span>
+                <span className="modpag_info-value modpag_info-value-highlight">{nombre} {apellido}</span>
+              </div>
+              {fechaUnion && (
+                <div className="modpag_info-item">
+                  <span className="modpag_info-label">Fecha de alta</span>
+                  <span className="modpag_info-value modpag_info-value-highlight">{formatDate(fechaUnion)}</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="modpag_periodos-section">
+            <div className="modpag_section-header">
+              <h4 className="modpag_section-title">Meses disponibles</h4>
+              <div className="modpag_section-header-actions">
+                <button
+                  className="modpag_btn modpag_btn-small modpag_btn-terciario"
+                  onClick={handleSeleccionarTodos}
+                  disabled={meses.filter(m => !mesesPagados.includes(m.id)).length === 0}
+                >
+                  {todosSeleccionados ? 'Deseleccionar todos' : 'Seleccionar todos'}
+                </button>
+                <div className="modpag_selection-info">
+                  {mesesSeleccionados.length > 0 ? `${mesesSeleccionados.length} seleccionados` : 'Ninguno seleccionado'}
+                </div>
+              </div>
+            </div>
+
+            <div className="modpag_periodos-grid-container">
+              <div className="modpag_periodos-grid">
+                {meses.map((mes) => {
+                  const yaPagado = mesesPagados.includes(mes.id);
+                  const checked = mesesSeleccionados.includes(mes.id);
+                  return (
+                    <div
+                      key={mes.id}
+                      className={`modpag_periodo-card ${yaPagado ? 'modpag_pagado' : ''} ${checked ? 'modpag_seleccionado' : ''}`}
+                      onClick={() => handleSeleccionarMes(mes.id, yaPagado)}
+                    >
+                      <div className="modpag_periodo-checkbox">
+                        <input
+                          type="checkbox"
+                          id={`periodo-${mes.id}`}
+                          checked={checked}
+                          onChange={() => handleSeleccionarMes(mes.id, yaPagado)}
+                          disabled={yaPagado}
+                        />
+                        <span className="modpag_checkmark"></span>
+                      </div>
+                      <label htmlFor={`periodo-${mes.id}`} className="modpag_periodo-label">
+                        {mes.nombre}
+                        {yaPagado && (
+                          <span className="modpag_periodo-status">
+                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                              <path d="M10 3L4.5 8.5L2 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                            Pagado
+                          </span>
+                        )}
+                      </label>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         </div>
-      ) : (
-        <div className="modal-s-header modal-s-content">
-          <h1 className="modal-s-title">Modal de Pagos</h1>
-          <p className="modal-s-subtitle">Socio: {nombre} {apellido}</p>
-          {fechaUnion && <p className="modal-s-subtitle">Fecha de alta: {formatDate(fechaUnion)}</p>}
 
-          {error && <p className="modal-s-error-message">{error}</p>}
-
-          <div className="modal-s-table-container">
-            {/* Encabezado de la tabla con divs */}
-            <div className="modal-s-table-header">
-              <div className="modal-s-th">Mes</div>
-              <div className="modal-s-th">Seleccionar</div>
-            </div>
-            
-            {/* Cuerpo de la tabla con divs */}
-            <div className="modal-s-table-body">
-              {meses.map((mes) => (
-                <div 
-                  key={mes.id}
-                  className={`modal-s-row ${mesesPagados.includes(mes.id) ? "modal-s-row-disabled" : ""}`}
-                >
-                  <div className="modal-s-td">{mes.nombre}</div>
-                  <div className="modal-s-td">
-                    <input
-                      type="checkbox"
-                      checked={mesesSeleccionados.includes(mes.id)}
-                      onChange={() => handleSeleccionarMes(mes.id)}
-                      className="modal-s-checkbox"
-                      disabled={mesesPagados.includes(mes.id)}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
+        <div className="modpag_footer modpag_footer-sides">
+          <div className="modpag_footer-left">
+            <div className="modpag_total-pill modpag_total-pill-inline">Total a pagar: ${totalPagar}</div>
           </div>
-
-          <div className="modal-s-select-all-container">
-            <input
-              type="checkbox"
-              checked={todosSeleccionados}
-              onChange={handleSeleccionarTodos}
-              className="modal-s-checkbox"
-              disabled={mesesPagados.length === meses.length}
-            />
-            <label className="modal-s-select-all-label">Todos los meses disponibles</label>
-            <h2 className="modal-s-total-amount">Total a pagar: ${totalPagar}</h2>
-          </div>
-
-          <div className="modal-s-buttons-container">
+          <div className="modpag_footer-right">
+            <button className="modpag_btn modpag_btn-secondary" onClick={cerrarModal}>Cerrar</button>
             <button
-              className="modal-s-button modal-s-cancel-button"
-              onClick={cerrarModal}
-            >
-              Cerrar
-            </button>
-            <button 
-              className="modal-s-button modal-s-pay-button" 
+              className="modpag_btn modpag_btn-primary"
               onClick={handleRealizarPago}
               disabled={mesesSeleccionados.length === 0}
             >
@@ -306,7 +454,7 @@ const ModalPagos = ({ nombre, apellido, cerrarModal, onPagoRealizado }) => {
             </button>
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 };

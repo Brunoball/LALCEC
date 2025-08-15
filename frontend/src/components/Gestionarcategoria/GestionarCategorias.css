@@ -1,353 +1,433 @@
 @keyframes cat_fadeSlideIn {
-  0% {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  0% { opacity: 0; transform: translateY(30px); }
+  100% { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes cat_pulse {
-  0% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.4;
-  }
-  100% {
-    opacity: 1;
-  }
+  0% { opacity: 1; }
+  50% { opacity: 0.4; }
+  100% { opacity: 1; }
 }
 
 @keyframes cat_subtleCascade {
-  0% {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  0% { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
 }
 
+/* Contenedor principal - ahora centrado verticalmente en todos los dispositivos */
 .cat_container {
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: center; /* Centrado vertical siempre */
   min-height: 100vh;
-  padding: 0 20px;
+  padding: 20px;
   font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
   background: linear-gradient(135deg, #f5f5f5 30%, #ff6e00 70%);
+  box-sizing: border-box; /* Asegura que el padding no afecte las dimensiones */
 }
 
+/* Caja de contenido principal */
 .cat_box {
   background: white;
-  padding: 25px;
+  padding: 20px;
   border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
   width: 100%;
   max-width: 600px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  animation: cat_fadeSlideIn 0.5s ease forwards;
+  animation: cat_fadeSlideIn .5s ease forwards;
+  /* Eliminado margin vertical para mejor centrado */
+  max-height: 90vh; /* Limita la altura máxima */
+  overflow-y: auto; /* Permite scroll si el contenido es muy largo */
 }
 
+/* Título */
 .cat_title {
-  font-size: 1.7rem;
+  font-size: 1.5rem;
   font-weight: 600;
-  margin-bottom: 1.5rem;
+  margin: 0.5rem 0 1.5rem;
   color: #333;
+  position: relative;
+  padding-bottom: 10px;
+  width: 100%;
+  text-align: center;
+}
+
+.cat_title::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 50px;
+  height: 3px;
+  background-color: #ff6e00;
+  border-radius: 3px;
+}
+
+/* Botones principales */
+.cat_button, .cat_buttonBack {
+  color: white;
+  padding: 12px 15px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all .2s ease;
+  box-shadow: 0 2px 6px rgba(0,0,0,.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  font-size: 0.95rem;
+  margin: 8px 0;
 }
 
 .cat_button {
   background: #4a6bff;
-  color: white;
-  padding: 12px 20px;
-  border: none;
-  border-radius: 8px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 1.5rem;
-  width: 100%;
-  font-size: 1rem;
-}
-
-.cat_buttonBack {
-  background: #ff6e00;
-  color: white;
-  padding: 12px 20px;
-  border: none;
-  border-radius: 8px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-top: 1rem;
-  width: 100%;
-  font-size: 1rem;
+  margin-bottom: 1rem;
 }
 
 .cat_button:hover {
-  background: #3b58d1;
+  background:#3b58d1;
   transform: translateY(-1px);
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 3px 8px rgba(0,0,0,.15);
+}
+
+.cat_buttonBack {
+  background:#ff6e00;
+  margin-top: 0.5rem;
 }
 
 .cat_buttonBack:hover {
-  background: #e65c00;
+  background:#e65c00;
   transform: translateY(-1px);
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 3px 8px rgba(0,0,0,.15);
 }
 
 .cat_iconButton {
-  margin-right: 10px;
-  font-size: 1rem;
+  margin-right: 8px;
+  font-size: 0.9rem;
 }
 
+/* Lista de categorías */
 .cat_categoriasList {
   width: 100%;
-  margin-top: 1rem;
-  max-height: 350px;
+  margin-top: 0.5rem;
+  max-height: 50vh;
   overflow-y: auto;
   padding-right: 5px;
+  flex-grow: 1; /* Permite que crezca para ocupar espacio disponible */
 }
 
+/* Items de categoría */
 .cat_categoriaItem {
   opacity: 0;
-  animation: cat_subtleCascade 0.3s ease forwards;
+  animation: cat_subtleCascade .3s ease forwards;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
-  padding: 15px;
+  margin-bottom: 10px;
+  padding: 12px;
   border-radius: 8px;
-  background: #f9f9f9;
-  border: 1px solid #e0e0e0;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  transition: all 0.2s ease;
+  background:#f9f9f9;
+  border:1px solid #e0e0e0;
+  box-shadow: 0 2px 4px rgba(0,0,0,.05);
+  transition: all .2s ease;
+  position: relative;
+  flex-wrap: wrap;
 }
 
 .cat_categoriaItem:hover {
-  border-color: #d0d0d0;
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+  border-color:#d0d0d0;
+  box-shadow: 0 3px 6px rgba(0,0,0,.1);
 }
 
 .cat_categoriaText {
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 500;
-  color: #333;
-  flex: 1;
-  text-align: left;
+  color:#333;
+  flex: 1 1 100%;
+  text-align:left;
+  margin-bottom: 8px;
 }
 
 .cat_categoriaPrice {
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 600;
-  color: #333;
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
+  color:#333;
+  position: static;
+  transform: none;
+  flex: 1 1 100%;
+  text-align: left;
+  margin-bottom: 8px;
 }
 
 .cat_categoriaActions {
-  display: flex;
-  gap: 8px;
+  display:flex;
+  gap:8px;
+  flex: 1 1 100%;
+  justify-content: flex-end;
+}
+
+.cat_editButton, .cat_deleteButton {
+  border:none;
+  border-radius:6px;
+  padding:6px;
+  cursor:pointer;
+  transition:all .2s ease;
+  width:32px;
+  height:32px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size: 0.9rem;
 }
 
 .cat_editButton {
-  background: rgba(74, 107, 255, 0.1);
-  color: #4a6bff;
-  border: none;
-  border-radius: 6px;
-  padding: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  width: 34px;
-  height: 34px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  background:rgba(74,107,255,.1);
+  color:#4a6bff;
 }
 
 .cat_editButton:hover {
-  background: rgba(74, 107, 255, 0.2);
+  background:rgba(74,107,255,.2);
 }
 
 .cat_deleteButton {
-  background: rgba(229, 62, 62, 0.1);
-  color: #e53e3e;
-  border: none;
-  border-radius: 6px;
-  padding: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  width: 34px;
-  height: 34px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  background:rgba(229,62,62,.1);
+  color:#e53e3e;
 }
 
 .cat_deleteButton:hover {
-  background: rgba(229, 62, 62, 0.2);
+  background:rgba(229,62,62,.2);
 }
 
 .cat_emptyMessage {
-  color: #666;
-  font-size: 1rem;
-  padding: 20px 0;
-  text-align: center;
+  color:#666;
+  font-size:0.95rem;
+  padding:15px 0;
+  text-align:center;
 }
+
+/* ========= MODAL ========= */
+@keyframes cat_modalFadeIn { from { opacity:0 } to { opacity:1 } }
+@keyframes cat_modalPop { from { transform: translateY(4px); opacity:.98 } to { transform: translateY(0); opacity:1 } }
 
 .cat_modal {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-  padding: 20px;
+  top:0;
+  left:0;
+  right:0;
+  bottom:0;
+  background-color: rgba(0,0,0,.5);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  z-index:1000;
+  padding:15px;
+  backdrop-filter: blur(5px);
+  animation: cat_modalFadeIn .2s ease-out;
 }
 
 .cat_modalContent {
-  background-color: #fff;
-  padding: 25px;
+  background-color:#fff;
+  padding: 1.5rem;
   border-radius: 12px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 20px 25px -5px rgba(0,0,0,.1), 0 10px 10px -5px rgba(0,0,0,.04);
   width: 100%;
-  max-width: 450px;
-  text-align: center;
+  max-width: 400px;
+  text-align:center;
+  position:relative;
+  border-top:4px solid transparent;
+  animation: cat_modalPop .18s ease-out;
 }
 
-.cat_modalTitle {
-  font-size: 1.4rem;
-  color: #333;
-  font-weight: 600;
-  margin-bottom: 15px;
+/* Variante semántica (danger) */
+.cat_modal--danger { border-top-color:#e53e3e; }
+
+/* Icono grande */
+.cat_modalIcon {
+  font-size: 2rem;
+  color:#e53e3e;
+  margin-bottom: 0.8rem;
 }
+
+/* Título y textos */
+.cat_modalTitle {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin: 0 0 0.8rem;
+  color:#1f2937;
+}
+
+.cat_modalTitle--danger { color:#e53e3e; }
 
 .cat_modalText {
-  font-size: 1rem;
-  margin-bottom: 15px;
-  color: #555;
-  line-height: 1.5;
-}
-
-.cat_modalButtons {
-  display: flex;
-  justify-content: space-between;
-  gap: 15px;
-  width: 100%;
-}
-
-.cat_modalButton {
-  flex: 1;
-  padding: 10px 15px;
-  border: none;
-  border-radius: 6px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
   font-size: 0.95rem;
+  margin-bottom: 0.75rem;
+  color:#4b5563;
+  line-height:1.5;
 }
 
-.cat_modalButton:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
+.cat_modalText strong { color:#1f2937; }
+
+/* ===== Botonera del modal ===== */
+.cat_modalButtons {
+  display:flex;
+  justify-content:center;
+  align-items:stretch;
+  gap:0.8rem;
+  width:100%;
+  margin-top: 0.5rem;
+  flex-wrap: nowrap;            /* <-- siempre lado a lado, incluso en mobile */
 }
 
-.cat_acceptButton {
-  background: #e53e3e;
-  color: white;
+.cat_btn {
+  flex: 1 1 0;                  /* <-- permite dos botones al 50% en mobile */
+  min-width: 0;                 /* <-- evita overflow en pantallas muy chicas */
+  padding:0.7rem 1rem;
+  border-radius:10px;
+  font-weight:600;
+  cursor:pointer;
+  transition: all .3s cubic-bezier(.4,0,.2,1);
+  border:1px solid transparent;
+  font-size: 0.9rem;
 }
 
-.cat_acceptButton:hover:not(:disabled) {
-  background: #c53030;
+/* Variantes: fantasma y peligro sólido (CONFIRMAR en rojo) */
+.cat_btn--ghost {
+  background:#fff;
+  color:#374151;
+  border-color:#d1d5db;
+}
+.cat_btn--ghost:hover {
+  background:#f3f4f6;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 18px rgba(0,0,0,0.12);
 }
 
-.cat_cancelButton {
-  background: #f0f0f0;
-  color: #333;
+.cat_btn--solid-danger {
+  background:#e53e3e;          /* <-- rojo sólido de confirmación */
+  color:#fff;
+  border-color:#e53e3e;
+}
+.cat_btn--solid-danger:hover {
+  filter: brightness(.95);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 18px rgba(0,0,0,0.12);
 }
 
-.cat_cancelButton:hover:not(:disabled) {
-  background: #e0e0e0;
-}
-
-.cat_hover-effect {
-  transition: all 0.2s ease;
-}
-.cat_hover-effect:hover {
-  transform: none;
-  box-shadow: none;
-}
-
-/* Skeleton Loader Styles */
+/* ====== Skeleton ====== */
 .cat_skeleton {
-  background: #f0f0f0;
+  background:#f0f0f0;
   animation: cat_pulse 1.2s ease-in-out infinite;
-  border-radius: 8px;
-  margin-bottom: 12px;
-  padding: 15px;
+  border-radius:8px;
+  margin-bottom:10px;
+  padding:12px;
 }
 
 .cat_skeleton-text {
-  background: #e0e0e0;
-  border-radius: 4px;
-  height: 16px;
-  width: 80px;
-  display: inline-block;
+  background:#e0e0e0;
+  border-radius:4px;
+  height:14px;
+  width:70px;
+  display:inline-block;
 }
 
 .cat_skeleton-icon {
-  background: #e0e0e0;
-  border-radius: 6px;
-  width: 34px;
-  height: 34px;
-  display: inline-block;
+  background:#e0e0e0;
+  border-radius:6px;
+  width:30px;
+  height:30px;
+  display:inline-block;
 }
 
-/* Scrollbar Styles */
-.cat_categoriasList::-webkit-scrollbar {
-  width: 6px;
+/* Scrollbar */
+.cat_categoriasList::-webkit-scrollbar { width:5px; }
+.cat_categoriasList::-webkit-scrollbar-track { background:#f1f1f1; border-radius:3px; }
+.cat_categoriasList::-webkit-scrollbar-thumb { background:#c1c1c1; border-radius:3px; }
+.cat_categoriasList::-webkit-scrollbar-thumb:hover { background:#a8a8a8; }
+
+/* Media Queries para ajustes específicos */
+@media (min-width: 768px) {
+  .cat_box {
+    padding: 25px;
+  }
+  
+  .cat_title {
+    font-size: 1.7rem;
+  }
+  
+  .cat_button, .cat_buttonBack {
+    padding: 12px 20px;
+    font-size: 1rem;
+  }
+  
+  .cat_categoriaText, .cat_categoriaPrice {
+    font-size: 1rem;
+    flex: none;
+    position: static;
+    transform: none;
+    margin-bottom: 0;
+  }
+  
+  .cat_categoriaPrice {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  
+  .cat_categoriaActions {
+    flex: none;
+  }
+  
+  .cat_modalContent {
+    padding: 2rem;
+    max-width: 500px;
+  }
+  
+  .cat_modalTitle {
+    font-size: 1.4rem;
+  }
+  
+  .cat_btn {
+    max-width: 220px;          /* en desktop, botones más compactos */
+  }
 }
 
-.cat_categoriasList::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 3px;
-}
+/* Ajustes para pantallas muy pequeñas */
+@media (max-width: 400px) {
+  .cat_container {
+    padding: 10px;
+    align-items: flex-start; /* En móviles muy pequeños, alineamos al inicio */
+  }
+  
+  .cat_box {
+    padding: 15px;
+    max-height: 95vh; /* Ajustamos la altura máxima */
+    margin-top: 20px; /* Añadimos margen superior */
+  }
+  
+  .cat_title {
+    font-size: 1.3rem;
+  }
+  
+  .cat_modalContent {
+    padding: 1.2rem;
+  }
+  
+  .cat_modalTitle {
+    font-size: 1.1rem;
+  }
+  
+  .cat_modalText {
+    font-size: 0.9rem;
+  }
 
-.cat_categoriasList::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 3px;
-}
-
-.cat_categoriasList::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
-}
-
-/* Eliminar efecto de focus en los botones */
-button:focus,
-.cat_button:focus,
-.cat_buttonBack:focus,
-.cat_editButton:focus,
-.cat_deleteButton:focus,
-.cat_modalButton:focus {
-  outline: none;
-  box-shadow: none;
+  /* En pantallas ultra pequeñas, aún lado a lado, con padding reducido */
+  .cat_btn {
+    padding: 0.6rem 0.7rem;
+  }
 }

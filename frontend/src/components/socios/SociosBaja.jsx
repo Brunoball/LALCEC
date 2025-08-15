@@ -2,18 +2,27 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import BASE_URL from "../../config/config";
-import { FaUserCheck } from "react-icons/fa";
+import { FaUserCheck, FaTrash } from "react-icons/fa";
 import Toast from "../global/Toast";
-
+import "./SociosBaja.css";
 
 const SociosBaja = () => {
   const [socios, setSocios] = useState([]);
   const [loading, setLoading] = useState(true);
+
   const [socioSeleccionado, setSocioSeleccionado] = useState(null);
   const [mostrarConfirmacion, setMostrarConfirmacion] = useState(false);
+
+  const [socioAEliminar, setSocioAEliminar] = useState(null);
+  const [mostrarEliminar, setMostrarEliminar] = useState(false);
+
+  const [mostrarMotivo, setMostrarMotivo] = useState(false);
+  const [socioMotivo, setSocioMotivo] = useState(null);
+
   const [toast, setToast] = useState({ show: false, tipo: "", mensaje: "" });
   const [busqueda, setBusqueda] = useState("");
   const [accionando, setAccionando] = useState(false);
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -27,7 +36,6 @@ const SociosBaja = () => {
         `${BASE_URL}/api.php?action=estado_socio&op=listar_baja`
       );
       const data = await response.json();
-
       if (response.ok && (data.exito || data.success)) {
         setSocios(Array.isArray(data.socios) ? data.socios : []);
       } else {
@@ -48,8 +56,10 @@ const SociosBaja = () => {
     const term = busqueda.trim().toLowerCase();
     if (!term) return socios;
     return socios.filter((s) => {
-      const nombre = `${s.apellido || ""} ${s.nombre || ""}`.toLowerCase();
-      return nombre.includes(term);
+      const ape = (s.apellido || "").toLowerCase();
+      const nom = (s.nombre || "").toLowerCase();
+      // Busca por apellido o nombre
+      return ape.includes(term) || nom.includes(term) || `${ape} ${nom}`.includes(term);
     });
   }, [socios, busqueda]);
 
@@ -66,9 +76,7 @@ const SociosBaja = () => {
         }
       );
       const data = await response.json();
-
       if (response.ok && (data.exito || data.success)) {
-        // quitar de la lista local
         setSocios((prev) => prev.filter((s) => s.id_socio !== id));
         setMostrarConfirmacion(false);
         setSocioSeleccionado(null);
@@ -91,40 +99,87 @@ const SociosBaja = () => {
     }
   };
 
+  const eliminarSocio = async (socio) => {
+    if (accionando || !socio) return;
+    setAccionando(true);
+    try {
+      const idSoc = socio.id_socio;
+      const nombre = `${socio.apellido || ""}, ${socio.nombre || ""}`.trim();
+
+      const qs = new URLSearchParams({
+        idSoc: String(idSoc),
+        nombre,
+      }).toString();
+
+      // Endpoint espejado al de empresas (GET con querystring)
+      const resp = await fetch(
+        `${BASE_URL}/api.php?action=eliminar_socio&${qs}`,
+        { method: "GET" }
+      );
+      const data = await resp.json();
+
+      if (resp.ok && (data.success || data.exito)) {
+        setSocios((prev) => prev.filter((s) => s.id_socio !== idSoc));
+        setMostrarEliminar(false);
+        setSocioAEliminar(null);
+        setToast({
+          show: true,
+          tipo: "exito",
+          mensaje: data?.message || data?.mensaje || "Socio eliminado correctamente",
+        });
+      } else {
+        throw new Error(data?.message || data?.mensaje || "No se pudo eliminar");
+      }
+    } catch (err) {
+      setToast({
+        show: true,
+        tipo: "error",
+        mensaje: err.message || "Error de red al eliminar",
+      });
+    } finally {
+      setAccionando(false);
+    }
+  };
+
   const closeToast = () => setToast({ ...toast, show: false });
 
   const formatearFecha = (yyyy_mm_dd) => {
     if (!yyyy_mm_dd) return "-";
-    const [y, m, d] = yyyy_mm_dd.split("-");
+    const [y, m, d] = String(yyyy_mm_dd).split("-");
     if (!y || !m || !d) return yyyy_mm_dd;
     return `${d}/${m}/${y}`;
   };
 
-  return (
-    <div className="soc-container-baja">
-      <div className="soc-glass-effect-baja"></div>
+  const abrirModalMotivo = (s) => {
+    setSocioMotivo(s);
+    setMostrarMotivo(true);
+  };
 
-      <div className="soc-barra-superior-baja">
-        <div className="soc-titulo-container-baja">
-          <h2 className="soc-titulo-baja">Socios Dados de Baja</h2>
+  return (
+    <div className="socbaj_container">
+      <div className="socbaj_glass"></div>
+
+      <div className="socbaj_barra-superior">
+        <div className="socbaj_titulo-container">
+          <h2 className="socbaj_titulo">Socios Dados de Baja</h2>
         </div>
         <button
-          className="soc-boton-volver-baja"
-          onClick={() => navigate("/socios")}
+          className="socbaj_boton-volver"
+          onClick={() => navigate("/Gestionarsocios")}
         >
           ← Volver
         </button>
       </div>
 
-      <div className="soc-buscador-container-baja">
+      <div className="socbaj_buscador-container">
         <input
           type="text"
-          className="soc-buscador-baja"
-          placeholder="Buscar por nombre o apellido..."
+          className="socbaj_buscador"
+          placeholder="Buscar por apellido o nombre..."
           value={busqueda}
           onChange={(e) => setBusqueda(e.target.value)}
         />
-        <div className="soc-buscador-iconos-baja">
+        <div className="socbaj_buscador-icono">
           <svg
             width="16"
             height="16"
@@ -151,55 +206,77 @@ const SociosBaja = () => {
       )}
 
       {loading ? (
-        <p className="soc-cargando-baja">Cargando socios dados de baja...</p>
+        <p className="socbaj_cargando">Cargando socios dados de baja...</p>
       ) : (
-        <div className="soc-tabla-container-baja">
-          <div className="soc-contador-baja">
+        <div className="socbaj_tabla-container">
+          <div className="socbaj_contador">
             Mostrando <strong>{sociosFiltrados.length}</strong> socios
           </div>
 
-          <div className="soc-tabla-header-container-baja">
-            <div className="soc-tabla-header-baja">
-              <div className="soc-col-id-baja">ID</div>
-              <div className="soc-col-nombre-baja">Nombre</div>
-              <div className="soc-col-domicilio-baja">Fecha de baja</div>
-              <div className="soc-col-comentario-baja">Motivo</div>
-              <div className="soc-col-acciones-baja">Acciones</div>
+          {/* ======= HEADER con Apellido y Nombre separados ======= */}
+          <div className="socbaj_tabla-header-container">
+            <div className="socbaj_tabla-header">
+              <div className="socbaj_col-id">ID</div>
+              <div className="socbaj_col-nombre">Apellido</div>
+              <div className="socbaj_col-nombre">Nombre</div>
+              <div className="socbaj_col-fecha">Fecha de baja</div>
+              <div className="socbaj_col-motivo">Motivo</div>
+              <div className="socbaj_col-acciones">Acciones</div>
             </div>
           </div>
 
-          <div className="soc-tabla-body-baja">
+          {/* ======= BODY con Apellido y Nombre separados ======= */}
+          <div className="socbaj_tabla-body">
             {sociosFiltrados.length === 0 ? (
-              <div className="soc-sin-resultados-container-baja">
-                <div className="soc-sin-resultados-baja">
-                  <FaUserCheck className="soc-icono-sin-resultados-baja" />
-                  No hay socios dados de baja
-                </div>
+              <div className="socbaj_sin-resultados">
+                <FaUserCheck className="socbaj_sin-icono" />
+                No hay socios dados de baja
               </div>
             ) : (
               sociosFiltrados.map((s) => (
-                <div className="soc-tabla-fila-baja" key={s.id_socio}>
-                  <div className="soc-col-id-baja">{s.id_socio}</div>
-                  <div className="soc-col-nombre-baja">
-                    {(s.apellido || "") + ", " + (s.nombre || "")}
-                  </div>
-                  <div className="soc-col-domicilio-baja">
+                <div className="socbaj_fila" key={s.id_socio}>
+                  <div className="socbaj_col-id">{s.id_socio}</div>
+                  <div className="socbaj_col-nombre">{s.apellido || ""}</div>
+                  <div className="socbaj_col-nombre">{s.nombre || ""}</div>
+                  <div className="socbaj_col-fecha">
                     {formatearFecha(s.fecha_baja)}
                   </div>
-                  <div className="soc-col-comentario-baja">
+
+                  <div
+                    className={`socbaj_col-motivo${
+                      (s.motivo || "").trim() ? " socbaj_col-motivo--click" : ""
+                    }`}
+                    title={(s.motivo || "").trim() ? "Ver motivo completo" : ""}
+                    onClick={() => {
+                      if ((s.motivo || "").trim()) abrirModalMotivo(s);
+                    }}
+                  >
                     {s.motivo || "-"}
                   </div>
-                  <div className="soc-col-acciones-baja">
-                    <div className="soc-iconos-acciones-baja">
+
+                  <div className="socbaj_col-acciones">
+                    <div className="socbaj_iconos">
                       <FaUserCheck
                         title="Dar de alta"
-                        className={`soc-icono-baja${
-                          accionando ? " soc-icono-disabled" : ""
+                        className={`socbaj_icono${
+                          accionando ? " socbaj_disabled" : ""
                         }`}
                         onClick={() => {
                           if (!accionando) {
                             setSocioSeleccionado(s);
                             setMostrarConfirmacion(true);
+                          }
+                        }}
+                      />
+                      <FaTrash
+                        title="Eliminar definitivamente"
+                        className={`socbaj_icono socbaj_icono-danger${
+                          accionando ? " socbaj_disabled" : ""
+                        }`}
+                        onClick={() => {
+                          if (!accionando) {
+                            setSocioAEliminar(s);
+                            setMostrarEliminar(true);
                           }
                         }}
                       />
@@ -212,28 +289,39 @@ const SociosBaja = () => {
         </div>
       )}
 
+      {/* Modal DAR ALTA */}
       {mostrarConfirmacion && socioSeleccionado && (
-        <div className="soc-modal-overlay-baja">
-          <div className="soc-modal-contenido-baja">
-            <h3>
-              ¿Deseás dar de alta nuevamente al socio{" "}
+        <div
+          className="socbaj_modal-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="modal-alta-title"
+        >
+          <div className="socbaj_modal socbaj_modal--success">
+            <div className="socbaj_modal__icon" aria-hidden="true">
+              <FaUserCheck />
+            </div>
+
+            <h3
+              id="modal-alta-title"
+              className="socbaj_modal__title socbaj_modal__title--success"
+            >
+              Reactivar socio
+            </h3>
+
+            <p className="socbaj_modal__body">
+              ¿Deseás dar de alta nuevamente a{" "}
               <strong>
                 {(socioSeleccionado.apellido || "") +
                   ", " +
                   (socioSeleccionado.nombre || "")}
               </strong>
               ?
-            </h3>
-            <div className="soc-modal-botones-baja">
+            </p>
+
+            <div className="socbaj_modal__actions">
               <button
-                className="soc-boton-confirmar-baja"
-                onClick={() => darAltaSocio(socioSeleccionado.id_socio)}
-                disabled={accionando}
-              >
-                {accionando ? "Procesando..." : "Sí, dar de alta"}
-              </button>
-              <button
-                className="soc-boton-cancelar-baja"
+                className="socbaj_btn socbaj_btn--ghost"
                 onClick={() => {
                   if (!accionando) {
                     setMostrarConfirmacion(false);
@@ -243,6 +331,106 @@ const SociosBaja = () => {
                 disabled={accionando}
               >
                 Cancelar
+              </button>
+
+              <button
+                className="socbaj_btn socbaj_btn--solid-success"
+                onClick={() => darAltaSocio(socioSeleccionado.id_socio)}
+                disabled={accionando}
+              >
+                {accionando ? "Procesando..." : "Sí, dar de alta"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal ELIMINAR */}
+      {mostrarEliminar && socioAEliminar && (
+        <div
+          className="socbaj_modal-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="modal-eliminar-title"
+        >
+          <div className="socbaj_modal socbaj_modal--danger">
+            <div
+              className="socbaj_modal__icon socbaj_modal__icon--danger"
+              aria-hidden="true"
+            >
+              <FaTrash />
+            </div>
+
+            <h3
+              id="modal-eliminar-title"
+              className="socbaj_modal__title socbaj_modal__title--danger"
+            >
+              Eliminar permanentemente
+            </h3>
+
+            <p className="socbaj_modal__body">
+              ¿Estás seguro que deseas eliminar al socio{" "}
+              <strong>
+                {(socioAEliminar?.apellido || "") +
+                  ", " +
+                  (socioAEliminar?.nombre || "")}
+              </strong>
+              ?
+            </p>
+
+            <div className="socbaj_modal__actions">
+              <button
+                className="socbaj_btn socbaj_btn--ghost"
+                onClick={() => {
+                  if (!accionando) {
+                    setMostrarEliminar(false);
+                    setSocioAEliminar(null);
+                  }
+                }}
+                disabled={accionando}
+              >
+                Cancelar
+              </button>
+
+              <button
+                className="socbaj_btn socbaj_btn--solid-danger"
+                onClick={() => eliminarSocio(socioAEliminar)}
+                disabled={accionando}
+              >
+                {accionando ? "Eliminando..." : "Sí, eliminar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal MOTIVO COMPLETO */}
+      {mostrarMotivo && socioMotivo && (
+        <div
+          className="socbaj_modal-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="modal-motivo-title"
+        >
+          <div className="socbaj_modal">
+            <h3 id="modal-motivo-title" className="socbaj_modal__title">
+              Motivo de baja
+            </h3>
+            <p className="socbaj_modal__body socbaj_modal__body--scroll">
+              {socioMotivo.motivo}
+            </p>
+            <div className="socbaj_modal__actions">
+              <button
+                className="socbaj_btn socbaj_btn--ghost"
+                onClick={() => {
+                  if (!accionando) {
+                    setMostrarMotivo(false);
+                    setSocioMotivo(null);
+                  }
+                }}
+                disabled={accionando}
+              >
+                Cerrar
               </button>
             </div>
           </div>

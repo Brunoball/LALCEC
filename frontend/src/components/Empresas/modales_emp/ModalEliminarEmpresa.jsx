@@ -1,19 +1,39 @@
 import React from "react";
+import { FaTrash } from "react-icons/fa";
 import "./ModalEliminarEmpresa.css";
 
 const ModalEliminarEmpresa = ({ empresaSeleccionada, onCancelar, onEliminar }) => {
-  return (
-    <div className="modal">
-      <div className="modal-content">
-        <h3 className="modal-title">¿Deseas eliminar esta empresa?</h3>
-        <p className="modal-text">{empresaSeleccionada?.razon_social}</p>
+  if (!empresaSeleccionada) return null;
 
-        <div className="modal-buttons">
-          <button className="modal-button cancel-button" onClick={onCancelar}>
+  return (
+    <div className="empdel-modal-overlay" role="dialog" aria-modal="true">
+      <div className="empdel-modal empdel-modal--danger">
+        <div className="empdel-modal__icon">
+          <FaTrash />
+        </div>
+
+        <h3 className="empdel-modal__title">Eliminar permanentemente</h3>
+
+        <p className="empdel-modal__body">
+          ¿Estás seguro que deseas eliminar a la empresa{" "}
+          <strong>{empresaSeleccionada.razon_social}</strong>?
+        </p>
+
+        <div className="empdel-modal__actions">
+          <button
+            type="button"
+            className="empdel-btn empdel-btn--ghost"
+            onClick={onCancelar}
+          >
             Cancelar
           </button>
-          <button className="modal-button accept-button" onClick={onEliminar}>
-            Aceptar
+
+          <button
+            type="button"
+            className="empdel-btn empdel-btn--solid-danger"
+            onClick={onEliminar}
+          >
+            Eliminar
           </button>
         </div>
       </div>

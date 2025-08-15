@@ -1,93 +1,172 @@
-/* Variables CSS para consistencia de diseño */
+/* src/components/empresas/EditarEmpresa.css */
+
+/* =========================================================
+   Variables (paleta naranja unificada con EditarSocio)
+========================================================= */
 :root {
   --primary-color: #ff6e00;
   --primary-hover: #ff8800;
-  --secondary-color: #0288d1;
-  --success-color: #4CAF50;
-  --danger-color: #F44336;
-  --background-color: #f5f5f5;
+  --primary-dark: #e55f00;
+  --accent-color: #ffa64d;
+  --surface-grad-a: #ff7e1a;
+  --surface-grad-b: #ff5e00;
+
+  --success-color: #2E7D32;
+  --danger-color: #C62828;
+
+  --background-color: #fff7f0;
   --surface-color: #ffffff;
-  --border-color: #ccc;
-  --text-primary: #4b4b4b;
-  --text-secondary: #888;
-  --border-radius: 15px;
-  --transition: all 0.3s ease;
+  --border-color: #e9e2da;
+
+  --text-primary: #2b1f17;
+  --text-secondary: #6a5c53;
+  --text-disabled: #9c8f87;
+
+  --border-radius: 12px;
+  --transition: all 0.25s ease;
+  --box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  --box-shadow-hover: 0 12px 28px rgba(0, 0, 0, 0.12);
+
+  --skel-base: #f0eee9;
+  --skel-shine: #e7e3dc;
 }
 
-/* ===== RESET Y BASE ===== */
-* {
-  box-sizing: border-box;
-}
-
+/* Base */
+* { box-sizing: border-box; margin: 0; padding: 0; }
 body {
-  font-family: 'Poppins', sans-serif;
-  margin: 0;
-  padding: 0;
+  font-family: 'Poppins', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  background: var(--background-color);
+  color: var(--text-primary);
+  line-height: 1.6;
+}
+
+/* Layout */
+.edit-empresa-container {
+  min-height: 100vh;
+  padding: 2rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: linear-gradient(135deg, #dcdcdc 30%, #ff6e00 70%);
 }
 
-/* ===== CONTENEDOR PRINCIPAL ===== */
-.edit-empresa-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-}
-
+/* Caja con animación clean (clon de EditarSocio) */
 .edit-empresa-box {
-  background: rgba(255, 255, 255, 0.95);
-  padding: 0 2.5rem 2rem;
-  border-radius: 25px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  background: var(--surface-color);
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
   width: 100%;
-  max-width: 900px;
-  position: relative;
+  max-width: 920px;
+  overflow: hidden;
+  transition: var(--transition);
+  will-change: transform, opacity;
+}
+.edit-empresa-box:hover { box-shadow: var(--box-shadow-hover); }
+
+.edit-empresa-animate-in {
+  opacity: 0;
+  transform: translateY(30px);
+  animation: editEmpresa_fadeSlideIn .5s ease forwards;
+}
+@keyframes editEmpresa_fadeSlideIn {
+  0% { opacity: 0; transform: translateY(30px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .edit-empresa-animate-in { animation: none; opacity: 1; transform: none; }
 }
 
-/* ===== TÍTULO ===== */
+/* Header con gradiente */
+.edit-empresa-header {
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid var(--border-color);
+  background: linear-gradient(135deg, var(--surface-grad-a), var(--surface-grad-b));
+  color: #fff;
+}
 .edit-empresa-title {
-  font-size: 1.8rem;
-  font-weight: 600;
-  margin: 1rem;
-  color: var(--text-primary);
-  text-align: center;
-  position: relative;
+  font-size: 1.85rem;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  margin-bottom: 0.25rem;
 }
+.edit-empresa-subtitle { font-size: 1rem; opacity: 0.95; }
 
+/* Skeleton en header */
+.edit-empresa-header-skel .skel-title { height: 24px; width: 280px; border-radius: 8px; }
+.edit-empresa-header-skel .skel-subtitle { height: 14px; width: 180px; margin-top: 10px; border-radius: 6px; }
 
-
-/* ===== FORMULARIO ===== */
-.edit-empresa-form {
+/* Tabs (mismo look & feel de EditarSocio) */
+.edit-empresa-tabs {
   display: flex;
-  flex-direction: column;
-  gap: 1rem;
+  gap: .25rem;
+  border-bottom: 1px solid var(--border-color);
+  padding: 0.25rem 0.75rem;
+  background: #fff3e6;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+.edit-empresa-tabs::-webkit-scrollbar { height: 6px; }
+
+.edit-empresa-tab {
+  padding: 0.9rem 1.25rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  position: relative;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 8px 8px 0 0;
+  white-space: nowrap;
+}
+.edit-empresa-tab:hover { color: var(--primary-color); background: rgba(255, 110, 0, 0.08); }
+.edit-empresa-tab.active { color: var(--primary-color); background: #fff; }
+.edit-empresa-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 12px;
+  right: 12px;
+  height: 3px;
+  background: var(--primary-color);
+  border-radius: 3px 3px 0 0;
+}
+.edit-empresa-tab.is-disabled { opacity: .6; cursor: not-allowed; }
+.edit-empresa-tab-icon { font-size: 0.9rem; }
+.tab-text { display: inline; }
+
+/* Form & contenidos */
+.edit-empresa-form { padding: 1.5rem 2rem; }
+
+.edit-empresa-tab-content {
+  margin-bottom: 1.25rem;
+  animation: fadeIn .25s ease;
+  will-change: transform, opacity;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 .edit-empresa-input-group {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 1.5rem;
+  gap: 1.1rem;
+  margin-bottom: 1.25rem;
+}
+@media (min-width: 640px) {
+  .edit-empresa-input-group { grid-template-columns: 1fr 1fr; }
 }
 
-@media (min-width: 768px) {
-  .edit-empresa-input-group {
-    grid-template-columns: 1fr 1fr;
-  }
-  
-  .edit-empresa-input-group:has(.edit-empresa-id-campo) {
-    grid-template-columns: 120px 1fr;
-  }
-}
-
-/* ===== CAMPOS CON FLOATING LABELS ===== */
-.edit-empresa-floating-label-wrapper {
-  position: relative;
-  width: 100%;
-}
+.edit-empresa-floating-label-wrapper { position: relative; width: 100%; }
 
 .edit-empresa-input {
   width: 100%;
-  padding: 0.8rem 1rem;
+  padding: 0.95rem 1rem;
   border: 1px solid var(--border-color);
   border-radius: 10px;
   font-size: 1rem;
@@ -95,190 +174,168 @@ body {
   color: var(--text-primary);
   transition: var(--transition);
   outline: none;
-  height: 50px;
-  font-family: 'Poppins', sans-serif;
+  font-family: inherit;
 }
-
 .edit-empresa-input:focus {
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(255, 110, 0, 0.2);
+  box-shadow: 0 0 0 3px rgba(255, 110, 0, 0.15);
 }
 
 .edit-empresa-floating-label {
   position: absolute;
   top: 50%;
-  left: 13px;
+  left: 1rem;
   font-size: 1rem;
   color: var(--text-secondary);
   pointer-events: none;
   transform: translateY(-50%);
   transition: var(--transition);
+  background: var(--surface-color);
+  padding: 0 0.25rem;
 }
-
 .edit-empresa-input:focus + .edit-empresa-floating-label,
 .edit-empresa-input:not(:placeholder-shown) + .edit-empresa-floating-label,
 .edit-empresa-floating-label-filled {
   top: 0;
-  font-size: 0.85rem;
-  color: var(--secondary-color);
-  background-color: var(--surface-color);
-  padding: 0 5px;
-  border-radius: 5px;
-  transform: translateY(-50%);
+  font-size: 0.8rem;
+  color: var(--primary-color);
+  transform: translateY(-50%) scale(0.94);
 }
 
-/* ===== CAMPOS ESPECIALES ===== */
-.edit-empresa-disabled-input {
-  background: #e9ecef !important;
-  color: var(--text-secondary) !important;
-  cursor: not-allowed;
-}
+.edit-empresa-textarea { min-height: 120px; resize: vertical; padding-top: 1.5rem; }
 
-.edit-empresa-id-campo .edit-empresa-floating-label-filled {
-  color: var(--text-secondary) !important;
-}
-
-/* ===== SELECTS ===== */
+/* Selects */
 select.edit-empresa-input {
   appearance: none;
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23888' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236a5c53' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
   background-position: right 1rem center;
   background-repeat: no-repeat;
-  background-size: 1.5em 1.5em;
-  padding-right: 3rem;
+  background-size: 1.2em 1.2em;
+  padding-right: 2.75rem;
   cursor: pointer;
 }
-
 select.edit-empresa-input:focus {
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%230288d1' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23ff6e00' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
 }
 
-/* ===== BOTONES ===== */
+/* Botones */
 .edit-empresa-buttons-container {
   display: flex;
-  gap: 1rem;
-  justify-content: space-between;
+  gap: 0.8rem;
+  justify-content: flex-end;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+  margin-top: 1.25rem;
+  flex-wrap: wrap;
 }
-
 .edit-empresa-button,
 .edit-empresa-back-button {
-  padding: 1rem;
+  padding: 0.8rem 1rem;
   border: none;
-  border-radius: var(--border-radius);
-  font-size: 1rem;
+  border-radius: 10px;
+  font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
   transition: var(--transition);
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  width: 48%;
-  height: 50px;
+  gap: 0.55rem;
 }
-
-.edit-empresa-button {
-     background: linear-gradient(135deg, #0288D1, #01579B);
-  color: white;
-}
-
+.edit-empresa-button { background: var(--primary-color); color: #fff; }
 .edit-empresa-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(255, 110, 0, 0.3);
+  background: var(--primary-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--box-shadow-hover);
 }
-
 .edit-empresa-back-button {
-  background: linear-gradient(135deg, #f97316, #c2410c);
-  color: white;
+  background: #fff;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
 }
-
 .edit-empresa-back-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(2, 136, 209, 0.3);
-}
-
-.edit-empresa-icon-button {
-  margin-right: 0.5rem;
-}
-
-/* ===== MENSAJES ===== */
-.edit-empresa-message {
-  padding: 1rem;
-  border-radius: 10px;
-  font-weight: 600;
-  width: 98%;
-  text-align: center;
-  margin: -1rem auto 1rem auto;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-}
-
-.edit-empresa-success-message {
-  background-color: rgba(76, 175, 80, 0.2);
-  color: var(--success-color);
-}
-
-.edit-empresa-error-message {
-  background-color: rgba(244, 67, 54, 0.2);
-  color: var(--danger-color);
-}
-
-/* ===== LOADER ===== */
-.edit-empresa-loader-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 60vh;
-}
-
-.edit-empresa-loader {
-  border: 8px solid #f3f3f3;
-  border-top: 8px solid var(--secondary-color);
-  border-radius: 50%;
-  width: 60px;
-  height: 60px;
-  animation: spin 1s linear infinite;
-}
-
-.edit-empresa-loading-text {
-  margin-top: 1rem;
-  font-size: 1rem;
+  background: #fff2e6;
+  border-color: #f2d6bf;
   color: var(--text-primary);
 }
+.edit-empresa-icon-button { font-size: .95rem; }
+.btn-text { display: inline; }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+/* Loader clásico (lo mantenemos por compat, pero la vista usa skeletons) */
+.edit-empresa-loader-container {
+  min-height: 70vh;
+  padding: 2rem 1rem;
+  display: grid;
+  place-items: center;
+  text-align: center;
+}
+.edit-empresa-loader {
+  border: 5px solid #f3f3f3;
+  border-top: 5px solid var(--primary-color);
+  border-radius: 50%;
+  width: 52px;
+  height: 52px;
+  animation: spin 1s linear infinite;
+}
+.edit-empresa-loading-text { margin-top: 1rem; font-size: 1rem; color: var(--text-primary); }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ===========================
+   Skeletons (como Categorías)
+=========================== */
+@keyframes skelShine {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.skel {
+  background: linear-gradient(90deg, var(--skel-base), var(--skel-shine), var(--skel-base));
+  background-size: 200% 100%;
+  animation: skelShine 1.4s ease-in-out infinite;
+}
+.skel-input {
+  height: 48px;
+  border-radius: 10px;
+}
+.skel-btn {
+  height: 44px;
+  width: 170px;
+  border-radius: 10px;
 }
 
-/* ===== RESPONSIVE ===== */
+/* Responsive */
 @media (max-width: 768px) {
-  .edit-empresa-container {
-    padding: 1rem;
-  }
-  
-  .edit-empresa-box {
-    padding: 1.5rem;
-  }
-  
-  .edit-empresa-title {
-    font-size: 1.5rem;
-  }
-  
+  .edit-empresa-container { padding: 1rem; }
+  .edit-empresa-header { padding: 1.1rem 1.25rem; }
+  .edit-empresa-form { padding: 1.1rem 1.25rem; }
+  .edit-empresa-tabs { padding: 0.25rem 0.5rem; }
+
   .edit-empresa-buttons-container {
-    flex-direction: column;
+    justify-content: space-between;
+    flex-wrap: nowrap;
+    gap: .6rem;
   }
-  
   .edit-empresa-button,
   .edit-empresa-back-button {
-    width: 100%;
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 0.75rem 0.85rem;
+    justify-content: center;
+    text-align: center;
   }
+  .tab-text { display: none; }
 }
 
-/* ===== VALIDACIÓN ===== */
-.edit-empresa-input:invalid:not(:placeholder-shown) {
-  border-color: var(--danger-color);
+@media (max-width: 420px) {
+  .btn-text { display: none; }
+  .edit-empresa-button,
+  .edit-empresa-back-button { padding: 0.7rem 0.75rem; }
 }
 
-.edit-empresa-input:invalid:not(:placeholder-shown) + .edit-empresa-floating-label {
-  color: var(--danger-color);
+@media (max-width: 360px) {
+  .edit-empresa-title { font-size: 1.5rem; }
+  .edit-empresa-input { font-size: .95rem; padding: 0.85rem 0.9rem; }
+}
+
+/* Accesibilidad: reducir movimiento */
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
 }
