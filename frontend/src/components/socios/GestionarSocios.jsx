@@ -169,6 +169,10 @@ const GestionarSocios = () => {
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState(null);
 
+  // NUEVO: control de carga diferida
+  const [dataLoaded, setDataLoaded] = useState(false); // se pone true cuando realmente se trae del server o cache
+  const CACHE_KEY = "sociosCache:v1"; // CACHE: cambiar versión si cambia el shape
+
   /* ---------- Selecciones / modales ---------- */
   const [filaSeleccionada, setFilaSeleccionada] = useState(null);
   const [socioSeleccionado, setSocioSeleccionado] = useState(null);
@@ -221,8 +225,44 @@ const GestionarSocios = () => {
     return () => clearTimeout(t);
   }, [filtrosActivos]);
 
-  /* ---------- Cargar datos ---------- */
-  const cargarSocios = useCallback(async () => {
+  /* ---------- Cargar desde cache (no fetch) al entrar ---------- */
+  useEffect(() => {
+    try {
+      const cached = sessionStorage.getItem(CACHE_KEY); // CACHE
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed)) {
+          setSociosRaw(parsed); // no mostramos nada hasta que apliquen filtro, pero ya está en memoria
+          setDataLoaded(true);  // marcado como cargado desde cache
+        }
+      }
+    } catch {
+      /* ignore */
+    }
+    // NO hacemos fetch aquí: la carga real se dispara solo al aplicar filtros/búsqueda/mostrar todos
+    // Mantiene la UI fija sin mini recarga inicial.
+  }, []);
+
+  /* ---------- Función de carga perezosa ---------- */
+  const ensureDataLoaded = useCallback(async () => {
+    if (dataLoaded && sociosRaw.length > 0) return; // ya tenemos algo útil (cache o previa)
+
+    // Intento 1: cache (sincrónico, instantáneo)
+    try {
+      const cached = sessionStorage.getItem(CACHE_KEY);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setSociosRaw(parsed);
+          setDataLoaded(true);
+          return; // listo al toque
+        }
+      }
+    } catch {
+      /* ignore cache errors */
+    }
+
+    // Intento 2: fetch real (primera vez sin cache)
     setCargando(true);
     try {
       const resp = await fetch(
@@ -233,17 +273,20 @@ const GestionarSocios = () => {
       const arr = Array.isArray(data.socios) ? data.socios : [];
       setSociosRaw(arr);
       setError(null);
+      setDataLoaded(true);
+      // CACHE
+      try {
+        sessionStorage.setItem(CACHE_KEY, JSON.stringify(arr));
+      } catch {
+        /* ignore */
+      }
     } catch (e) {
       console.error(e);
       setError("Error al cargar los datos");
     } finally {
       setCargando(false);
     }
-  }, []);
-
-  useEffect(() => {
-    cargarSocios();
-  }, [cargarSocios]);
+  }, [dataLoaded, sociosRaw.length]);
 
   /* ---------- Pre-procesamiento liviano ---------- */
   const getEstadoPago = useCallback((mesesPagadosStr, fechaUnion) => {
@@ -338,6 +381,8 @@ const GestionarSocios = () => {
     const letrasArr = filtrosActivos.letras?.length ? filtrosActivos.letras : null;
     const mediosArr = filtrosActivos.mediosPago?.length ? filtrosActivos.mediosPago : null;
 
+    // IMPORTANTE:
+    // Si no hay búsqueda ni filtros ni "todos", NO devolvemos nada (UI vacía)
     if (!useSearch && !letrasArr && !mediosArr && !filtrosActivos.todos) {
       return [];
     }
@@ -366,15 +411,23 @@ const GestionarSocios = () => {
   }, [socios, deferredBusqueda, filtrosActivos]);
 
   /* ---------- Handlers UI (estables) ---------- */
-  const handleBusquedaInputChange = useCallback((e) => {
-    setBusqueda(e.target.value);
-  }, []);
+  const handleBusquedaInputChange = useCallback(async (e) => {
+    const value = e.target.value;
+    setBusqueda(value);
+    // primera interacción de búsqueda → carga perezosa
+    if (!dataLoaded) {
+      await ensureDataLoaded();
+    }
+  }, [dataLoaded, ensureDataLoaded]);
 
   const limpiarFiltros = useCallback(() => {
     setFiltrosActivos({ letras: [], mediosPago: [], todos: false });
+    setBusqueda("");
+    setFilaSeleccionada(null);
+    setSocioSeleccionado(null);
   }, []);
 
-  const handleFiltrarPorLetra = useCallback((letra) => {
+  const handleFiltrarPorLetra = useCallback(async (letra) => {
     setBusqueda("");
     setFiltrosActivos((prev) => {
       const exists = prev.letras.includes(letra);
@@ -383,9 +436,10 @@ const GestionarSocios = () => {
         : [...prev.letras, letra];
       return { ...prev, letras, todos: false };
     });
-  }, []);
+    if (!dataLoaded) await ensureDataLoaded();
+  }, [dataLoaded, ensureDataLoaded]);
 
-  const handleFiltrarPorMedioPago = useCallback((medio) => {
+  const handleFiltrarPorMedioPago = useCallback(async (medio) => {
     setBusqueda("");
     setFiltrosActivos((prev) => {
       const exists = prev.mediosPago.includes(medio);
@@ -394,12 +448,17 @@ const GestionarSocios = () => {
         : [...prev.mediosPago, medio];
       return { ...prev, mediosPago, todos: false };
     });
-  }, []);
+    if (!dataLoaded) await ensureDataLoaded();
+  }, [dataLoaded, ensureDataLoaded]);
 
-  const handleMostrarTodos = useCallback(() => {
+  const handleMostrarTodos = useCallback(async () => {
     setBusqueda("");
     setFiltrosActivos({ letras: [], mediosPago: [], todos: true });
-  }, []);
+    setMostrarMenuFiltros(false);
+    setFilaSeleccionada(null);
+    setSocioSeleccionado(null);
+    await ensureDataLoaded(); // <- “al toque” si hay cache; si no, trae y cachea
+  }, [ensureDataLoaded]);
 
   const onSelect = useCallback((index, socio) => {
     setFilaSeleccionada((prev) => (prev === index ? null : index));
@@ -450,7 +509,14 @@ const GestionarSocios = () => {
       });
       const data = await response.json();
       if (data?.exito || data?.success) {
-        setSociosRaw((prev) => prev.filter((s) => getSocioId(s) !== idSel));
+        setSociosRaw((prev) => {
+          const next = prev.filter((s) => getSocioId(s) !== idSel);
+          // CACHE: reflejar eliminación inmediata
+          try {
+            sessionStorage.setItem(CACHE_KEY, JSON.stringify(next));
+          } catch {}
+          return next;
+        });
         setMostrarModalEliminar(false);
         showToast("Socio eliminado correctamente");
       } else {
@@ -480,7 +546,14 @@ const GestionarSocios = () => {
         );
         const result = await response.json();
         if (response.ok && (result?.exito || result?.success)) {
-          setSociosRaw((prev) => prev.filter((s) => getSocioId(s) !== id));
+          setSociosRaw((prev) => {
+            const next = prev.filter((s) => getSocioId(s) !== id);
+            // CACHE: reflejar baja inmediata
+            try {
+              sessionStorage.setItem(CACHE_KEY, JSON.stringify(next));
+            } catch {}
+            return next;
+          });
           setMostrarModalBaja(false);
           showToast(result?.mensaje || "Socio dado de baja");
         } else {
@@ -533,7 +606,10 @@ const GestionarSocios = () => {
   const cantidadVisibles = useMemo(() => sociosFiltrados.length, [sociosFiltrados]);
 
   /* ---------- Exportar Excel ---------- */
-  const exportarAExcel = useCallback(() => {
+  const exportarAExcel = useCallback(async () => {
+    // si aún no cargamos datos y quieren exportar, cargar primero
+    if (!dataLoaded) await ensureDataLoaded();
+
     if (sociosFiltrados.length === 0) {
       showToast("No hay socios para exportar.", "error");
       return;
@@ -566,7 +642,7 @@ const GestionarSocios = () => {
     XLSX.utils.book_append_sheet(wb, ws, "Socios");
     XLSX.writeFile(wb, "Socios.xlsx");
     showToast("Exportación a Excel completada");
-  }, [sociosFiltrados, showToast]);
+  }, [sociosFiltrados, showToast, dataLoaded, ensureDataLoaded]);
 
   /* ---------- Solo montamos la vista correspondiente ---------- */
   const isMobile = useMediaQuery("(max-width: 900px)");
@@ -581,9 +657,9 @@ const GestionarSocios = () => {
     ].join("::");
   }, [deferredBusqueda, filtrosActivos]);
 
-  /* === NUEVO: overscan enorme para forzar que estén TODAS las filas cargadas === */
+  /* === Overscan grande para cascada suave === */
   const overscanAll = useMemo(
-    () => Math.max(6, sociosFiltrados.length), // efectivamente “todo”
+    () => Math.max(6, sociosFiltrados.length),
     [sociosFiltrados.length]
   );
 
@@ -625,7 +701,13 @@ const GestionarSocios = () => {
                 title="Limpiar búsqueda"
               />
             )}
-            <button className="gessoc_search-button" title="Buscar">
+            <button
+              className="gessoc_search-button"
+              title="Buscar"
+              onClick={async () => {
+                if (!dataLoaded) await ensureDataLoaded();
+              }}
+            >
               <FontAwesomeIcon icon={faMagnifyingGlass} className="gessoc_search-icon" />
             </button>
           </div>
@@ -710,10 +792,7 @@ const GestionarSocios = () => {
 
                 <div
                   className="gessoc_filtros-menu-item gessoc_mostrar-todas"
-                  onClick={() => {
-                    handleMostrarTodos();
-                    setMostrarMenuFiltros(false);
-                  }}
+                  onClick={handleMostrarTodos}
                 >
                   <span>Mostrar Todos</span>
                 </div>
@@ -817,19 +896,16 @@ const GestionarSocios = () => {
                   </div>
                 ) : sociosFiltrados.length > 0 ? (
                   <div
-                    /* IMPORTANTE: key para re-montar y re-animar en cada búsqueda/filtro */
                     key={cascadeKey}
                     className="gessoc_scrollableE gessoc_cascade-animation"
                     style={{ padding: 0, height: listHeight }}
                   >
                     <List
-                      /* IMPORTANTE: key también en List para un remount limpio */
                       key={cascadeKey}
                       height={listHeight}
                       itemCount={sociosFiltrados.length}
                       itemSize={48}
                       width="100%"
-                      /* 👉 Overscan gigante = todas las filas renderizadas siempre */
                       overscanCount={overscanAll}
                       itemData={itemData}
                     >

@@ -74,12 +74,16 @@
 /* ===== Botonera ===== */
 .empdel-modal__actions {
   display: flex;
-  gap: 1rem;
+  flex-direction: row;     /* siempre en fila */
+  align-items: stretch;
   justify-content: center;
+  gap: 1rem;
+  margin-top: 1.25rem;
+  flex-wrap: nowrap;       /* evita salto en móviles comunes */
 }
 
 .empdel-btn {
-  flex: 1;
+  flex: 1 1 0;             /* botones equivalentes */
   max-width: 200px;
   padding: .75rem 1.25rem;
   border-radius: var(--soc-border-radius);
@@ -87,6 +91,7 @@
   cursor: pointer;
   transition: var(--soc-transition);
   border: 1px solid transparent;
+  user-select: none;
 }
 
 /* Botón primario peligro */
@@ -125,14 +130,20 @@
 
 /* ===== Responsive ===== */
 @media (max-width: 576px) {
-  .empdel-modal {
-    padding: 1.25rem;
-  }
+  .empdel-modal { padding: 1.25rem; }
+
   .empdel-modal__actions {
-    flex-direction: column;
+    gap: .75rem;           /* un poco menos de espacio en mobile */
+    flex-wrap: nowrap;     /* mantener lado a lado */
   }
+
   .empdel-btn {
-    max-width: 100%;
-    width: 100%;
+    max-width: none;       /* ocupar el ancho disponible equitativamente */
   }
+}
+
+/* Pantallas MUY estrechas: permitir wrap en 2 columnas si no entra */
+@media (max-width: 340px) {
+  .empdel-modal__actions { flex-wrap: wrap; }
+  .empdel-btn { flex: 1 1 calc(50% - .5rem); }
 }

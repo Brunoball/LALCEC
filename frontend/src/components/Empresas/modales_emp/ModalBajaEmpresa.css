@@ -34,7 +34,7 @@
   animation: empbaja-fadeIn .2s ease-out;
 }
 
-/* ===== Caja del modal (misma estética) ===== */
+/* ===== Caja del modal ===== */
 .empbaja-modal {
   width: 100%;
   max-width: 500px;
@@ -106,9 +106,7 @@
   line-height: 1.5;
 }
 
-.empbaja-textarea::placeholder {
-  color: #9ca3af;
-}
+.empbaja-textarea::placeholder { color: #9ca3af; }
 
 .empbaja-textarea:focus {
   outline: none;
@@ -127,13 +125,16 @@
 /* ===== Acciones ===== */
 .empbaja-modal__actions {
   display: flex;
-  gap: 1rem;
+  flex-direction: row;        /* Siempre en fila, inclusive mobile */
+  align-items: stretch;
   justify-content: center;
+  gap: 1rem;
   margin-top: 1.25rem;
+  flex-wrap: nowrap;          /* Evita salto de línea en anchos comunes */
 }
 
 .empbaja-btn {
-  flex: 1;
+  flex: 1 1 0;                /* Botones equivalentes */
   max-width: 200px;
   padding: .75rem 1.25rem;
   border-radius: var(--soc-border-radius);
@@ -141,6 +142,7 @@
   cursor: pointer;
   transition: var(--soc-transition);
   border: 1px solid transparent;
+  user-select: none;
 }
 
 /* Primario peligro (solid) */
@@ -194,11 +196,23 @@
   .empbaja-modal {
     padding: 1.25rem;
   }
+
   .empbaja-modal__actions {
-    flex-direction: column-reverse;
+    gap: .75rem;              /* Un poco menos de espacio en mobile */
+    flex-wrap: nowrap;        /* Mantener lado a lado */
+  }
+
+  .empbaja-btn {
+    max-width: none;          /* Que ocupen el ancho disponible de forma equitativa */
+  }
+}
+
+/* En pantallas MUY estrechas, permitir wrap pero mantener 2 columnas si entra */
+@media (max-width: 340px) {
+  .empbaja-modal__actions {
+    flex-wrap: wrap;
   }
   .empbaja-btn {
-    max-width: 100%;
-    width: 100%;
+    flex: 1 1 calc(50% - .5rem);
   }
 }

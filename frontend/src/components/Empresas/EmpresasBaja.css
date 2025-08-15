@@ -351,7 +351,7 @@
     background: linear-gradient(180deg, var(--emp-danger), var(--emp-accent));
   }
 
-  /* Cada “columna” ahora es una línea etiqueta/valor */
+  /* Cada "columna" ahora es una línea etiqueta/valor */
   .emp-baja-fila > div {
     width: 100%;
     display: grid;
@@ -412,9 +412,15 @@
     font-size: 1.4rem;
   }
 
-  /* Modal */
-  .emp-baja-modal__actions { flex-direction: column; }
-  .emp-baja-btn { max-width: 100%; width: 100%; }
+  /* Modal - Mantener botones en fila en mobile */
+  .emp-baja-modal__actions {
+    flex-direction: row !important; /* Cambiado de column a row */
+    flex-wrap: wrap;
+  }
+  .emp-baja-btn {
+    min-width: 120px;
+    max-width: calc(50% - 0.5rem);
+  }
   .emp-baja-sin-resultados { padding: 20px; font-size: 0.9rem; }
 }
 
@@ -426,5 +432,12 @@
   /* Etiqueta un poco más angosta en pantallas muy chicas */
   .emp-baja-fila > div {
     grid-template-columns: 115px 1fr;
+  }
+  
+  /* Ajustar botones en modales para pantallas muy pequeñas */
+  .emp-baja-btn {
+    min-width: 100px;
+    padding: .65rem 1rem;
+    font-size: 0.9rem;
   }
 }

@@ -169,8 +169,8 @@ html, body, #root {
 
 .gcuotas-tab-container {
   display: flex;
-  border-radius: 6px;
-  overflow: hidden;
+  border-radius: 12px;        /* más redondo */
+  overflow: hidden;            /* asegura que el color del activo llegue a las puntas */
   background-color: #f8f9fa;
   border: 1px solid #e0e3e7;
   margin: 0 12px 12px;
@@ -180,6 +180,7 @@ html, body, #root {
   flex: 1;
   padding: 12px;
   border: none;
+  margin: 0;                   /* sin márgenes para evitar “cortes” */
   cursor: pointer;
   font-weight: 500;
   font-size: 14px;
@@ -190,6 +191,7 @@ html, body, #root {
   gap: 8px;
   background-color: transparent;
   color: #6c757d;
+  border-radius: 0;            /* lo maneja el contenedor con overflow */
 }
 .gcuotas-active-tab { background-color: #4361ee; color: #fff; }
 
@@ -368,14 +370,14 @@ html, body, #root {
 .gcuotas-virtual-header.gsocios > .gcuotas-virtual-cell:nth-child(3),
 .gcuotas-virtual-row.gsocios   > .gcuotas-virtual-cell:nth-child(3) {
   width: 22%;
-  white-space: nowrap;        /* dirección suele ser corta aquí */
+  white-space: nowrap;
 }
 .gcuotas-virtual-header.gsocios > .gcuotas-virtual-cell:nth-child(4),
 .gcuotas-virtual-row.gsocios   > .gcuotas-virtual-cell:nth-child(4) { width: 14%; }
 .gcuotas-virtual-header.gsocios > .gcuotas-virtual-cell:nth-child(5),
 .gcuotas-virtual-row.gsocios   > .gcuotas-virtual-cell:nth-child(5) {
   width: 20%;
-  white-space: normal;        /* permite varias líneas */
+  white-space: normal;
   word-break: break-word;
   line-height: 1.2;
 }
@@ -383,7 +385,7 @@ html, body, #root {
 .gcuotas-virtual-row.gsocios   > .gcuotas-virtual-cell:nth-child(6) {
   width: 8%;
   text-align: center;
-  min-width: 56px;            /* más compacto */
+  min-width: 56px;
 }
 
 /* ===== EMPRESAS (compacto) */
@@ -527,6 +529,7 @@ html, body, #root {
   min-width: 96px;
 }
 
+/* Acciones en la card (móvil) */
 .gcuotas-mobile-actions {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -534,19 +537,40 @@ html, body, #root {
   margin-top: 10px;
 }
 
-.gcuotas-mobile-print-button, .gcuotas-mobile-payment-button {
+.gcuotas-mobile-print-button,
+.gcuotas-mobile-payment-button {
   border-radius: 10px;
   border: 1px solid #e6e6e6;
   padding: 10px 8px;
   font-size: 14px;
   font-weight: 700;
-  background: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
+  background: #fff;
+  color: #2b2d42;
 }
-.gcuotas-mobile-payment-button { background: #38a169; color: #fff; border-color: #2f855a; }
+
+/* ✅ FIX: asegurar que “Registrar Pago” se vea verde con texto/icono blancos */
+.gcuotas-mobile-payment-button {
+  background: #38a169 !important;
+  border-color: #2f855a !important;
+  color: #fff !important;
+}
+.gcuotas-mobile-payment-button span,
+.gcuotas-mobile-payment-button svg,
+.gcuotas-mobile-payment-button i,
+.gcuotas-mobile-payment-button .fa,
+.gcuotas-mobile-payment-button .fa-solid {
+  color: #fff !important;
+  fill: #fff !important;
+}
+.gcuotas-mobile-payment-button:hover {
+  background: #2f855a !important;
+  border-color: #276749 !important;
+}
+
 .gcuotas-mobile-print-button { background: #f7fafc; color: #2b2d42; }
 
 /* ===========================
@@ -733,10 +757,15 @@ html, body, #root {
 
   /* padding lateral para los botones Pagado/Deudores */
   .gcuotas-tabs-card { padding: 0 12px; }
+
+  /* ✅ FIX de puntas: sin padding interno, border-radius + overflow para que el activo pinte completo */
   .gcuotas-tab-container {
     margin: 8px 0;
-    padding: 0 4px;
-    border-radius: 10px;
+    padding: 0;               /* antes 0 4px; eso dejaba “bordes” sin pintar */
+    border-radius: 12px;
+    overflow: hidden;
+    background-color: #f8f9fa;
+    border: 1px solid #e0e3e7;
   }
 
   .gcuotas-tab-button { padding: 10px 8px; font-size: 13px; }
@@ -746,11 +775,11 @@ html, body, #root {
     background: #fff;
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    margin: 8px auto 0 auto;       /* sin margen inferior gris */
-    padding-bottom: 72px;           /* espacio para la bottom bar dentro del card (blanco) */
+    margin: 8px auto 0 auto;
+    padding-bottom: 72px;
   }
 
-  .gcuotas-right-section.gcuotas-has-bottombar { margin-bottom: 0; } /* quita franja gris */
+  .gcuotas-right-section.gcuotas-has-bottombar { margin-bottom: 0; }
 
   .gcuotas-table-header {
     padding: 14px 0 8px;
