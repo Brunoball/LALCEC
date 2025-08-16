@@ -291,6 +291,10 @@ const GestionarSocios = () => {
   const [dataLoaded, setDataLoaded] = useState(false);
   const CACHE_KEY = "sociosCache:v1";
 
+  /* ---------- Revalidación ---------- */
+  const refreshingRef = useRef(false); // evita llamadas concurrentes
+  const [lastSync, setLastSync] = useState(0); // opcional, por si querés mostrarlo
+
   /* ---------- Selecciones / modales ---------- */
   const [filaSeleccionada, setFilaSeleccionada] = useState(null);
   const [socioSeleccionado, setSocioSeleccionado] = useState(null);
@@ -359,26 +363,73 @@ const GestionarSocios = () => {
     }
   }, []);
 
-  /* ---------- Carga perezosa ---------- */
-  const ensureDataLoaded = useCallback(async () => {
-    if (dataLoaded && sociosRaw.length > 0) return;
-
+  /* ---------- Revalidación (siempre trae lo último) ---------- */
+  const revalidate = useCallback(async () => {
+    if (refreshingRef.current) return;
+    refreshingRef.current = true;
     try {
-      const cached = sessionStorage.getItem(CACHE_KEY);
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setSociosRaw(parsed);
-          setDataLoaded(true);
-          return;
+      // cache-buster para evitar cualquier capa intermedia
+      const url = `${BASE_URL}/api.php?action=todos_socios&tipo=socios&_=${Date.now()}`;
+      const resp = await fetch(url, { method: "GET", cache: "no-store" });
+      if (!resp.ok) throw new Error("No se pudo obtener socios (revalidate)");
+      const data = await resp.json();
+      const arr = Array.isArray(data.socios) ? data.socios : [];
+
+      // Actualiza estado y cache sólo si cambia el largo o si difiere algún id/prop básica
+      const old = sociosRaw;
+      let shouldUpdate = arr.length !== old.length;
+
+      if (!shouldUpdate) {
+        const byId = (s) => getSocioId(s) ?? -1;
+        for (let i = 0; i < arr.length; i++) {
+          const a = arr[i];
+          const b = old[i];
+          if (byId(a) !== byId(b)) {
+            shouldUpdate = true;
+            break;
+          }
+          // chequeo barato de campos visibles
+          if (
+            a.nombre !== b?.nombre ||
+            a.apellido !== b?.apellido ||
+            a.categoria !== b?.categoria ||
+            a.precio_categoria !== b?.precio_categoria ||
+            a.medio_pago !== b?.medio_pago ||
+            a.domicilio_2 !== b?.domicilio_2 ||
+            a.observacion !== b?.observacion ||
+            a.meses_pagados !== b?.meses_pagados ||
+            a.fecha_union !== b?.fecha_union
+          ) {
+            shouldUpdate = true;
+            break;
+          }
         }
       }
-    } catch {}
 
+      if (shouldUpdate) {
+        setSociosRaw(arr);
+        try {
+          sessionStorage.setItem(CACHE_KEY, JSON.stringify(arr));
+        } catch {}
+        setLastSync(Date.now());
+      }
+      setError(null);
+      setDataLoaded(true);
+    } catch (e) {
+      console.error(e);
+      // No tocamos estado si falla, mantenemos lo último bueno
+    } finally {
+      refreshingRef.current = false;
+    }
+  }, [BASE_URL, sociosRaw]);
+
+  /* ---------- Carga perezosa inicial + revalidación ---------- */
+  const ensureDataLoaded = useCallback(async () => {
+    if (dataLoaded && sociosRaw.length > 0) return;
     setCargando(true);
     try {
       const resp = await fetch(
-        `${BASE_URL}/api.php?action=todos_socios&tipo=socios`,
+        `${BASE_URL}/api.php?action=todos_socios&tipo=socios&_=${Date.now()}`,
         { method: "GET", cache: "no-store" }
       );
       if (!resp.ok) throw new Error("No se pudo obtener socios");
@@ -397,6 +448,37 @@ const GestionarSocios = () => {
       setCargando(false);
     }
   }, [dataLoaded, sociosRaw.length]);
+
+  // Revalidá al montar (después de leer cache) para traer lo último
+  useEffect(() => {
+    // pequeño defer para no bloquear el hilo en móviles
+    const id = window.requestIdleCallback
+      ? window.requestIdleCallback(() => revalidate())
+      : setTimeout(revalidate, 0);
+    return () => {
+      if (typeof id === "number") clearTimeout(id);
+      else window.cancelIdleCallback?.(id);
+    };
+  }, [revalidate]);
+
+  // Revalidá al volver a la pestaña/ventana y al volver atrás (bfcache)
+  useEffect(() => {
+    const onFocus = () => revalidate();
+    const onVis = () => {
+      if (document.visibilityState === "visible") revalidate();
+    };
+    const onPageShow = () => revalidate(); // cubre navegación por atrás/adelante
+
+    window.addEventListener("focus", onFocus, { passive: true });
+    document.addEventListener("visibilitychange", onVis, { passive: true });
+    window.addEventListener("pageshow", onPageShow, { passive: true });
+
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVis);
+      window.removeEventListener("pageshow", onPageShow);
+    };
+  }, [revalidate]);
 
   /* ---------- Pre-procesamiento liviano ---------- */
   const getEstadoPago = useCallback((mesesPagadosStr, fechaUnion) => {
@@ -523,12 +605,16 @@ const GestionarSocios = () => {
     const value = e.target.value;
     setBusqueda(value);
     if (!dataLoaded) {
-      // deja tiempo al hilo principal antes de fetchear en móvil
       window.requestIdleCallback
         ? window.requestIdleCallback(() => ensureDataLoaded())
         : ensureDataLoaded();
+    } else {
+      // cada búsqueda puede ser una oportunidad de refrescar en 2º plano
+      window.requestIdleCallback
+        ? window.requestIdleCallback(() => revalidate())
+        : setTimeout(revalidate, 0);
     }
-  }, [dataLoaded, ensureDataLoaded]);
+  }, [dataLoaded, ensureDataLoaded, revalidate]);
 
   const limpiarFiltros = useCallback(() => {
     setFiltrosActivos({ letras: [], mediosPago: [], todos: false });
@@ -547,7 +633,8 @@ const GestionarSocios = () => {
       return { ...prev, letras, todos: false };
     });
     if (!dataLoaded) await ensureDataLoaded();
-  }, [dataLoaded, ensureDataLoaded]);
+    else revalidate();
+  }, [dataLoaded, ensureDataLoaded, revalidate]);
 
   const handleFiltrarPorMedioPago = useCallback(async (medio) => {
     setBusqueda("");
@@ -559,7 +646,8 @@ const GestionarSocios = () => {
       return { ...prev, mediosPago, todos: false };
     });
     if (!dataLoaded) await ensureDataLoaded();
-  }, [dataLoaded, ensureDataLoaded]);
+    else revalidate();
+  }, [dataLoaded, ensureDataLoaded, revalidate]);
 
   const handleMostrarTodos = useCallback(async () => {
     setBusqueda("");
@@ -568,7 +656,8 @@ const GestionarSocios = () => {
     setFilaSeleccionada(null);
     setSocioSeleccionado(null);
     await ensureDataLoaded();
-  }, [ensureDataLoaded]);
+    revalidate();
+  }, [ensureDataLoaded, revalidate]);
 
   const onSelect = useCallback((index, socio) => {
     setFilaSeleccionada((prev) => (prev === index ? null : index));
@@ -579,6 +668,7 @@ const GestionarSocios = () => {
     (socio) => {
       const id = getSocioId(socio);
       if (!id) return;
+      // Navegamos; al volver, pageshow/focus/visibility revalidan.
       navigate(`/editarSocio/${id}`);
     },
     [navigate]
@@ -628,13 +718,15 @@ const GestionarSocios = () => {
         });
         setMostrarModalEliminar(false);
         showToast("Socio eliminado correctamente");
+        // Revalida contra el server por si hubo side-effects
+        revalidate();
       } else {
         showToast(data?.mensaje || "Error al eliminar", "error");
       }
     } catch {
       showToast("Problema al eliminar el socio", "error");
     }
-  }, [socioSeleccionado, showToast]);
+  }, [socioSeleccionado, showToast, revalidate]);
 
   const handleConfirmarBajaSocio = useCallback(
     async (socio, motivo) => {
@@ -664,6 +756,7 @@ const GestionarSocios = () => {
           });
           setMostrarModalBaja(false);
           showToast(result?.mensaje || "Socio dado de baja");
+          revalidate(); // trae estado fresco del server
         } else {
           showToast(result?.mensaje || "No se pudo dar de baja", "error");
         }
@@ -671,7 +764,7 @@ const GestionarSocios = () => {
         showToast("Problema al dar de baja", "error");
       }
     },
-    [showToast]
+    [showToast, revalidate]
   );
 
   /* ---------- cierre menú filtros al click afuera ---------- */
@@ -808,6 +901,7 @@ const GestionarSocios = () => {
               title="Buscar"
               onClick={async () => {
                 if (!dataLoaded) await ensureDataLoaded();
+                revalidate();
               }}
             >
               <FontAwesomeIcon icon={faMagnifyingGlass} className="gessoc_search-icon" />
