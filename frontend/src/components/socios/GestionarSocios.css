@@ -112,6 +112,10 @@
   --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   --transition-normal: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   --transition-smooth: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ===== CASCADA (fluida y liviana) ===== */
+  --cascade-stagger: 28ms;     /* Escalonado por item */
+  --cascade-duration: 220ms;   /* Duración por item */
 }
 
 /* Reset y base */
@@ -122,7 +126,6 @@ body {
   color: var(--text-primary);
   background-color: var(--background-color);
 }
-
 input:-webkit-autofill { background-color: transparent !important; }
 
 /* ================================
@@ -141,7 +144,6 @@ input:-webkit-autofill { background-color: transparent !important; }
   background: var(--surface-color);
   box-shadow: var(--shadow-lg);
   overflow: hidden;
-  /* 🔸 Antes tenía animación de entrada: la removemos para que quede fija */
   animation: none !important;
   display: flex;
   flex-direction: column;
@@ -459,15 +461,167 @@ input:-webkit-autofill { background-color: transparent !important; }
   transition: min-height 0.3s ease, max-height 0.3s ease;
 }
 
-/* 🔸 Cascada para filas de tabla (desktop) */
-@keyframes gessoc_fadeIn { from {opacity:0} to {opacity:1} }
-.gessoc_cascade-animation .gessoc_row {
-  opacity: 0;
-  animation:
-    gessoc_fadeIn 0.35s ease-out forwards,
-    gessoc_slideInUp 0.45s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
+/* ================================
+   💨 Efecto CASCADA FLUIDO (performante)
+   - Sólo usa transform + opacity (GPU)
+   - Delays por nth-child (suficiente para 60 items)
+   - Respeta reduced-motion
+==================================*/
+@keyframes gessoc_cascadeIn {
+  0%   { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
 }
 
+/* Pistas de rendimiento en filas y tarjetas */
+.gessoc_row,
+.gessoc_card {
+  backface-visibility: hidden;
+  transform: translateZ(0);
+  will-change: transform, opacity;
+  contain: content;
+}
+
+/* Cascada para filas de TABLA (desktop) */
+.gessoc_body .gessoc_row {
+  opacity: 0;
+  animation: gessoc_cascadeIn var(--cascade-duration) ease-out both;
+}
+
+/* Cascada para TARJETAS (mobile) */
+.gessoc_cards_wrapper_virtual .gessoc_card {
+  opacity: 0;
+  animation: gessoc_cascadeIn calc(var(--cascade-duration) + 40ms) ease-out both;
+}
+
+/* Stagger por índice (1..60) */
+.gessoc_body .gessoc_row:nth-child(1),
+.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(1) { animation-delay: calc(var(--cascade-stagger) * 0); }
+.gessoc_body .gessoc_row:nth-child(2),
+.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(2) { animation-delay: calc(var(--cascade-stagger) * 1); }
+.gessoc_body .gessoc_row:nth-child(3),
+.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(3) { animation-delay: calc(var(--cascade-stagger) * 2); }
+.gessoc_body .gessoc_row:nth-child(4),
+.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(4) { animation-delay: calc(var(--cascade-stagger) * 3); }
+.gessoc_body .gessoc_row:nth-child(5),
+.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(5) { animation-delay: calc(var(--cascade-stagger) * 4); }
+.gessoc_body .gessoc_row:nth-child(6),
+.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(6) { animation-delay: calc(var(--cascade-stagger) * 5); }
+.gessoc_body .gessoc_row:nth-child(7),
+.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(7) { animation-delay: calc(var(--cascade-stagger) * 6); }
+.gessoc_body .gessoc_row:nth-child(8),
+.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(8) { animation-delay: calc(var(--cascade-stagger) * 7); }
+.gessoc_body .gessoc_row:nth-child(9),
+.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(9) { animation-delay: calc(var(--cascade-stagger) * 8); }
+.gessoc_body .gessoc_row:nth-child(10),
+.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(10) { animation-delay: calc(var(--cascade-stagger) * 9); }
+.gessoc_body .gessoc_row:nth-child(11),
+.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(11) { animation-delay: calc(var(--cascade-stagger) * 10); }
+.gessoc_body .gessoc_row:nth-child(12),
+.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(12) { animation-delay: calc(var(--cascade-stagger) * 11); }
+.gessoc_body .gessoc_row:nth-child(13),
+.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(13) { animation-delay: calc(var(--cascade-stagger) * 12); }
+.gessoc_body .gessoc_row:nth-child(14),
+.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(14) { animation-delay: calc(var(--cascade-stagger) * 13); }
+.gessoc_body .gessoc_row:nth-child(15),
+.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(15) { animation-delay: calc(var(--cascade-stagger) * 14); }
+.gessoc_body .gessoc_row:nth-child(16),
+.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(16) { animation-delay: calc(var(--cascade-stagger) * 15); }
+.gessoc_body .gessoc_row:nth-child(17),
+.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(17) { animation-delay: calc(var(--cascade-stagger) * 16); }
+.gessoc_body .gessoc_row:nth-child(18),
+.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(18) { animation-delay: calc(var(--cascade-stagger) * 17); }
+.gessoc_body .gessoc_row:nth-child(19),
+.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(19) { animation-delay: calc(var(--cascade-stagger) * 18); }
+.gessoc_body .gessoc_row:nth-child(20),
+.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(20) { animation-delay: calc(var(--cascade-stagger) * 19); }
+.gessoc_body .gessoc_row:nth-child(21),
+.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(21) { animation-delay: calc(var(--cascade-stagger) * 20); }
+.gessoc_body .gessoc_row:nth-child(22),
+.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(22) { animation-delay: calc(var(--cascade-stagger) * 21); }
+.gessoc_body .gessoc_row:nth-child(23),
+.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(23) { animation-delay: calc(var(--cascade-stagger) * 22); }
+.gessoc_body .gessoc_row:nth-child(24),
+.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(24) { animation-delay: calc(var(--cascade-stagger) * 23); }
+.gessoc_body .gessoc_row:nth-child(25),
+.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(25) { animation-delay: calc(var(--cascade-stagger) * 24); }
+.gessoc_body .gessoc_row:nth-child(26),
+.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(26) { animation-delay: calc(var(--cascade-stagger) * 25); }
+.gessoc_body .gessoc_row:nth-child(27),
+.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(27) { animation-delay: calc(var(--cascade-stagger) * 26); }
+.gessoc_body .gessoc_row:nth-child(28),
+.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(28) { animation-delay: calc(var(--cascade-stagger) * 27); }
+.gessoc_body .gessoc_row:nth-child(29),
+.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(29) { animation-delay: calc(var(--cascade-stagger) * 28); }
+.gessoc_body .gessoc_row:nth-child(30),
+.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(30) { animation-delay: calc(var(--cascade-stagger) * 29); }
+.gessoc_body .gessoc_row:nth-child(31),
+.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(31) { animation-delay: calc(var(--cascade-stagger) * 30); }
+.gessoc_body .gessoc_row:nth-child(32),
+.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(32) { animation-delay: calc(var(--cascade-stagger) * 31); }
+.gessoc_body .gessoc_row:nth-child(33),
+.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(33) { animation-delay: calc(var(--cascade-stagger) * 32); }
+.gessoc_body .gessoc_row:nth-child(34),
+.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(34) { animation-delay: calc(var(--cascade-stagger) * 33); }
+.gessoc_body .gessoc_row:nth-child(35),
+.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(35) { animation-delay: calc(var(--cascade-stagger) * 34); }
+.gessoc_body .gessoc_row:nth-child(36),
+.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(36) { animation-delay: calc(var(--cascade-stagger) * 35); }
+.gessoc_body .gessoc_row:nth-child(37),
+.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(37) { animation-delay: calc(var(--cascade-stagger) * 36); }
+.gessoc_body .gessoc_row:nth-child(38),
+.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(38) { animation-delay: calc(var(--cascade-stagger) * 37); }
+.gessoc_body .gessoc_row:nth-child(39),
+.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(39) { animation-delay: calc(var(--cascade-stagger) * 38); }
+.gessoc_body .gessoc_row:nth-child(40),
+.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(40) { animation-delay: calc(var(--cascade-stagger) * 39); }
+.gessoc_body .gessoc_row:nth-child(41),
+.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(41) { animation-delay: calc(var(--cascade-stagger) * 40); }
+.gessoc_body .gessoc_row:nth-child(42),
+.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(42) { animation-delay: calc(var(--cascade-stagger) * 41); }
+.gessoc_body .gessoc_row:nth-child(43),
+.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(43) { animation-delay: calc(var(--cascade-stagger) * 42); }
+.gessoc_body .gessoc_row:nth-child(44),
+.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(44) { animation-delay: calc(var(--cascade-stagger) * 43); }
+.gessoc_body .gessoc_row:nth-child(45),
+.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(45) { animation-delay: calc(var(--cascade-stagger) * 44); }
+.gessoc_body .gessoc_row:nth-child(46),
+.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(46) { animation-delay: calc(var(--cascade-stagger) * 45); }
+.gessoc_body .gessoc_row:nth-child(47),
+.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(47) { animation-delay: calc(var(--cascade-stagger) * 46); }
+.gessoc_body .gessoc_row:nth-child(48),
+.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(48) { animation-delay: calc(var(--cascade-stagger) * 47); }
+.gessoc_body .gessoc_row:nth-child(49),
+.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(49) { animation-delay: calc(var(--cascade-stagger) * 48); }
+.gessoc_body .gessoc_row:nth-child(50),
+.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(50) { animation-delay: calc(var(--cascade-stagger) * 49); }
+.gessoc_body .gessoc_row:nth-child(51),
+.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(51) { animation-delay: calc(var(--cascade-stagger) * 50); }
+.gessoc_body .gessoc_row:nth-child(52),
+.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(52) { animation-delay: calc(var(--cascade-stagger) * 51); }
+.gessoc_body .gessoc_row:nth-child(53),
+.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(53) { animation-delay: calc(var(--cascade-stagger) * 52); }
+.gessoc_body .gessoc_row:nth-child(54),
+.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(54) { animation-delay: calc(var(--cascade-stagger) * 53); }
+.gessoc_body .gessoc_row:nth-child(55),
+.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(55) { animation-delay: calc(var(--cascade-stagger) * 54); }
+.gessoc_body .gessoc_row:nth-child(56),
+.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(56) { animation-delay: calc(var(--cascade-stagger) * 55); }
+.gessoc_body .gessoc_row:nth-child(57),
+.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(57) { animation-delay: calc(var(--cascade-stagger) * 56); }
+.gessoc_body .gessoc_row:nth-child(58),
+.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(58) { animation-delay: calc(var(--cascade-stagger) * 57); }
+.gessoc_body .gessoc_row:nth-child(59),
+.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(59) { animation-delay: calc(var(--cascade-stagger) * 58); }
+.gessoc_body .gessoc_row:nth-child(60),
+.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(60) { animation-delay: calc(var(--cascade-stagger) * 59); }
+
+/* 🔙 Compatibilidad con la clase previa (si la agregás) */
+.gessoc_cascade-animation .gessoc_row,
+.gessoc_cascade-animation .gessoc_card {
+  animation-name: gessoc_cascadeIn;
+}
+
+/* ====== Hover/Selected y estilos existentes (sin cambios visuales) ====== */
 .gessoc_row {
   display: flex;
   align-items: center;
@@ -508,8 +662,8 @@ input:-webkit-autofill { background-color: transparent !important; }
 
 /* 🔸 Íconos de la tabla: naranja y un poco más chicos */
 .gessoc_icon {
-  font-size: 18px;              /* antes 20px */
-  color: var(--primary-500);    /* naranja */
+  font-size: 18px;
+  color: var(--primary-500);
   cursor: pointer;
   transition: transform 0.18s ease, color 0.18s ease;
   background: none;
@@ -818,14 +972,6 @@ input:-webkit-autofill { background-color: transparent !important; }
   .gessoc_action-btn:active { transform: translateY(1px); }
   .gessoc_action-danger { color: var(--danger-600); border-color: #fecaca; background: #fff5f5; }
 
-  /* Cascada también para tarjetas móviles (ya presente en JSX) */
-  .gessoc_cascade-animation .gessoc_card {
-    opacity: 0;
-    animation:
-      gessoc_fadeIn 0.4s ease-out forwards,
-      gessoc_slideInUp 0.5s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
-  }
-
   .gessoc_down-container {
     position: fixed; bottom: 0; left: 0; right: 0;
     height: 60px;
@@ -895,6 +1041,12 @@ input:-webkit-autofill { background-color: transparent !important; }
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+  .gessoc_body .gessoc_row,
+  .gessoc_cards_wrapper_virtual .gessoc_card {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
   }
 }
 

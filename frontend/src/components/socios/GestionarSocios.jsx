@@ -1,4 +1,3 @@
-// src/components/socios/GestionarSocios.jsx
 import React, {
   useState,
   useEffect,
@@ -45,7 +44,7 @@ const useClickOutside = (ref, onOut) => {
     const h = (e) => {
       if (ref.current && !ref.current.contains(e.target)) onOut?.();
     };
-    document.addEventListener("mousedown", h);
+    document.addEventListener("mousedown", h, { passive: true });
     return () => document.removeEventListener("mousedown", h);
   }, [ref, onOut]);
 };
@@ -54,13 +53,13 @@ const useWindowHeight = (offset = 0) => {
   const [h, setH] = useState(() => window.innerHeight - offset);
   useEffect(() => {
     const onResize = () => setH(window.innerHeight - offset);
-    window.addEventListener("resize", onResize);
+    window.addEventListener("resize", onResize, { passive: true });
     return () => window.removeEventListener("resize", onResize);
   }, [offset]);
   return h;
 };
 
-// Monta UNA vista según ancho (evita render doble)
+// Prefiere una sola vista según media-query
 const useMediaQuery = (query) => {
   const [match, setMatch] = useState(() => window.matchMedia(query).matches);
   useEffect(() => {
@@ -76,8 +75,22 @@ const useMediaQuery = (query) => {
   return match;
 };
 
+// Detecta preferencia de “reduced motion”
+const useReducedMotion = () => {
+  const [reduced, setReduced] = useState(() =>
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  );
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const onChange = () => setReduced(mq.matches);
+    mq.addEventListener?.("change", onChange);
+    return () => mq.removeEventListener?.("change", onChange);
+  }, []);
+  return reduced;
+};
+
 /* =====================
-   Row virtualizado (tabla)
+   Row virtualizado (tabla desktop)
 ===================== */
 const SocioRow = React.memo(
   function SocioRow({ index, style, data }) {
@@ -92,8 +105,7 @@ const SocioRow = React.memo(
 
     return (
       <div
-        /* delay escalonado para efecto cascada */
-        style={{ ...style, animationDelay: `${(index % 20) * 0.04}s` }}
+        style={style}
         className={`gessoc_row ${rowClass}`}
         onClick={() => data.onSelect(index, socio)}
       >
@@ -158,6 +170,112 @@ const SocioRow = React.memo(
 );
 
 /* =====================
+   Row virtualizado ( tarjetas mobile )
+===================== */
+const SocioCardRow = React.memo(
+  function SocioCardRow({ index, style, data }) {
+    const socio = data.items[index];
+
+    return (
+      <div
+        style={style}
+        className={`gessoc_card ${socio._estadoClase}`}
+        onClick={() => data.onSelect(index, socio)}
+      >
+        <div className="gessoc_card-status-strip" />
+        <div className="gessoc_card-header">
+          <h3 className="gessoc_card-title">
+            {socio.apellido} {socio.nombre}
+          </h3>
+          <span
+            className={`gessoc_badge ${
+              socio._estadoClase === "gessoc_verde"
+                ? "gessoc_badge-success"
+                : socio._estadoClase === "gessoc_amarillo"
+                ? "gessoc_badge-warn"
+                : "gessoc_badge-danger"
+            }`}
+          >
+            {socio._estadoClase === "gessoc_verde"
+              ? "Al día"
+              : socio._estadoClase === "gessoc_amarillo"
+              ? "Debe 1-2"
+              : "Debe 3+"}
+          </span>
+        </div>
+
+        <div className="gessoc_card-body">
+          <div className="gessoc_card-row">
+            <span className="gessoc_card-label">Categoría</span>
+            <span className="gessoc_card-value">
+              {socio.categoria} ${socio.precio_categoria || "0"}
+            </span>
+          </div>
+          <div className="gessoc_card-row">
+            <span className="gessoc_card-label">Medio de Pago</span>
+            <span className="gessoc_card-value">{socio.medio_pago}</span>
+          </div>
+          <div className="gessoc_card-row">
+            <span className="gessoc_card-label">Domicilio cobro</span>
+            <span className="gessoc_card-value">{socio.domicilio_2}</span>
+          </div>
+          {socio.observacion && (
+            <div className="gessoc_card-row">
+              <span className="gessoc_card-label">Obs.</span>
+              <span className="gessoc_card-value">{socio.observacion}</span>
+            </div>
+          )}
+        </div>
+
+        <div className="gessoc_card-actions">
+          <button
+            className="gessoc_action-btn"
+            title="Información"
+            onClick={(e) => {
+              e.stopPropagation();
+              data.onInfo(socio);
+            }}
+          >
+            <FontAwesomeIcon icon={faInfoCircle} />
+          </button>
+          <button
+            className="gessoc_action-btn"
+            title="Editar"
+            onClick={(e) => {
+              e.stopPropagation();
+              data.onEdit(socio);
+            }}
+          >
+            <FontAwesomeIcon icon={faEdit} />
+          </button>
+          <button
+            className="gessoc_action-btn"
+            title="Eliminar"
+            onClick={(e) => {
+              e.stopPropagation();
+              data.onDelete(socio);
+            }}
+          >
+            <FontAwesomeIcon icon={faTrash} />
+          </button>
+          <button
+            className="gessoc_action-btn gessoc_action-danger"
+            title="Dar de baja"
+            onClick={(e) => {
+              e.stopPropagation();
+              data.onBaja(socio);
+            }}
+          >
+            <FontAwesomeIcon icon={faUserMinus} />
+          </button>
+        </div>
+      </div>
+    );
+  },
+  areEqual
+);
+
+/* =====================
    Componente principal
 ===================== */
 const GestionarSocios = () => {
@@ -169,9 +287,9 @@ const GestionarSocios = () => {
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState(null);
 
-  // NUEVO: control de carga diferida
-  const [dataLoaded, setDataLoaded] = useState(false); // se pone true cuando realmente se trae del server o cache
-  const CACHE_KEY = "sociosCache:v1"; // CACHE: cambiar versión si cambia el shape
+  // control de carga diferida
+  const [dataLoaded, setDataLoaded] = useState(false);
+  const CACHE_KEY = "sociosCache:v1";
 
   /* ---------- Selecciones / modales ---------- */
   const [filaSeleccionada, setFilaSeleccionada] = useState(null);
@@ -207,47 +325,44 @@ const GestionarSocios = () => {
   const [toast, setToast] = useState({ show: false, tipo: "exito", msg: "" });
   const showToast = useCallback((msg, tipo = "exito", ms = 2500) => {
     setToast({ show: true, tipo, msg });
-    setTimeout(() => setToast({ show: false, tipo: "exito", msg: "" }), ms);
+    window.setTimeout(() => setToast({ show: false, tipo: "exito", msg: "" }), ms);
   }, []);
 
   /* ---------- Persistencia filtros (micro debounce) ---------- */
   useEffect(() => {
-    const t = setTimeout(() => {
+    const t = window.setTimeout(() => {
       localStorage.setItem("sociosSearchTerm", busqueda);
     }, 120);
-    return () => clearTimeout(t);
+    return () => window.clearTimeout(t);
   }, [busqueda]);
 
   useEffect(() => {
-    const t = setTimeout(() => {
+    const t = window.setTimeout(() => {
       localStorage.setItem("sociosFilters", JSON.stringify(filtrosActivos));
     }, 120);
-    return () => clearTimeout(t);
+    return () => window.clearTimeout(t);
   }, [filtrosActivos]);
 
-  /* ---------- Cargar desde cache (no fetch) al entrar ---------- */
+  /* ---------- Cargar desde cache ---------- */
   useEffect(() => {
     try {
-      const cached = sessionStorage.getItem(CACHE_KEY); // CACHE
+      const cached = sessionStorage.getItem(CACHE_KEY);
       if (cached) {
         const parsed = JSON.parse(cached);
         if (Array.isArray(parsed)) {
-          setSociosRaw(parsed); // no mostramos nada hasta que apliquen filtro, pero ya está en memoria
-          setDataLoaded(true);  // marcado como cargado desde cache
+          setSociosRaw(parsed);
+          setDataLoaded(true);
         }
       }
     } catch {
       /* ignore */
     }
-    // NO hacemos fetch aquí: la carga real se dispara solo al aplicar filtros/búsqueda/mostrar todos
-    // Mantiene la UI fija sin mini recarga inicial.
   }, []);
 
-  /* ---------- Función de carga perezosa ---------- */
+  /* ---------- Carga perezosa ---------- */
   const ensureDataLoaded = useCallback(async () => {
-    if (dataLoaded && sociosRaw.length > 0) return; // ya tenemos algo útil (cache o previa)
+    if (dataLoaded && sociosRaw.length > 0) return;
 
-    // Intento 1: cache (sincrónico, instantáneo)
     try {
       const cached = sessionStorage.getItem(CACHE_KEY);
       if (cached) {
@@ -255,18 +370,16 @@ const GestionarSocios = () => {
         if (Array.isArray(parsed) && parsed.length > 0) {
           setSociosRaw(parsed);
           setDataLoaded(true);
-          return; // listo al toque
+          return;
         }
       }
-    } catch {
-      /* ignore cache errors */
-    }
+    } catch {}
 
-    // Intento 2: fetch real (primera vez sin cache)
     setCargando(true);
     try {
       const resp = await fetch(
-        `${BASE_URL}/api.php?action=todos_socios&tipo=socios`
+        `${BASE_URL}/api.php?action=todos_socios&tipo=socios`,
+        { method: "GET", cache: "no-store" }
       );
       if (!resp.ok) throw new Error("No se pudo obtener socios");
       const data = await resp.json();
@@ -274,12 +387,9 @@ const GestionarSocios = () => {
       setSociosRaw(arr);
       setError(null);
       setDataLoaded(true);
-      // CACHE
       try {
         sessionStorage.setItem(CACHE_KEY, JSON.stringify(arr));
-      } catch {
-        /* ignore */
-      }
+      } catch {}
     } catch (e) {
       console.error(e);
       setError("Error al cargar los datos");
@@ -373,7 +483,7 @@ const GestionarSocios = () => {
     return Array.from(set).sort();
   }, [socios]);
 
-  /* ---------- Filtrado en un solo loop ---------- */
+  /* ---------- Filtrado ---------- */
   const sociosFiltrados = useMemo(() => {
     const term = (deferredBusqueda || "").trim().toLowerCase();
     const useSearch = term.length > 0;
@@ -381,8 +491,6 @@ const GestionarSocios = () => {
     const letrasArr = filtrosActivos.letras?.length ? filtrosActivos.letras : null;
     const mediosArr = filtrosActivos.mediosPago?.length ? filtrosActivos.mediosPago : null;
 
-    // IMPORTANTE:
-    // Si no hay búsqueda ni filtros ni "todos", NO devolvemos nada (UI vacía)
     if (!useSearch && !letrasArr && !mediosArr && !filtrosActivos.todos) {
       return [];
     }
@@ -410,13 +518,15 @@ const GestionarSocios = () => {
     return out;
   }, [socios, deferredBusqueda, filtrosActivos]);
 
-  /* ---------- Handlers UI (estables) ---------- */
+  /* ---------- Handlers ---------- */
   const handleBusquedaInputChange = useCallback(async (e) => {
     const value = e.target.value;
     setBusqueda(value);
-    // primera interacción de búsqueda → carga perezosa
     if (!dataLoaded) {
-      await ensureDataLoaded();
+      // deja tiempo al hilo principal antes de fetchear en móvil
+      window.requestIdleCallback
+        ? window.requestIdleCallback(() => ensureDataLoaded())
+        : ensureDataLoaded();
     }
   }, [dataLoaded, ensureDataLoaded]);
 
@@ -457,7 +567,7 @@ const GestionarSocios = () => {
     setMostrarMenuFiltros(false);
     setFilaSeleccionada(null);
     setSocioSeleccionado(null);
-    await ensureDataLoaded(); // <- “al toque” si hay cache; si no, trae y cachea
+    await ensureDataLoaded();
   }, [ensureDataLoaded]);
 
   const onSelect = useCallback((index, socio) => {
@@ -497,7 +607,7 @@ const GestionarSocios = () => {
     setMostrarModalEliminar(false);
   }, []);
 
-  /* ---------- Acciones al servidor ---------- */
+  /* ---------- Acciones server ---------- */
   const handleEliminarSocio = useCallback(async () => {
     if (!socioSeleccionado) return;
     try {
@@ -511,7 +621,6 @@ const GestionarSocios = () => {
       if (data?.exito || data?.success) {
         setSociosRaw((prev) => {
           const next = prev.filter((s) => getSocioId(s) !== idSel);
-          // CACHE: reflejar eliminación inmediata
           try {
             sessionStorage.setItem(CACHE_KEY, JSON.stringify(next));
           } catch {}
@@ -548,7 +657,6 @@ const GestionarSocios = () => {
         if (response.ok && (result?.exito || result?.success)) {
           setSociosRaw((prev) => {
             const next = prev.filter((s) => getSocioId(s) !== id);
-            // CACHE: reflejar baja inmediata
             try {
               sessionStorage.setItem(CACHE_KEY, JSON.stringify(next));
             } catch {}
@@ -566,7 +674,7 @@ const GestionarSocios = () => {
     [showToast]
   );
 
-  /* ---------- Menú filtros: cierre al click afuera ---------- */
+  /* ---------- cierre menú filtros al click afuera ---------- */
   useClickOutside(filtrosRef, () => {
     if (mostrarMenuFiltros) {
       setMostrarMenuFiltros(false);
@@ -575,7 +683,7 @@ const GestionarSocios = () => {
     }
   });
 
-  /* ---------- itemData estable para la lista ---------- */
+  /* ---------- itemData ---------- */
   const itemData = useMemo(
     () => ({
       items: sociosFiltrados,
@@ -598,18 +706,30 @@ const GestionarSocios = () => {
   );
 
   /* ---------- Altura lista ---------- */
-  // Offset estimado: header, filtros, paddings, etc.
-  const windowHeight = useWindowHeight(360);
-  const listHeight = useMemo(() => clamp(windowHeight, 300, 880), [windowHeight]);
+  const isMobile = useMediaQuery("(max-width: 900px)");
+  const reducedMotion = useReducedMotion();
+
+  // Desktop: espacio para header/filtros. Mobile: navbar fija y paddings.
+  const windowHeight = useWindowHeight(isMobile ? 180 : 360);
+
+  const listHeight = useMemo(
+    () => clamp(windowHeight, isMobile ? 360 : 300, isMobile ? 1000 : 880),
+    [windowHeight, isMobile]
+  );
+
+  // Tamaño fijo de los ítems para virtualización
+  const desktopRowHeight = 48;
+  const mobileCardHeight = 156; // altura suficiente para 4 filas + acciones
+
+  // Overscan: en mobile lo bajamos para evitar sobre-pintado
+  const overscan = isMobile ? 6 : 10;
 
   /* ---------- Contador visibles ---------- */
   const cantidadVisibles = useMemo(() => sociosFiltrados.length, [sociosFiltrados]);
 
   /* ---------- Exportar Excel ---------- */
   const exportarAExcel = useCallback(async () => {
-    // si aún no cargamos datos y quieren exportar, cargar primero
     if (!dataLoaded) await ensureDataLoaded();
-
     if (sociosFiltrados.length === 0) {
       showToast("No hay socios para exportar.", "error");
       return;
@@ -644,30 +764,11 @@ const GestionarSocios = () => {
     showToast("Exportación a Excel completada");
   }, [sociosFiltrados, showToast, dataLoaded, ensureDataLoaded]);
 
-  /* ---------- Solo montamos la vista correspondiente ---------- */
-  const isMobile = useMediaQuery("(max-width: 900px)");
-
-  /* === NUEVO: clave para re-montar la lista y re-disparar la cascada === */
-  const cascadeKey = useMemo(() => {
-    return [
-      deferredBusqueda,
-      filtrosActivos.todos ? "ALL" : "SOME",
-      filtrosActivos.letras.join("|"),
-      filtrosActivos.mediosPago.join("|"),
-    ].join("::");
-  }, [deferredBusqueda, filtrosActivos]);
-
-  /* === Overscan grande para cascada suave === */
-  const overscanAll = useMemo(
-    () => Math.max(6, sociosFiltrados.length),
-    [sociosFiltrados.length]
-  );
-
   /* =====================
          RENDER
   ===================== */
   return (
-    <div className="gessoc_empresa-container">
+    <div className={`gessoc_empresa-container ${isMobile ? "gessoc_mobile" : ""}`}>
       {toast.show && (
         <Toast
           tipo={toast.tipo}
@@ -679,7 +780,7 @@ const GestionarSocios = () => {
 
       <div className="gessoc_empresa-box">
         {/* HEADER */}
-        <div className="gessoc_front-row-emp">
+        <div className={`gessoc_front-row-emp ${isMobile ? "gessoc_front-row-emp--mobile" : ""}`}>
           <span className="gessoc_empresa-title">Gestionar Socios</span>
 
           {/* Búsqueda */}
@@ -692,6 +793,7 @@ const GestionarSocios = () => {
               value={busqueda}
               onChange={handleBusquedaInputChange}
               onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
+              inputMode="search"
             />
             {busqueda && (
               <FontAwesomeIcon
@@ -896,17 +998,15 @@ const GestionarSocios = () => {
                   </div>
                 ) : sociosFiltrados.length > 0 ? (
                   <div
-                    key={cascadeKey}
-                    className="gessoc_scrollableE gessoc_cascade-animation"
+                    className="gessoc_scrollableE"
                     style={{ padding: 0, height: listHeight }}
                   >
                     <List
-                      key={cascadeKey}
                       height={listHeight}
                       itemCount={sociosFiltrados.length}
-                      itemSize={48}
+                      itemSize={desktopRowHeight}
                       width="100%"
-                      overscanCount={overscanAll}
+                      overscanCount={overscan}
                       itemData={itemData}
                     >
                       {SocioRow}
@@ -925,105 +1025,23 @@ const GestionarSocios = () => {
               </div>
             </div>
           ) : (
-            /* TARJETAS (Mobile) */
-            <div className="gessoc_cards-wrapper" key={cascadeKey}>
-              {sociosFiltrados.length > 0 ? (
-                sociosFiltrados.map((socio, index) => (
-                  <div
-                    className={`gessoc_card ${socio._estadoClase}`}
-                    key={`card-${socio.id || index}`}
-                    onClick={() => onSelect(index, socio)}
-                    style={{ animationDelay: `${(index % 20) * 0.03}s` }}
-                  >
-                    <div className="gessoc_card-status-strip" />
-                    <div className="gessoc_card-header">
-                      <h3 className="gessoc_card-title">
-                        {socio.apellido} {socio.nombre}
-                      </h3>
-                      <span
-                        className={`gessoc_badge ${
-                          socio._estadoClase === "gessoc_verde"
-                            ? "gessoc_badge-success"
-                            : socio._estadoClase === "gessoc_amarillo"
-                            ? "gessoc_badge-warn"
-                            : "gessoc_badge-danger"
-                        }`}
-                      >
-                        {socio._estadoClase === "gessoc_verde"
-                          ? "Al día"
-                          : socio._estadoClase === "gessoc_amarillo"
-                          ? "Debe 1-2"
-                          : "Debe 3+"}
-                      </span>
-                    </div>
-
-                    <div className="gessoc_card-body">
-                      <div className="gessoc_card-row">
-                        <span className="gessoc_card-label">Categoría</span>
-                        <span className="gessoc_card-value">
-                          {socio.categoria} ${socio.precio_categoria || "0"}
-                        </span>
-                      </div>
-                      <div className="gessoc_card-row">
-                        <span className="gessoc_card-label">Medio de Pago</span>
-                        <span className="gessoc_card-value">{socio.medio_pago}</span>
-                      </div>
-                      <div className="gessoc_card-row">
-                        <span className="gessoc_card-label">Domicilio cobro</span>
-                        <span className="gessoc_card-value">{socio.domicilio_2}</span>
-                      </div>
-                      {socio.observacion && (
-                        <div className="gessoc_card-row">
-                          <span className="gessoc_card-label">Obs.</span>
-                          <span className="gessoc_card-value">{socio.observacion}</span>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="gessoc_card-actions">
-                      <button
-                        className="gessoc_action-btn"
-                        title="Información"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleMostrarInfoSocio(socio);
-                        }}
-                      >
-                        <FontAwesomeIcon icon={faInfoCircle} />
-                      </button>
-                      <button
-                        className="gessoc_action-btn"
-                        title="Editar"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleEditarSocio(socio);
-                        }}
-                      >
-                        <FontAwesomeIcon icon={faEdit} />
-                      </button>
-                      <button
-                        className="gessoc_action-btn"
-                        title="Eliminar"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleConfirmarEliminar(socio);
-                        }}
-                      >
-                        <FontAwesomeIcon icon={faTrash} />
-                      </button>
-                      <button
-                        className="gessoc_action-btn gessoc_action-danger"
-                        title="Dar de baja"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleConfirmarBaja(socio);
-                        }}
-                      >
-                        <FontAwesomeIcon icon={faUserMinus} />
-                      </button>
-                    </div>
-                  </div>
-                ))
+            /* TARJETAS (Mobile) → AHORA TAMBIÉN VIRTUALIZADO */
+            <div className="gessoc_cards_wrapper_virtual">
+              {cargando ? (
+                <div className="gessoc_loading-spinner-container">
+                  <div className="gessoc_loading-spinner"></div>
+                </div>
+              ) : sociosFiltrados.length > 0 ? (
+                <List
+                  height={listHeight}
+                  itemCount={sociosFiltrados.length}
+                  itemSize={mobileCardHeight}
+                  width="100%"
+                  overscanCount={overscan}
+                  itemData={itemData}
+                >
+                  {SocioCardRow}
+                </List>
               ) : (
                 <div className="gessoc_no-data-message gessoc_no-data-mobile">
                   <div className="gessoc_message-content">
