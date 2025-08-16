@@ -1,3 +1,4 @@
+// src/App.js
 import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
@@ -11,14 +12,16 @@ import AgregarSocio from "./components/socios/Agregarsocio";
 import AgregarEmpresa from "./components/Empresas/AgregarEmpresa";
 import EditarSocio from "./components/socios/EditarSocio";
 import EditarEmpresa from "./components/Empresas/EditarEmpresa";
-import ModalPagos from "./components/Gestionarcuota/ModalPagos";
-import ModalPagosEmpresas from "./components/Gestionarcuota/ModalPagosEmpresas";
+
+// ⬇️ IMPORTS CORREGIDOS (carpeta modalcuotas)
+import ModalPagos from "./components/Gestionarcuota/modalcuotas/ModalPagos";
+import ModalPagosEmpresas from "./components/Gestionarcuota/modalcuotas/ModalPagosEmpresas";
+
 import AgregarCategoria from "./components/Gestionarcategoria/agregar_categoria";
 import EditarCategoria from "./components/Gestionarcategoria/editar_categoria";
 import GestionarSocios from "./components/socios/GestionarSocios";
 import GestionarEmpresas from "./components/Empresas/GestionarEmpresas";
 import SociosBaja from "./components/socios/SociosBaja";
-
 // >>> NUEVO: pantalla de empresas dadas de baja
 import EmpresasBaja from "./components/Empresas/EmpresasBaja";
 
@@ -43,6 +46,7 @@ const App = () => {
         <Route path="/editarSocio/:id" element={<EditarSocio />} />
         <Route path="/editarEmpresa/:razon_social" element={<EditarEmpresa />} />
 
+        {/* Rutas de modales (si también querés poder abrirlos como página) */}
         <Route path="/modalPagos/:nombre/:apellido" element={<ModalPagos />} />
         <Route path="/ModalPagosEmpresas/:razon_social" element={<ModalPagosEmpresas />} />
 

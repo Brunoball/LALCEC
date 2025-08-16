@@ -15,6 +15,9 @@ require_once(__DIR__ . '/../../config/db.php');
 function agregar_categoria($nombre_categoria, $precio_categoria) {
     global $conn;
 
+    // Convertir el nombre a mayúsculas (soporta UTF-8)
+    $nombre_categoria = mb_strtoupper($nombre_categoria, 'UTF-8');
+
     // Obtener la fecha actual (formato YYYY-MM-DD)
     $fecha_agregado = date("Y-m-d");
 
@@ -23,7 +26,7 @@ function agregar_categoria($nombre_categoria, $precio_categoria) {
 
     // Preparar la sentencia
     if ($stmt = $conn->prepare($sql)) {
-        // Vincular los parámetros
+        // Vincular los parámetros (s = string, d = double, s = string)
         $stmt->bind_param("sds", $nombre_categoria, $precio_categoria, $fecha_agregado);
 
         // Ejecutar la consulta

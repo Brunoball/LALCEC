@@ -76,6 +76,11 @@ switch ($action) {
         require_once(__DIR__ . '/../modules/cuotas/registrar_pagos_empresas.php');
         break;
 
+    case 'eliminar_pago':
+        require_once(__DIR__ . '/../modules/cuotas/eliminar_pago.php');
+        break;
+
+
     // SOCIOS
     case 'agregar_socio':
         require_once(__DIR__ . '/../modules/socios/agregar_socios.php');
