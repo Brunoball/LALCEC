@@ -1,7 +1,7 @@
 <?php
-// backend/agregar_empresa.php
+// backend/modules/empresas/agregar_empresa.php
 
-header("Access-Control-Allow-Origin: http://localhost:3000");
+header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
 header("Content-Type: application/json");
@@ -18,78 +18,97 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $data = json_decode(file_get_contents("php://input"), true);
 if (!$data) {
     echo json_encode(["error_message" => "No se recibieron datos válidos"]);
-    exit;
+    exit();
 }
 
-// FUNCIONES DE LIMPIEZA
+/* =========================
+   Helpers de limpieza/validación
+========================= */
 function limpiarTexto($dato) {
     global $conn;
     return isset($dato) && trim($dato) !== '' ? mb_strtoupper($conn->real_escape_string(trim($dato)), 'UTF-8') : NULL;
 }
 
 function limpiarEntero($dato) {
-    return isset($dato) && is_numeric($dato) ? (int)$dato : NULL;
+    return (isset($dato) && $dato !== '' && is_numeric($dato)) ? (int)$dato : NULL;
 }
 
-function validarCampoTexto($valor, $campo, $regex, $max) {
-    if ($valor !== NULL && (!preg_match($regex, $valor) || strlen($valor) > $max)) {
-        echo json_encode(["error_message" => "El campo $campo tiene un formato inválido o supera los $max caracteres."]);
-        exit();
-    }
+function validarRegexOpcional($valor, $regex, $maxLen = null) {
+    if ($valor === NULL) return true;
+    if ($maxLen !== null && mb_strlen($valor, 'UTF-8') > $maxLen) return false;
+    return (bool) preg_match($regex, $valor);
 }
 
-// VALIDAR Y LIMPIAR DATOS
+function errorYSalir($msg) {
+    echo json_encode(["error_message" => $msg]);
+    exit();
+}
+
+/* =========================
+   Campos requeridos
+========================= */
 $razon_social = limpiarTexto($data['razon_social'] ?? '');
 if (!$razon_social) {
-    echo json_encode(["error_message" => "La Razón Social es obligatoria."]);
-    exit();
+    errorYSalir("La Razón Social es obligatoria.");
 }
-validarCampoTexto($razon_social, "Razón Social", '/^[A-ZÑÁÉÍÓÚÜ.\s]+$/u', 60);
 
-$cuit = trim($data['cuit'] ?? '');
-if ($cuit !== '' && !preg_match('/^\d{2}-\d{8}-\d{1}$/', $cuit)) {
-    echo json_encode(["error_message" => "El CUIT debe tener el formato XX-XXXXXXXX-X."]);
-    exit();
+// CUIT/CUIL: aceptar 11 dígitos o XX-XXXXXXXX-X
+$cuitRaw = trim($data['cuit'] ?? '');
+if ($cuitRaw === '') {
+    errorYSalir("El CUIL/CUIT es obligatorio.");
 }
-$cuit = $cuit !== '' ? strtoupper($conn->real_escape_string($cuit)) : NULL;
+$soloDigitos = preg_replace('/[^0-9]/', '', $cuitRaw);
+if (!(preg_match('/^\d{2}-\d{8}-\d{1}$/', $cuitRaw) || preg_match('/^\d{11}$/', $soloDigitos))) {
+    errorYSalir("El CUIL/CUIT debe ser 11 dígitos o con formato XX-XXXXXXXX-X.");
+}
+$cuit = strtoupper($conn->real_escape_string($cuitRaw));
 
-$cond_iva = limpiarEntero($data['cond_iva'] ?? NULL);
+/* =========================
+   Campos opcionales pero estrictos
+========================= */
+$cond_iva    = limpiarEntero($data['cond_iva'] ?? NULL);
 
-$domicilio = limpiarTexto($data['domicilio'] ?? NULL);
-validarCampoTexto($domicilio, "Domicilio", '/^[A-ZÑÁÉÍÓÚÜ0-9.\s]+$/u', 40);
+$domicilio   = limpiarTexto($data['domicilio'] ?? NULL);
+if (!validarRegexOpcional($domicilio, '/^[A-ZÑÁÉÍÓÚÜ0-9.\s]+$/u', 40)) {
+    errorYSalir("Domicilio inválido (solo letras, números, puntos y espacios; máx. 40).");
+}
 
 $domicilio_2 = limpiarTexto($data['domicilio_2'] ?? NULL);
-validarCampoTexto($domicilio_2, "Domicilio Alternativo", '/^[A-ZÑÁÉÍÓÚÜ0-9.\s]+$/u', 40);
-
-$telefono = limpiarTexto($data['telefono'] ?? NULL);
-if ($telefono !== NULL && (!preg_match('/^[0-9\- ]+$/', $telefono) || strlen($telefono) > 20)) {
-    echo json_encode(["error_message" => "El teléfono contiene caracteres inválidos o supera los 20 caracteres."]);
-    exit();
+if (!validarRegexOpcional($domicilio_2, '/^[A-ZÑÁÉÍÓÚÜ0-9.\s]+$/u', 40)) {
+    errorYSalir("Domicilio Alternativo inválido (solo letras, números, puntos y espacios; máx. 40).");
 }
 
-$email = trim($data['email'] ?? '');
-if ($email !== '' && (!filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($email) > 60)) {
-    echo json_encode(["error_message" => "El email no tiene un formato válido o supera los 60 caracteres."]);
-    exit();
+$telefonoRaw = trim($data['telefono'] ?? '');
+$telefono = ($telefonoRaw === '') ? NULL : mb_strtoupper($conn->real_escape_string($telefonoRaw), 'UTF-8');
+if ($telefono !== NULL && (!preg_match('/^[0-9+\-\s()]*$/', $telefono) || strlen($telefono) > 20)) {
+    errorYSalir("El teléfono contiene caracteres inválidos o supera los 20 caracteres.");
 }
-$email = $email !== '' ? strtolower($conn->real_escape_string($email)) : NULL;
+
+$emailRaw = trim($data['email'] ?? '');
+$email = ($emailRaw === '') ? NULL : strtolower($conn->real_escape_string($emailRaw));
+if ($email !== NULL && (!filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($email) > 60)) {
+    errorYSalir("El email no tiene un formato válido o supera los 60 caracteres.");
+}
 
 $observacion = limpiarTexto($data['observacion'] ?? NULL);
-validarCampoTexto($observacion, "Observación", '/^[A-ZÑÁÉÍÓÚÜ0-9.\s]*$/u', 60);
+if (!validarRegexOpcional($observacion, '/^[A-ZÑÁÉÍÓÚÜ0-9.\s]*$/u', 60)) {
+    errorYSalir("Observación inválida (solo letras, números, puntos y espacios; máx. 60).");
+}
 
-$idCategorias = limpiarEntero($data['idCategoria'] ?? NULL);
+$idCategorias  = limpiarEntero($data['idCategoria'] ?? NULL);
 $idMedios_Pago = limpiarEntero($data['idMedios_Pago'] ?? NULL);
-$fechaunion = date('Y-m-d');
+$fechaunion    = date('Y-m-d');
 
-// VERIFICAR EXISTENCIA DE CLAVES FORÁNEAS
+/* =========================
+   Verificar claves foráneas SOLO si se envían
+========================= */
 if ($idCategorias !== NULL) {
     $checkCategoria = $conn->prepare("SELECT idCategorias FROM categorias WHERE idCategorias = ?");
     $checkCategoria->bind_param("i", $idCategorias);
     $checkCategoria->execute();
     $checkCategoria->store_result();
     if ($checkCategoria->num_rows === 0) {
-        echo json_encode(["error_message" => "El idCategoria proporcionado no existe."]);
-        exit();
+        errorYSalir("El idCategoria proporcionado no existe.");
     }
     $checkCategoria->close();
 }
@@ -100,15 +119,30 @@ if ($cond_iva !== NULL) {
     $checkIVA->execute();
     $checkIVA->store_result();
     if ($checkIVA->num_rows === 0) {
-        echo json_encode(["error_message" => "La condición de IVA seleccionada no existe."]);
-        exit();
+        errorYSalir("La condición de IVA seleccionada no existe.");
     }
     $checkIVA->close();
 }
 
-// INSERTAR EN LA BASE DE DATOS
-$query = "INSERT INTO empresas (razon_social, cuit, id_iva, domicilio, domicilio_2, telefono, email, observacion, idCategorias, idMedios_Pago, fechaunion)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+if ($idMedios_Pago !== NULL) {
+    $checkMP = $conn->prepare("SELECT IdMedios_pago FROM medios_pago WHERE IdMedios_pago = ?");
+    if ($checkMP) {
+        $checkMP->bind_param("i", $idMedios_Pago);
+        $checkMP->execute();
+        $checkMP->store_result();
+        if ($checkMP->num_rows === 0) {
+            errorYSalir("El medio de pago seleccionado no existe.");
+        }
+        $checkMP->close();
+    }
+}
+
+/* =========================
+   Insertar
+========================= */
+$query = "INSERT INTO empresas (
+            razon_social, cuit, id_iva, domicilio, domicilio_2, telefono, email, observacion, idCategorias, idMedios_Pago, fechaunion
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
 $stmt = $conn->prepare($query);
 if (!$stmt) {
@@ -139,4 +173,3 @@ if ($stmt->execute()) {
 
 $stmt->close();
 $conn->close();
-?>

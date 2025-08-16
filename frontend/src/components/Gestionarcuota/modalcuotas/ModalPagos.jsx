@@ -1,11 +1,9 @@
-// src/components/Empresas/ModalPagosEmpresas.jsx
 import React, { useState, useEffect } from 'react';
 import { FaCoins } from 'react-icons/fa';
-import BASE_URL from "../../config/config";
-import Toast from "../global/Toast"; // ← usa tu Toast global
-import './ModalPagos.css'; // MISMO CSS que ModalPagos (clases modpag_*)
+import BASE_URL from '../../../config/config';
+import './ModalPagos.css';
 
-const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
+const ModalPagos = ({ nombre, apellido, cerrarModal, onPagoRealizado }) => {
   const [mesesSeleccionados, setMesesSeleccionados] = useState([]);
   const [todosSeleccionados, setTodosSeleccionados] = useState(false);
   const [pagoExitoso, setPagoExitoso] = useState(false);
@@ -13,13 +11,8 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
   const [error, setError] = useState('');
   const [mesesPagados, setMesesPagados] = useState([]);
   const [fechaUnion, setFechaUnion] = useState(null);
-  const [empresaData, setEmpresaData] = useState(null);
+  const [socioData, setSocioData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [toast, setToast] = useState(null); // { tipo: 'error'|'success'|'info', mensaje: string }
-
-  const mostrarToast = (tipo, mensaje, duracion = 3200) => {
-    setToast({ tipo, mensaje, duracion });
-  };
 
   const formatDate = (dateString) => {
     if (!dateString) return '';
@@ -28,44 +21,39 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
   };
 
   useEffect(() => {
-    const obtenerDatosEmpresa = async () => {
+    const obtenerDatosSocio = async () => {
       try {
-        const response = await fetch(`${BASE_URL}/api.php?action=monto_pago_empresas`, {
+        const response = await fetch(`${BASE_URL}/api.php?action=monto_pago`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ razonSocial, tipoEntidad: "empresa" })
+          body: JSON.stringify({ nombre, apellido })
         });
 
         const result = await response.json();
 
         if (result.success) {
-          const precio = result.precioMes ?? 0;
-          setPrecioMensual(precio);
+          setPrecioMensual(result.precioMes || 0);
           setMesesPagados(result.mesesPagados || []);
           setFechaUnion(result.fechaUnion || new Date().toISOString().split('T')[0]);
-          setEmpresaData({
-            domicilio: result.domicilio_2 || result.domicilio || '',
+          setSocioData({
+            domicilio: result.domicilio || '',
+            domicilio_2: result.domicilio_2 || '',
             categoria: result.categoria || '',
             cobrador: result.cobrador || ''
           });
-
-          // Si no hay monto/categoría mostrarmos el mismo toast que en socios
-          if (!precio || precio <= 0 || !result.categoria) {
-            mostrarToast('error', 'El socio no tiene categoría asignada. No se puede registrar el pago.');
-          }
         } else {
-          setError(result.message || "Error al obtener datos de la empresa");
+          setError(result.message || "Error al obtener datos del socio");
         }
-      } catch (e) {
-        setError("Ocurrió un error al obtener los datos de la empresa.");
-        console.error(e);
+      } catch (error) {
+        setError("Ocurrió un error al obtener los datos del socio.");
+        console.error(error);
       } finally {
         setLoading(false);
       }
     };
 
-    if (razonSocial) obtenerDatosEmpresa();
-  }, [razonSocial]);
+    obtenerDatosSocio();
+  }, [nombre, apellido]);
 
   const getMesesDisponibles = () => {
     if (!fechaUnion) return [];
@@ -77,7 +65,7 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
 
       const makeMes = (id) => ({
         id,
-        nombre: new Date(0, id - 1).toLocaleString('es-AR', { month: 'long' }).toUpperCase()
+        nombre: new Date(0, id - 1).toLocaleString('es', { month: 'long' }).toUpperCase()
       });
 
       if (añoUnion === añoActual) {
@@ -91,7 +79,7 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
   };
 
   const meses = getMesesDisponibles();
-  const totalPagar = mesesSeleccionados.length * (precioMensual || 0);
+  const totalPagar = mesesSeleccionados.length * precioMensual;
 
   const handleSeleccionarMes = (mesId, yaPagado) => {
     if (yaPagado) return;
@@ -120,43 +108,36 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
   }, [mesesSeleccionados, mesesPagados, fechaUnion]);
 
   const handleRealizarPago = async () => {
-    // Mismo bloqueo que en socios si no hay categoría/monto
-    if (!precioMensual || precioMensual <= 0 || !empresaData?.categoria) {
-      mostrarToast('error', 'El socio no tiene categoría asignada. No se puede registrar el pago.');
-      return;
-    }
-
     if (mesesSeleccionados.length === 0) return;
 
     try {
-      const response = await fetch(`${BASE_URL}/api.php?action=registrar_pago_empresas`, {
+      const response = await fetch(`${BASE_URL}/api.php?action=registrar_pago`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          razonSocial,
-          meses: mesesSeleccionados,
-          tipoEntidad: "empresa"
+          nombre,
+          apellido,
+          meses: mesesSeleccionados
         })
       });
 
       const result = await response.json();
 
       if (result.success) {
-        // NO cerramos el modal automáticamente → se queda en estado de éxito
         setPagoExitoso(true);
-        // Si querés notificar a la lista, podés llamar onPagoRealizado al cerrar, como en socios
       } else {
         setError(result.message || "Error al registrar el pago");
       }
-    } catch (e) {
+    } catch (error) {
       setError("Ocurrió un error al realizar el pago.");
-      console.error(e);
+      console.error(error);
     }
   };
 
   const handleImprimirComprobante = () => {
-    if (!empresaData || mesesSeleccionados.length === 0) return;
+    if (!socioData || mesesSeleccionados.length === 0) return;
 
+    const domicilioMostrar = socioData.domicilio_2 || socioData.domicilio || 'Domicilio no registrado';
     const mesesPagadosStr = meses
       .filter(m => mesesSeleccionados.includes(m.id))
       .map(m => m.nombre)
@@ -168,30 +149,52 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
         <title>Comprobante de Pago</title>
         <style>
           @page { size: A4 portrait; margin: 0; }
-          body { width: 210mm; height: 297mm; margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 12px; display: flex; justify-content: center; align-items: center; }
-          .contenedor { width: 210mm; height: 70mm; position: absolute; top: 33%; left: 50%; transform: translate(-50%, -50%) rotate(90deg); transform-origin: center center; box-sizing: border-box; }
-          .comprobante { width: 100%; height: 100%; display: flex; box-sizing: border-box; }
-          .talon-empresa { width: 60%; padding-left: 20mm; padding-top: 13mm; }
-          .talon-cobrador { width: 60mm; padding-left: 10mm; padding-top: 16mm; }
+          body {
+            width: 210mm; height: 297mm;
+            margin: 0; padding: 0;
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            display: flex; justify-content: center; align-items: center;
+          }
+          .contenedor {
+            width: 210mm; height: 70mm;
+            position: absolute;
+            top: 33%; left: 50%;
+            transform: translate(-50%, -50%) rotate(90deg);
+            transform-origin: center center;
+            box-sizing: border-box;
+          }
+          .comprobante {
+            width: 100%; height: 100%;
+            display: flex; box-sizing: border-box;
+          }
+          .talon-socio {
+            width: 60%; padding-left: 20mm; padding-top: 13mm;
+          }
+          .talon-cobrador {
+            width: 60mm; padding-left: 10mm; padding-top: 16mm;
+          }
           p { margin-top: 5px; font-size: 13px; }
         </style>
       </head>
       <body>
         <div class="contenedor">
           <div class="comprobante">
-            <div class="talon-empresa">
-              <p><strong>Empresa:</strong> ${razonSocial}</p>
-              <p><strong>Domicilio:</strong> ${empresaData.domicilio || 'No registrado'}</p>
-              <p><strong>Categoría / Monto:</strong> ${empresaData.categoria} / $${totalPagar}</p>
+            <div class="talon-socio">
+              <p><strong>Afiliado:</strong> ${nombre} ${apellido}</p>
+              <p><strong>Domicilio:</strong> ${domicilioMostrar}</p>
+              <p><strong>Categoría / Monto:</strong> ${socioData.categoria} / $${totalPagar}</p>
               <p><strong>Período:</strong> ${mesesPagadosStr}</p>
-              <p><strong>Cobrador:</strong> ${empresaData.cobrador}</p>
+              <p><strong>Cobrador:</strong> ${socioData.cobrador}</p>
+              <p><strong>Estado:</strong> PAGADO</p>
               <p>Por consultas comunicarse al 03564-15205778</p>
             </div>
             <div class="talon-cobrador">
-              <p><strong>Empresa:</strong> ${razonSocial}</p>
-              <p><strong>Categoría / Monto:</strong> ${empresaData.categoria} / $${totalPagar}</p>
+              <p><strong>Nombre y Apellido:</strong> ${nombre} ${apellido}</p>
+              <p><strong>Categoría / Monto:</strong> ${socioData.categoria} / $${totalPagar}</p>
               <p><strong>Período:</strong> ${mesesPagadosStr}</p>
-              <p><strong>Cobrador:</strong> ${empresaData.cobrador}</p>
+              <p><strong>Cobrador:</strong> ${socioData.cobrador}</p>
+              <p><strong>Estado:</strong> PAGADO</p>
             </div>
           </div>
         </div>
@@ -225,7 +228,7 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
           <div className="modpag_body">
             <div className="modpag_loading-state">
               <div className="modpag_spinner"></div>
-              <span>Cargando datos de la empresa...</span>
+              <span>Cargando datos del socio...</span>
             </div>
           </div>
         </div>
@@ -254,8 +257,8 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
             <div className="modpag_info-summary">
               <div className="modpag_info-row">
                 <div className="modpag_info-item">
-                  <span className="modpag_info-label">Empresa</span>
-                  <span className="modpag_info-value">{razonSocial}</span>
+                  <span className="modpag_info-label">Socio</span>
+                  <span className="modpag_info-value">{nombre} {apellido}</span>
                 </div>
                 {fechaUnion && (
                   <div className="modpag_info-item">
@@ -265,6 +268,7 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
                 )}
               </div>
             </div>
+
             <p className="modpag_error-banner">{error}</p>
           </div>
           <div className="modpag_footer modpag_footer-sides">
@@ -274,14 +278,6 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
             </div>
           </div>
         </div>
-        {toast && (
-          <Toast
-            tipo={toast.tipo}
-            mensaje={toast.mensaje}
-            duracion={toast.duracion}
-            onClose={() => setToast(null)}
-          />
-        )}
       </div>
     );
   }
@@ -297,10 +293,7 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
                 <h2 className="modpag_title">Registro de Pagos</h2>
               </div>
             </div>
-            <button
-              className="modpag_close-btn"
-              onClick={() => { if (onPagoRealizado) onPagoRealizado(); cerrarModal(); }}
-            >
+            <button className="modpag_close-btn" onClick={() => { if (onPagoRealizado) onPagoRealizado(); cerrarModal(); }}>
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                 <path d="M12 4L4 12M4 4L12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
@@ -311,8 +304,8 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
             <div className="modpag_info-summary">
               <div className="modpag_info-row">
                 <div className="modpag_info-item">
-                  <span className="modpag_info-label">Empresa</span>
-                  <span className="modpag_info-value">{razonSocial}</span>
+                  <span className="modpag_info-label">Socio</span>
+                  <span className="modpag_info-value">{nombre} {apellido}</span>
                 </div>
                 {fechaUnion && (
                   <div className="modpag_info-item">
@@ -350,14 +343,6 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
             </div>
           </div>
         </div>
-        {toast && (
-          <Toast
-            tipo={toast.tipo}
-            mensaje={toast.mensaje}
-            duracion={toast.duracion}
-            onClose={() => setToast(null)}
-          />
-        )}
       </div>
     );
   }
@@ -385,8 +370,8 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
           <div className="modpag_info-summary">
             <div className="modpag_info-row">
               <div className="modpag_info-item">
-                <span className="modpag_info-label">Empresa</span>
-                <span className="modpag_info-value modpag_info-value-highlight">{razonSocial}</span>
+                <span className="modpag_info-label">Socio</span>
+                <span className="modpag_info-value modpag_info-value-highlight">{nombre} {apellido}</span>
               </div>
               {fechaUnion && (
                 <div className="modpag_info-item">
@@ -470,17 +455,8 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
           </div>
         </div>
       </div>
-
-      {toast && (
-        <Toast
-          tipo={toast.tipo}
-          mensaje={toast.mensaje}
-          duracion={toast.duracion}
-          onClose={() => setToast(null)}
-        />
-      )}
     </div>
   );
 };
 
-export default ModalPagosEmpresas;
+export default ModalPagos;

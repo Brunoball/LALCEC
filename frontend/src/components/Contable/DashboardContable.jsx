@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import "./dashboard.css";
 import BASE_URL from "../../config/config";
@@ -14,7 +14,11 @@ import {
   faBuilding,
   faUser,
   faCreditCard,
+  faChartPie,
 } from "@fortawesome/free-solid-svg-icons";
+
+// Modal unificado:
+import ContableChartsModal from "./modalcontable/ContableChartsModal";
 
 export default function DashboardContable() {
   const navigate = useNavigate();
@@ -26,12 +30,12 @@ export default function DashboardContable() {
 
   // Datos base
   const [meses, setMeses] = useState(["Selecciona un mes"]);
-  const [datosMeses, setDatosMeses] = useState([]);       // socios
+  const [datosMeses, setDatosMeses] = useState([]); // socios
   const [datosEmpresas, setDatosEmpresas] = useState([]); // empresas
   const [preciosCategorias, setPreciosCategorias] = useState({});
 
   // Medios de pago
-  const [mediosPago, setMediosPago] = useState([]); // ["Efectivo","Transferencia",...]
+  const [mediosPago, setMediosPago] = useState([]);
 
   // Derivados
   const [categoriasAgrupadas, setCategoriasAgrupadas] = useState([]);
@@ -43,6 +47,9 @@ export default function DashboardContable() {
   const [error, setError] = useState(null);
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
   const [mostrarTablaDetalle, setMostrarTablaDetalle] = useState(false);
+
+  // Modal Gráficos
+  const [mostrarModalGraficos, setMostrarModalGraficos] = useState(false);
 
   // Helper fetch con cache buster
   const fetchData = async (url) => {
@@ -59,9 +66,7 @@ export default function DashboardContable() {
         },
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
       const data = await response.json();
       if (!data) throw new Error("No data received from server");
@@ -83,19 +88,14 @@ export default function DashboardContable() {
         setLoading(true);
         setError(null);
 
-        const [
-          dataContable,
-          dataEmpresas,
-          dataPrecios,
-          dataMediosPago,
-        ] = await Promise.all([
-          fetchData(`${BASE_URL}/api.php?action=contable`),
-          fetchData(`${BASE_URL}/api.php?action=contable_emp`),
-          fetchData(`${BASE_URL}/api.php?action=precios_cat_mes`),
-          fetchData(`${BASE_URL}/api.php?action=obtener_medios_pago`),
-        ]);
+        const [dataContable, dataEmpresas, dataPrecios, dataMediosPago] =
+          await Promise.all([
+            fetchData(`${BASE_URL}/api.php?action=contable`),
+            fetchData(`${BASE_URL}/api.php?action=contable_emp`),
+            fetchData(`${BASE_URL}/api.php?action=precios_cat_mes`),
+            fetchData(`${BASE_URL}/api.php?action=obtener_medios_pago`),
+          ]);
 
-        // Validaciones
         if (!dataContable?.success || !Array.isArray(dataContable.data)) {
           throw new Error("Formato inválido en datos contables (socios).");
         }
@@ -113,7 +113,6 @@ export default function DashboardContable() {
         setDatosEmpresas(dataEmpresas.data);
         setPreciosCategorias(dataPrecios);
 
-        // Meses disponibles
         const mesesDisponibles =
           Object.keys(dataPrecios).length > 0
             ? Object.keys(dataPrecios)
@@ -126,13 +125,12 @@ export default function DashboardContable() {
 
         setMeses(["Selecciona un mes", ...mesesDisponibles.filter(Boolean)]);
 
-        // Medios de pago (lista para el select)
         const listaMedios = dataMediosPago.data
           .map((m) => m?.nombre)
           .filter(Boolean)
           .sort((a, b) => a.localeCompare(b, "es"));
-
         setMediosPago(listaMedios);
+
         setInitialLoadComplete(true);
       } catch (error) {
         console.error("Error en carga inicial:", error);
@@ -177,34 +175,27 @@ export default function DashboardContable() {
 
   const updateMonthData = () => {
     try {
-      // Elegir origen (socio/empresa)
       const mesData =
         tipoEntidad === "socio"
           ? datosMeses.find((m) => m?.nombre === mesSeleccionado)
           : datosEmpresas.find((m) => m?.nombre === mesSeleccionado);
 
       const preciosMesActual = preciosCategorias[mesSeleccionado] || [];
-
-      // Pagos del mes (o vacío)
       let pagos = Array.isArray(mesData?.pagos) ? mesData.pagos : [];
 
-      // Filtro por medio de pago
       if (medioSeleccionado !== "todos") {
         pagos = pagos.filter(
           (p) => (p?.Medio_Pago || "").toString().trim() === medioSeleccionado
         );
       }
 
-      // Total recaudado filtrado
       const totalFiltrado = pagos.reduce(
         (acc, p) => acc + (parseFloat(p?.Precio) || 0),
         0
       );
 
-      // Agrupar por categoría usando los pagos filtrados
       const pagosAgrupados = agruparPorCategoria(pagos);
 
-      // Combinar con precios (precio esperado por categoría)
       const categoriasCombinadas = preciosMesActual.map((catPrecio) => {
         const categoriaPagos =
           pagosAgrupados.find((c) => c.nombre === catPrecio.nombreCategoria) || {
@@ -239,10 +230,25 @@ export default function DashboardContable() {
   const handleTipoEntidadChange = (e) => setTipoEntidad(e.target.value);
   const toggleVistaDetalle = () => setMostrarTablaDetalle((v) => !v);
   const handleMedioPagoChange = (e) => setMedioSeleccionado(e.target.value);
+  const abrirModalGraficos = () => setMostrarModalGraficos(true);
+  const cerrarModalGraficos = () => setMostrarModalGraficos(false);
 
   const calcularTotalRegistros = () => registrosMes.length;
-
   const labelEntidad = tipoEntidad === "socio" ? "Socio" : "Razón social";
+
+  // Meses presentes (para encabezados)
+  const MESES_ORDEN = [
+    "Enero","Febrero","Marzo","Abril","Mayo","Junio",
+    "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre",
+  ];
+  const norm = (s) => (s || "").toString().trim().toLowerCase();
+  const mesesPresentesTodos = useMemo(() => {
+    const set = new Set([
+      ...datosMeses.map((m) => norm(m?.nombre)),
+      ...datosEmpresas.map((m) => norm(m?.nombre)),
+    ]);
+    return MESES_ORDEN.filter((m) => set.has(norm(m)));
+  }, [datosMeses, datosEmpresas]);
 
   return (
     <div className="dashboard-contable-fullscreen">
@@ -266,7 +272,9 @@ export default function DashboardContable() {
           </button>
         </div>
 
+        {/* ==== Tarjetas resumen ==== */}
         <div className="contable-summary-cards">
+          {/* Total recaudado */}
           <div className="contable-summary-card total-card">
             <div className="contable-card-icon">
               <FontAwesomeIcon icon={faDollarSign} />
@@ -284,6 +292,7 @@ export default function DashboardContable() {
             </div>
           </div>
 
+          {/* Categorías */}
           <div className="contable-summary-card">
             <div className="contable-card-icon">
               <FontAwesomeIcon icon={faTags} />
@@ -299,6 +308,7 @@ export default function DashboardContable() {
             </div>
           </div>
 
+          {/* Total registros */}
           <div className="contable-summary-card">
             <div className="contable-card-icon">
               <FontAwesomeIcon icon={faListAlt} />
@@ -315,24 +325,25 @@ export default function DashboardContable() {
           </div>
         </div>
 
+        {/* ==== Sección categorías ==== */}
         <div className="contable-categories-section">
           <div className="contable-section-header">
             <h2>
               {mostrarTablaDetalle ? (
                 <>
-                  <FontAwesomeIcon icon={faTable} /> Detalle de Pagos - {mesSeleccionado} (
+                  <FontAwesomeIcon icon={faTable} /> Detalle de Pagos - {mesSeleccionado || "—"} (
                   {tipoEntidad === "socio" ? "Socios" : "Empresas"})
                 </>
               ) : (
                 <>
-                  <FontAwesomeIcon icon={faTags} /> Resumen por Categoría - {mesSeleccionado} (
+                  <FontAwesomeIcon icon={faTags} /> Resumen por Categoría - {mesSeleccionado || "—"} (
                   {tipoEntidad === "socio" ? "Socios" : "Empresas"})
                 </>
               )}
             </h2>
 
             <div className="contable-selectors-container">
-              {/* Selector de Mes */}
+              {/* Mes */}
               <div className="contable-month-selector">
                 <FontAwesomeIcon icon={faCalendarAlt} />
                 <select
@@ -353,7 +364,7 @@ export default function DashboardContable() {
                 </select>
               </div>
 
-              {/* Selector de Entidad */}
+              {/* Entidad */}
               <div className="contable-entity-selector">
                 <FontAwesomeIcon icon={tipoEntidad === "socio" ? faUser : faBuilding} />
                 <select
@@ -367,7 +378,7 @@ export default function DashboardContable() {
                 </select>
               </div>
 
-              {/* Selector de Medio de Pago (en mobile ocupa fila completa) */}
+              {/* Medio de Pago */}
               <div className="contable-payment-selector full-row-mobile">
                 <FontAwesomeIcon icon={faCreditCard} />
                 <select
@@ -390,19 +401,31 @@ export default function DashboardContable() {
                 </select>
               </div>
 
-              {mesSeleccionado !== "Selecciona un mes" && (
-                <button
-                  className="contable-detail-view-button"
-                  onClick={toggleVistaDetalle}
-                  disabled={loading}
-                >
-                  <FontAwesomeIcon icon={mostrarTablaDetalle ? faTags : faTable} />
-                  {mostrarTablaDetalle ? "Ver Resumen" : "Ver Detalle"}
-                </button>
-              )}
+              {/* Botón Detalle/Resumen (SIEMPRE VISIBLE) */}
+              <button
+                className="contable-detail-view-button"
+                onClick={toggleVistaDetalle}
+                disabled={loading}
+              >
+                <FontAwesomeIcon icon={mostrarTablaDetalle ? faTags : faTable} />
+                {mostrarTablaDetalle ? "Ver Resumen" : "Ver Detalle"}
+              </button>
+
+              {/* Botón Ver Gráficos */}
+              <button
+                className="contable-charts-button"
+                type="button"
+                onClick={abrirModalGraficos}
+                disabled={!initialLoadComplete}
+                title="Ver gráficos Socios vs Empresas"
+              >
+                <FontAwesomeIcon icon={faChartPie} />
+                Ver Gráficos
+              </button>
             </div>
           </div>
 
+          {/* ==== Contenido dinámico ==== */}
           <div className="contable-categories-scroll-container">
             {loading ? (
               <div className="contable-loading-categories">
@@ -443,7 +466,9 @@ export default function DashboardContable() {
                     ) : (
                       <tr>
                         <td colSpan="6" className="contable-no-data">
-                          No hay registros para mostrar en este mes
+                          {mesSeleccionado === "Selecciona un mes"
+                            ? "Seleccione un mes para ver los detalles"
+                            : "No hay registros para mostrar en este mes"}
                         </td>
                       </tr>
                     )}
@@ -491,6 +516,16 @@ export default function DashboardContable() {
           </div>
         </div>
       </div>
+
+      {/* ==== MODAL GRÁFICOS (unificado) ==== */}
+      <ContableChartsModal
+        open={mostrarModalGraficos}
+        onClose={cerrarModalGraficos}
+        datosMeses={datosMeses}
+        datosEmpresas={datosEmpresas}
+        mesSeleccionado={mesSeleccionado}
+        medioSeleccionado={medioSeleccionado}
+      />
     </div>
   );
 }
