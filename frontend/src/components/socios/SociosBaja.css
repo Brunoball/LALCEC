@@ -330,13 +330,17 @@
 
 /* ===== MOBILE (≤768px) ===== */
 @media (max-width: 768px) {
-  .socbaj_barra-superior { flex-direction: column; gap: .75rem; }
+  .socbaj_buscador-container{ margin: 0;}
+  .socbaj_barra-superior { position: static; margin-bottom: 3rem;}
+  .socbaj_tabla-container{ margin-top: 1rem;}
   .socbaj_titulo-container, .socbaj_buscador-container { width: 100%; min-width: auto; }
-
   .socbaj_boton-volver {
-    align-self: flex-start;
+    position: absolute;
+    bottom: 1rem;
     padding: .45rem .7rem;
     font-size: .85rem;
+    border: 2px solid var(--socbaj-accent);
+    color: var(--socbaj-accent);
   }
 
   .socbaj_tabla-header { display: none; }
@@ -432,9 +436,10 @@
 @media (max-width: 576px) {
   .socbaj_container { padding: 1rem; }
   .socbaj_titulo { font-size: 1.4rem; text-align: center; }
-  .socbaj_boton-volver { align-self: flex-start; }
 
   .socbaj_fila > div {
     grid-template-columns: 115px 1fr;
   }
 }
+
+

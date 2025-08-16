@@ -422,7 +422,8 @@ input:-webkit-autofill { background-color: transparent !important; }
   background: var(--surface-color);
 }
 .gessoc_header {
-  display: flex;
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr;
   background: linear-gradient(90deg, #fa7815, #ef6a14);
   border-bottom: 2px solid var(--border-color);
   position: sticky;
@@ -623,7 +624,8 @@ input:-webkit-autofill { background-color: transparent !important; }
 
 /* ====== Hover/Selected y estilos existentes (sin cambios visuales) ====== */
 .gessoc_row {
-  display: flex;
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr;
   align-items: center;
   padding: 0;
   position: relative;
@@ -647,9 +649,14 @@ input:-webkit-autofill { background-color: transparent !important; }
   overflow: hidden;
   text-overflow: ellipsis;
   min-width: 0;
-  flex: 1;
 }
-.gessoc_column-razon { font-weight: 500; color: var(--text-primary); }
+
+/* 🔧 MOD: esta columna ahora muestra “Nombre y Apellido” y ocupa el doble */
+.gessoc_column-razon {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
 .gessoc_column-cuit { font-family: 'JetBrains Mono', monospace; color: var(--text-secondary); }
 
 .gessoc_icons-column { justify-content: center; }

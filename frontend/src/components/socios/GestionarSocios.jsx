@@ -75,7 +75,7 @@ const useMediaQuery = (query) => {
   return match;
 };
 
-// Detecta preferencia de “reduced motion”
+// Detecta preferencia de "reduced motion"
 const useReducedMotion = () => {
   const [reduced, setReduced] = useState(() =>
     window.matchMedia("(prefers-reduced-motion: reduce)").matches
@@ -109,8 +109,9 @@ const SocioRow = React.memo(
         className={`gessoc_row ${rowClass}`}
         onClick={() => data.onSelect(index, socio)}
       >
-        <div className="gessoc_column gessoc_column-razon">{socio.apellido}</div>
-        <div className="gessoc_column gessoc_column-razon">{socio.nombre}</div>
+        <div className="gessoc_column gessoc_column-razon">
+          {socio.apellido} {socio.nombre}
+        </div>
         <div className="gessoc_column gessoc_column-iva">
           {socio.categoria} ${socio.precio_categoria || "0"}
         </div>
@@ -1076,8 +1077,7 @@ const GestionarSocios = () => {
             /* TABLA (Desktop) */
             <div className="gessoc_box-table">
               <div className="gessoc_header" style={{ width: "100%" }}>
-                <div className="gessoc_column-header">Apellido</div>
-                <div className="gessoc_column-header">Nombre</div>
+                <div className="gessoc_column-header">Nombre y Apellido</div>
                 <div className="gessoc_column-header">Cat/Precio</div>
                 <div className="gessoc_column-header">Medio de Pago</div>
                 <div className="gessoc_column-header">Domicilio Cobro</div>

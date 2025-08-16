@@ -1,557 +1,515 @@
-import React, { useState, useEffect } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSave, faArrowLeft } from "@fortawesome/free-solid-svg-icons";
-import BASE_URL from "../../config/config";
+// src/components/socios/AgregarSocio.jsx
+import React, { useState, useEffect, useRef } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  faSave,
+  faArrowLeft,
+  faArrowRight,
+  faArrowLeft as faStepBack,
+  faUserPlus,
+  faUser,
+  faIdCard,
+  faEnvelope,
+  faPhone,
+  faHome,
+  faHashtag,
+  faMapMarkerAlt,
+  faComment,
+  faTags,
+  faMoneyBillWave
+} from '@fortawesome/free-solid-svg-icons';
+import BASE_URL from '../../config/config';
+import './Agregarsocio.css';
 
 const AgregarSocio = () => {
-  const [socio, setSocio] = useState({
-    nombre: "",
-    apellido: "",
-    dni: "",
-    localidad: "",
-    domicilio: "",
-    domicilio_2: "",
-    numero: "",
-    email: "",
-    telefono: "",
-    observacion: "",
-    idCategoria: "",
-    idMedios_Pago: "",
-  });
-
+  const [currentStep, setCurrentStep] = useState(1);
   const [categorias, setCategorias] = useState([]);
   const [mediosPago, setMediosPago] = useState([]);
-  const [mensaje, setMensaje] = useState({ text: "", type: "" });
-  const [tipoEntidad, setTipoEntidad] = useState("");
+  const [loading, setLoading] = useState(false);
 
+  const [mensaje, setMensaje] = useState({ text: '', type: '' });
+  const [mostrarErrores, setMostrarErrores] = useState(false);
+  const [errores, setErrores] = useState({});
+  const [activeField, setActiveField] = useState(null);
 
+  // Nuevo estado crudo para mostrar exactamente lo que escribe el usuario
+  const [nombreCompleto, setNombreCompleto] = useState('');
+
+  const [socio, setSocio] = useState({
+    nombre: '',
+    apellido: '',
+    dni: '',
+    localidad: '',
+    domicilio: '',
+    domicilio_2: '',
+    numero: '',
+    email: '',
+    telefono: '',
+    observacion: '',
+    idCategoria: '',
+    idMedios_Pago: '',
+  });
+
+  const formRef = useRef(null);
+  const tipoEntidad = 'socio';
+
+  // ===== Helpers UI =====
+  const handleFocus = (fieldName) => setActiveField(fieldName);
+  const handleBlur = () => setActiveField(null);
+
+  // ===== Fetch listas =====
   useEffect(() => {
     const fetchDatos = async () => {
       try {
+        setLoading(true);
         const response = await fetch(`${BASE_URL}/api.php?action=obtener_datos`);
         const data = await response.json();
         if (data.categorias && data.mediosPago) {
           setCategorias(data.categorias);
           setMediosPago(data.mediosPago);
         } else {
-          setMensaje({ text: "No se encontraron datos.", type: "error" });
+          setMensaje({ text: 'No se encontraron datos.', type: 'error' });
         }
       } catch (error) {
-        setMensaje({ text: "Error al obtener los datos: " + error.message, type: "error" });
-        setTimeout(() => setMensaje({ text: "", type: "" }), 5000);
+        setMensaje({ text: 'Error al obtener los datos: ' + error.message, type: 'error' });
+      } finally {
+        setLoading(false);
       }
     };
     fetchDatos();
   }, []);
 
-
-
+  // ===== Handlers =====
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setSocio({ ...socio, [name]: value });
+    const v = (name === 'email') ? value : value.toUpperCase();
+    setSocio((prev) => ({ ...prev, [name]: v }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const response = await fetch(
-        `${BASE_URL}/api.php?action=agregar_socio`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...socio, tipoEntidad }),
-        }
-      );
-      const data = await response.json();
+  const handleNumberChange = (e) => {
+    const { name, value } = e.target;
+    const numericValue = value.replace(/[^0-9]/g, '');
+    setSocio((prev) => ({ ...prev, [name]: numericValue }));
+  };
 
-      if (data.success_message) {
-        setMensaje({ text: data.success_message, type: "success" });
-        setSocio({
-          nombre: "",
-          apellido: "",
-          dni: "",
-          localidad: "",
-          domicilio: "",
-          domicilio_2: "",
-          numero: "",
-          email: "",
-          telefono: "",
-          observacion: "",
-          idCategoria: "",
-          idMedios_Pago: "",
-        });
-        setTipoEntidad("socio");
-      } else {
-        setMensaje({ text: data.error_message, type: "error" });
-      }
+  // Campo ÚNICO: Nombre y Apellido -> mantiene espacios en el input y actualiza nombre/apellido para backend
+  const handleFullNameChange = (e) => {
+    const raw = e.target.value.toUpperCase(); // conserva espacios tal cual
+    setNombreCompleto(raw);
 
-      setTimeout(() => setMensaje({ text: "", type: "" }), 5000);
-    } catch (error) {
-      setMensaje({ text: "Error al agregar socio: " + error.message, type: "error" });
-      setTimeout(() => setMensaje({ text: "", type: "" }), 5000);
+    // Para el backend: partimos por el primer espacio, sin trim para no “comerse” los espacios que estás viendo
+    const firstSpace = raw.indexOf(' ');
+    let nombre = '', apellido = '';
+    if (firstSpace >= 0) {
+      nombre = raw.slice(0, firstSpace);
+      apellido = raw.slice(firstSpace + 1);
+    } else {
+      nombre = raw;
+      apellido = '';
+    }
+    setSocio((prev) => ({ ...prev, nombre, apellido }));
+  };
+
+  const validar = () => {
+    const errs = {};
+    if (!socio.nombre.trim()) errs.nombre = 'El nombre es obligatorio';
+    if (!socio.apellido.trim()) errs.apellido = 'El apellido es obligatorio';
+    setErrores(errs);
+    setMostrarErrores(true);
+    return Object.keys(errs).length === 0;
+  };
+
+  const handleNextStep = () => {
+    if (!validar()) return;
+    setCurrentStep((s) => Math.min(s + 1, 3));
+    setMostrarErrores(false);
+  };
+
+  const handlePrevStep = () => {
+    setCurrentStep((s) => Math.max(s - 1, 1));
+    setMostrarErrores(false);
+  };
+
+  const handleFormKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (currentStep < 3) handleNextStep();
     }
   };
 
+  const handleSubmit = async (e) => {
+    e?.preventDefault();
+    if (!validar()) return;
 
-  const handleGoBack = () => {
-    window.history.back();
+    try {
+      setLoading(true);
+
+      // (Opcional) Normalización suave solo al enviar:
+      // const nombreNorm = socio.nombre.replace(/\s+/g, ' ').trim();
+      // const apellidoNorm = socio.apellido.replace(/\s+/g, ' ').trim();
+
+      const response = await fetch(`${BASE_URL}/api.php?action=agregar_socio`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...socio, tipoEntidad }),
+        // body: JSON.stringify({ ...socio, nombre: nombreNorm, apellido: apellidoNorm, tipoEntidad }),
+      });
+      const data = await response.json();
+
+      if (data.success_message) {
+        setMensaje({ text: data.success_message, type: 'success' });
+        setSocio({
+          nombre: '', apellido: '', dni: '', localidad: '',
+          domicilio: '', domicilio_2: '', numero: '',
+          email: '', telefono: '', observacion: '',
+          idCategoria: '', idMedios_Pago: '',
+        });
+        setNombreCompleto(''); // limpiar el input crudo también
+        setCurrentStep(1);
+      } else {
+        setMensaje({ text: data.error_message || 'Error inesperado', type: 'error' });
+      }
+    } catch (error) {
+      setMensaje({ text: 'Error al agregar socio: ' + error.message, type: 'error' });
+    } finally {
+      setLoading(false);
+      setTimeout(() => setMensaje({ text: '', type: '' }), 4000);
+    }
   };
 
-  const handleTipoEntidadChange = (e) => {
-    setTipoEntidad(e.target.value); // Aquí se establece el valor de "socio" o "empresa"
-  };
-  
+  // ===== UI =====
+  const ProgressSteps = () => (
+    <div className="progress-steps">
+      {[1, 2, 3].map((step) => (
+        <div
+          key={step}
+          className={`progress-step ${currentStep === step ? 'active' : ''} ${currentStep > step ? 'completed' : ''}`}
+          onClick={() => currentStep > step && setCurrentStep(step)}
+        >
+          <div className="step-number">{step}</div>
+          <div className="step-label">
+            {step === 1 && 'Información'}
+            {step === 2 && 'Contacto y Domicilio'}
+            {step === 3 && 'Cobro y Observación'}
+          </div>
+        </div>
+      ))}
+      <div className="progress-bar">
+        <div
+          className="progress-bar-fill"
+          style={{ width: `${((currentStep - 1) / 2) * 100}%` }}
+        />
+      </div>
+    </div>
+  );
 
   return (
-    <div style={styles.container}>
-      <div style={styles.box}>
+    <div className="add-socio-container">
+      <div className="add-socio-box">
+        {/* Mensaje tipo Toast simple */}
         {mensaje.text && (
-          <div style={mensaje.type === "success" ? styles.successMessage : styles.errorMessage}>
+          <div className={`ags-msg ${mensaje.type === 'success' ? 'ags-msg--success' : 'ags-msg--error'}`}>
             {mensaje.text}
           </div>
         )}
-        <h2 style={styles.title}>Agregar Socio</h2>
-        <form onSubmit={handleSubmit} style={styles.form}>
-          <div style={styles.inputRow}>
-            <div style={styles.inputWrapper}>
-              <input
-                id="nombre"
-                type="text"
-                name="nombre"
-                value={socio.nombre}
-                onChange={handleInputChange}
-                style={styles.input}
-                placeholder=" "
-              />
-              <label
-                htmlFor="nombre"
-                style={
-                  socio.nombre
-                    ? { ...styles.floatingLabel, ...styles.floatingLabelActive }
-                    : styles.floatingLabel
-                }
-              >
-                Nombre
-              </label>
-            </div>
 
-            <div style={styles.inputWrapper}>
-              <input
-                id="apellido"
-                type="text"
-                name="apellido"
-                value={socio.apellido}
-                onChange={handleInputChange}
-                style={styles.input}
-                placeholder=" "
-              />
-              <label
-                htmlFor="apellido"
-                style={
-                  socio.apellido
-                    ? { ...styles.floatingLabel, ...styles.floatingLabelActive }
-                    : styles.floatingLabel
-                }
-              >
-                Apellido
-              </label>
+        <div className="add-header">
+          <div className="add-icon-title">
+            <FontAwesomeIcon icon={faUserPlus} className="add-icon" />
+            <div>
+              <h1>Agregar Socio</h1>
+              <p>Completa los datos para registrar un nuevo socio</p>
             </div>
           </div>
+          <button type="button" className="add-back-btn" onClick={() => window.history.back()} disabled={loading}>
+            <FontAwesomeIcon icon={faArrowLeft} />
+            Volver
+          </button>
+        </div>
 
-          <div style={styles.inputRow}>
-            <div style={styles.inputWrapper}>
-              <input
-                id="dni"
-                type="text"
-                name="dni"
-                value={socio.dni}
-                onChange={handleInputChange}
-                style={styles.input}
-                placeholder=" "
-              />
-              <label
-                htmlFor="dni"
-                style={
-                  socio.dni
-                    ? { ...styles.floatingLabel, ...styles.floatingLabelActive }
-                    : styles.floatingLabel
-                }
-              >
-                DNI
-              </label>
+        <ProgressSteps />
+
+        <form
+          ref={formRef}
+          className="add-socio-form"
+          onSubmit={(e) => e.preventDefault()}
+          onKeyDown={handleFormKeyDown}
+        >
+          {/* Paso 1 */}
+          {currentStep === 1 && (
+            <div className="add-socio-section">
+              <h3 className="add-socio-section-title">Información Básica</h3>
+              <div className="add-socio-section-content">
+                {/* Campo Único: Nombre y Apellido */}
+                <div className={`add-socio-input-wrapper ${nombreCompleto || activeField === 'nombreCompleto' ? 'has-value' : ''}`}>
+                  <label className="add-socio-label">
+                    <FontAwesomeIcon icon={faUser} className="input-icon" />
+                    Nombre y Apellido
+                  </label>
+                  <input
+                    name="nombreCompleto"
+                    value={nombreCompleto}
+                    onChange={handleFullNameChange}
+                    onFocus={() => handleFocus('nombreCompleto')}
+                    onBlur={handleBlur}
+                    className="add-socio-input"
+                  />
+                  <span className="add-socio-input-highlight"></span>
+                  {mostrarErrores && (errores.nombre || errores.apellido) && (
+                    <span className="add-socio-error">Nombre y apellido son obligatorios</span>
+                  )}
+                </div>
+
+                <div className="add-socio-group-row">
+                  <div className={`add-socio-input-wrapper ${socio.dni || activeField === 'dni' ? 'has-value' : ''}`}>
+                    <label className="add-socio-label">
+                      <FontAwesomeIcon icon={faIdCard} className="input-icon" />
+                      DNI
+                    </label>
+                    <input
+                      name="dni"
+                      value={socio.dni}
+                      onChange={handleNumberChange}
+                      onFocus={() => handleFocus('dni')}
+                      onBlur={handleBlur}
+                      className="add-socio-input"
+                      inputMode="numeric"
+                    />
+                    <span className="add-socio-input-highlight"></span>
+                  </div>
+
+                  <div className={`add-socio-input-wrapper ${socio.localidad || activeField === 'localidad' ? 'has-value' : ''}`}>
+                    <label className="add-socio-label">
+                      <FontAwesomeIcon icon={faMapMarkerAlt} className="input-icon" />
+                      Localidad
+                    </label>
+                    <input
+                      name="localidad"
+                      value={socio.localidad}
+                      onChange={handleInputChange}
+                      onFocus={() => handleFocus('localidad')}
+                      onBlur={handleBlur}
+                      className="add-socio-input"
+                    />
+                    <span className="add-socio-input-highlight"></span>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div style={styles.inputWrapper}>
-              <input
-                id="localidad"
-                type="text"
-                name="localidad"
-                value={socio.localidad}
-                onChange={handleInputChange}
-                style={styles.input}
-                placeholder=" "
-              />
-              <label
-                htmlFor="localidad"
-                style={
-                  socio.localidad
-                    ? { ...styles.floatingLabel, ...styles.floatingLabelActive }
-                    : styles.floatingLabel
-                }
-              >
-                Localidad
-              </label>
+          )}
+
+          {/* Paso 2 */}
+          {currentStep === 2 && (
+            <div className="add-socio-section">
+              <h3 className="add-socio-section-title">Contacto y Domicilio</h3>
+              <div className="add-socio-section-content">
+                <div className="add-socio-group-row">
+                  <div className={`add-socio-input-wrapper ${socio.email || activeField === 'email' ? 'has-value' : ''}`}>
+                    <label className="add-socio-label">
+                      <FontAwesomeIcon icon={faEnvelope} className="input-icon" />
+                      Email
+                    </label>
+                    <input
+                      name="email"
+                      value={socio.email}
+                      onChange={handleInputChange}
+                      onFocus={() => handleFocus('email')}
+                      onBlur={handleBlur}
+                      className="add-socio-input"
+                      inputMode="email"
+                    />
+                    <span className="add-socio-input-highlight"></span>
+                  </div>
+
+                  <div className={`add-socio-input-wrapper ${socio.telefono || activeField === 'telefono' ? 'has-value' : ''}`}>
+                    <label className="add-socio-label">
+                      <FontAwesomeIcon icon={faPhone} className="input-icon" />
+                      Teléfono
+                    </label>
+                    <input
+                      name="telefono"
+                      value={socio.telefono}
+                      onChange={handleNumberChange}
+                      onFocus={() => handleFocus('telefono')}
+                      onBlur={handleBlur}
+                      className="add-socio-input"
+                      inputMode="tel"
+                    />
+                    <span className="add-socio-input-highlight"></span>
+                  </div>
+                </div>
+
+                <div className="add-socio-domicilio-group">
+                  <div className={`add-socio-input-wrapper ${socio.domicilio || activeField === 'domicilio' ? 'has-value' : ''}`}>
+                    <label className="add-socio-label">
+                      <FontAwesomeIcon icon={faHome} className="input-icon" />
+                      Domicilio
+                    </label>
+                    <input
+                      name="domicilio"
+                      value={socio.domicilio}
+                      onChange={handleInputChange}
+                      onFocus={() => handleFocus('domicilio')}
+                      onBlur={handleBlur}
+                      className="add-socio-input"
+                    />
+                    <span className="add-socio-input-highlight"></span>
+                  </div>
+
+                  <div className={`add-socio-input-wrapper ${socio.numero || activeField === 'numero' ? 'has-value' : ''}`}>
+                    <label className="add-socio-label">
+                      <FontAwesomeIcon icon={faHashtag} className="input-icon" />
+                      Número
+                    </label>
+                    <input
+                      name="numero"
+                      value={socio.numero}
+                      onChange={handleNumberChange}
+                      onFocus={() => handleFocus('numero')}
+                      onBlur={handleBlur}
+                      className="add-socio-input"
+                      inputMode="numeric"
+                    />
+                    <span className="add-socio-input-highlight"></span>
+                  </div>
+                </div>
+
+                <div className={`add-socio-input-wrapper ${socio.domicilio_2 || activeField === 'domicilio_2' ? 'has-value' : ''}`}>
+                  <label className="add-socio-label">
+                    <FontAwesomeIcon icon={faMapMarkerAlt} className="input-icon" />
+                    Domicilio de Cobro
+                  </label>
+                  <input
+                    name="domicilio_2"
+                    value={socio.domicilio_2}
+                    onChange={handleInputChange}
+                    onFocus={() => handleFocus('domicilio_2')}
+                    onBlur={handleBlur}
+                    className="add-socio-input"
+                  />
+                  <span className="add-socio-input-highlight"></span>
+                </div>
+              </div>
             </div>
-          </div>
+          )}
 
-          <div style={styles.inputRow}>
-            <div style={styles.inputWrapper}>
-              <input
-                id="email"
-                type="email"
-                name="email"
-                value={socio.email}
-                onChange={handleInputChange}
-                style={styles.input}
-                placeholder=" "
-              />
-              <label
-                htmlFor="email"
-                style={
-                  socio.email
-                    ? { ...styles.floatingLabel, ...styles.floatingLabelActive }
-                    : styles.floatingLabel
-                }
-              >
-                Email
-              </label>
+          {/* Paso 3 */}
+          {currentStep === 3 && (
+            <div className="add-socio-section">
+              <h3 className="add-socio-section-title">Cobro y Observación</h3>
+              <div className="add-socio-section-content">
+
+                {/* MEDIO DE PAGO y CATEGORÍA lado a lado */}
+                <div className="add-socio-group-row">
+                  <div className={`add-socio-input-wrapper always-active ${socio.idMedios_Pago || activeField === 'idMedios_Pago' ? 'has-value' : ''}`}>
+                    <label className="add-socio-label">
+                      <FontAwesomeIcon icon={faMoneyBillWave} className="input-icon" />
+                      Medio de Pago
+                    </label>
+                    <select
+                      name="idMedios_Pago"
+                      value={socio.idMedios_Pago}
+                      onChange={handleInputChange}
+                      onFocus={() => handleFocus('idMedios_Pago')}
+                      onBlur={handleBlur}
+                      className="add-socio-input"
+                      disabled={loading}
+                    >
+                      <option value="" disabled hidden>Seleccione medio de pago</option>
+                      {mediosPago.map((medio) => (
+                        <option key={medio.IdMedios_pago} value={medio.IdMedios_pago}>
+                          {medio.Medio_Pago}
+                        </option>
+                      ))}
+                    </select>
+                    <span className="add-socio-input-highlight"></span>
+                  </div>
+
+                  <div className={`add-socio-input-wrapper always-active ${socio.idCategoria || activeField === 'idCategoria' ? 'has-value' : ''}`}>
+                    <label className="add-socio-label">
+                      <FontAwesomeIcon icon={faTags} className="input-icon" />
+                      Categoría
+                    </label>
+                    <select
+                      name="idCategoria"
+                      value={socio.idCategoria}
+                      onChange={handleInputChange}
+                      onFocus={() => handleFocus('idCategoria')}
+                      onBlur={handleBlur}
+                      className="add-socio-input"
+                      disabled={loading}
+                    >
+                      <option value="" disabled hidden>Seleccione categoría</option>
+                      {categorias.map((c) => (
+                        <option key={c.idCategorias} value={c.idCategorias}>
+                          {c.Nombre_categoria} - ${c.Precio_Categoria}
+                        </option>
+                      ))}
+                    </select>
+                    <span className="add-socio-input-highlight"></span>
+                  </div>
+                </div>
+
+                <div className={`add-socio-input-wrapper ${socio.observacion || activeField === 'observacion' ? 'has-value' : ''}`}>
+                  <label className="add-socio-label">
+                    <FontAwesomeIcon icon={faComment} className="input-icon" />
+                    Observación
+                  </label>
+                  <textarea
+                    name="observacion"
+                    value={socio.observacion}
+                    onChange={handleInputChange}
+                    onFocus={() => handleFocus('observacion')}
+                    onBlur={handleBlur}
+                    className="add-socio-textarea"
+                    rows="4"
+                  />
+                  <span className="add-socio-input-highlight"></span>
+                </div>
+              </div>
             </div>
-            <div style={styles.inputWrapper}>
-              <input
-                id="telefono"
-                type="text"
-                name="telefono"
-                value={socio.telefono}
-                onChange={handleInputChange}
-                style={styles.input}
-                placeholder=" "
-              />
-              <label
-                htmlFor="telefono"
-                style={
-                  socio.telefono
-                    ? { ...styles.floatingLabel, ...styles.floatingLabelActive }
-                    : styles.floatingLabel
-                }
+          )}
+
+          {/* Botonera */}
+          <div className="add-socio-buttons-container">
+            {currentStep > 1 && (
+              <button
+                type="button"
+                className="add-socio-button prev-step"
+                onClick={handlePrevStep}
+                disabled={loading}
               >
-                Teléfono
-              </label>
-            </div>
-          </div>
+                <FontAwesomeIcon icon={faStepBack} className="add-socio-icon-button" />
+                <span className="add-socio-button-text">Anterior</span>
+              </button>
+            )}
 
-
-          <div style={styles.inputRow}>
-            <div style={styles.inputWrapper}>
-              <input
-                id="domicilio"
-                type="text"
-                name="domicilio"
-                value={socio.domicilio}
-                onChange={handleInputChange}
-                style={styles.input}
-                placeholder=" "
-              />
-              <label
-                htmlFor="domicilio"
-                style={
-                  socio.domicilio
-                    ? { ...styles.floatingLabel, ...styles.floatingLabelActive }
-                    : styles.floatingLabel
-                }
+            {currentStep < 3 ? (
+              <button
+                type="button"
+                className="add-socio-button next-step"
+                onClick={handleNextStep}
+                disabled={loading}
               >
-                Domicilio
-              </label>
-            </div>
-            <div style={styles.inputWrapper}>
-              <input
-                id="numero"
-                type="text"
-                name="numero"
-                value={socio.numero}
-                onChange={handleInputChange}
-                style={styles.input}
-                placeholder=" "
-              />
-              <label
-                htmlFor="numero"
-                style={
-                  socio.numero
-                    ? { ...styles.floatingLabel, ...styles.floatingLabelActive }
-                    : styles.floatingLabel
-                }
+                <span className="add-socio-button-text">Siguiente</span>
+                <FontAwesomeIcon icon={faArrowRight} className="add-socio-icon-button" />
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="add-socio-button"
+                onClick={handleSubmit}
+                disabled={loading}
               >
-                Número
-              </label>
-            </div>
-          </div>
-
-          <div style={styles.inputRow}>
-            <div style={styles.inputWrapper}>
-              <input
-                id="domicilio_2"
-                type="text"
-                name="domicilio_2"
-                value={socio.domicilio_2}
-                onChange={handleInputChange}
-                style={styles.input}
-                placeholder=" "
-              />
-              <label
-                htmlFor="domicilio_2"
-                style={
-                  socio.domicilio_2
-                    ? { ...styles.floatingLabel, ...styles.floatingLabelActive }
-                    : styles.floatingLabel
-                }
-              >
-                Domicilio de Cobro
-              </label>
-            </div>
-            <div style={styles.inputWrapper}>
-              <input
-                id="observacion"
-                type="text"
-                name="observacion"
-                value={socio.observacion}
-                onChange={handleInputChange}
-                style={styles.input}
-                placeholder=" "
-              />
-              <label
-                htmlFor="observacion"
-                style={
-                  socio.observacion
-                    ? { ...styles.floatingLabel, ...styles.floatingLabelActive }
-                    : styles.floatingLabel
-                }
-              >
-                Observación
-              </label>
-            </div>
-          </div>
-
-
-          <div style={styles.inputRow}>
-            <select
-              name="idMedios_Pago"
-              value={socio.idMedios_Pago}
-              onChange={handleInputChange}
-              style={styles.select}
-            >
-              <option value="">Seleccione Medio de Pago</option>
-              {mediosPago.map((medio) => (
-                <option key={medio.IdMedios_pago} value={medio.IdMedios_pago}>
-                  {medio.Medio_Pago}
-                </option>
-              ))}
-            </select>
-
-            <select
-              name="idCategoria"
-              value={socio.idCategoria}
-              onChange={handleInputChange}
-              style={styles.select}
-            >
-              <option value="">Seleccione Categoría</option>
-              {categorias.map((categoria) => (
-                <option key={categoria.idCategorias} value={categoria.idCategorias}>
-                  {categoria.Nombre_categoria} - ${categoria.Precio_Categoria} {/* Mostrar nombre y precio */}
-                </option>
-              ))}
-            </select>
-          </div>
-
-
-
-          <div style={styles.buttonsContainer}>
-            <button type="submit" style={styles.saveButton}>
-              <FontAwesomeIcon icon={faSave} />
-              Agregar Socio
-            </button>
-            <button
-              type="button"
-              onClick={handleGoBack}
-              style={styles.backButton}
-            >
-              <FontAwesomeIcon icon={faArrowLeft} />
-              Volver Atrás
-            </button>
+                <FontAwesomeIcon icon={faSave} className="add-socio-icon-button" />
+                <span className="add-socio-button-text">{loading ? 'Guardando...' : 'Agregar Socio'}</span>
+              </button>
+            )}
           </div>
         </form>
       </div>
     </div>
   );
-};
-
-
-
-const styles = {
-  container: {
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    height: '100vh',
-    margin: 0,
-    fontFamily: "'Poppins', sans-serif",
-    background: 'linear-gradient(135deg, #dcdcdc 30%, #ff6e00 70%)',
-  },
-  box: {
-    background: 'rgba(255, 255, 255, 0.95)',
-    padding: '2.5rem',
-    borderRadius: '25px',
-    boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)',
-    textAlign: 'center',
-    width: '80%',
-    maxWidth: '1000px',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    position: 'relative',
-    transition: 'height 0.3s ease', // Suaviza el cambio de tamaño del contenedor
-  },
-  title: {
-    fontSize: '1.6rem',
-    fontWeight: '600',
-    marginBottom: '1.5rem',
-    color: '#4b4b4b',
-    marginTop: '0',
-  },
-  form: {
-    width: '100%',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-  },
-  inputRow: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    width: '100%',
-    gap: '1rem',
-    marginBottom: '1.5rem',
-  },
-  inputWrapper: {
-    position: 'relative',
-    width: '48%',
-  },
-  input: {
-    width: '100%',
-    padding: '0.6rem',
-    borderRadius: '10px',
-    border: '1px solid #ccc',
-    fontSize: '1.1rem',
-    boxSizing: 'border-box',
-    height: '45px',
-  },
-  
-  floatingLabel: {
-    position: 'absolute',
-    top: '50%',
-    left: '10px',
-    transform: 'translateY(-50%)',
-    fontSize: '1rem',
-    color: '#aaa',
-    transition: '0.2s ease all',
-    pointerEvents: 'none',
-  },
-  floatingLabelActive: {
-    top: '0px',
-    fontSize: '0.9rem',
-    color: '#0288d1',
-    backgroundColor: '#fff',
-    padding:'0 3px',
-  },
-  select: {
-    width: '48%', // Igualar el ancho al de los campos de entrada
-    padding: '0.6rem', // Igualar el padding al de los campos de entrada
-    borderRadius: '10px', // Igualar las esquinas redondeadas
-    border: '1px solid #ccc', // Igualar el estilo del borde
-    fontSize: '1.1rem', // Igualar el tamaño de fuente
-    boxSizing: 'border-box', // Asegurar que el padding no afecte el tamaño total
-    height: '45px', // Igualar la altura al de los campos de entrada
-    backgroundColor: '#fff', // Fondo blanco para consistencia
-  },
-  buttonsContainer: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    width: '100%',
-    marginTop: '1.5rem',
-  },
-  saveButton: {
-    background: 'linear-gradient(135deg, #ff8800, #ff6e00)',
-    color: 'white',
-    padding: '1rem',
-    border: 'none',
-    borderRadius: '15px',
-    fontSize: '1rem',
-    fontWeight: '600',
-    cursor: 'pointer',
-    transition: 'transform 0.2s ease',
-    boxShadow: '0 5px 15px rgba(0, 0, 0, 0.3)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '48%',
-    height: '50px',
-    gap: '8px',
-  },
-  backButton: {
-    backgroundColor: '#0288d1',
-    color: 'white',
-    padding: '1rem',
-    border: 'none',
-    borderRadius: '15px',
-    fontSize: '1rem',
-    fontWeight: '600',
-    cursor: 'pointer',
-    transition: 'transform 0.2s ease',
-    boxShadow: '0 5px 15px rgba(0, 0, 0, 0.3)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '48%',
-    height: '50px',
-    gap: '8px',
-  },
-
-  successMessage: {
-    backgroundColor: 'rgba(76, 175, 80, 0.2)', // Verde claro con transparencia
-    color: '#4CAF50',
-    padding: '1rem',
-    borderRadius: '10px',
-    fontSize: '1rem',
-    fontWeight: '600',
-    width: '98%', // Reducido para no sobrepasar los bordes del contenedor
-    textAlign: 'center',
-    boxShadow: '0 5px 15px rgba(0, 0, 0, 0.1)',
-    marginTop: '-2rem', // Subir ligeramente el mensaje
-    alignSelf: 'center', // Centrar horizontalmente
-    transition: 'opacity 0.3s ease', // Transición suave para el mensaje
-  },
-
-  errorMessage: {
-    backgroundColor: 'rgba(244, 67, 54, 0.2)',
-    color: '#F44336',
-    padding: '1rem',
-    borderRadius: '10px',
-    fontSize: '1rem',
-    fontWeight: '600',
-    width: '98%',
-    textAlign: 'center',
-    boxShadow: '0 5px 15px rgba(0, 0, 0, 0.1)',
-    marginTop: '-2rem',
-    alignSelf: 'center',
-    transition: 'opacity 0.3s ease',
-  },
-
 };
 
 export default AgregarSocio;
