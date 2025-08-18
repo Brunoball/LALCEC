@@ -1,11 +1,23 @@
-// src/components/Cuotas/modalcuotas/ModalEliminarPago.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTimesCircle } from "@fortawesome/free-solid-svg-icons";
 import "./ModalEliminarPago.css";
 
 const ModalEliminarPago = ({ tipo, mes, item, onCancelar, onConfirmar }) => {
   const [submitting, setSubmitting] = useState(false);
+
+  // ⌨️ Cerrar con ESC cuando el modal está visible (hay item)
+  useEffect(() => {
+    if (!item) return;
+    const onKeyDown = (e) => {
+      if (e.key === "Escape" || e.key === "Esc" || e.keyCode === 27) {
+        e.preventDefault();
+        onCancelar?.();
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [item, onCancelar]);
 
   if (!item) return null;
 

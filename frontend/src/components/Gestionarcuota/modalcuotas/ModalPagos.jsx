@@ -14,6 +14,18 @@ const ModalPagos = ({ nombre, apellido, cerrarModal, onPagoRealizado }) => {
   const [socioData, setSocioData] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // ⌨️ Cerrar modal con ESC
+  useEffect(() => {
+    const onKeyDown = (e) => {
+      if (e.key === "Escape" || e.key === "Esc" || e.keyCode === 27) {
+        e.preventDefault();
+        cerrarModal?.();
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [cerrarModal]);
+
   const formatDate = (dateString) => {
     if (!dateString) return '';
     const date = new Date(dateString + 'T00:00:00');

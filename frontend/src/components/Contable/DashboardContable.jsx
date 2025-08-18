@@ -42,50 +42,41 @@ export default function DashboardContable() {
   const [totalRecaudado, setTotalRecaudado] = useState(0);
   const [registrosMes, setRegistrosMes] = useState([]);
 
-  // UI
-  const [loading, setLoading] = useState(false);
+  // UI (sin usar para bloquear UI; sólo para manejar errores)
   const [error, setError] = useState(null);
-  const [initialLoadComplete, setInitialLoadComplete] = useState(false);
-  const [mostrarTablaDetalle, setMostrarTablaDetalle] = useState(false);
 
   // Modal Gráficos
   const [mostrarModalGraficos, setMostrarModalGraficos] = useState(false);
 
   // Helper fetch con cache buster
   const fetchData = async (url) => {
-    try {
-      const timestamp = new Date().getTime();
-      const urlWithCacheBuster = url.includes("?")
-        ? `${url}&timestamp=${timestamp}`
-        : `${url}?timestamp=${timestamp}`;
+    const timestamp = new Date().getTime();
+    const urlWithCacheBuster = url.includes("?")
+      ? `${url}&timestamp=${timestamp}`
+      : `${url}?timestamp=${timestamp}`;
 
-      const response = await fetch(urlWithCacheBuster, {
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-      });
+    const response = await fetch(urlWithCacheBuster, {
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+    });
 
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
-      const data = await response.json();
-      if (!data) throw new Error("No data received from server");
+    const data = await response.json();
+    if (!data) throw new Error("No data received from server");
 
-      return data;
-    } catch (error) {
-      console.error(`Error fetching ${url}:`, error);
-      throw error;
-    }
+    return data;
   };
 
-  // Carga inicial
+  // Carga inicial SIN mostrar “cargando”
   useEffect(() => {
     sessionStorage.removeItem("datos_contables");
     sessionStorage.removeItem("precios_categorias");
 
-    const fetchInitialData = async () => {
+    (async () => {
       try {
-        setLoading(true);
         setError(null);
 
         const [dataContable, dataEmpresas, dataPrecios, dataMediosPago] =
@@ -130,27 +121,26 @@ export default function DashboardContable() {
           .filter(Boolean)
           .sort((a, b) => a.localeCompare(b, "es"));
         setMediosPago(listaMedios);
-
-        setInitialLoadComplete(true);
-      } catch (error) {
-        console.error("Error en carga inicial:", error);
+      } catch (err) {
+        console.error("Error en carga inicial:", err);
         setError("Error al cargar datos. Verifique la conexión o intente más tarde.");
-      } finally {
-        setLoading(false);
       }
-    };
-
-    fetchInitialData();
+    })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Recalcular al cambiar filtros/mes
   useEffect(() => {
-    if (initialLoadComplete && mesSeleccionado !== "Selecciona un mes") {
+    if (mesSeleccionado !== "Selecciona un mes") {
       updateMonthData();
+    } else {
+      // Limpiar al no tener mes
+      setCategoriasAgrupadas([]);
+      setRegistrosMes([]);
+      setTotalRecaudado(0);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mesSeleccionado, tipoEntidad, medioSeleccionado, initialLoadComplete]);
+  }, [mesSeleccionado, tipoEntidad, medioSeleccionado]);
 
   // Agrupar por categoría
   const agruparPorCategoria = (pagos) => {
@@ -215,8 +205,8 @@ export default function DashboardContable() {
       setCategoriasAgrupadas(categoriasCombinadas);
       setTotalRecaudado(totalFiltrado);
       setRegistrosMes(pagos);
-    } catch (error) {
-      console.error("Error al actualizar datos del mes:", error);
+    } catch (err) {
+      console.error("Error al actualizar datos del mes:", err);
       setError("Error al procesar datos del mes seleccionado.");
       setCategoriasAgrupadas([]);
       setRegistrosMes([]);
@@ -235,6 +225,9 @@ export default function DashboardContable() {
 
   const calcularTotalRegistros = () => registrosMes.length;
   const labelEntidad = tipoEntidad === "socio" ? "Socio" : "Razón social";
+
+  // Vista detalle/resumen
+  const [mostrarTablaDetalle, setMostrarTablaDetalle] = useState(false);
 
   // Meses presentes (para encabezados)
   const MESES_ORDEN = [
@@ -284,9 +277,7 @@ export default function DashboardContable() {
               <p>${totalRecaudado.toLocaleString("es-AR")}</p>
               <small className="contable-card-subtext">
                 {mesSeleccionado !== "Selecciona un mes"
-                  ? `En ${mesSeleccionado}${
-                      medioSeleccionado !== "todos" ? ` · ${medioSeleccionado}` : ""
-                    }`
+                  ? `En ${mesSeleccionado}${medioSeleccionado !== "todos" ? ` · ${medioSeleccionado}` : ""}`
                   : "Seleccione un mes"}
               </small>
             </div>
@@ -350,7 +341,6 @@ export default function DashboardContable() {
                   value={mesSeleccionado}
                   onChange={handleMesChange}
                   className="contable-month-select"
-                  disabled={loading || !initialLoadComplete}
                 >
                   {meses.map((mes, index) => (
                     <option key={index} value={mes}>
@@ -371,7 +361,6 @@ export default function DashboardContable() {
                   value={tipoEntidad}
                   onChange={handleTipoEntidadChange}
                   className="contable-entity-select"
-                  disabled={loading}
                 >
                   <option value="socio">Socios</option>
                   <option value="empresa">Empresas</option>
@@ -385,9 +374,6 @@ export default function DashboardContable() {
                   value={medioSeleccionado}
                   onChange={handleMedioPagoChange}
                   className="contable-payment-select"
-                  disabled={
-                    loading || !initialLoadComplete || mesSeleccionado === "Selecciona un mes"
-                  }
                   title="Filtrar por medio de pago"
                 >
                   <option value="todos">
@@ -401,22 +387,21 @@ export default function DashboardContable() {
                 </select>
               </div>
 
-              {/* Botón Detalle/Resumen (SIEMPRE VISIBLE) */}
+              {/* Botón Detalle/Resumen (siempre activo) */}
               <button
                 className="contable-detail-view-button"
                 onClick={toggleVistaDetalle}
-                disabled={loading}
+                type="button"
               >
                 <FontAwesomeIcon icon={mostrarTablaDetalle ? faTags : faTable} />
                 {mostrarTablaDetalle ? "Ver Resumen" : "Ver Detalle"}
               </button>
 
-              {/* Botón Ver Gráficos */}
+              {/* Botón Ver Gráficos (siempre activo) */}
               <button
                 className="contable-charts-button"
                 type="button"
                 onClick={abrirModalGraficos}
-                disabled={!initialLoadComplete}
                 title="Ver gráficos Socios vs Empresas"
               >
                 <FontAwesomeIcon icon={faChartPie} />
@@ -425,14 +410,9 @@ export default function DashboardContable() {
             </div>
           </div>
 
-          {/* ==== Contenido dinámico ==== */}
+          {/* ==== Contenido dinámico (sin “cargando…”) ==== */}
           <div className="contable-categories-scroll-container">
-            {loading ? (
-              <div className="contable-loading-categories">
-                <div className="contable-spinner"></div>
-                <span>Cargando datos...</span>
-              </div>
-            ) : mostrarTablaDetalle ? (
+            {mostrarTablaDetalle ? (
               <div className="contable-detail-table-container">
                 <table className="contable-detail-table">
                   <thead>

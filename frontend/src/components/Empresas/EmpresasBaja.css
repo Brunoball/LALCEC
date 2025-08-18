@@ -36,7 +36,7 @@
 
 /* ===========================
    CONTENEDOR
-   =========================== */
+=========================== */
 .emp-baja-container {
   position: relative;
   width: 100%;
@@ -49,7 +49,6 @@
   backdrop-filter: none !important;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
-
 .emp-baja-glass {
   position: absolute;
   top: 0; left: 0; right: 0;
@@ -65,7 +64,7 @@
 
 /* ===========================
    BARRA SUPERIOR
-   =========================== */
+=========================== */
 .emp-baja-barra-superior {
   position: relative;
   z-index: 1;
@@ -77,33 +76,31 @@
   padding-bottom: 1.5rem;
   margin-bottom: 1rem;
 }
-
 .emp-baja-titulo-container { min-width: 200px; text-align: left; position: relative; z-index: 1; }
-
 .emp-baja-titulo {
   font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 1.8rem; font-weight: 700; color: white; margin: 0;
   background: linear-gradient(90deg, var(--emp-danger), var(--emp-primary-dark));
   -webkit-background-clip: text; background-clip: text;
 }
-
 .emp-baja-boton-volver {
-  padding: 0.75rem 1.5rem;
-  border-radius: var(--emp-border-radius);
+  padding: 0.55rem 0.85rem;
+  border-radius: 10px;
   font-family: 'Inter', sans-serif; font-weight: 600;
   cursor: pointer; transition: var(--emp-transition);
-  display: flex; align-items: center; gap: 0.5rem;
+  display: inline-flex; align-items: center; gap: 0.45rem;
   border: 1px solid var(--emp-gray-300);
   background-color: var(--emp-glass);
   color: var(--emp-dark);
   box-shadow: var(--emp-shadow-sm);
   position: relative; z-index: 1;
+  font-size: .92rem;
 }
 .emp-baja-boton-volver:hover { background-color: var(--emp-danger); color: white; border-color: var(--emp-danger); }
 
 /* ===========================
    BUSCADOR
-   =========================== */
+=========================== */
 .emp-baja-buscador-container { position: relative; margin: 0 1rem; }
 .emp-baja-buscador {
   width: 100%; padding: 0.75rem 1rem 0.75rem 2.5rem;
@@ -118,7 +115,7 @@
 
 /* ===========================
    TABLA (DESKTOP / WEB)
-   =========================== */
+=========================== */
 .emp-baja-tabla-body::-webkit-scrollbar { width: 6px; height: 6px; }
 .emp-baja-tabla-body::-webkit-scrollbar-track { background: rgba(241, 245, 249, 0.5); border-radius: 10px; }
 .emp-baja-tabla-body::-webkit-scrollbar-thumb { background: rgba(100, 116, 139, 0.4); border-radius: 10px; }
@@ -128,50 +125,53 @@
   max-height: 50vh; overflow: auto;
   scrollbar-width: thin; scrollbar-color: rgba(100,116,139,0.4) rgba(241,245,249,0.5);
 }
-
 .emp-baja-tabla-container {
   position: relative; margin: 0 1rem; flex: 1; max-height: 70vh;
   border-radius: var(--emp-border-radius); overflow: hidden;
   backdrop-filter: blur(5px); display: flex; flex-direction: column;
   border-bottom: 2px solid var(--emp-danger); background: transparent;
 }
-
 .emp-baja-tabla-header-container { display: flex; flex-direction: column; gap: 7px; }
 .emp-baja-tabla-header {
   display: grid; border-radius: 14px 14px 0 0;
-  grid-template-columns: 60px 1.5fr 1.5fr 1fr 100px;
+  grid-template-columns: 60px 1.8fr 1fr 1.2fr 120px;
   background: linear-gradient(135deg, var(--emp-danger), var(--emp-accent));
   color: white; font-weight: 600; font-size: 0.9rem;
   padding: 12px 0; backdrop-filter: blur(5px);
   position: sticky; top: 0; z-index: 2;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
-
 .emp-baja-tabla-header > div,
 .emp-baja-fila > div { padding: 0 8px; display: flex; align-items: center; justify-content: center; }
 
 .emp-baja-fila {
-  display: grid; grid-template-columns: 60px 1.5fr 1.5fr 1fr 100px;
+  display: grid;
+  grid-template-columns: 60px 1.8fr 1fr 1.2fr 120px;
   padding: 10px 0; border-bottom: 1px solid rgba(237, 242, 247, 0.7);
-  align-items: center; cursor: pointer; background: #ffffff;
-  position: relative; font-size: 0.9rem; transition: background 0.2s;
+  align-items: center; background: #ffffff;
+  position: relative; font-size: 0.9rem;
 }
 .emp-baja-fila:nth-child(even) { background: #f7f7f7; }
-.emp-baja-fila:hover { background: inherit !important; }
-
-.emp-baja-col-nombre, .emp-baja-col-fecha, .emp-baja-col-motivo {
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%;
-  padding: 0 8px; text-transform: capitalize;
-}
 
 .emp-baja-col-id { min-width: 60px; max-width: 60px; }
-.emp-baja-col-nombre { min-width: 200px; }
-.emp-baja-col-fecha { min-width: 200px; }
-.emp-baja-col-motivo { justify-content: start !important; min-width: 150px; }
-.emp-baja-col-acciones { min-width: 100px; max-width: 100px; }
+.emp-baja-col-nombre { min-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.emp-baja-col-fecha { min-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Motivo en desktop: izquierda (clic para ver completo) */
+.emp-baja-col-motivo {
+  justify-content: start !important;
+  min-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+.emp-baja-col-acciones { min-width: 120px; max-width: 120px; }
+
+.emp-baja-col-motivo--click {
+  cursor: pointer;
+  text-decoration: underline dotted;
+  text-underline-offset: 2px;
+}
 
 .emp-baja-iconos { display: flex; justify-content: center; align-items: center; gap: 6px; font-size: 1.3rem; }
-
 .emp-baja-icono {
   color: var(--emp-danger); transition: var(--emp-transition); cursor: pointer;
   font-size: 1.9rem; padding: 5px; border-radius: 10px; background-color: rgba(239, 68, 68, 0.1);
@@ -180,24 +180,20 @@
   transform: scale(1.2); color: white; background-color: var(--emp-danger);
   box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
 }
+.emp-baja-icono-danger { background-color: rgba(239,68,68,.12); }
 .emp-baja-disabled { opacity: 0.5; pointer-events: none; }
 
 /* ===========================
    EMPTY STATE
-   =========================== */
+=========================== */
 .emp-baja-tabla-container:has(.emp-baja-sin-resultados) { background: transparent; border: none; border-bottom: 2px solid var(--emp-danger); }
 .emp-baja-tabla-container:has(.emp-baja-sin-resultados) .emp-baja-tabla-header { border-bottom: 1px solid var(--emp-gray-200); }
 .emp-baja-tabla-body:has(.emp-baja-sin-resultados) {
   background: #ffffff; padding: 16px 0; border: 1px solid var(--emp-gray-200);
   border-top: none; border-radius: 0 0 var(--emp-border-radius) var(--emp-border-radius);
 }
-
-/* ===========================
-   MENSAJES
-   =========================== */
 .emp-baja-contador { font-size: 0.9rem; color: var(--emp-gray-600); margin: 1rem 0 0.5rem; padding: 0 0.5rem; background: transparent !important; }
 .emp-baja-contador strong { color: var(--emp-danger); margin-left: 0.25rem; }
-
 .emp-baja-sin-resultados {
   padding: 30px; color: var(--emp-gray-600); font-size: 1rem; font-weight: 500;
   text-align: center; background-color: #ffffff; border-radius: var(--emp-border-radius);
@@ -209,8 +205,8 @@
 .emp-baja-cargando { padding: 20px; text-align: center; color: var(--emp-gray-600); font-size: 0.9rem; }
 
 /* ===========================
-   MODALES (MISMA ESTÉTICA)
-   =========================== */
+   MODALES
+=========================== */
 .emp-baja-modal-overlay {
   position: fixed; inset: 0;
   background-color: rgba(0, 0, 0, 0.5);
@@ -218,7 +214,6 @@
   z-index: 1000; backdrop-filter: blur(5px);
   animation: empb-fadeIn .2s ease-out;
 }
-
 .emp-baja-modal {
   background-color: white;
   padding: 2rem;
@@ -229,39 +224,17 @@
   border-top: 4px solid transparent;
   animation: empb-pop .18s ease-out;
 }
-
-/* Variantes semánticas */
 .emp-baja-modal--success { border-top-color: var(--emp-success); }
 .emp-baja-modal--danger  { border-top-color: var(--emp-danger); }
-
-/* Icono grande */
-.emp-baja-modal__icon {
-  font-size: 2.5rem; color: var(--emp-success);
-  margin-bottom: 1rem;
-}
+.emp-baja-modal__icon { font-size: 2.5rem; color: var(--emp-success); margin-bottom: 1rem; }
 .emp-baja-modal__icon--danger { color: var(--emp-danger); }
-
-/* Títulos por variante */
-.emp-baja-modal__title {
-  margin: 0 0 1rem; font-size: 1.4rem; font-weight: 600; color: var(--emp-success);
-}
+.emp-baja-modal__title { margin: 0 0 1rem; font-size: 1.4rem; font-weight: 600; color: var(--emp-success); }
 .emp-baja-modal__title--danger  { color: var(--emp-danger) !important; }
 .emp-baja-modal__title--success { color: var(--emp-success) !important; }
-
-/* Cuerpo y warning */
 .emp-baja-modal__body { color: var(--emp-gray-700); line-height: 1.5; margin: 0 0 1rem; }
 .emp-baja-modal__body strong { color: var(--emp-dark); }
-.emp-baja-modal__warn {
-  color: var(--emp-gray-600);
-  font-size: .95rem;
-  background: var(--emp-gray-100);
-  border: 1px solid var(--emp-gray-200);
-  border-radius: var(--emp-border-radius);
-  padding: .75rem 1rem;
-  margin: 0 0 1rem;
-}
+.emp-baja-modal__body--scroll { max-height: 40vh; overflow: auto; text-align: left; white-space: pre-wrap; }
 
-/* Acciones */
 .emp-baja-modal__actions {
   display: flex; gap: 1rem; justify-content: center; margin-top: 1rem;
 }
@@ -273,8 +246,6 @@
   transition: var(--emp-transition);
   border: 1px solid transparent;
 }
-
-/* Ghost (secundario) */
 .emp-baja-btn--ghost {
   background: #fff; color: var(--emp-gray-700); border-color: var(--emp-gray-300);
 }
@@ -283,64 +254,62 @@
   transform: translateY(-2px);
   box-shadow: var(--emp-shadow-md);
 }
-
-/* Solid success/danger */
 .emp-baja-btn--solid-success {
   background: var(--emp-success); color: #fff; border-color: var(--emp-success);
 }
 .emp-baja-btn--solid-success:hover {
   filter: brightness(.95); transform: translateY(-2px); box-shadow: var(--emp-shadow-md);
 }
-
 .emp-baja-btn--solid-danger {
   background: var(--emp-danger); color: #fff; border-color: var(--emp-danger);
 }
 .emp-baja-btn--solid-danger:hover {
   filter: brightness(.95); transform: translateY(-2px); box-shadow: var(--emp-shadow-md);
 }
+.emp-baja-btn:disabled { opacity: .7; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
 
-/* Disabled */
-.emp-baja-btn:disabled {
-  opacity: .7; cursor: not-allowed; transform: none !important; box-shadow: none !important;
-}
-
-/* Animaciones */
 @keyframes empb-fadeIn { from { opacity: 0 } to { opacity: 1 } }
 @keyframes empb-pop { from { transform: translateY(4px); opacity: .98 } to { transform: translateY(0); opacity: 1 } }
 
 /* ===========================
    RESPONSIVE
-   =========================== */
+=========================== */
 @media (max-width: 992px) {
   .emp-baja-container { padding: 1.5rem; }
   .emp-baja-titulo { font-size: 1.6rem; }
   .emp-baja-tabla-header, .emp-baja-fila {
-    grid-template-columns: 60px minmax(150px, 1fr) minmax(150px, 1fr) minmax(150px, 1fr) 100px;
+    grid-template-columns: 60px 1.6fr 1fr 1.1fr 110px;
   }
 }
 
-/* ===== MOBILE (≤768px): tarjetas con barra izquierda + etiqueta/valor ===== */
+/* ===== MOBILE (≤768px) ===== */
 @media (max-width: 768px) {
-  .emp-baja-barra-superior { flex-direction: column; gap: 1rem; }
-  .emp-baja-titulo-container, .emp-baja-buscador-container { width: 100%; min-width: auto; }
+  .emp-baja-buscador-container{ margin: 0; }
+  .emp-baja-barra-superior { position: static; margin-bottom: 3rem; margin-top: 1rem; }
+  .emp-baja-tabla-container{ margin-top: 1rem; border-bottom: none; }
+  .emp-baja-boton-volver {
+    position: absolute;
+    bottom: 1rem;
+    padding: .45rem .7rem;
+    font-size: .85rem;
+    border: 2px solid var(--emp-accent);
+    color: var(--emp-accent);
+    background: #fff;
+  }
 
-  /* Quitar header tabla y convertir filas en tarjetas */
   .emp-baja-tabla-header { display: none; }
-  .emp-baja-tabla-container { height: auto; border-bottom: none; }
-  .emp-baja-tabla-body { max-height: none; overflow: visible; }
+  .emp-baja-tabla-body { max-height: 60vh; overflow: auto; }
 
   .emp-baja-fila {
-    display: block;              /* tarjeta */
+    display: block;
     position: relative;
     background: #ffffff;
-    border-radius: var(--emp-border-radius);
+    border-radius: 12px;
     padding: 12px 12px 10px 14px;
     margin: 10px 0;
     box-shadow: var(--emp-shadow-sm);
     border: 1px solid var(--emp-gray-200);
   }
-
-  /* Barra estética en el borde izquierdo (no abajo) */
   .emp-baja-fila::before {
     content: "";
     position: absolute;
@@ -351,25 +320,22 @@
     background: linear-gradient(180deg, var(--emp-danger), var(--emp-accent));
   }
 
-  /* Cada "columna" ahora es una línea etiqueta/valor */
   .emp-baja-fila > div {
     width: 100%;
-    display: grid;
-    grid-template-columns: 130px 1fr;   /* etiqueta | valor */
-    align-items: start;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     gap: 8px;
-    justify-content: flex-start;
-    padding: 6px 6px;
+    padding: 3px 6px;
     border-bottom: 1px dashed rgba(226, 232, 240, 0.9);
+    text-align: right;
+    grid-template-columns: unset;
   }
-
-  /* Último ítem sin borde */
   .emp-baja-fila > div:last-child {
     border-bottom: none;
     padding-bottom: 2px;
   }
 
-  /* Etiquetas (generadas por CSS, a la IZQUIERDA) */
   .emp-baja-col-id::before      { content: "ID"; }
   .emp-baja-col-nombre::before  { content: "Razón Social"; }
   .emp-baja-col-fecha::before   { content: "Fecha de baja"; }
@@ -380,64 +346,69 @@
     font-weight: 600;
     color: var(--emp-gray-700);
     opacity: 0.95;
+    min-width: 130px;
+    text-align: left;
+    margin-right: 8px;
+    flex: 0 0 auto;
   }
 
-  /* Valores (a la DERECHA) */
+  /* Valores a la derecha */
   .emp-baja-col-id,
   .emp-baja-col-nombre,
   .emp-baja-col-fecha,
   .emp-baja-col-motivo,
   .emp-baja-col-acciones {
-    justify-content: flex-start;
+    justify-content: flex-end;
+    text-align: right;
+    width: 100%;
+  }
+
+  /* 🔧 FIX: Motivo (SD) a la derecha en mobile, venciendo el !important de desktop */
+  .emp-baja-col-motivo {
+    justify-content: flex-end !important;
+    text-align: right !important;
   }
 
   .emp-baja-col-nombre,
   .emp-baja-col-fecha,
   .emp-baja-col-motivo {
-    white-space: normal; 
-    overflow: visible; 
+    white-space: normal;
+    overflow: visible;
     text-overflow: initial;
-    text-transform: none; /* mantené el casing en mobile */
+    text-transform: none;
     color: var(--emp-dark);
   }
 
-  /* Acciones en mobile: fila sin borde y botones a la izquierda */
   .emp-baja-col-acciones {
     padding-top: 10px;
     border-bottom: none !important;
   }
   .emp-baja-iconos {
-    justify-content: flex-start;
+    justify-content: flex-end;
     gap: 12px;
     font-size: 1.4rem;
+    width: 100%;
   }
 
-  /* Modal - Mantener botones en fila en mobile */
-  .emp-baja-modal__actions {
-    flex-direction: row !important; /* Cambiado de column a row */
-    flex-wrap: wrap;
-  }
-  .emp-baja-btn {
-    min-width: 120px;
-    max-width: calc(50% - 0.5rem);
-  }
+  .emp-baja-modal__actions { flex-direction: row; flex-wrap: wrap; }
+  .emp-baja-btn { min-width: 120px; max-width: calc(50% - .5rem); }
+
   .emp-baja-sin-resultados { padding: 20px; font-size: 0.9rem; }
 }
 
 @media (max-width: 576px) {
   .emp-baja-container { padding: 1rem; }
-  .emp-baja-titulo { font-size: 1.4rem; text-align: center; }
-  .emp-baja-boton-volver { width: 100%; justify-content: center; }
+  .emp-baja-titulo { 
+    font-size: 1.4rem; 
+    text-align: center;
+    width: 100%;
+  }
+  .emp-baja-titulo-container {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+  }
 
-  /* Etiqueta un poco más angosta en pantallas muy chicas */
-  .emp-baja-fila > div {
-    grid-template-columns: 115px 1fr;
-  }
-  
-  /* Ajustar botones en modales para pantallas muy pequeñas */
-  .emp-baja-btn {
-    min-width: 100px;
-    padding: .65rem 1rem;
-    font-size: 0.9rem;
-  }
+  .emp-baja-fila > div::before { min-width: 185px; }
+  .emp-baja-fila > div { max-width: 100%; grid-template-columns: unset; }
 }

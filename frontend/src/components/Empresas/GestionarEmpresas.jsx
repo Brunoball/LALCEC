@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo, useCallback, useDeferredValue } from "react";
 import { useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -31,13 +31,30 @@ const useClickOutside = (ref, callback) => {
         callback?.();
       }
     };
-    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside, { passive: true });
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [ref, callback]);
 };
 
+// Respeta prefers-reduced-motion
+const useReducedMotion = () => {
+  const [reduced, setReduced] = useState(() =>
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  );
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const onChange = () => setReduced(mq.matches);
+    mq.addEventListener?.("change", onChange);
+    return () => mq.removeEventListener?.("change", onChange);
+  }, []);
+  return reduced;
+};
+
 const getEmpresaId = (e) =>
   e?.id ?? e?.idEmp ?? e?.id_empresa ?? e?.idEmpresa ?? null;
+
+// === Flag para reactivar cascada al volver de editar
+const CASCADE_FLAG = "empresas_cascade_on_return";
 
 const GestionarEmpresas = () => {
   const navigate = useNavigate();
@@ -62,11 +79,14 @@ const GestionarEmpresas = () => {
 
   // Filtros locales
   const [busqueda, setBusqueda] = useState("");
-  const [empresasFiltradas, setEmpresasFiltradas] = useState([]);
+  // deferimos la búsqueda para que el filtrado no “bloquee” al escribir
+  const deferredBusqueda = useDeferredValue(busqueda);
+
   const [mostrarMenuFiltros, setMostrarMenuFiltros] = useState(false);
   const [mostrarSubmenuAlfabetico, setMostrarSubmenuAlfabetico] = useState(false);
   const [mostrarSubmenuTransferencia, setMostrarSubmenuTransferencia] =
     useState(false);
+
   const [animacionCascada, setAnimacionCascada] = useState(false);
   const [datosCargados, setDatosCargados] = useState(false);
   const [primeraCarga, setPrimeraCarga] = useState(true);
@@ -87,6 +107,10 @@ const GestionarEmpresas = () => {
   // otros
   const [mesesPagados, setMesesPagados] = useState([]);
   const filtrosRef = useRef(null);
+
+  const reducedMotion = useReducedMotion();
+  const cascadeTimerRef = useRef(null);
+
   useClickOutside(filtrosRef, () => {
     if (mostrarMenuFiltros) {
       setMostrarMenuFiltros(false);
@@ -96,13 +120,13 @@ const GestionarEmpresas = () => {
   });
 
   // Util pago
-  const getEstadoPago = (mesesPagadosStr, fechaUnionStr) => {
+  const getEstadoPago = useCallback((mesesPagadosStr, fechaUnionStr) => {
     if (!fechaUnionStr) return "emp_rojo";
     const mesesPagadosArr =
       mesesPagadosStr?.split(",").map((m) => m.trim().toUpperCase()) || [];
     const MESES_ANIO = [
-      "ENERO","FEBRERO","MARZO","ABRIL","MAYO","JUNIO",
-      "JULIO","AGOSTO","SEPTIEMBRE","OCTUBRE","NOVIEMBRE","DICIEMBRE",
+      "ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO",
+      "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE",
     ];
     const fechaUnion = new Date(
       fechaUnionStr?.includes?.("T")
@@ -127,7 +151,7 @@ const GestionarEmpresas = () => {
     if (deuda === 0) return "emp_verde";
     if (deuda <= 2) return "emp_amarillo";
     return "emp_rojo";
-  };
+  }, []);
 
   // Cargar filtros guardados
   useEffect(() => {
@@ -146,17 +170,26 @@ const GestionarEmpresas = () => {
     }
   }, [actualizar, primeraCarga]);
 
-  // Carga inicial
+  // Carga inicial (sin bloquear UI al máximo)
   useEffect(() => {
+    let cancelled = false;
     const cargarDatosIniciales = async () => {
       try {
         const [mediosResponse, empresasResponse] = await Promise.all([
-          fetch(`${BASE_URL}/api.php?action=obtener_datos_empresas`),
-          fetch(`${BASE_URL}/api.php?action=todos_empresas&tipo=empresas`),
+          fetch(`${BASE_URL}/api.php?action=obtener_datos_empresas`, { cache: "no-store" }),
+          fetch(`${BASE_URL}/api.php?action=todos_empresas&tipo=empresas&_=${Date.now()}`, { cache: "no-store" }),
         ]);
 
-        const mediosData = await mediosResponse.json();
-        const empresasData = await empresasResponse.json();
+        if (!mediosResponse.ok || !empresasResponse.ok) {
+          throw new Error("No se pudo obtener datos");
+        }
+
+        const [mediosData, empresasData] = await Promise.all([
+          mediosResponse.json(),
+          empresasResponse.json(),
+        ]);
+
+        if (cancelled) return;
 
         if (Array.isArray(mediosData.mediosPago)) {
           setMediosDePago(mediosData.mediosPago);
@@ -166,40 +199,6 @@ const GestionarEmpresas = () => {
           ? empresasData.empresas
           : [];
         setEmpresas(lista);
-
-        // Restaurar filtros/búsqueda (solo local)
-        const savedFilters = localStorage.getItem("empresasFilters");
-        const savedSearch = localStorage.getItem("empresasSearchTerm");
-
-        let base = [...lista];
-
-        if (savedFilters) {
-          const parsed = JSON.parse(savedFilters);
-          setFiltrosActivos(parsed);
-          if (parsed.letras.length > 0) {
-            base = base.filter((empresa) =>
-              parsed.letras.some((letra) =>
-                (empresa.razon_social || "").toUpperCase().startsWith(letra)
-              )
-            );
-          }
-          if (parsed.mediosPago.length > 0) {
-            base = base.filter((empresa) =>
-              parsed.mediosPago.includes(empresa.medio_pago)
-            );
-          }
-        }
-
-        if (savedSearch && savedSearch.trim() !== "") {
-          setBusqueda(savedSearch);
-          base = base.filter((empresa) =>
-            (empresa.razon_social || "")
-              .toLowerCase()
-              .includes(savedSearch.toLowerCase())
-          );
-        }
-
-        setEmpresasFiltradas(base);
         setError(null);
         setDatosCargados(true);
       } catch (err) {
@@ -211,204 +210,232 @@ const GestionarEmpresas = () => {
       }
     };
 
-    cargarDatosIniciales();
+    const id = window.requestIdleCallback
+      ? window.requestIdleCallback(cargarDatosIniciales, { timeout: 500 })
+      : setTimeout(cargarDatosIniciales, 0);
+
+    return () => {
+      cancelled = true;
+      if (typeof id === "number") clearTimeout(id);
+      else window.cancelIdleCallback?.(id);
+    };
   }, [actualizar]);
 
-  // ======== FILTRADO LOCAL ========
-  const aplicarFiltradoLocal = (listaBase, filtros, textoBusqueda) => {
-    let resultado = [...listaBase];
+  // ======== FILTRADO LOCAL (Memo + deferred) ========
+  const empresasFiltradas = useMemo(() => {
+    if (!datosCargados) return [];
+    const filtros = filtrosActivos;
+    const textoBusqueda = (deferredBusqueda || "").trim().toLowerCase();
+    let resultado = empresas;
 
     if (filtros.letras.length > 0) {
+      const setL = new Set(filtros.letras.map((l) => l.toUpperCase()));
       resultado = resultado.filter((empresa) =>
-        filtros.letras.some((letra) =>
-          (empresa.razon_social || "").toUpperCase().startsWith(letra)
-        )
+        setL.has((empresa.razon_social || "").charAt(0).toUpperCase())
       );
     }
     if (filtros.mediosPago.length > 0) {
+      const setM = new Set(filtros.mediosPago);
+      resultado = resultado.filter((empresa) => setM.has(empresa.medio_pago));
+    }
+    if (textoBusqueda !== "") {
       resultado = resultado.filter((empresa) =>
-        filtros.mediosPago.includes(empresa.medio_pago)
+        (empresa.razon_social || "").toLowerCase().includes(textoBusqueda)
       );
     }
-    if ((textoBusqueda || "").trim() !== "") {
-      const q = textoBusqueda.toLowerCase();
-      resultado = resultado.filter((empresa) =>
-        (empresa.razon_social || "").toLowerCase().includes(q)
-      );
+    if (!filtros.todos && filtros.letras.length === 0 && filtros.mediosPago.length === 0 && textoBusqueda === "") {
+      return [];
     }
     return resultado;
-  };
+  }, [empresas, filtrosActivos, deferredBusqueda, datosCargados]);
 
-  // Reaplicar filtros
+  // Disparar cascada cuando cambia el conjunto visible
+  useEffect(() => {
+    if (reducedMotion) return;
+    if (!datosCargados) return;
+    if (empresasFiltradas.length === 0) return;
+
+    if (cascadeTimerRef.current) {
+      clearTimeout(cascadeTimerRef.current);
+      cascadeTimerRef.current = null;
+    }
+    setAnimacionCascada(true);
+    cascadeTimerRef.current = setTimeout(() => {
+      setAnimacionCascada(false);
+      cascadeTimerRef.current = null;
+    }, 600);
+  }, [empresasFiltradas, datosCargados, reducedMotion]);
+
+  // Al volver desde Editar
   useEffect(() => {
     if (!datosCargados) return;
-    const res = aplicarFiltradoLocal(empresas, filtrosActivos, busqueda);
-    setEmpresasFiltradas(res);
-  }, [filtrosActivos, empresas, datosCargados, busqueda]);
+    if (sessionStorage.getItem(CASCADE_FLAG) === "1") {
+      setAnimacionCascada(true);
+      setTimeout(() => setAnimacionCascada(false), 600);
+      sessionStorage.removeItem(CASCADE_FLAG);
+    }
+  }, [datosCargados]);
 
-  const toggleMenuFiltros = () => {
-    setMostrarMenuFiltros(!mostrarMenuFiltros);
+  const toggleMenuFiltros = useCallback(() => {
+    setMostrarMenuFiltros((v) => !v);
     if (mostrarMenuFiltros) {
       setMostrarSubmenuAlfabetico(false);
       setMostrarSubmenuTransferencia(false);
     }
-  };
-  const toggleSubmenu = (submenu) => {
-    switch (submenu) {
-      case "alfabetico":
-        setMostrarSubmenuAlfabetico(!mostrarSubmenuAlfabetico);
-        setMostrarSubmenuTransferencia(false);
-        break;
-      case "transferencia":
-        setMostrarSubmenuTransferencia(!mostrarSubmenuTransferencia);
-        setMostrarSubmenuAlfabetico(false);
-        break;
-      default:
-        break;
+  }, [mostrarMenuFiltros]);
+
+  const toggleSubmenu = useCallback((submenu) => {
+    if (submenu === "alfabetico") {
+      setMostrarSubmenuAlfabetico((v) => !v);
+      setMostrarSubmenuTransferencia(false);
+    } else if (submenu === "transferencia") {
+      setMostrarSubmenuTransferencia((v) => !v);
+      setMostrarSubmenuAlfabetico(false);
     }
-  };
+  }, []);
 
   // Buscar (local)
-  const handleBusquedaInputChange = (e) => {
+  const handleBusquedaInputChange = useCallback((e) => {
     const value = e.target.value;
     setBusqueda(value);
-    localStorage.setItem("empresasSearchTerm", value);
+    // persistencia liviana
+    window.clearTimeout(handleBusquedaInputChange._t);
+    handleBusquedaInputChange._t = window.setTimeout(() => {
+      localStorage.setItem("empresasSearchTerm", value);
+    }, 120);
+  }, []);
+  const handleBusqueda = useCallback(() => {
+    if (reducedMotion) return;
     setAnimacionCascada(true);
-    setTimeout(() => setAnimacionCascada(false), 600);
-  };
-  const handleBusqueda = () => {
-    setAnimacionCascada(true);
-    setTimeout(() => setAnimacionCascada(false), 600);
-  };
-  const handleClearSearch = () => {
+    setTimeout(() => setAnimacionCascada(false), 400);
+  }, [reducedMotion]);
+
+  const handleClearSearch = useCallback(() => {
     setBusqueda("");
     localStorage.removeItem("empresasSearchTerm");
-    const res = aplicarFiltradoLocal(empresas, filtrosActivos, "");
-    setEmpresasFiltradas(res);
-  };
+  }, []);
 
-  const handleFiltrarPorLetra = (letra) => {
-    const newLetras = filtrosActivos.letras.includes(letra)
-      ? filtrosActivos.letras.filter((l) => l !== letra)
-      : [...filtrosActivos.letras, letra];
+  const handleFiltrarPorLetra = useCallback((letra) => {
+    setFiltrosActivos((prev) => {
+      const exists = prev.letras.includes(letra);
+      const newLetras = exists ? prev.letras.filter((l) => l !== letra) : [...prev.letras, letra];
+      const next = {
+        ...prev,
+        letras: newLetras,
+        todos: false,
+        hasFilters: newLetras.length > 0 || prev.mediosPago.length > 0,
+      };
+      localStorage.setItem("empresasFilters", JSON.stringify(next));
+      return next;
+    });
+  }, []);
 
-    const newFilters = {
-      ...filtrosActivos,
-      letras: newLetras,
-      todos: false,
-      hasFilters: newLetras.length > 0 || filtrosActivos.mediosPago.length > 0,
-    };
+  const handleFiltrarPorMedioPago = useCallback((medio) => {
+    setFiltrosActivos((prev) => {
+      const exists = prev.mediosPago.includes(medio);
+      const newMedios = exists ? prev.mediosPago.filter((m) => m !== medio) : [...prev.mediosPago, medio];
+      const next = {
+        ...prev,
+        mediosPago: newMedios,
+        todos: false,
+        hasFilters: newMedios.length > 0 || prev.letras.length > 0,
+      };
+      localStorage.setItem("empresasFilters", JSON.stringify(next));
+      return next;
+    });
+  }, []);
 
-    setFiltrosActivos(newFilters);
-    localStorage.setItem("empresasFilters", JSON.stringify(newFilters));
-    setAnimacionCascada(true);
-    setTimeout(() => setAnimacionCascada(false), 600);
-  };
+  const eliminarFiltroLetra = useCallback((letra) => {
+    setFiltrosActivos((prev) => {
+      const newLetras = prev.letras.filter((l) => l !== letra);
+      const next = {
+        ...prev,
+        letras: newLetras,
+        todos: false,
+        hasFilters: newLetras.length > 0 || prev.mediosPago.length > 0,
+      };
+      localStorage.setItem("empresasFilters", JSON.stringify(next));
+      return next;
+    });
+  }, []);
 
-  const handleFiltrarPorMedioPago = (medio) => {
-    const newMedios = filtrosActivos.mediosPago.includes(medio)
-      ? filtrosActivos.mediosPago.filter((m) => m !== medio)
-      : [...filtrosActivos.mediosPago, medio];
+  const eliminarFiltroMedioPago = useCallback((medio) => {
+    setFiltrosActivos((prev) => {
+      const newMedios = prev.mediosPago.filter((m) => m !== medio);
+      const next = {
+        ...prev,
+        mediosPago: newMedios,
+        todos: false,
+        hasFilters: newMedios.length > 0 || prev.letras.length > 0,
+      };
+      localStorage.setItem("empresasFilters", JSON.stringify(next));
+      return next;
+    });
+  }, []);
 
-    const newFilters = {
-      ...filtrosActivos,
-      mediosPago: newMedios,
-      todos: false,
-      hasFilters: newMedios.length > 0 || filtrosActivos.letras.length > 0,
-    };
-
-    setFiltrosActivos(newFilters);
-    localStorage.setItem("empresasFilters", JSON.stringify(newFilters));
-    setAnimacionCascada(true);
-    setTimeout(() => setAnimacionCascada(false), 600);
-  };
-
-  const eliminarFiltroLetra = (letra) => {
-    const newLetras = filtrosActivos.letras.filter((l) => l !== letra);
-    const newFilters = {
-      ...filtrosActivos,
-      letras: newLetras,
-      todos: false,
-      hasFilters: newLetras.length > 0 || filtrosActivos.mediosPago.length > 0,
-    };
-    setFiltrosActivos(newFilters);
-    localStorage.setItem("empresasFilters", JSON.stringify(newFilters));
-  };
-
-  const eliminarFiltroMedioPago = (medio) => {
-    const newMedios = filtrosActivos.mediosPago.filter((m) => m !== medio);
-    const newFilters = {
-      ...filtrosActivos,
-      mediosPago: newMedios,
-      todos: false,
-      hasFilters: newMedios.length > 0 || filtrosActivos.letras.length > 0,
-    };
-    setFiltrosActivos(newFilters);
-    localStorage.setItem("empresasFilters", JSON.stringify(newFilters));
-  };
-
-  const limpiarFiltros = () => {
+  const limpiarFiltros = useCallback(() => {
     const reset = { letras: [], mediosPago: [], todos: false, hasFilters: false };
     setFiltrosActivos(reset);
     localStorage.setItem("empresasFilters", JSON.stringify(reset));
-    setEmpresasFiltradas(aplicarFiltradoLocal(empresas, reset, busqueda));
-  };
+  }, []);
 
-  const handleMostrarTodos = () => {
+  const handleMostrarTodos = useCallback(() => {
     const allFilters = { letras: [], mediosPago: [], todos: true, hasFilters: false };
     setFiltrosActivos(allFilters);
     localStorage.setItem("empresasFilters", JSON.stringify(allFilters));
-    setEmpresasFiltradas(empresas);
-    setAnimacionCascada(true);
-    setTimeout(() => setAnimacionCascada(false), 600);
-  };
+    if (!reducedMotion) {
+      setAnimacionCascada(true);
+      setTimeout(() => setAnimacionCascada(false), 600);
+    }
+  }, [reducedMotion]);
 
   // Navegación
-  const handleVolverAtras = () => {
+  const handleVolverAtras = useCallback(() => {
     localStorage.removeItem("empresasFilters");
     localStorage.removeItem("empresasSearchTerm");
     navigate("/PaginaPrincipal");
-  };
-  const handleAgregarEmpresa = () => {
+  }, [navigate]);
+
+  const handleAgregarEmpresa = useCallback(() => {
     navigate("/AgregarEmpresa");
     setActualizar((p) => !p);
-  };
+  }, [navigate]);
 
-  // Tabla / tarjetas acciones
-  const handleFilaSeleccionada = (index, empresa) => {
-    setFilaSeleccionada(filaSeleccionada === index ? null : index);
-    setEmpresaSeleccionada(empresa);
-  };
-
-  const handleEditarEmpresa = (razonSocial) => {
+  // setear flag antes de ir a Editar
+  const handleEditarEmpresa = useCallback((razonSocial) => {
+    sessionStorage.setItem(CASCADE_FLAG, "1");
     navigate(`/editarEmpresa/${razonSocial}`);
     setActualizar((p) => !p);
-  };
+  }, [navigate]);
 
-  const handleConfirmarEliminar = (empresa) => {
+  // Tabla / tarjetas acciones
+  const handleFilaSeleccionada = useCallback((index, empresa) => {
+    setFilaSeleccionada((prev) => (prev === index ? null : index));
+    setEmpresaSeleccionada(empresa);
+  }, []);
+
+  const handleConfirmarEliminar = useCallback((empresa) => {
     setEmpresaSeleccionada(empresa);
     setMostrarModalEliminar(true);
-  };
+  }, []);
 
-  const handleEliminarEmpresa = async () => {
+  const handleEliminarEmpresa = useCallback(async () => {
     if (!empresaSeleccionada) return;
     try {
-      const url = `${BASE_URL}/api.php?action=eliminar_empresa&idEmp=${empresaSeleccionada.idEmp}&razon_social=${encodeURIComponent(
+      const idEmp = getEmpresaId(empresaSeleccionada);
+      const url = `${BASE_URL}/api.php?action=eliminar_empresa&idEmp=${idEmp}&razon_social=${encodeURIComponent(
         empresaSeleccionada.razon_social
       )}`;
       const response = await fetch(url, { method: "GET" });
       const data = await response.json();
-      if (data.success) {
-        setEmpresas((prev) => prev.filter((e) => e.idEmp !== empresaSeleccionada.idEmp));
-        setEmpresasFiltradas((prev) =>
-          prev.filter((e) => e.idEmp !== empresaSeleccionada.idEmp)
-        );
+      if (data?.success) {
+        setEmpresas((prev) => prev.filter((e) => getEmpresaId(e) !== idEmp));
         setMostrarModalEliminar(false);
         setToastMensaje("Empresa eliminada correctamente");
         setToastTipo("exito");
         setMostrarToast(true);
       } else {
-        setToastMensaje(data.message || "Error al eliminar la empresa.");
+        setToastMensaje(data?.message || "Error al eliminar la empresa.");
         setToastTipo("error");
         setMostrarToast(true);
       }
@@ -418,15 +445,15 @@ const GestionarEmpresas = () => {
       setToastTipo("error");
       setMostrarToast(true);
     }
-  };
+  }, [empresaSeleccionada]);
 
   // ====== BAJA EMPRESA ======
-  const handleConfirmarBajaEmpresa = (empresa) => {
+  const handleConfirmarBajaEmpresa = useCallback((empresa) => {
     setEmpresaABaja(empresa);
     setMostrarModalBaja(true);
-  };
+  }, []);
 
-  const handleConfirmarBajaEmpresaSubmit = async (empresa, motivo) => {
+  const handleConfirmarBajaEmpresaSubmit = useCallback(async (empresa, motivo) => {
     const id = getEmpresaId(empresa);
     const m = (motivo || "").trim();
     if (!id || !m) {
@@ -447,7 +474,6 @@ const GestionarEmpresas = () => {
       const result = await response.json();
       if (response.ok && (result?.success || result?.exito)) {
         setEmpresas((prev) => prev.filter((e) => getEmpresaId(e) !== id));
-        setEmpresasFiltradas((prev) => prev.filter((e) => getEmpresaId(e) !== id));
         setMostrarModalBaja(false);
         setEmpresaABaja(null);
         setToastMensaje(result?.mensaje || "Empresa dada de baja");
@@ -463,9 +489,9 @@ const GestionarEmpresas = () => {
       setToastTipo("error");
       setMostrarToast(true);
     }
-  };
+  }, []);
 
-  const handleMostrarInfoEmpresa = (empresa) => {
+  const handleMostrarInfoEmpresa = useCallback((empresa) => {
     setCargando(true);
     try {
       const mesesP = empresa.meses_pagados
@@ -481,10 +507,10 @@ const GestionarEmpresas = () => {
     } finally {
       setCargando(false);
     }
-  };
+  }, []);
 
   // Exportar Excel (solo visibles)
-  const exportarAExcel = () => {
+  const exportarAExcel = useCallback(() => {
     const visibles = empresasFiltradas;
     if (!visibles || visibles.length === 0) {
       setToastMensaje("No hay datos para exportar");
@@ -517,22 +543,23 @@ const GestionarEmpresas = () => {
     setToastMensaje("Exportación a Excel completada");
     setToastTipo("exito");
     setMostrarToast(true);
-  };
+  }, [empresasFiltradas]);
 
-  const aplicarFiltroAlfabetico = (letra) => {
+  const aplicarFiltroAlfabetico = useCallback((letra) => {
     handleFiltrarPorLetra(letra);
     setMostrarSubmenuAlfabetico(false);
-  };
-  const aplicarFiltroTransferencia = (medio) => {
+  }, [handleFiltrarPorLetra]);
+
+  const aplicarFiltroTransferencia = useCallback((medio) => {
     handleFiltrarPorMedioPago(medio);
     setMostrarSubmenuTransferencia(false);
-  };
+  }, [handleFiltrarPorMedioPago]);
 
   const cantidadVisibles =
     (filtrosActivos.todos ||
       filtrosActivos.letras.length > 0 ||
       filtrosActivos.mediosPago.length > 0 ||
-      busqueda.trim() !== "")
+      (deferredBusqueda || "").trim() !== "")
       ? empresasFiltradas.length
       : 0;
 
@@ -553,6 +580,7 @@ const GestionarEmpresas = () => {
               value={busqueda}
               onChange={handleBusquedaInputChange}
               onKeyDown={(e) => e.key === "Enter" && handleBusqueda()}
+              inputMode="search"
             />
             {busqueda && (
               <FontAwesomeIcon
@@ -713,7 +741,6 @@ const GestionarEmpresas = () => {
         <div className="emp_empresas-list">
           <div className="emp_contenedor-list-items">
             <div className="emp_contador-container">
-              {/* Desktop: "Cant empresas: N"  |  Mobile: "Emp: N" */}
               <span className="emp_socios-totales emp_socios-desktop">
                 Cant empresas: {cantidadVisibles}
               </span>
@@ -731,6 +758,7 @@ const GestionarEmpresas = () => {
                 <div className="emp_indicador-color"></div>
                 <span>Debe 1-2 meses</span>
               </div>
+              {/* FIX: mismo bloque y clase base para “Debe 3+ meses” */}
               <div className="emp_estado-indicador emp_debe-3-mas">
                 <div className="emp_indicador-color"></div>
                 <span>Debe 3+ meses</span>
@@ -738,7 +766,7 @@ const GestionarEmpresas = () => {
             </div>
           </div>
 
-          {/* ======= TABLA (Desktop / por defecto) ======= */}
+          {/* ======= TABLA ======= */}
           <div className="emp_box-table">
             <div className="emp_header">
               <div className="emp_column-header emp_header-razon">Razón Social</div>
@@ -764,7 +792,7 @@ const GestionarEmpresas = () => {
               ) : (filtrosActivos.todos ||
                   filtrosActivos.letras.length > 0 ||
                   filtrosActivos.mediosPago.length > 0 ||
-                  busqueda.trim() !== "") &&
+                  (deferredBusqueda || "").trim() !== "") &&
                 empresasFiltradas.length > 0 ? (
                 <div
                   className={`emp_scrollableE ${animacionCascada ? "emp_cascade-animation" : ""}`}
@@ -781,9 +809,11 @@ const GestionarEmpresas = () => {
                         ? `emp_even-row ${estadoPago}`
                         : `emp_odd-row ${estadoPago}`;
 
+                    const key = getEmpresaId(empresa) || empresa.cuit || `row-${index}`;
+
                     return (
                       <div
-                        key={`${empresa.idEmp || empresa.cuit || index}`}
+                        key={key}
                         className={`emp_row ${rowClass}`}
                         onClick={() => handleFilaSeleccionada(index, empresa)}
                         style={{ animationDelay: `${index * 0.05}s` }}
@@ -871,7 +901,7 @@ const GestionarEmpresas = () => {
             </div>
           </div>
 
-          {/* ======= TARJETAS (Mobile — ocultas en desktop por CSS) ======= */}
+          {/* ======= TARJETAS (Mobile) ======= */}
           <div className={`emp_cards-wrapper ${animacionCascada ? "emp_cascade-animation" : ""}`}>
             {cargando ? (
               <div className="emp_no-data-message emp_no-data-mobile">
@@ -888,17 +918,18 @@ const GestionarEmpresas = () => {
             ) : (filtrosActivos.todos ||
                 filtrosActivos.letras.length > 0 ||
                 filtrosActivos.mediosPago.length > 0 ||
-                busqueda.trim() !== "") &&
+                (deferredBusqueda || "").trim() !== "") &&
               empresasFiltradas.length > 0 ? (
               empresasFiltradas.map((empresa, index) => {
                 const estadoPago = getEstadoPago(
                   empresa.meses_pagados,
                   empresa.Fechaunion
                 );
+                const key = getEmpresaId(empresa) || empresa.cuit || `card-${index}`;
                 return (
                   <div
                     className={`emp_card ${estadoPago}`}
-                    key={`card-${empresa.idEmp || empresa.cuit || index}`}
+                    key={key}
                     style={{ animationDelay: `${index * 0.05}s` }}
                     onClick={() => handleFilaSeleccionada(index, empresa)}
                   >

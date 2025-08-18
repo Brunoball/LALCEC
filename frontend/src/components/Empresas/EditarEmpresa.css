@@ -162,7 +162,13 @@ body {
   .edit-empresa-input-group { grid-template-columns: 1fr 1fr; }
 }
 
-.edit-empresa-floating-label-wrapper { position: relative; width: 100%; }
+.edit-empresa-floating-label-wrapper { 
+  position: relative; 
+  width: 100%; 
+}
+.edit-empresa-floating-label-wrapper.full-width {
+  grid-column: span 2;
+}
 
 .edit-empresa-input {
   width: 100%;
@@ -322,6 +328,11 @@ select.edit-empresa-input:focus {
     text-align: center;
   }
   .tab-text { display: none; }
+  
+  /* Ajuste para el campo de razón social en móvil */
+  .edit-empresa-floating-label-wrapper.full-width {
+    grid-column: span 1;
+  }
 }
 
 @media (max-width: 420px) {

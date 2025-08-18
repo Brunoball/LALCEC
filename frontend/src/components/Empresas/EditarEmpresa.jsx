@@ -212,21 +212,7 @@ const EditarEmpresa = () => {
             {activeTab === 'informacion' && (
               <div className="edit-empresa-tab-content">
                 <div className="edit-empresa-input-group">
-                  <div className="edit-empresa-floating-label-wrapper">
-                    <input
-                      type="text"
-                      value={idEmp || ''}
-                      readOnly
-                      placeholder=" "
-                      className="edit-empresa-input edit-empresa-disabled-input"
-                      id="idEmp"
-                    />
-                    <label htmlFor="idEmp" className={`edit-empresa-floating-label ${idEmp ? 'edit-empresa-floating-label-filled' : ''}`}>
-                      ID Empresa
-                    </label>
-                  </div>
-
-                  <div className="edit-empresa-floating-label-wrapper">
+                  <div className="edit-empresa-floating-label-wrapper full-width">
                     <input
                       type="text"
                       value={razonSocialInput}

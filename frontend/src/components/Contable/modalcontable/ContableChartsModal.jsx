@@ -1,5 +1,5 @@
 // ContableChartsModal.jsx
-import React, { useMemo } from "react";
+import React, { useMemo, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTimes, faChartPie } from "@fortawesome/free-solid-svg-icons";
 
@@ -53,6 +53,20 @@ export default function ContableChartsModal({
 }) {
   // ⚠️ NO early return antes de declarar hooks
 
+  // ⌨️ Cerrar con ESC cuando está abierto
+  useEffect(() => {
+    if (!open) return;
+    const handleKeyDown = (e) => {
+      // Algunas implementaciones viejas usan "Esc" o keyCode 27
+      if (e.key === "Escape" || e.key === "Esc" || e.keyCode === 27) {
+        e.preventDefault();
+        onClose?.();
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [open, onClose]);
+
   const MESES_ORDEN = [
     "Enero","Febrero","Marzo","Abril","Mayo","Junio",
     "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre",
@@ -74,32 +88,25 @@ export default function ContableChartsModal({
     return MESES_ORDEN.filter((m) => set.has(norm(m)));
   }, [datosMeses, datosEmpresas]);
 
-  // Mes "por defecto" cuando no hay uno seleccionado: el mes actual si existe;
-  // si no, el más cercano anterior en el año con datos; si tampoco hay, el último disponible.
+  // Mes "por defecto" cuando no hay uno seleccionado
   const mesPorDefecto = useMemo(() => {
     if (!mesesPresentesTodos.length) return undefined;
 
     const idxActual = MESES_ORDEN.findIndex((m) => norm(m) === norm(mesActualNombre));
-    // ¿Está el mes actual presente?
     const estaActual = mesesPresentesTodos.some((m) => norm(m) === norm(mesActualNombre));
     if (estaActual) return mesActualNombre;
 
-    // Buscar el último mes presente <= mes actual
     for (let i = idxActual; i >= 0; i--) {
       const candidato = MESES_ORDEN[i];
       if (mesesPresentesTodos.some((m) => norm(m) === norm(candidato))) {
         return candidato;
       }
     }
-    // Si no hay anteriores, usamos el último presente (el más “reciente” en datos)
     return mesesPresentesTodos[mesesPresentesTodos.length - 1];
   }, [mesesPresentesTodos, mesActualNombre]);
 
-  // Meses a mostrar en el line chart:
-  // - Si hay selección: hasta el seleccionado.
-  // - Si NO hay selección: hasta el mesPorDefecto (mes actual / cercano).
+  // Meses a mostrar en el line chart
   const mesesLineChart = useMemo(() => {
-    // helper para cortar por un mes límite
     const cortarHasta = (mesLimite) => {
       if (!mesLimite) return mesesPresentesTodos;
       const idxLim = MESES_ORDEN.findIndex((m) => norm(m) === norm(mesLimite));
@@ -267,7 +274,6 @@ export default function ContableChartsModal({
       return idxSel === -1 ? mesesLineChart.length - 1 : idxSel;
     }
 
-    // Sin selección: cortar en el mes por defecto (mes actual o el más cercano)
     const idxDef = mesesLineChart.findIndex((m) => norm(m) === norm(mesPorDefecto));
     return idxDef === -1 ? mesesLineChart.length - 1 : idxDef;
   }, [mesesLineChart, mesSeleccionado, mesPorDefecto]);

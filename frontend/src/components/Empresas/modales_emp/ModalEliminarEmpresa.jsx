@@ -1,8 +1,21 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { FaTrash } from "react-icons/fa";
 import "./ModalEliminarEmpresa.css";
 
 const ModalEliminarEmpresa = ({ empresaSeleccionada, onCancelar, onEliminar }) => {
+  // ⌨️ Cerrar con ESC
+  useEffect(() => {
+    if (!empresaSeleccionada) return;
+    const onKeyDown = (e) => {
+      if (e.key === "Escape" || e.key === "Esc" || e.keyCode === 27) {
+        e.preventDefault();
+        onCancelar?.();
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [empresaSeleccionada, onCancelar]);
+
   if (!empresaSeleccionada) return null;
 
   return (

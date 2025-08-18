@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { FaUserMinus } from "react-icons/fa";
 import "./ModalBajaEmpresa.css";
 
@@ -7,6 +7,19 @@ const MAX_LEN = 250;
 const ModalBajaEmpresa = ({ empresa, onCancelar, onConfirmar }) => {
   const [motivo, setMotivo] = useState("");
   const [enviando, setEnviando] = useState(false);
+
+  // ⌨️ Cerrar con ESC
+  useEffect(() => {
+    if (!empresa) return;
+    const onKeyDown = (e) => {
+      if (e.key === "Escape" || e.key === "Esc" || e.keyCode === 27) {
+        e.preventDefault();
+        onCancelar?.();
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [empresa, onCancelar]);
 
   const puedeConfirmar = useMemo(
     () => motivo.trim().length > 0 && !enviando,
@@ -77,16 +90,10 @@ const ModalBajaEmpresa = ({ empresa, onCancelar, onConfirmar }) => {
 
           <button
             type="button"
-            className={`empbaja-btn empbaja-btn--solid-danger ${
-              !puedeConfirmar ? "is-disabled" : ""
-            }`}
+            className={`empbaja-btn empbaja-btn--solid-danger ${!puedeConfirmar ? "is-disabled" : ""}`}
             onClick={handleConfirmarClick}
             disabled={!puedeConfirmar}
-            title={
-              !puedeConfirmar
-                ? "Ingresá un motivo para continuar"
-                : "Confirmar baja"
-            }
+            title={!puedeConfirmar ? "Ingresá un motivo para continuar" : "Confirmar baja"}
           >
             {enviando ? "Procesando..." : "Confirmar baja"}
           </button>

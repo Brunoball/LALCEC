@@ -28,7 +28,7 @@
   --secondary-200: #bfdbfe;
   --secondary-300: #93c5fd;
   --secondary-400: #60a5fa;
-  --secondary-500: #3b82f6;
+  --secondary-500: #3b82f6; /* azul */
   --secondary-600: #2563eb;
   --secondary-700: #1d4ed8;
   --secondary-800: #1e40af;
@@ -43,7 +43,7 @@
   --success-200: #a7f3d0;
   --success-300: #6ee7b7;
   --success-400: #34d399;
-  --success-500: #10b981;
+  --success-500: #10b981; /* verde excel */
   --success-600: #059669;
   --success-700: #047857;
 
@@ -59,7 +59,7 @@
   --danger-200: #fecaca;
   --danger-300: #fca5a5;
   --danger-400: #f87171;
-  --danger-500: #ef4444;
+  --danger-500: #ef4444;  /* rojo baja */
   --danger-600: #dc2626;
 
   /* ===== NEUTROS / SUPERFICIES ===== */
@@ -501,8 +501,7 @@ input:-webkit-autofill { background-color: transparent !important; }
 .emp_icon:hover { transform: scale(1.1); color: var(--primary-700); }
 
 /* ================================
-   Animaciones en cascada (web + mobile)
-   — ÚNICA animación reutilizable
+   Animaciones en cascada
 ==================================*/
 @keyframes emp_cascadeFadeUp {
   from { opacity: 0; transform: translateY(8px); }
@@ -510,7 +509,6 @@ input:-webkit-autofill { background-color: transparent !important; }
 }
 @keyframes emp_fadeIn { from {opacity:0} to {opacity:1} }
 
-/* Desktop (filas) — aplica cuando el contenedor tiene la clase emp_cascade-animation */
 .emp_scrollableE.emp_cascade-animation .emp_row,
 .emp_cascade-animation .emp_row {
   opacity: 0;
@@ -557,7 +555,7 @@ input:-webkit-autofill { background-color: transparent !important; }
 .emp_btn-show-all:hover { background: var(--primary-600); transform: translateY(-1px); }
 
 /* ================================
-   Botonera inferior (Desktop intacto)
+   Botonera inferior (Desktop)
 ==================================*/
 .emp_down-container {
   width: 100%;
@@ -591,10 +589,13 @@ input:-webkit-autofill { background-color: transparent !important; }
 }
 .emp_socio-button:hover { transform: translateY(-2px); }
 .emp_socio-button p { margin: 0; display: inline; }
+
+/* desktop colors */
 .emp_volver-atras { background: linear-gradient(135deg,#fa7815, #ee6914 ) !important; }
 .emp_socio-button:nth-child(1) { background: linear-gradient(135deg, #0288D1, #01579B); }
 .emp_socio-button:nth-child(2) { background: linear-gradient(135deg, #38a169, #2f855a); }
 .emp_btn-baja-nav { background: linear-gradient(135deg, #e53935, #b71c1c) !important; }
+
 .emp_socio-icon-button { width: 16px; height: 16px; }
 .emp_icono-empresa{ padding-left: 10px; color: var(--primary-500); }
 .emp_icono-celular-empresa{ display: none; }
@@ -819,9 +820,7 @@ input:-webkit-autofill { background-color: transparent !important; }
   .emp_action-btn:active { transform: translateY(1px); }
   .emp_action-danger { color: var(--danger-600); border-color: #fecaca; background: #fff5f5; }
 
-  /* === CASCADA EN MOBILE (igual que web) ===
-     Usamos la MISMA animación emp_cascadeFadeUp y forzamos
-     la especificidad para vencer el opacity:1 por defecto. */
+  /* === CASCADA EN MOBILE === */
   .emp_cards-wrapper.emp_cascade-animation .emp_card,
   .emp_cascade-animation .emp_cards-wrapper .emp_card {
     opacity: 0;
@@ -829,10 +828,12 @@ input:-webkit-autofill { background-color: transparent !important; }
     animation: emp_cascadeFadeUp 0.45s ease-out forwards;
   }
 
+  /* ====== BOTONERA INFERIOR (MOBILE)  ======
+     Estética tipo “chip” redondeado como el screenshot */
   .emp_down-container {
     position: fixed; bottom: 0; left: 0; right: 0;
-    height: 60px;
-    padding: 6px calc(12px + env(safe-area-inset-right)) calc(6px + env(safe-area-inset-bottom)) calc(12px + env(safe-area-inset-left));
+    height: 64px;
+    padding: 8px calc(12px + env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) calc(12px + env(safe-area-inset-left));
     background: rgba(255,255,255,0.96);
     backdrop-filter: saturate(150%) blur(10px);
     border-top: 1px solid var(--gray-200);
@@ -841,37 +842,88 @@ input:-webkit-autofill { background-color: transparent !important; }
     gap: 10px;
     z-index: 70;
   }
+
+  /* Botón “Volver” (neutral, ícono naranja) */
   .emp_volver-atras {
     flex: 0 0 auto;
+    width: 44px;
     height: 44px;
-    min-width: 44px;
-    padding: 0 12px;
+    padding: 0;
     border-radius: 12px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
+    display: grid;
+    place-items: center;
+    background: #ffffff;
+    border: 1.5px solid rgba(0,0,0,0.08);
+    box-shadow:
+      0 1px 2px rgba(16, 24, 40, 0.06),
+      0 2px 6px rgba(16, 24, 40, 0.06);
   }
   .emp_volver-atras p { display: none !important; }
-  .emp_volver-atras .emp_socio-icon-button { width: 20px; height: 20px; }
+  .emp_volver-atras .emp_socio-icon-button {
+    width: 20px; height: 20px; color: var(--primary-500);
+  }
+  .emp_volver-atras:active { transform: scale(0.98); }
 
+  /* Contenedor de los tres chips de acción */
   .emp_botones-container {
     flex: 1 1 auto;
     display: flex; justify-content: flex-end; align-items: center;
-    gap: 8px;
+    gap: 10px;
   }
+
+  /* Base común de cada chip */
   .emp_botones-container .emp_socio-button {
     height: 44px;
-    min-width: 44px;
     width: 44px;
+    min-width: 44px;
     padding: 0;
     border-radius: 12px;
     display: grid; place-items: center;
-    color: #fff; border: none;
-    box-shadow: var(--shadow-sm);
+    border: 1.5px solid var(--gray-200);
+    background: #ffffff;
+    box-shadow:
+      0 1px 2px rgba(16, 24, 40, 0.06),
+      0 2px 6px rgba(16, 24, 40, 0.06);
+    transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease, border-color 0.12s ease;
+    color: #334155; /* se sobrescribe en cada variante */
   }
   .emp_botones-container .emp_socio-button p { display: none !important; }
   .emp_socio-icon-button { width: 20px; height: 20px; }
+
+  /* Variantes por orden: 
+     1) Agregar (azul), 2) Excel (verde), 3) Baja (rojo) */
+  .emp_botones-container .emp_socio-button:nth-child(1) {
+    border-color: rgba(59, 130, 246, 0.35);
+    background: rgba(59, 130, 246, 0.08);
+    color: var(--secondary-600);
+  }
+  .emp_botones-container .emp_socio-button:nth-child(2) {
+    border-color: rgba(16, 185, 129, 0.35);
+    background: rgba(16, 185, 129, 0.09);
+    color: var(--success-600);
+  }
+  .emp_botones-container .emp_socio-button.emp_btn-baja-nav,
+  .emp_botones-container .emp_socio-button:nth-child(3) {
+    border-color: rgba(239, 68, 68, 0.35);
+    background: rgba(239, 68, 68, 0.08);
+    color: var(--danger-600);
+  }
+
+  /* énfasis al tocar */
+  .emp_botones-container .emp_socio-button:active {
+    transform: scale(0.98);
+    box-shadow:
+      0 1px 1px rgba(16,24,40,0.08),
+      0 1px 4px rgba(16,24,40,0.08);
+    background: #fff;
+  }
+
+  /* Asegurar que los gradientes de desktop NO apliquen en mobile */
+  .emp_botones-container .emp_socio-button,
+  .emp_volver-atras {
+    background-image: none !important;
+  }
+
   .emp_icono-celular-empresa{ display: none; }
 
   .emp_body { min-height: unset; max-height: none; }

@@ -37,6 +37,19 @@ const GestionarCategorias = () => {
     fetchCategorias();
   }, []);
 
+  // ⌨️ Cerrar el modal de eliminar con ESC
+  useEffect(() => {
+    if (!modalOpen) return;
+    const onKeyDown = (e) => {
+      if (e.key === "Escape" || e.key === "Esc" || e.keyCode === 27) {
+        e.preventDefault();
+        setModalOpen(false);
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [modalOpen]);
+
   const handleAgregarCategoria = () => navigate("/agregar_categoria");
   const handleEditarCategoria = (nombreCategoria) => navigate(`/editar_categoria/${nombreCategoria}`);
 

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import "./ModalMesCuotas.css";
@@ -9,6 +9,18 @@ const ModalMesCuotas = ({
   onCancelar, 
   onImprimir 
 }) => {
+  // ⌨️ Cerrar con ESC
+  useEffect(() => {
+    const onKeyDown = (e) => {
+      if (e.key === "Escape" || e.key === "Esc" || e.keyCode === 27) {
+        e.preventDefault();
+        onCancelar?.();
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [onCancelar]);
+
   const meses = [
     "ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO",
     "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE"
@@ -23,11 +35,11 @@ const ModalMesCuotas = ({
   };
 
   return (
-    <div className="modal">
-      <div className="modal-content">
+    <div className="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div className="modal-content" role="document">
         <div className="modal-header">
-          <h3 className="modal-title">Seleccionar Meses para Comprobantes</h3>
-          <button className="modal-close" onClick={onCancelar}>
+          <h3 id="modal-title" className="modal-title">Seleccionar Meses para Comprobantes</h3>
+          <button className="modal-close" onClick={onCancelar} aria-label="Cerrar">
             <FontAwesomeIcon icon={faTimes} />
           </button>
         </div>

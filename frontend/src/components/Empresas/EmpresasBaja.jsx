@@ -15,14 +15,39 @@ const EmpresasBaja = () => {
   const [empresaAEliminar, setEmpresaAEliminar] = useState(null);
   const [mostrarEliminar, setMostrarEliminar] = useState(false);
 
+  const [mostrarMotivo, setMostrarMotivo] = useState(false);
+  const [empresaMotivo, setEmpresaMotivo] = useState(null);
+
   const [toast, setToast] = useState({ show: false, tipo: "", mensaje: "" });
   const [busqueda, setBusqueda] = useState("");
   const [accionando, setAccionando] = useState(false);
+
   const navigate = useNavigate();
 
   useEffect(() => {
     obtenerEmpresasBaja();
   }, []);
+
+  useEffect(() => {
+    const handleEsc = (e) => {
+      if (e.key === "Escape") {
+        if (mostrarConfirmacion) {
+          setMostrarConfirmacion(false);
+          setEmpresaSeleccionada(null);
+        }
+        if (mostrarEliminar) {
+          setMostrarEliminar(false);
+          setEmpresaAEliminar(null);
+        }
+        if (mostrarMotivo) {
+          setMostrarMotivo(false);
+          setEmpresaMotivo(null);
+        }
+      }
+    };
+    document.addEventListener("keydown", handleEsc);
+    return () => document.removeEventListener("keydown", handleEsc);
+  }, [mostrarConfirmacion, mostrarEliminar, mostrarMotivo]);
 
   const obtenerEmpresasBaja = async () => {
     setLoading(true);
@@ -31,7 +56,7 @@ const EmpresasBaja = () => {
         `${BASE_URL}/api.php?action=estado_empresa&op=listar_baja`
       );
       const data = await response.json();
-      if (response.ok && (data.success || data.exito)) {
+      if (response.ok && (data.exito || data.success)) {
         setEmpresas(Array.isArray(data.empresas) ? data.empresas : []);
       } else {
         throw new Error(data?.mensaje || "Error al cargar empresas dadas de baja");
@@ -56,8 +81,6 @@ const EmpresasBaja = () => {
     });
   }, [empresas, busqueda]);
 
-  const idFrom = (e) => e?.idEmp ?? e?.id_empresa ?? e?.id;
-
   const darAltaEmpresa = async (id) => {
     if (accionando) return;
     setAccionando(true);
@@ -71,8 +94,8 @@ const EmpresasBaja = () => {
         }
       );
       const data = await response.json();
-      if (response.ok && (data.success || data.exito)) {
-        setEmpresas((prev) => prev.filter((e) => idFrom(e) !== id));
+      if (response.ok && (data.exito || data.success)) {
+        setEmpresas((prev) => prev.filter((e) => e.id_empresa !== id));
         setMostrarConfirmacion(false);
         setEmpresaSeleccionada(null);
         setToast({
@@ -98,8 +121,8 @@ const EmpresasBaja = () => {
     if (accionando || !empresa) return;
     setAccionando(true);
     try {
-      const idEmp = idFrom(empresa);
-      const razon_social = empresa?.razon_social ?? "";
+      const idEmp = empresa.id_empresa;
+      const razon_social = empresa.razon_social || "";
 
       const qs = new URLSearchParams({
         idEmp: String(idEmp),
@@ -110,11 +133,10 @@ const EmpresasBaja = () => {
         `${BASE_URL}/api.php?action=eliminar_empresa&${qs}`,
         { method: "GET" }
       );
-
       const data = await resp.json();
 
       if (resp.ok && (data.success || data.exito)) {
-        setEmpresas((prev) => prev.filter((e) => idFrom(e) !== idEmp));
+        setEmpresas((prev) => prev.filter((e) => e.id_empresa !== idEmp));
         setMostrarEliminar(false);
         setEmpresaAEliminar(null);
         setToast({
@@ -145,6 +167,11 @@ const EmpresasBaja = () => {
     return `${d}/${m}/${y}`;
   };
 
+  const abrirModalMotivo = (e) => {
+    setEmpresaMotivo(e);
+    setMostrarMotivo(true);
+  };
+
   return (
     <div className="emp-baja-container">
       <div className="emp-baja-glass"></div>
@@ -153,7 +180,10 @@ const EmpresasBaja = () => {
         <div className="emp-baja-titulo-container">
           <h2 className="emp-baja-titulo">Empresas Dadas de Baja</h2>
         </div>
-        <button className="emp-baja-boton-volver" onClick={() => navigate("/GestionarEmpresas")}>
+        <button
+          className="emp-baja-boton-volver"
+          onClick={() => navigate("/GestionarEmpresas")}
+        >
           ← Volver
         </button>
       </div>
@@ -184,7 +214,12 @@ const EmpresasBaja = () => {
       </div>
 
       {toast.show && (
-        <Toast tipo={toast.tipo} mensaje={toast.mensaje} onClose={closeToast} duracion={3000} />
+        <Toast
+          tipo={toast.tipo}
+          mensaje={toast.mensaje}
+          onClose={closeToast}
+          duracion={3000}
+        />
       )}
 
       {loading ? (
@@ -213,16 +248,32 @@ const EmpresasBaja = () => {
               </div>
             ) : (
               empresasFiltradas.map((e) => (
-                <div className="emp-baja-fila" key={idFrom(e)}>
-                  <div className="emp-baja-col-id">{idFrom(e)}</div>
-                  <div className="emp-baja-col-nombre">{e.razon_social || "-"}</div>
-                  <div className="emp-baja-col-fecha">{formatearFecha(e.fecha_baja)}</div>
-                  <div className="emp-baja-col-motivo">{e.motivo || "-"}</div>
+                <div className="emp-baja-fila" key={e.id_empresa}>
+                  <div className="emp-baja-col-id">{e.id_empresa}</div>
+                  <div className="emp-baja-col-nombre">{e.razon_social || ""}</div>
+                  <div className="emp-baja-col-fecha">
+                    {formatearFecha(e.fecha_baja)}
+                  </div>
+
+                  <div
+                    className={`emp-baja-col-motivo${
+                      (e.motivo || "").trim() ? " emp-baja-col-motivo--click" : ""
+                    }`}
+                    title={(e.motivo || "").trim() ? "Ver motivo completo" : ""}
+                    onClick={() => {
+                      if ((e.motivo || "").trim()) abrirModalMotivo(e);
+                    }}
+                  >
+                    {e.motivo || "-"}
+                  </div>
+
                   <div className="emp-baja-col-acciones">
                     <div className="emp-baja-iconos">
                       <FaUserCheck
                         title="Dar de alta"
-                        className={`emp-baja-icono${accionando ? " emp-baja-disabled" : ""}`}
+                        className={`emp-baja-icono${
+                          accionando ? " emp-baja-disabled" : ""
+                        }`}
                         onClick={() => {
                           if (!accionando) {
                             setEmpresaSeleccionada(e);
@@ -251,7 +302,7 @@ const EmpresasBaja = () => {
         </div>
       )}
 
-      {/* Modal DAR ALTA (misma estética) */}
+      {/* Modal DAR ALTA */}
       {mostrarConfirmacion && empresaSeleccionada && (
         <div
           className="emp-baja-modal-overlay"
@@ -264,13 +315,16 @@ const EmpresasBaja = () => {
               <FaUserCheck />
             </div>
 
-            <h3 id="modal-alta-title" className="emp-baja-modal__title emp-baja-modal__title--success">
+            <h3
+              id="modal-alta-title"
+              className="emp-baja-modal__title emp-baja-modal__title--success"
+            >
               Reactivar empresa
             </h3>
 
             <p className="emp-baja-modal__body">
               ¿Deseás dar de alta nuevamente a{" "}
-              <strong>{empresaSeleccionada.razon_social || "-"}</strong>?
+              <strong>{empresaSeleccionada.razon_social || ""}</strong>?
             </p>
 
             <div className="emp-baja-modal__actions">
@@ -289,7 +343,7 @@ const EmpresasBaja = () => {
 
               <button
                 className="emp-baja-btn emp-baja-btn--solid-success"
-                onClick={() => darAltaEmpresa(idFrom(empresaSeleccionada))}
+                onClick={() => darAltaEmpresa(empresaSeleccionada.id_empresa)}
                 disabled={accionando}
               >
                 {accionando ? "Procesando..." : "Sí, dar de alta"}
@@ -299,7 +353,7 @@ const EmpresasBaja = () => {
         </div>
       )}
 
-      {/* Modal ELIMINAR DEFINITIVAMENTE (misma estética) */}
+      {/* Modal ELIMINAR */}
       {mostrarEliminar && empresaAEliminar && (
         <div
           className="emp-baja-modal-overlay"
@@ -308,16 +362,23 @@ const EmpresasBaja = () => {
           aria-labelledby="modal-eliminar-title"
         >
           <div className="emp-baja-modal emp-baja-modal--danger">
-            <div className="emp-baja-modal__icon emp-baja-modal__icon--danger" aria-hidden="true">
+            <div
+              className="emp-baja-modal__icon emp-baja-modal__icon--danger"
+              aria-hidden="true"
+            >
               <FaTrash />
             </div>
 
-            <h3 id="modal-eliminar-title" className="emp-baja-modal__title emp-baja-modal__title--danger">
+            <h3
+              id="modal-eliminar-title"
+              className="emp-baja-modal__title emp-baja-modal__title--danger"
+            >
               Eliminar permanentemente
             </h3>
 
             <p className="emp-baja-modal__body">
-              ¿Estás seguro que deseas eliminar a la empresa <strong>{empresaAEliminar?.razon_social || "-"}</strong>?
+              ¿Estás seguro que deseas eliminar la empresa{" "}
+              <strong>{empresaAEliminar?.razon_social || ""}</strong>?
             </p>
 
             <div className="emp-baja-modal__actions">
@@ -340,6 +401,39 @@ const EmpresasBaja = () => {
                 disabled={accionando}
               >
                 {accionando ? "Eliminando..." : "Sí, eliminar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal MOTIVO COMPLETO */}
+      {mostrarMotivo && empresaMotivo && (
+        <div
+          className="emp-baja-modal-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="modal-motivo-title"
+        >
+          <div className="emp-baja-modal">
+            <h3 id="modal-motivo-title" className="emp-baja-modal__title">
+              Motivo de baja
+            </h3>
+            <p className="emp-baja-modal__body emp-baja-modal__body--scroll">
+              {empresaMotivo.motivo}
+            </p>
+            <div className="emp-baja-modal__actions">
+              <button
+                className="emp-baja-btn emp-baja-btn--ghost"
+                onClick={() => {
+                  if (!accionando) {
+                    setMostrarMotivo(false);
+                    setEmpresaMotivo(null);
+                  }
+                }}
+                disabled={accionando}
+              >
+                Cerrar
               </button>
             </div>
           </div>

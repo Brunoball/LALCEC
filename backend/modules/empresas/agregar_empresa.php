@@ -138,6 +138,30 @@ if ($idMedios_Pago !== NULL) {
 }
 
 /* =========================
+   Verificar CUIT duplicado (normalizado)
+   - Compara eliminando -, ., espacios y /
+========================= */
+$checkDup = $conn->prepare("
+    SELECT idEmp
+    FROM empresas
+    WHERE REPLACE(REPLACE(REPLACE(REPLACE(cuit,'-',''),'.',''),' ',''),'/','') = ?
+    LIMIT 1
+");
+if ($checkDup) {
+    $checkDup->bind_param("s", $soloDigitos);
+    $checkDup->execute();
+    $checkDup->store_result();
+    if ($checkDup->num_rows > 0) {
+        $checkDup->close();
+        errorYSalir("Ya existe una empresa registrada con ese CUIT/CUIL.");
+    }
+    $checkDup->close();
+} else {
+    // Si fallara el prepare por alguna razón
+    errorYSalir("No se pudo validar duplicados de CUIT: " . $conn->error);
+}
+
+/* =========================
    Insertar
 ========================= */
 $query = "INSERT INTO empresas (
@@ -168,7 +192,12 @@ $stmt->bind_param(
 if ($stmt->execute()) {
     echo json_encode(["success_message" => "Empresa agregada con éxito"]);
 } else {
-    echo json_encode(["error_message" => "Error al agregar empresa: " . $stmt->error]);
+    // Si en tu DB hay un índice único por CUIT, podría dispararse aquí:
+    if ($stmt->errno === 1062) {
+        echo json_encode(["error_message" => "Ya existe una empresa registrada con ese CUIT/CUIL."]);
+    } else {
+        echo json_encode(["error_message" => "Error al agregar empresa: " . $stmt->error]);
+    }
 }
 
 $stmt->close();

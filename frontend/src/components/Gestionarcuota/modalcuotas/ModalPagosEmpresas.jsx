@@ -1,4 +1,3 @@
-// src/components/Empresas/ModalPagosEmpresas.jsx
 import React, { useState, useEffect } from 'react';
 import { FaCoins } from 'react-icons/fa';
 import BASE_URL from '../../../config/config';
@@ -16,6 +15,18 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
   const [empresaData, setEmpresaData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState(null); // { tipo: 'error'|'success'|'info', mensaje: string }
+
+  // ⌨️ Cerrar modal con ESC
+  useEffect(() => {
+    const onKeyDown = (e) => {
+      if (e.key === "Escape" || e.key === "Esc" || e.keyCode === 27) {
+        e.preventDefault();
+        cerrarModal?.();
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [cerrarModal]);
 
   const mostrarToast = (tipo, mensaje, duracion = 3200) => {
     setToast({ tipo, mensaje, duracion });
@@ -49,7 +60,7 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
             cobrador: result.cobrador || ''
           });
 
-          // Si no hay monto/categoría mostrarmos el mismo toast que en socios
+          // Si no hay monto/categoría mostramos el mismo toast que en socios
           if (!precio || precio <= 0 || !result.categoria) {
             mostrarToast('error', 'El socio no tiene categoría asignada. No se puede registrar el pago.');
           }
@@ -120,7 +131,7 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
   }, [mesesSeleccionados, mesesPagados, fechaUnion]);
 
   const handleRealizarPago = async () => {
-    // Mismo bloqueo que en socios si no hay categoría/monto
+    // Bloqueo si no hay categoría/monto
     if (!precioMensual || precioMensual <= 0 || !empresaData?.categoria) {
       mostrarToast('error', 'El socio no tiene categoría asignada. No se puede registrar el pago.');
       return;
@@ -142,9 +153,7 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
       const result = await response.json();
 
       if (result.success) {
-        // NO cerramos el modal automáticamente → se queda en estado de éxito
         setPagoExitoso(true);
-        // Si querés notificar a la lista, podés llamar onPagoRealizado al cerrar, como en socios
       } else {
         setError(result.message || "Error al registrar el pago");
       }

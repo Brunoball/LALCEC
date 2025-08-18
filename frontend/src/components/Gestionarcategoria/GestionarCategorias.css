@@ -22,7 +22,7 @@
   min-height: 100vh;
   padding: 20px;
   font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
-  background: linear-gradient(135deg, #f5f5f5 30%, #ff6e00 70%);
+  background: linear-gradient(135deg, #cccccc 30%, #ff6e00 70%);
   box-sizing: border-box; /* Asegura que el padding no afecte las dimensiones */
 }
 
@@ -30,7 +30,7 @@
 .cat_box {
   background: white;
   padding: 20px;
-  border-radius: 12px;
+  border-radius: 20px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
   width: 100%;
   max-width: 600px;
