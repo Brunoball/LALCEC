@@ -335,7 +335,6 @@ input:-webkit-autofill { background-color: transparent !important; }
 }
 
 /* ===== (ANTIGUO) FILTROS ACTIVOS – SECCIÓN ELIMINADA/REEMPLAZADA ===== */
-/* Se reemplaza más abajo por “ESTILOS UNIFICADOS PARA FILTROS ACTIVOS” */
 
 .gessoc_empresas-list { padding: 1rem 2rem 0; }
 
@@ -372,7 +371,7 @@ input:-webkit-autofill { background-color: transparent !important; }
 }
 .gessoc_header {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr;
+  grid-template-columns: 2fr .5fr 1fr 1fr 1fr 1fr;
   background: linear-gradient(90deg, #fa7815, #ef6a14);
   border-bottom: 2px solid var(--border-color);
   position: sticky;
@@ -418,7 +417,6 @@ input:-webkit-autofill { background-color: transparent !important; }
   0%   { opacity: 0; transform: translateY(8px); }
   100% { opacity: 1; transform: translateY(0); }
 }
-
 .gessoc_row,
 .gessoc_card {
   backface-visibility: hidden;
@@ -426,13 +424,11 @@ input:-webkit-autofill { background-color: transparent !important; }
   will-change: transform, opacity;
   contain: content;
 }
-
 /* Cascada para filas de TABLA (desktop) */
 .gessoc_body .gessoc_row {
   opacity: 0;
   animation: gessoc_cascadeIn var(--cascade-duration) ease-out both;
 }
-
 /* Cascada para TARJETAS (mobile) */
 .gessoc_cards_wrapper_virtual .gessoc_card {
   opacity: 0;
@@ -570,7 +566,7 @@ input:-webkit-autofill { background-color: transparent !important; }
 /* ====== Hover/Selected ====== */
 .gessoc_row {
   display: grid;
-  grid-template-columns: 1.9fr 1fr 1fr 1fr 1fr 1fr;
+  grid-template-columns: 2fr .6fr 1fr 1fr 1fr 1fr;
   align-items: center;
   padding: 0;
   position: relative;
@@ -843,75 +839,104 @@ input:-webkit-autofill { background-color: transparent !important; }
   .gessoc_socios-mobile { display: inline; }
 
   .gessoc_box-table { display: none !important; }
-  .gessoc_cards-wrapper {
+
+  /* === Tarjetas Mobile (actualizado, coherente con empresas) === */
+  .gessoc_cards-wrapper { display: grid !important; } /* si existe la clase antigua */
+  .gessoc_cards_wrapper_virtual {
     display: grid !important;
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr; /* default en mobile */
     gap: 12px;
     margin-top: 8px;
+    padding: 8px;
+    width: 100%;
   }
 
   .gessoc_card {
     position: relative;
     background: #fff;
     border: 1px solid var(--gray-200);
-    border-radius: 14px;
+    border-radius: 12px;
     box-shadow: var(--shadow-sm);
-    padding: 12px 12px 8px 12px;
+    padding: 12px;
     overflow: hidden;
-    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
-    opacity: 1;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    opacity: 1; /* la animación de cascada la maneja arriba */
   }
   .gessoc_card:active { transform: scale(0.997); }
-  .gessoc_card.gessoc_verde { border-left: 4px solid var(--success-500); }
-  .gessoc_card.gessoc_amarillo { border-left: 4px solid var(--warning-500); }
-  .gessoc_card.gessoc_rojo { border-left: 4px solid var(--danger-500); }
 
-  .gessoc_card-status-strip { position: absolute; inset: 0 auto 0 0; width: 3px; opacity: 0; pointer-events: none; }
-  .gessoc_card.gessoc_verde .gessoc_card-status-strip { background: var(--success-500); opacity: 1; }
-  .gessoc_card.gessoc_amarillo .gessoc_card-status-strip { background: var(--warning-500); opacity: 1; }
-  .gessoc_card.gessoc_rojo .gessoc_card-status-strip { background: var(--danger-500); opacity: 1; }
+  .gessoc_card-status-strip {
+    position: absolute;
+    top: 0; left: 0; bottom: 0;
+    width: 4px;
+    opacity: 1;
+    pointer-events: none;
+  }
+  .gessoc_card.gessoc_verde   .gessoc_card-status-strip { background: var(--success-500); }
+  .gessoc_card.gessoc_amarillo .gessoc_card-status-strip { background: var(--warning-500); }
+  .gessoc_card.gessoc_rojo     .gessoc_card-status-strip { background: var(--danger-500); }
 
   .gessoc_card-header {
     display: flex; align-items: center; gap: 8px;
     justify-content: space-between;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
   }
-  .gessoc_card-title { margin: 0; font-size: 1rem; font-weight: 650; color: var(--text-primary); }
+  .gessoc_card-title { margin: 0; font-size: 1rem; font-weight: 650; color: var(--text-primary); flex: 1; }
+
   .gessoc_badge {
     font-size: 11px; font-weight: 600; border-radius: 999px;
     padding: 4px 8px; border: 1px solid transparent;
+    margin-left: 8px;
   }
-  .gessoc_badge-success { background: #10b9811a; color: #065f46; border-color: #10b98140; }
-  .gessoc_badge-warn { background: #f59e0b1a; color: #92400e; border-color: #f59e0b40; }
-  .gessoc_badge-danger { background: #ef44441a; color: #991b1b; border-color: #ef444440; }
+  .gessoc_badge-success { background: var(--success-100); color: var(--success-700); border-color: var(--success-200); }
+  .gessoc_badge-warn    { background: var(--warning-100); color: var(--warning-700); border-color: var(--warning-200); }
+  .gessoc_badge-danger  { background: var(--danger-100);  color: var(--danger-700);  border-color: var(--danger-200); }
 
   .gessoc_card-body { display: grid; gap: 6px; margin: 6px 0 10px 0; }
-  .gessoc_card-row { display: flex; justify-content: space-between; gap: 10px; }
-  .gessoc_card-label { font-size: 12px; color: var(--text-muted); }
-  .gessoc_card-value { font-size: 13px; color: var(--text-primary); text-align: right; }
+  .gessoc_card-row {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 8px;
+    align-items: center;
+  }
+  .gessoc_card-label { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+  .gessoc_card-value { font-size: 13px; color: var(--text-primary); text-align: left; word-break: break-word; }
   .gessoc_mono { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace; }
 
-  .gessoc_card-actions { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .gessoc_card-actions {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-top: auto;
+  }
   .gessoc_action-btn {
-    height: 30px; border-radius: 10px; border: 1px solid var(--gray-200);
-    background: #fff; box-shadow: var(--shadow-sm);
-    display: grid; place-items: center; font-size: 18px; color: var(--gray-700);
-    transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
-    
+    height: 36px;
+    border-radius: 8px;
+    border: 1px solid var(--gray-200);
+    background: #fff;
+    display: grid;
+    place-items: center;
+    font-size: 16px;
+    color: var(--gray-700);
+    transition: all 0.12s ease;
   }
   .gessoc_action-btn:active { transform: translateY(1px); }
-  .gessoc_action-danger { color: var(--danger-600); border-color: #fecaca; background: #fff5f5; }
+  .gessoc_action-danger { color: var(--danger-600); border-color: var(--danger-200); background: var(--danger-50); }
 
   .gessoc_down-container {
     position: fixed; bottom: 0; left: 0; right: 0;
-    height: 60px;
-    padding: 6px calc(12px + env(safe-area-inset-right)) calc(6px + env(safe-area-inset-bottom)) calc(12px + env(safe-area-inset-left));
+    height: auto;
+    padding: 10px calc(12px + env(safe-area-inset-right))
+             calc(10px + env(safe-area-inset-bottom))
+             calc(12px + env(safe-area-inset-left));
     background: rgba(255,255,255,0.96);
     backdrop-filter: saturate(150%) blur(10px);
     border-top: 1px solid var(--gray-200);
     display: flex;
     align-items: center;
     gap: 10px;
+    flex-wrap: wrap;
     z-index: 70;
   }
   .gessoc_volver-atras {
@@ -924,6 +949,9 @@ input:-webkit-autofill { background-color: transparent !important; }
     align-items: center;
     justify-content: center;
     gap: 8px;
+    background: var(--primary-50) !important;
+    border-color: var(--primary-300) !important;
+    color: var(--primary-600) !important;
   }
   .gessoc_volver-atras p { display: none !important; }
   .gessoc_volver-atras .gessoc_socio-icon-button { width: 20px; height: 20px; }
@@ -931,21 +959,40 @@ input:-webkit-autofill { background-color: transparent !important; }
   .gessoc_botones-container {
     flex: 1 1 auto;
     display: flex; justify-content: flex-end; align-items: center;
-    gap: 8px;
+    gap: 10px; flex-wrap: wrap;
   }
-  .gessoc_botones-container .gessoc_socio-button {
-    height: 44px;
-    min-width: 44px;
-    width: 44px;
-    padding: 0;
-    border-radius: 12px;
-    display: grid; place-items: center;
-    color: #fff; border: none;
-    box-shadow: var(--shadow-sm);
+  .gessoc_down-container .gessoc_socio-button {
+    width: auto !important;
+    min-width: 20px;
+    height: auto !important;
+    padding:  12px !important;
+    border-radius: 14px !important;
+    display: inline-flex !important;
+    align-items: center; justify-content: center; gap: 8px;
+    box-shadow: var(--shadow-sm) !important;
+    transform: none !important;
   }
-  .gessoc_botones-container .gessoc_socio-button p { display: none !important; }
-  .gessoc_socio-icon-button { width: 20px; height: 20px; }
-  .gessoc_icono-celular-empresa{ display: none; }
+  .gessoc_down-container .gessoc_socio-button p { display: none; }
+  .gessoc_down-container .gessoc_socio-icon-button { width: 20px; height: 20px; }
+  .gessoc_volver-atras{ color: var(--primary-500);}
+  .gessoc_down-container .gessoc_socio-button:hover { filter: brightness(0.98); }
+  .gessoc_down-container .gessoc_socio-button:active { transform: translateY(1px) !important; }
+
+  .gessoc_botones-container .gessoc_socio-button:first-child {
+    background: var(--secondary-50) !important;
+    border-color: var(--secondary-300) !important;
+    color: var(--secondary-700) !important;
+  }
+  .gessoc_botones-container .gessoc_socio-button:nth-child(2) {
+    background: var(--success-50) !important;
+    border-color: var(--success-300) !important;
+    color: var(--success-600) !important;
+  }
+  .gessoc_btn-baja-nav {
+    background: rgba(239, 68, 68, 0.08) !important;
+    border-color: rgba(239, 68, 68, 0.35) !important;
+    color: var(--danger-600) !important;
+  }
 
   .gessoc_body { min-height: unset; max-height: none; }
   .gessoc_scrollableE { min-height: unset; max-height: none; }
@@ -960,8 +1007,9 @@ input:-webkit-autofill { background-color: transparent !important; }
 
 /* XS */
 @media (max-width: 480px) {
-  .gessoc_card { border-radius: 12px; padding: 10px 10px 8px 10px; }
-  .gessoc_card-title { font-size: 0.95rem; }
+  .gessoc_cards_wrapper_virtual { grid-template-columns: 1fr; }
+  .gessoc_card { border-radius: 12px; padding: 12px; }
+  .gessoc_card-title { font-size: 1rem; }
   .gessoc_card-value { font-size: 12.5px; }
 }
 
@@ -990,77 +1038,8 @@ input:-webkit-autofill { background-color: transparent !important; }
 }
 
 /* ================================
-   MOBILE – Botones estilo "chips"
-   (como en la imagen)
-================================== */
-@media (max-width: 768px) {
-  .gessoc_down-container {
-    height: auto;
-    padding: 10px calc(12px + env(safe-area-inset-right))
-             calc(10px + env(safe-area-inset-bottom))
-             calc(12px + env(safe-area-inset-left));
-    gap: 10px;
-    flex-wrap: wrap;
-  }
-
-  .gessoc_botones-container {
-    flex: 1 1 auto;
-    justify-content: flex-end;
-    gap: 10px;
-    flex-wrap: wrap;
-  }
-
-  .gessoc_down-container .gessoc_socio-button {
-    width: auto !important;
-    min-width: 20px;
-    height: auto !important;
-    padding: 10px 14px !important;
-    border-radius: 14px !important;
-    display: inline-flex !important;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    background: #fff !important;
-    border: 1px solid var(--gray-200) !important;
-    box-shadow: var(--shadow-sm) !important;
-    transform: none !important;
-  }
-  .gessoc_down-container .gessoc_socio-button p { display: none; }
-  .gessoc_down-container .gessoc_socio-icon-button { width: 16px; height: 16px; }
-  .gessoc_down-container .gessoc_socio-button:hover { filter: brightness(0.98); }
-  .gessoc_down-container .gessoc_socio-button:active { transform: translateY(1px) !important; }
-
-  .gessoc_volver-atras {
-    background: var(--primary-50) !important;
-    border-color: var(--primary-300) !important;
-    color: var(--primary-600) !important;
-  }
-
-  .gessoc_botones-container .gessoc_socio-button:first-child {
-    background: var(--secondary-50) !important;
-    border-color: var(--secondary-300) !important;
-    color: var(--secondary-700) !important;
-  }
-
-  .gessoc_botones-container .gessoc_socio-button:nth-child(2) {
-    background: var(--success-50) !important;
-    border-color: var(--success-300) !important;
-    color: var(--success-600) !important;
-  }
-
-  .gessoc_btn-baja-nav {
-    background: var(--danger-50) !important;
-    border-color: var(--danger-300) !important;
-    color: var(--danger-600) !important;
-  }
-}
-
-/* ================================
    ESTILOS UNIFICADOS PARA FILTROS ACTIVOS
-   (modificaciones implementadas)
 ================================== */
-
-/* Contenedor principal de filtros activos (reemplaza versiones anteriores) */
 .gessoc_filtros-activos-container {
   display: flex;
   flex-wrap: nowrap;
@@ -1070,20 +1049,19 @@ input:-webkit-autofill { background-color: transparent !important; }
   align-items: center;
 }
 .gessoc_filtros-submenu-item {
-    background-color: white;
-    color: #000;
-    font-weight: 400;
-    margin: .5rem 0;
-    padding: .5rem;
-    cursor: pointer;
-    transition: all .3s;
-    border-radius: 8px;
+  background-color: white;
+  color: #000;
+  font-weight: 400;
+  margin: .5rem 0;
+  padding: .5rem;
+  cursor: pointer;
+  transition: all .3s;
+  border-radius: 8px;
 }
 .gessoc_filtros-submenu-item:hover{
   background-color: var(--primary-500);
   color: white;
 }
-/* Chip base - estilo común para todos los filtros */
 .gessoc_filter-chip {
   height: 40px;
   width: max-content;
@@ -1101,49 +1079,20 @@ input:-webkit-autofill { background-color: transparent !important; }
   font-size: 14px;
   transition: all 0.2s ease;
 }
-
-/* Etiqueta descriptiva del filtro */
-.gessoc_filter-chip-label {
-  color: var(--gray-600);
-  font-weight: 500;
-}
-
-/* Valor del filtro */
-.gessoc_filter-chip-value {
-  font-weight: 600;
-  color: var(--gray-800);
-}
-
-/* Badge circular (para letras) */
+.gessoc_filter-chip-label { color: var(--gray-600); font-weight: 500; }
+.gessoc_filter-chip-value { font-weight: 600; color: var(--gray-800); }
 .gessoc_filter-chip-badge {
-  display: inline-grid;
-  place-items: center;
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  background: var(--primary-500);
-  color: #fff;
-  font-weight: 800;
-  font-size: 14px;
-  letter-spacing: 0.02em;
+  display: inline-grid; place-items: center;
+  width: 26px; height: 26px; border-radius: 50%;
+  background: var(--primary-500); color: #fff; font-weight: 800;
+  font-size: 14px; letter-spacing: 0.02em;
   box-shadow: 0 2px 6px rgba(29, 78, 216, 0.35);
 }
-
-/* Botón para eliminar filtro (X) */
 .gessoc_filter-chip-close {
-  position: absolute;
-  top: -8px;
-  left: -8px;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  border: none;
-  background: var(--danger-500);
-  color: #fff;
-  font-size: 14px;
-  line-height: 1;
-  display: grid;
-  place-items: center;
+  position: absolute; top: -8px; left: -8px;
+  width: 22px; height: 22px; border-radius: 50%;
+  border: none; background: var(--danger-500); color: #fff;
+  font-size: 14px; line-height: 1; display: grid; place-items: center;
   cursor: pointer;
   box-shadow: 0 4px 10px rgba(239, 68, 68, 0.35);
   transition: transform 0.15s ease, filter 0.15s ease, box-shadow 0.15s ease;
@@ -1151,21 +1100,10 @@ input:-webkit-autofill { background-color: transparent !important; }
 .gessoc_filter-chip-close:hover { filter: brightness(0.95); transform: scale(1.03); }
 .gessoc_filter-chip-close:active { transform: scale(0.97); }
 
-/* Variantes de color para diferentes tipos de filtros */
-.gessoc_filter-chip--letter {
-  background: var(--primary-50);
-  border-color: var(--primary-200);
-}
-.gessoc_filter-chip--medio {
-  background: var(--secondary-50);
-  border-color: var(--secondary-200);
-}
-.gessoc_filter-chip--todos {
-  background: var(--success-50);
-  border-color: var(--success-200);
-}
+.gessoc_filter-chip--letter { background: var(--primary-50);  border-color: var(--primary-200); }
+.gessoc_filter-chip--medio  { background: var(--secondary-50); border-color: var(--secondary-200); }
+.gessoc_filter-chip--todos  { background: var(--success-50);   border-color: var(--success-200); }
 
-/* Ajustes responsive de los chips */
 @media (max-width: 768px) {
   .gessoc_filtros-activos-container { padding: 0 16px; gap: 8px; }
   .gessoc_filter-chip { padding: 7px 12px 7px 16px; font-size: 13px; }
@@ -1173,26 +1111,29 @@ input:-webkit-autofill { background-color: transparent !important; }
   .gessoc_filter-chip-close { width: 20px; height: 20px; font-size: 12px; }
 }
 
-/* ================================
-   Deprecados/antiguos (no usar)
-   (estos selectores quedan sin estilos)
-==================================*/
-.gessoc_filtro-activo,
-.gessoc_letter-chip,
-.gessoc_letter-chip-label,
-.gessoc_letter-badge,
-.gessoc_letter-chip-close,
-.gessoc_filtros-activos-chips,
-.gessoc_filtro-chip,
-.gessoc_filtro-chip-close { /* intencionalmente vacío para evitar conflictos */ }
-
-
+/* Quitar focus negro de iconos (para evitar borde al cerrar modal) */
 .gessoc_icon:focus,
 .gessoc_icon:focus-visible {
   outline: none;
-  box-shadow: none; /* por si usás sombras como focus ring */
+  box-shadow: none;
 }
 
+/* ===== SOLO ICONO + NÚMERO EN CELULAR ===== */
+/* En móvil, el contador debe mostrar únicamente el ícono y el número.
+   Asegurate en JSX de colocar el ícono dentro de .gessoc_socios-mobile junto al número. */
 @media (max-width: 768px) {
-  .gessoc_card { margin-bottom: 12px; transform: scale(.92) !important;}
+  .gessoc_socios-mobile {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 6px;
+    font-weight: 700;
+    color: var(--gray-800);
+  }
+  /* Tamaño del ícono en el contador móvil */
+  .gessoc_socios-mobile .gessoc_icono-empresa {
+    padding-left: 0;
+    width: 18px;
+    height: 18px;
+    color: var(--primary-600);
+  }
 }
