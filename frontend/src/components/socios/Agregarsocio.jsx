@@ -1,5 +1,6 @@
 // src/components/socios/AgregarSocio.jsx
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faSave,
@@ -19,6 +20,7 @@ import {
   faMoneyBillWave
 } from '@fortawesome/free-solid-svg-icons';
 import BASE_URL from '../../config/config';
+import Toast from "../global/Toast";
 import './Agregarsocio.css';
 
 const AgregarSocio = () => {
@@ -26,13 +28,24 @@ const AgregarSocio = () => {
   const [categorias, setCategorias] = useState([]);
   const [mediosPago, setMediosPago] = useState([]);
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
-  const [mensaje, setMensaje] = useState({ text: '', type: '' });
+  // ===== TOAST =====
+  const [toast, setToast] = useState({
+    visible: false,
+    tipo: 'info',
+    mensaje: '',
+    duracion: 3500
+  });
+  const showToast = (tipo, mensaje, duracion = 3500) =>
+    setToast({ visible: true, tipo, mensaje, duracion });
+  const closeToast = () => setToast(t => ({ ...t, visible: false }));
+
   const [mostrarErrores, setMostrarErrores] = useState(false);
   const [errores, setErrores] = useState({});
   const [activeField, setActiveField] = useState(null);
 
-  // Nuevo estado crudo para mostrar exactamente lo que escribe el usuario
+  // Campo crudo "Nombre y Apellido"
   const [nombreCompleto, setNombreCompleto] = useState('');
 
   const [socio, setSocio] = useState({
@@ -68,10 +81,10 @@ const AgregarSocio = () => {
           setCategorias(data.categorias);
           setMediosPago(data.mediosPago);
         } else {
-          setMensaje({ text: 'No se encontraron datos.', type: 'error' });
+          showToast('error', 'No se encontraron datos.', 4000);
         }
       } catch (error) {
-        setMensaje({ text: 'Error al obtener los datos: ' + error.message, type: 'error' });
+        showToast('error', `Error al obtener los datos: ${error.message}`, 4500);
       } finally {
         setLoading(false);
       }
@@ -92,12 +105,10 @@ const AgregarSocio = () => {
     setSocio((prev) => ({ ...prev, [name]: numericValue }));
   };
 
-  // Campo ÚNICO: Nombre y Apellido -> mantiene espacios en el input y actualiza nombre/apellido para backend
+  // Campo ÚNICO: Nombre y Apellido
   const handleFullNameChange = (e) => {
-    const raw = e.target.value.toUpperCase(); // conserva espacios tal cual
+    const raw = e.target.value.toUpperCase();
     setNombreCompleto(raw);
-
-    // Para el backend: partimos por el primer espacio, sin trim para no “comerse” los espacios que estás viendo
     const firstSpace = raw.indexOf(' ');
     let nombre = '', apellido = '';
     if (firstSpace >= 0) {
@@ -120,7 +131,10 @@ const AgregarSocio = () => {
   };
 
   const handleNextStep = () => {
-    if (!validar()) return;
+    if (!validar()) {
+      showToast('advertencia', 'Completá nombre y apellido para continuar', 3000);
+      return;
+    }
     setCurrentStep((s) => Math.min(s + 1, 3));
     setMostrarErrores(false);
   };
@@ -139,41 +153,42 @@ const AgregarSocio = () => {
 
   const handleSubmit = async (e) => {
     e?.preventDefault();
-    if (!validar()) return;
+    if (!validar()) {
+      showToast('advertencia', 'Revisá los campos obligatorios', 3200);
+      return;
+    }
 
     try {
       setLoading(true);
-
-      // (Opcional) Normalización suave solo al enviar:
-      // const nombreNorm = socio.nombre.replace(/\s+/g, ' ').trim();
-      // const apellidoNorm = socio.apellido.replace(/\s+/g, ' ').trim();
-
       const response = await fetch(`${BASE_URL}/api.php?action=agregar_socio`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...socio, tipoEntidad }),
-        // body: JSON.stringify({ ...socio, nombre: nombreNorm, apellido: apellidoNorm, tipoEntidad }),
       });
       const data = await response.json();
 
       if (data.success_message) {
-        setMensaje({ text: data.success_message, type: 'success' });
+        showToast('exito', data.success_message, 2000);
+
+        // Reset form
         setSocio({
           nombre: '', apellido: '', dni: '', localidad: '',
           domicilio: '', domicilio_2: '', numero: '',
           email: '', telefono: '', observacion: '',
           idCategoria: '', idMedios_Pago: '',
         });
-        setNombreCompleto(''); // limpiar el input crudo también
+        setNombreCompleto('');
         setCurrentStep(1);
+
+        // Redirigir después de un pequeño delay para que se vea el Toast
+        setTimeout(() => navigate('/gestionarsocios'), 2200);
       } else {
-        setMensaje({ text: data.error_message || 'Error inesperado', type: 'error' });
+        showToast('error', data.error_message || 'Error inesperado', 4200);
       }
     } catch (error) {
-      setMensaje({ text: 'Error al agregar socio: ' + error.message, type: 'error' });
+      showToast('error', `Error al agregar socio: ${error.message}`, 4500);
     } finally {
       setLoading(false);
-      setTimeout(() => setMensaje({ text: '', type: '' }), 4000);
     }
   };
 
@@ -206,13 +221,7 @@ const AgregarSocio = () => {
   return (
     <div className="add-socio-container">
       <div className="add-socio-box">
-        {/* Mensaje tipo Toast simple */}
-        {mensaje.text && (
-          <div className={`ags-msg ${mensaje.type === 'success' ? 'ags-msg--success' : 'ags-msg--error'}`}>
-            {mensaje.text}
-          </div>
-        )}
-
+        {/* Header */}
         <div className="add-header">
           <div className="add-icon-title">
             <FontAwesomeIcon icon={faUserPlus} className="add-icon" />
@@ -221,7 +230,12 @@ const AgregarSocio = () => {
               <p>Completa los datos para registrar un nuevo socio</p>
             </div>
           </div>
-          <button type="button" className="add-back-btn" onClick={() => window.history.back()} disabled={loading}>
+          <button
+            type="button"
+            className="add-back-btn"
+            onClick={() => window.history.back()}
+            disabled={loading}
+          >
             <FontAwesomeIcon icon={faArrowLeft} />
             Volver
           </button>
@@ -240,8 +254,11 @@ const AgregarSocio = () => {
             <div className="add-socio-section">
               <h3 className="add-socio-section-title">Información Básica</h3>
               <div className="add-socio-section-content">
-                {/* Campo Único: Nombre y Apellido */}
-                <div className={`add-socio-input-wrapper ${nombreCompleto || activeField === 'nombreCompleto' ? 'has-value' : ''}`}>
+                <div
+                  className={`add-socio-input-wrapper 
+                    ${nombreCompleto || activeField === 'nombreCompleto' ? 'has-value' : ''} 
+                    ${mostrarErrores && (errores.nombre || errores.apellido) ? 'has-error' : ''}`}
+                >
                   <label className="add-socio-label">
                     <FontAwesomeIcon icon={faUser} className="input-icon" />
                     Nombre y Apellido
@@ -398,8 +415,6 @@ const AgregarSocio = () => {
             <div className="add-socio-section">
               <h3 className="add-socio-section-title">Cobro y Observación</h3>
               <div className="add-socio-section-content">
-
-                {/* MEDIO DE PAGO y CATEGORÍA lado a lado */}
                 <div className="add-socio-group-row">
                   <div className={`add-socio-input-wrapper always-active ${socio.idMedios_Pago || activeField === 'idMedios_Pago' ? 'has-value' : ''}`}>
                     <label className="add-socio-label">
@@ -475,39 +490,47 @@ const AgregarSocio = () => {
             {currentStep > 1 && (
               <button
                 type="button"
-                className="add-socio-button prev-step"
+                className="add-socio-button back-btn"
                 onClick={handlePrevStep}
                 disabled={loading}
               >
-                <FontAwesomeIcon icon={faStepBack} className="add-socio-icon-button" />
-                <span className="add-socio-button-text">Anterior</span>
+                <FontAwesomeIcon icon={faStepBack} />
+                Atrás
               </button>
             )}
-
             {currentStep < 3 ? (
               <button
                 type="button"
-                className="add-socio-button next-step"
+                className="add-socio-button next-btn"
                 onClick={handleNextStep}
                 disabled={loading}
               >
-                <span className="add-socio-button-text">Siguiente</span>
-                <FontAwesomeIcon icon={faArrowRight} className="add-socio-icon-button" />
+                Siguiente
+                <FontAwesomeIcon icon={faArrowRight} />
               </button>
             ) : (
               <button
                 type="button"
-                className="add-socio-button"
+                className="add-socio-button save-btn"
                 onClick={handleSubmit}
                 disabled={loading}
               >
-                <FontAwesomeIcon icon={faSave} className="add-socio-icon-button" />
-                <span className="add-socio-button-text">{loading ? 'Guardando...' : 'Agregar Socio'}</span>
+                <FontAwesomeIcon icon={faSave} />
+                {loading ? 'Guardando...' : 'Guardar'}
               </button>
             )}
           </div>
         </form>
       </div>
+
+      {toast.visible && (
+        <Toast
+          tipo={toast.tipo}
+          mensaje={toast.mensaje}
+          duracion={toast.duracion}
+          onClose={closeToast}
+        />
+      )}
     </div>
   );
 };

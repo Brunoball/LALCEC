@@ -331,7 +331,7 @@
 /* ===== MOBILE (≤768px) ===== */
 @media (max-width: 768px) {
   .socbaj_buscador-container{ margin: 0;}
-  .socbaj_barra-superior { position: static; margin-bottom: 3rem;}
+  .socbaj_barra-superior { position: static; margin-bottom: 3rem; margin-top: 1rem;}
   .socbaj_tabla-container{ margin-top: 1rem;}
   .socbaj_titulo-container, .socbaj_buscador-container { width: 100%; min-width: auto; }
   .socbaj_boton-volver {
@@ -351,7 +351,7 @@
     display: block;              /* tarjeta */
     position: relative;
     background: #ffffff;
-    border-radius: var(--socbaj-border-radius);
+    border-radius: 12px;
     padding: 12px 12px 10px 14px;
     margin: 10px 0;
     box-shadow: var(--socbaj-shadow-sm);
@@ -368,15 +368,16 @@
     background: linear-gradient(180deg, var(--socbaj-danger), var(--socbaj-accent));
   }
 
+  /* === CAMBIO CLAVE: cada renglón pasa a flex (label izq + valor der) === */
   .socbaj_fila > div {
     width: 100%;
-    display: grid;
-    grid-template-columns: 130px 1fr;
-    align-items: start;
-    gap: 8px;
-    justify-content: flex-start;
-    padding: 6px 6px;
+    display: flex;                      /* antes: grid */
+    align-items: center;
+    justify-content: space-between;     /* valor a la derecha */
+    padding: 3px 0;
     border-bottom: 1px dashed rgba(226, 232, 240, 0.9);
+    text-align: right;                  /* el contenido del valor queda a la derecha */
+    grid-template-columns: unset;       /* limpia definición previa */
   }
 
   .socbaj_fila > div:last-child {
@@ -386,26 +387,30 @@
 
   /* Labels móviles por fila (ID, Apellido, Nombre, Fecha, Motivo, Acciones) */
   .socbaj_col-id::before      { content: "ID"; }
-  /* El 2do hijo de la fila es Apellido (porque el 1ro es ID) */
   .socbaj_fila > div.socbaj_col-nombre:nth-child(2)::before { content: "Apellido"; }
-  /* El 3er hijo de la fila es Nombre */
   .socbaj_fila > div.socbaj_col-nombre:nth-child(3)::before { content: "Nombre"; }
   .socbaj_col-fecha::before   { content: "Fecha de baja"; }
   .socbaj_col-motivo::before  { content: "Motivo"; }
   .socbaj_col-acciones::before{ content: "Acciones"; }
 
+  /* Estilo del label (pseudo-elemento) a la izquierda */
   .socbaj_fila > div::before {
     font-weight: 600;
     color: var(--socbaj-gray-700);
     opacity: 0.95;
+    min-width: 130px;                   /* ancho de etiqueta */
+    text-align: left;                   /* pegado a la izquierda */
+    margin-right: 8px;
+    flex: 0 0 auto;
   }
 
+  /* El contenido/valor de cada celda se alinea a la derecha */
   .socbaj_col-id,
   .socbaj_col-nombre,
   .socbaj_col-fecha,
   .socbaj_col-motivo,
   .socbaj_col-acciones {
-    justify-content: flex-start;
+    justify-content: flex-end;          /* empuja contenido hacia la derecha */
   }
 
   .socbaj_col-nombre,
@@ -423,12 +428,12 @@
     border-bottom: none !important;
   }
   .socbaj_iconos {
-    justify-content: flex-start;
+    justify-content: flex-end;          /* íconos a la derecha */
     gap: 12px;
     font-size: 1.4rem;
+    width: 100%;
   }
 
-  .socbaj_modal__actions { flex-direction: column; }
   .socbaj_btn { max-width: 100%; width: 100%; }
   .socbaj_sin-resultados { padding: 20px; font-size: 0.9rem; }
 }
@@ -437,9 +442,14 @@
   .socbaj_container { padding: 1rem; }
   .socbaj_titulo { font-size: 1.4rem; text-align: center; }
 
+  /* Ajuste de ancho de etiqueta en móviles muy chicos */
+  .socbaj_fila > div::before {
+    min-width: 185px;
+  }
+
+  /* por si quedó alguna traza de grid en overrides viejos */
   .socbaj_fila > div {
-    grid-template-columns: 115px 1fr;
+    max-width: 100%;
+    grid-template-columns: unset;
   }
 }
-
-

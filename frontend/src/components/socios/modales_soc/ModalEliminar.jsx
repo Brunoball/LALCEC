@@ -1,8 +1,22 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { FaTrash } from "react-icons/fa";
 import "./ModalEliminar.css";
 
 const ModalEliminar = ({ socioSeleccionado, onCancelar, onEliminar }) => {
+  // Cerrar con ESC
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        onCancelar?.();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [onCancelar]);
+
   if (!socioSeleccionado) return null;
 
   return (

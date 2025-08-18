@@ -34,6 +34,7 @@ import Toast from "../global/Toast";
 /* =====================
    Utils súper livianos
 ===================== */
+
 const getSocioId = (s) =>
   s?.id ?? s?.idSocios ?? s?.id_socio ?? s?.idSocio ?? null;
 
@@ -348,6 +349,41 @@ const GestionarSocios = () => {
     return () => window.clearTimeout(t);
   }, [filtrosActivos]);
 
+  /* ---------- Exclusividad de filtros ---------- */
+  const setExclusiveFilter = useCallback((mode, value = null) => {
+    switch (mode) {
+      case "search":
+        setBusqueda(value ?? "");
+        setFiltrosActivos({ letras: [], mediosPago: [], todos: false });
+        break;
+      case "letra":
+        setBusqueda("");
+        setFiltrosActivos({
+          letras: value ? [value] : [],
+          mediosPago: [],
+          todos: false,
+        });
+        break;
+      case "medio":
+        setBusqueda("");
+        setFiltrosActivos({
+          letras: [],
+          mediosPago: value ? [value] : [],
+          todos: false,
+        });
+        break;
+      case "todos":
+        setBusqueda("");
+        setFiltrosActivos({ letras: [], mediosPago: [], todos: true });
+        break;
+      case "none":
+      default:
+        setBusqueda("");
+        setFiltrosActivos({ letras: [], mediosPago: [], todos: false });
+        break;
+    }
+  }, []);
+
   /* ---------- Cargar desde cache ---------- */
   useEffect(() => {
     try {
@@ -369,14 +405,12 @@ const GestionarSocios = () => {
     if (refreshingRef.current) return;
     refreshingRef.current = true;
     try {
-      // cache-buster para evitar cualquier capa intermedia
       const url = `${BASE_URL}/api.php?action=todos_socios&tipo=socios&_=${Date.now()}`;
       const resp = await fetch(url, { method: "GET", cache: "no-store" });
       if (!resp.ok) throw new Error("No se pudo obtener socios (revalidate)");
       const data = await resp.json();
       const arr = Array.isArray(data.socios) ? data.socios : [];
 
-      // Actualiza estado y cache sólo si cambia el largo o si difiere algún id/prop básica
       const old = sociosRaw;
       let shouldUpdate = arr.length !== old.length;
 
@@ -389,7 +423,6 @@ const GestionarSocios = () => {
             shouldUpdate = true;
             break;
           }
-          // chequeo barato de campos visibles
           if (
             a.nombre !== b?.nombre ||
             a.apellido !== b?.apellido ||
@@ -418,7 +451,7 @@ const GestionarSocios = () => {
       setDataLoaded(true);
     } catch (e) {
       console.error(e);
-      // No tocamos estado si falla, mantenemos lo último bueno
+      // mantenemos último bueno
     } finally {
       refreshingRef.current = false;
     }
@@ -450,9 +483,7 @@ const GestionarSocios = () => {
     }
   }, [dataLoaded, sociosRaw.length]);
 
-  // Revalidá al montar (después de leer cache) para traer lo último
   useEffect(() => {
-    // pequeño defer para no bloquear el hilo en móviles
     const id = window.requestIdleCallback
       ? window.requestIdleCallback(() => revalidate())
       : setTimeout(revalidate, 0);
@@ -462,18 +493,15 @@ const GestionarSocios = () => {
     };
   }, [revalidate]);
 
-  // Revalidá al volver a la pestaña/ventana y al volver atrás (bfcache)
   useEffect(() => {
     const onFocus = () => revalidate();
     const onVis = () => {
       if (document.visibilityState === "visible") revalidate();
     };
-    const onPageShow = () => revalidate(); // cubre navegación por atrás/adelante
-
+    const onPageShow = () => revalidate();
     window.addEventListener("focus", onFocus, { passive: true });
     document.addEventListener("visibilitychange", onVis, { passive: true });
     window.addEventListener("pageshow", onPageShow, { passive: true });
-
     return () => {
       window.removeEventListener("focus", onFocus);
       document.removeEventListener("visibilitychange", onVis);
@@ -601,64 +629,53 @@ const GestionarSocios = () => {
     return out;
   }, [socios, deferredBusqueda, filtrosActivos]);
 
-  /* ---------- Handlers ---------- */
+  /* ---------- Handlers (exclusivos) ---------- */
   const handleBusquedaInputChange = useCallback(async (e) => {
     const value = e.target.value;
-    setBusqueda(value);
+    setExclusiveFilter("search", value);
+
     if (!dataLoaded) {
       window.requestIdleCallback
         ? window.requestIdleCallback(() => ensureDataLoaded())
         : ensureDataLoaded();
     } else {
-      // cada búsqueda puede ser una oportunidad de refrescar en 2º plano
       window.requestIdleCallback
         ? window.requestIdleCallback(() => revalidate())
         : setTimeout(revalidate, 0);
     }
-  }, [dataLoaded, ensureDataLoaded, revalidate]);
+  }, [dataLoaded, ensureDataLoaded, revalidate, setExclusiveFilter]);
 
   const limpiarFiltros = useCallback(() => {
-    setFiltrosActivos({ letras: [], mediosPago: [], todos: false });
-    setBusqueda("");
+    setExclusiveFilter("none");
     setFilaSeleccionada(null);
     setSocioSeleccionado(null);
-  }, []);
+  }, [setExclusiveFilter]);
 
   const handleFiltrarPorLetra = useCallback(async (letra) => {
-    setBusqueda("");
-    setFiltrosActivos((prev) => {
-      const exists = prev.letras.includes(letra);
-      const letras = exists
-        ? prev.letras.filter((l) => l !== letra)
-        : [...prev.letras, letra];
-      return { ...prev, letras, todos: false };
-    });
+    const isSame = filtrosActivos.letras?.[0] === letra;
+    setExclusiveFilter(isSame ? "none" : "letra", isSame ? null : letra);
+
     if (!dataLoaded) await ensureDataLoaded();
     else revalidate();
-  }, [dataLoaded, ensureDataLoaded, revalidate]);
+  }, [dataLoaded, ensureDataLoaded, revalidate, filtrosActivos.letras, setExclusiveFilter]);
 
   const handleFiltrarPorMedioPago = useCallback(async (medio) => {
-    setBusqueda("");
-    setFiltrosActivos((prev) => {
-      const exists = prev.mediosPago.includes(medio);
-      const mediosPago = exists
-        ? prev.mediosPago.filter((m) => m !== medio)
-        : [...prev.mediosPago, medio];
-      return { ...prev, mediosPago, todos: false };
-    });
+    const actual = filtrosActivos.mediosPago?.[0] ?? null;
+    const isSame = actual === medio;
+    setExclusiveFilter(isSame ? "none" : "medio", isSame ? null : medio);
+
     if (!dataLoaded) await ensureDataLoaded();
     else revalidate();
-  }, [dataLoaded, ensureDataLoaded, revalidate]);
+  }, [dataLoaded, ensureDataLoaded, revalidate, filtrosActivos.mediosPago, setExclusiveFilter]);
 
   const handleMostrarTodos = useCallback(async () => {
-    setBusqueda("");
-    setFiltrosActivos({ letras: [], mediosPago: [], todos: true });
+    setExclusiveFilter("todos");
     setMostrarMenuFiltros(false);
     setFilaSeleccionada(null);
     setSocioSeleccionado(null);
     await ensureDataLoaded();
     revalidate();
-  }, [ensureDataLoaded, revalidate]);
+  }, [ensureDataLoaded, revalidate, setExclusiveFilter]);
 
   const onSelect = useCallback((index, socio) => {
     setFilaSeleccionada((prev) => (prev === index ? null : index));
@@ -669,7 +686,6 @@ const GestionarSocios = () => {
     (socio) => {
       const id = getSocioId(socio);
       if (!id) return;
-      // Navegamos; al volver, pageshow/focus/visibility revalidan.
       navigate(`/editarSocio/${id}`);
     },
     [navigate]
@@ -719,7 +735,6 @@ const GestionarSocios = () => {
         });
         setMostrarModalEliminar(false);
         showToast("Socio eliminado correctamente");
-        // Revalida contra el server por si hubo side-effects
         revalidate();
       } else {
         showToast(data?.mensaje || "Error al eliminar", "error");
@@ -757,7 +772,7 @@ const GestionarSocios = () => {
           });
           setMostrarModalBaja(false);
           showToast(result?.mensaje || "Socio dado de baja");
-          revalidate(); // trae estado fresco del server
+          revalidate();
         } else {
           showToast(result?.mensaje || "No se pudo dar de baja", "error");
         }
@@ -803,7 +818,6 @@ const GestionarSocios = () => {
   const isMobile = useMediaQuery("(max-width: 900px)");
   const reducedMotion = useReducedMotion();
 
-  // Desktop: espacio para header/filtros. Mobile: navbar fija y paddings.
   const windowHeight = useWindowHeight(isMobile ? 180 : 360);
 
   const listHeight = useMemo(
@@ -811,11 +825,8 @@ const GestionarSocios = () => {
     [windowHeight, isMobile]
   );
 
-  // Tamaño fijo de los ítems para virtualización
   const desktopRowHeight = 48;
-  const mobileCardHeight = 156; // altura suficiente para 4 filas + acciones
-
-  // Overscan: en mobile lo bajamos para evitar sobre-pintado
+  const mobileCardHeight = 200;
   const overscan = isMobile ? 6 : 10;
 
   /* ---------- Contador visibles ---------- */
@@ -893,7 +904,7 @@ const GestionarSocios = () => {
               <FontAwesomeIcon
                 icon={faTimes}
                 className="gessoc_clear-search-icon"
-                onClick={() => setBusqueda("")}
+                onClick={() => setExclusiveFilter("none")}
                 title="Limpiar búsqueda"
               />
             )}
@@ -997,53 +1008,10 @@ const GestionarSocios = () => {
             )}
           </div>
 
-          {/* Resumen filtros */}
-          <div
-            className={`gessoc_filtros-activos-container ${
-              filtrosActivos.letras.length > 0 || filtrosActivos.mediosPago.length > 0
-                ? "gessoc_show"
-                : ""
-            }`}
-          >
-            {(filtrosActivos.letras.length > 0 ||
-              filtrosActivos.mediosPago.length > 0) && (
-              <div className="gessoc_filtros-activos">
-                <div className="gessoc_filtros-activos-header">
-                  <span>Filtros aplicados:</span>
-                </div>
-                <button className="gessoc_limpiar-filtros-btn" onClick={limpiarFiltros}>
-                  Limpiar todos
-                </button>
-                <div className="gessoc_filtros-activos-chips">
-                  {filtrosActivos.letras.map((letra) => (
-                    <div key={`letra-${letra}`} className="gessoc_filtro-chip">
-                      <span>Letra: {letra}</span>
-                      <FontAwesomeIcon
-                        icon={faTimes}
-                        className="gessoc_filtro-chip-close"
-                        onClick={() => handleFiltrarPorLetra(letra)}
-                      />
-                    </div>
-                  ))}
-                  {filtrosActivos.mediosPago.map((medio) => (
-                    <div key={`medio-${medio}`} className="gessoc_filtro-chip">
-                      <span>Medio: {medio}</span>
-                      <FontAwesomeIcon
-                        icon={faTimes}
-                        className="gessoc_filtro-chip-close"
-                        onClick={() => handleFiltrarPorMedioPago(medio)}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
           {error && <p className="gessoc_error">{error}</p>}
         </div>
 
-        {/* CONTADOR + LEYENDA + LISTADO */}
+        {/* CONTADOR + CHIPS DE FILTRO + LEYENDA + LISTADO */}
         <div className="gessoc_empresas-list">
           <div className="gessoc_contenedor-list-items">
             <div className="gessoc_contador-container">
@@ -1056,6 +1024,50 @@ const GestionarSocios = () => {
               <FontAwesomeIcon icon={faUsers} className="gessoc_icono-empresa" />
             </div>
 
+            {/* === NUEVOS CHIPS DE FILTROS ACTIVOS === */}
+            <div className="gessoc_filtros-activos-container">
+              {/* Filtro por letra */}
+              {filtrosActivos.letras?.length > 0 && (
+                <div className="gessoc_filter-chip gessoc_filter-chip--letter">
+                  <button
+                    className="gessoc_filter-chip-close"
+                    onClick={() => setExclusiveFilter("none")}
+                    title="Quitar filtro por letra"
+                    aria-label="Quitar filtro por letra"
+                  >
+                    ×
+                  </button>
+                  <span className="gessoc_filter-chip-label">Letra:</span>
+                  <span className="gessoc_filter-chip-badge">
+                    {filtrosActivos.letras[0]}
+                  </span>
+                </div>
+              )}
+
+              {/* Filtro por medio de pago */}
+              {filtrosActivos.mediosPago?.length > 0 && (
+                <div className="gessoc_filter-chip gessoc_filter-chip--medio">
+                  <button
+                    className="gessoc_filter-chip-close"
+                    onClick={() => setExclusiveFilter("none")}
+                    title="Quitar filtro de medio de pago"
+                    aria-label="Quitar filtro de medio de pago"
+                  >
+                    ×
+                  </button>
+                  <span className="gessoc_filter-chip-label">Medio:</span>
+                  <span className="gessoc_filter-chip-value">
+                    {filtrosActivos.mediosPago.join(", ")}
+                  </span>
+                </div>
+              )}
+
+              {/* NO renderizar chip “Mostrando todos” */}
+              {/* (se mantiene la lógica de filtrosActivos.todos para el listado) */}
+            </div>
+            {/* === FIN chips === */}
+
+            {/* Leyenda de estados */}
             <div className="gessoc_estado-pagos-container">
               <div className="gessoc_estado-indicador gessoc_al-dia">
                 <div className="gessoc_indicador-color"></div>
@@ -1077,7 +1089,7 @@ const GestionarSocios = () => {
             /* TABLA (Desktop) */
             <div className="gessoc_box-table">
               <div className="gessoc_header" style={{ width: "100%" }}>
-                <div className="gessoc_column-header">Nombre y Apellido</div>
+                <div className="gessoc_column-header">Apellido y Nombre</div>
                 <div className="gessoc_column-header">Cat/Precio</div>
                 <div className="gessoc_column-header">Medio de Pago</div>
                 <div className="gessoc_column-header">Domicilio Cobro</div>
@@ -1119,7 +1131,7 @@ const GestionarSocios = () => {
               </div>
             </div>
           ) : (
-            /* TARJETAS (Mobile) → AHORA TAMBIÉN VIRTUALIZADO */
+            /* TARJETAS (Mobile) */
             <div className="gessoc_cards_wrapper_virtual">
               {cargando ? (
                 <div className="gessoc_loading-spinner-container">

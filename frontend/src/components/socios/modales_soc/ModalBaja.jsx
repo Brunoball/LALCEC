@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { FaUserMinus } from "react-icons/fa";
 import "./ModalBaja.css";
 
@@ -22,6 +22,20 @@ const ModalBaja = ({ socio, onCancelar, onConfirmar }) => {
       setEnviando(false);
     }
   };
+
+  // 👉 Cerrar con Escape
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        onCancelar();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [onCancelar]);
 
   if (!socio) return null;
 

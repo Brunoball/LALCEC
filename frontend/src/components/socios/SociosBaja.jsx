@@ -29,6 +29,28 @@ const SociosBaja = () => {
     obtenerSociosBaja();
   }, []);
 
+  // 👇 useEffect global para cerrar modales con ESC
+  useEffect(() => {
+    const handleEsc = (e) => {
+      if (e.key === "Escape") {
+        if (mostrarConfirmacion) {
+          setMostrarConfirmacion(false);
+          setSocioSeleccionado(null);
+        }
+        if (mostrarEliminar) {
+          setMostrarEliminar(false);
+          setSocioAEliminar(null);
+        }
+        if (mostrarMotivo) {
+          setMostrarMotivo(false);
+          setSocioMotivo(null);
+        }
+      }
+    };
+    document.addEventListener("keydown", handleEsc);
+    return () => document.removeEventListener("keydown", handleEsc);
+  }, [mostrarConfirmacion, mostrarEliminar, mostrarMotivo]);
+
   const obtenerSociosBaja = async () => {
     setLoading(true);
     try {
@@ -58,7 +80,6 @@ const SociosBaja = () => {
     return socios.filter((s) => {
       const ape = (s.apellido || "").toLowerCase();
       const nom = (s.nombre || "").toLowerCase();
-      // Busca por apellido o nombre
       return ape.includes(term) || nom.includes(term) || `${ape} ${nom}`.includes(term);
     });
   }, [socios, busqueda]);
@@ -111,7 +132,6 @@ const SociosBaja = () => {
         nombre,
       }).toString();
 
-      // Endpoint espejado al de empresas (GET con querystring)
       const resp = await fetch(
         `${BASE_URL}/api.php?action=eliminar_socio&${qs}`,
         { method: "GET" }
@@ -213,7 +233,6 @@ const SociosBaja = () => {
             Mostrando <strong>{sociosFiltrados.length}</strong> socios
           </div>
 
-          {/* ======= HEADER con Apellido y Nombre separados ======= */}
           <div className="socbaj_tabla-header-container">
             <div className="socbaj_tabla-header">
               <div className="socbaj_col-id">ID</div>
@@ -225,7 +244,6 @@ const SociosBaja = () => {
             </div>
           </div>
 
-          {/* ======= BODY con Apellido y Nombre separados ======= */}
           <div className="socbaj_tabla-body">
             {sociosFiltrados.length === 0 ? (
               <div className="socbaj_sin-resultados">
