@@ -613,10 +613,72 @@ input:-webkit-autofill { background-color: transparent !important; }
   display: inline-flex;
   align-items: center;
 }
+
+/* Contador + mini tarjeta a la derecha */
+.emp_left-inline{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: nowrap;
+  min-width: 0;
+}
+
+/* Mini tarjeta de filtro */
+.emp_chip-mini{
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border: 1.5px solid var(--primary-400);
+  border-radius: 9999px;
+  background: #fff;
+  box-shadow: var(--shadow-sm);
+  white-space: nowrap;
+  max-width: 320px;
+  overflow: hidden;
+}
+.emp_chip-mini-text{
+  font-size: 0.85rem;
+  color: var(--text-primary);
+}
+.emp_chip-mini-more{
+  padding: 0 6px;
+  border-radius: 9999px;
+  border: 1px solid var(--primary-200);
+  background: var(--primary-50);
+  color: var(--primary-700);
+  font-weight: 600;
+  font-size: 0.75rem;
+}
+.emp_chip-mini-close{
+  width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  border: none;
+  background: transparent;
+  color: var(--danger-600);
+  border-radius: 50%;
+  cursor: pointer;
+  font-weight: 700;
+  line-height: 1;
+  transition: transform .15s ease, background-color .15s ease, color .15s ease;
+}
+.emp_chip-mini-close:hover{
+  transform: scale(1.1);
+  background: #fee2e2;
+}
+
+/* Leyenda de estados a la derecha */
 .emp_socios-desktop { display: inline; }
 .emp_socios-mobile { display: none; }
 
-.emp_estado-pagos-container { display: flex; flex-wrap: wrap; align-content: flex-end; gap: 1rem; }
+.emp_estado-pagos-container {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-end;
+  gap: 1rem;
+}
 .emp_estado-indicador {
   height: fit-content;
   display: flex;
@@ -633,6 +695,10 @@ input:-webkit-autofill { background-color: transparent !important; }
 .emp_debe-1-2 .emp_indicador-color { background-color: var(--warning-500); }
 .emp_debe-3-mas .emp_indicador-color { background-color: var(--danger-500); }
 
+/* >>> NUEVO: textos de leyenda responsivos */
+.emp_legend-desktop { display: inline; }
+.emp_legend-mobile  { display: none; }
+
 /* ================================
    IMPORTANTES PARA NO ROMPER WEB
 ==================================*/
@@ -647,7 +713,9 @@ input:-webkit-autofill { background-color: transparent !important; }
 
 /* ================================
    MOBILE — tarjetas + navbar fija
+   (Título arriba; debajo buscador + filtros lado a lado)
 ==================================*/
+
 @media (max-width: 768px) {
 
   .emp_empresa-box {
@@ -657,28 +725,56 @@ input:-webkit-autofill { background-color: transparent !important; }
     flex-direction: column;
   }
 
+  /* Header como grid con 2 filas:
+     1) title
+     2) search | filters  */
   .emp_front-row-emp {
     position: sticky;
     top: 0;
     z-index: 80;
     padding: max(12px, env(safe-area-inset-top)) 16px 12px;
     gap: 10px;
+
+    display: grid;
+    grid-template-columns: 1fr 1fr;     /* ← ambos del mismo ancho */
+    grid-template-areas:
+      "title title"
+      "search filters";
+    align-items: center;
   }
-  .emp_empresa-title { font-size: 1.3rem; margin: 0; flex: 1 0 auto; }
 
-  .emp_empresas-list {
-    flex: 1 1 auto;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    padding: 8px 12px 90px;
+  /* Asignación de áreas sin tocar el JSX */
+  .emp_front-row-emp > .emp_empresa-title { grid-area: title; }
+  .emp_front-row-emp > .emp_search-input-container { grid-area: search; }
+  .emp_front-row-emp > .emp_filtros-container { grid-area: filters; }
+
+  .emp_empresa-title {
+    font-size: 1.3rem;
+    margin: 0;
+    justify-content: center;  /* centrado en mobile */
+    flex: initial;
   }
 
-  .emp_search-input-container { width: 100%; max-width: none; order: 3; }
-  .emp_search-input { padding: 0.7rem 2.5rem 0.7rem 0.9rem; font-size: 0.95rem; }
-
-  .emp_filtros-container { width: 100%; order: 4; position: relative; }
-  .emp_filtros-button {
+  /* Eliminar órdenes previos en mobile y ajustar anchos */
+  .emp_search-input-container {
     width: 100%;
+    max-width: none;
+    order: initial !important;
+  }
+  .emp_search-input {
+    padding: 0.7rem 2.5rem 0.7rem 0.9rem;
+    font-size: 0.95rem;
+  }
+
+  .emp_filtros-container {
+    width: 100%;                 /* ← ocupa el 50% del grid */
+    order: initial !important;
+    position: relative;
+    justify-self: stretch;       /* ← se estira en su celda */
+    display: flex;
+  }
+  .emp_filtros-button {
+    width: 100%;                 /* ← botón del mismo ancho que el buscador */
     justify-content: center;
     border: 1px dashed rgba(255,255,255,0.45);
     background: rgba(255,255,255,0.18);
@@ -687,11 +783,11 @@ input:-webkit-autofill { background-color: transparent !important; }
   .emp_filtros-menu {
     position: absolute;
     top: calc(100% + 8px);
-    left: -16px;
-    right: -16px;
+    right: 0;                    /* anclar al botón */
+    left: auto;
     margin: 0;
     border-radius: 12px;
-    width: auto;
+    width: min(90vw, 420px);     /* ancho cómodo en mobile */
     box-shadow: 0 10px 30px rgba(0,0,0,0.15);
     z-index: 1000;
     max-height: 60vh;
@@ -713,6 +809,13 @@ input:-webkit-autofill { background-color: transparent !important; }
   .emp_filtros-activos-chips { grid-column: 1 / -1; gap: 6px; }
   .emp_filtro-chip { padding: 4px 9px; font-size: 12px; }
 
+  .emp_empresas-list {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 8px 12px 90px;
+  }
+
   .emp_contenedor-list-items {
     height: auto;
     gap: 8px;
@@ -724,6 +827,12 @@ input:-webkit-autofill { background-color: transparent !important; }
     margin-bottom: 6px;
     padding-bottom: 2px;
   }
+
+  .emp_left-inline{
+    flex: 1 1 auto;
+    gap: 8px;
+  }
+
   .emp_contador-container {
     flex: 0 0 auto;
     display: inline-flex;
@@ -739,6 +848,16 @@ input:-webkit-autofill { background-color: transparent !important; }
     color: var(--primary-500);
     padding-left: 6px;
   }
+
+  /* Mini tarjeta responsive */
+  .emp_chip-mini{
+    padding: 4px 8px;
+    gap: 6px;
+    max-width: 70vw;
+  }
+  .emp_chip-mini-text{ font-size: 0.8rem; }
+  .emp_chip-mini-more{ font-size: 0.7rem; }
+  .emp_chip-mini-close{ width: 16px; height: 16px; }
 
   .emp_estado-pagos-container {
     flex: 0 0 auto;
@@ -758,6 +877,10 @@ input:-webkit-autofill { background-color: transparent !important; }
   .emp_socios-desktop { display: none; }
   .emp_socios-mobile { display: inline; }
 
+  /* >>> NUEVO: textos de leyenda responsivos en mobile */
+  .emp_legend-desktop { display: none; }
+  .emp_legend-mobile  { display: inline; }
+
   /* Ocultar TABLA y mostrar TARJETAS */
   .emp_box-table { display: none !important; }
   .emp_cards-wrapper {
@@ -776,7 +899,7 @@ input:-webkit-autofill { background-color: transparent !important; }
     padding: 12px 12px 8px 12px;
     overflow: hidden;
     transition: transform 0.15s ease, box-shadow 0.15s ease;
-    opacity: 1; /* valor por defecto, será sobrescrito en la cascada */
+    opacity: 1;
   }
   .emp_card:active { transform: scale(0.997); }
   .emp_card.emp_verde { border-left: 4px solid var(--success-500); }
@@ -828,8 +951,7 @@ input:-webkit-autofill { background-color: transparent !important; }
     animation: emp_cascadeFadeUp 0.45s ease-out forwards;
   }
 
-  /* ====== BOTONERA INFERIOR (MOBILE)  ======
-     Estética tipo “chip” redondeado como el screenshot */
+  /* ====== BOTONERA INFERIOR (MOBILE)  ====== */
   .emp_down-container {
     position: fixed; bottom: 0; left: 0; right: 0;
     height: 64px;
@@ -843,7 +965,7 @@ input:-webkit-autofill { background-color: transparent !important; }
     z-index: 70;
   }
 
-  /* Botón “Volver” (neutral, ícono naranja) */
+  /* Botón “Volver” */
   .emp_volver-atras {
     flex: 0 0 auto;
     width: 44px;
@@ -864,14 +986,12 @@ input:-webkit-autofill { background-color: transparent !important; }
   }
   .emp_volver-atras:active { transform: scale(0.98); }
 
-  /* Contenedor de los tres chips de acción */
   .emp_botones-container {
     flex: 1 1 auto;
     display: flex; justify-content: flex-end; align-items: center;
     gap: 10px;
   }
 
-  /* Base común de cada chip */
   .emp_botones-container .emp_socio-button {
     height: 44px;
     width: 44px;
@@ -885,13 +1005,11 @@ input:-webkit-autofill { background-color: transparent !important; }
       0 1px 2px rgba(16, 24, 40, 0.06),
       0 2px 6px rgba(16, 24, 40, 0.06);
     transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease, border-color 0.12s ease;
-    color: #334155; /* se sobrescribe en cada variante */
+    color: #334155;
   }
   .emp_botones-container .emp_socio-button p { display: none !important; }
   .emp_socio-icon-button { width: 20px; height: 20px; }
 
-  /* Variantes por orden: 
-     1) Agregar (azul), 2) Excel (verde), 3) Baja (rojo) */
   .emp_botones-container .emp_socio-button:nth-child(1) {
     border-color: rgba(59, 130, 246, 0.35);
     background: rgba(59, 130, 246, 0.08);
@@ -909,7 +1027,6 @@ input:-webkit-autofill { background-color: transparent !important; }
     color: var(--danger-600);
   }
 
-  /* énfasis al tocar */
   .emp_botones-container .emp_socio-button:active {
     transform: scale(0.98);
     box-shadow:
@@ -918,7 +1035,6 @@ input:-webkit-autofill { background-color: transparent !important; }
     background: #fff;
   }
 
-  /* Asegurar que los gradientes de desktop NO apliquen en mobile */
   .emp_botones-container .emp_socio-button,
   .emp_volver-atras {
     background-image: none !important;
@@ -936,6 +1052,8 @@ input:-webkit-autofill { background-color: transparent !important; }
     justify-content: center;
   }
 }
+
+
 
 /* XS */
 @media (max-width: 480px) {

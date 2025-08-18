@@ -1112,6 +1112,7 @@ input:-webkit-autofill { background-color: transparent !important; }
 }
 
 /* Quitar focus negro de iconos (para evitar borde al cerrar modal) */
+
 .gessoc_icon:focus,
 .gessoc_icon:focus-visible {
   outline: none;
