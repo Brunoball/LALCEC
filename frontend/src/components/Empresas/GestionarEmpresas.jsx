@@ -79,6 +79,19 @@ const useReducedMotion = () => {
 const getEmpresaId = (e) =>
   e?.id ?? e?.idEmp ?? e?.id_empresa ?? e?.idEmpresa ?? null;
 
+/* ===== Abreviador genérico SOLO para tarjetas ===== */
+const shortMedio = (label = "") => {
+  const raw = String(label).trim();
+  if (!raw) return "";
+  const words = raw.split(/[\s\-_]+/).filter(Boolean);
+  if (words.length > 1) {
+    const initials = words.map(w => w[0]).join("").slice(0, 6);
+    if (initials.length >= 2) return initials.toLowerCase();
+  }
+  if (raw.length <= 8) return raw.toLowerCase();
+  return raw.slice(0, 7).toLowerCase();
+};
+
 /* ================================
    Subcomponentes memoizados
 ================================ */
@@ -149,7 +162,10 @@ const Row = memo(function Row({
       <div className="emp_column emp_column-iva">{empresa?.descripcion_iva}</div>
       <div className="emp_column emp_column-dom">{empresa?.domicilio_2}</div>
       <div className="emp_column emp_column-obs">{empresa?.observacion}</div>
+
+      {/* Medio de Pago: SIEMPRE COMPLETO en la tabla (igual web y mobile) */}
       <div className="emp_column emp_column-medio">{empresa?.medio_pago}</div>
+
       <div className="emp_column emp_icons-column">
         {selected && (
           <div className="emp_icons-container">
@@ -283,7 +299,8 @@ const Card = memo(function Card({
         )}
         <div className="emp_card-row">
           <span className="emp_card-label">Medio de Pago</span>
-          <span className="emp_card-value">{empresa?.medio_pago}</span>
+          {/* En tarjeta: abreviado dinámico */}
+          <span className="emp_card-value">{shortMedio(empresa?.medio_pago)}</span>
         </div>
       </div>
 
@@ -413,8 +430,7 @@ const GestionarEmpresas = () => {
     const savedSearch = localStorage.getItem("empresasSearchTerm");
     if (savedFilters) setFiltrosActivos(safeJSON.parse(savedFilters, filtrosActivos));
     if (savedSearch) setBusqueda(savedSearch);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, []); // eslint-disable-line
 
   // Toast post-acción
   useEffect(() => {
@@ -604,16 +620,17 @@ const GestionarEmpresas = () => {
     localStorage.setItem("empresasFilters", safeJSON.stringify(next));
   }, []);
 
+  /* === Selección ÚNICA: o 1 letra o 1 medio, nunca ambos === */
   const handleFiltrarPorLetra = useCallback((letra) => {
     startTransition(() => {
       setFiltrosActivos((prev) => {
-        const exists = prev.letras.includes(letra);
-        const newLetras = exists ? prev.letras.filter((l) => l !== letra) : [...prev.letras, letra];
+        const yaSeleccionada = prev.letras[0] === letra;
+        const newLetras = yaSeleccionada ? [] : [letra];
         const next = {
-          ...prev,
           letras: newLetras,
+          mediosPago: [],
           todos: false,
-          hasFilters: newLetras.length > 0 || prev.mediosPago.length > 0,
+          hasFilters: newLetras.length > 0,
         };
         persistFilters(next);
         return next;
@@ -624,13 +641,13 @@ const GestionarEmpresas = () => {
   const handleFiltrarPorMedioPago = useCallback((medio) => {
     startTransition(() => {
       setFiltrosActivos((prev) => {
-        const exists = prev.mediosPago.includes(medio);
-        const newMedios = exists ? prev.mediosPago.filter((m) => m !== medio) : [...prev.mediosPago, medio];
+        const yaSeleccionado = prev.mediosPago[0] === medio;
+        const newMedios = yaSeleccionado ? [] : [medio];
         const next = {
-          ...prev,
+          letras: [],
           mediosPago: newMedios,
           todos: false,
-          hasFilters: newMedios.length > 0 || prev.letras.length > 0,
+          hasFilters: newMedios.length > 0,
         };
         persistFilters(next);
         return next;
@@ -643,10 +660,10 @@ const GestionarEmpresas = () => {
       setFiltrosActivos((prev) => {
         const newLetras = prev.letras.filter((l) => l !== letra);
         const next = {
-          ...prev,
           letras: newLetras,
+          mediosPago: [],
           todos: false,
-          hasFilters: newLetras.length > 0 || prev.mediosPago.length > 0,
+          hasFilters: newLetras.length > 0,
         };
         persistFilters(next);
         return next;
@@ -659,10 +676,10 @@ const GestionarEmpresas = () => {
       setFiltrosActivos((prev) => {
         const newMedios = prev.mediosPago.filter((m) => m !== medio);
         const next = {
-          ...prev,
+          letras: [],
           mediosPago: newMedios,
           todos: false,
-          hasFilters: newMedios.length > 0 || prev.letras.length > 0,
+          hasFilters: newMedios.length > 0,
         };
         persistFilters(next);
         return next;
@@ -924,16 +941,16 @@ const GestionarEmpresas = () => {
   }, [empresasFiltradas, visibleCount]);
 
   /* ========= Mini chip junto al contador ========= */
-  const totalChipsActivos = filtrosActivos.letras.length + filtrosActivos.mediosPago.length;
   const firstLetter = filtrosActivos.letras[0];
   const firstMedio = filtrosActivos.mediosPago[0];
-  const firstChipType = firstLetter ? "letra" : firstMedio ? "medio" : null;
-  const firstChipLabel = firstLetter ? `Letra: ${firstLetter}` : firstMedio ? `Medio: ${firstMedio}` : null;
-  const restCount = Math.max(0, totalChipsActivos - 1);
+
+  // Desktop: "Letra: X" o "Medio: X" | Mobile: "X"
+  const chipValue = firstLetter || firstMedio || null;
+  const chipKind = firstLetter ? "Letra" : firstMedio ? "Medio" : "";
 
   const removeFirstChip = () => {
-    if (firstChipType === "letra") eliminarFiltroLetra(firstLetter);
-    if (firstChipType === "medio") eliminarFiltroMedioPago(firstMedio);
+    if (firstLetter) eliminarFiltroLetra(firstLetter);
+    if (firstMedio) eliminarFiltroMedioPago(firstMedio);
   };
 
   return (
@@ -941,10 +958,10 @@ const GestionarEmpresas = () => {
       <div className="emp_empresa-box">
         {/* HEADER */}
         <div className="emp_front-row-emp">
-          {/* Título (área: title) */}
+          {/* Título */}
           <span className="emp_empresa-title emp_title-wrap">Gestionar Empresas</span>
 
-          {/* Búsqueda (área: search) */}
+          {/* Búsqueda */}
           <div className="emp_search-input-container emp_search-wrap">
             <input
               id="search"
@@ -969,7 +986,7 @@ const GestionarEmpresas = () => {
             </button>
           </div>
 
-          {/* Filtros (área: filters) */}
+          {/* Filtros */}
           <div className="emp_filtros-container emp_filters-wrap" ref={filtrosRef}>
             <button className="emp_filtros-button" onClick={toggleMenuFiltros}>
               <FontAwesomeIcon icon={faFilter} className="emp_icon-button" />
@@ -1025,13 +1042,15 @@ const GestionarEmpresas = () => {
                   <div className="emp_filtros-submenu">
                     {mediosDePago.map((medio) => {
                       const label = medio.Medio_Pago || String(medio);
+                      const isActive = filtrosActivos.mediosPago.includes(label);
                       return (
                         <div
                           key={label}
-                          className={`emp_filtros-submenu-item ${filtrosActivos.mediosPago.includes(label) ? "emp_active" : ""}`}
+                          className={`emp_filtros-submenu-item ${isActive ? "emp_active" : ""}`}
                           onClick={() => aplicarFiltroTransferencia(label)}
                           title={`Filtrar por ${label}`}
                         >
+                          {/* IGUAL en web y mobile: texto completo */}
                           {label}
                         </div>
                       );
@@ -1057,10 +1076,10 @@ const GestionarEmpresas = () => {
 
         {errorMessage && <div className="emp_error-message-emp">{errorMessage}</div>}
 
-        {/* CONTADOR + CHIP MINI + LEYENDA + LISTADO */}
+        {/* CONTADOR + CHIP + LISTADO */}
         <div className="emp_empresas-list">
           <div className="emp_contenedor-list-items">
-            {/* Contador + mini chip pegada a la derecha */}
+            {/* Contador + chip */}
             <div className="emp_left-inline">
               <div className="emp_contador-container">
                 <span className="emp_socios-desktop">Cant empresas: {cantidadVisibles}</span>
@@ -1068,10 +1087,17 @@ const GestionarEmpresas = () => {
                 <FontAwesomeIcon icon={faBuilding} className="emp_icono-empresa" />
               </div>
 
-              {firstChipLabel && (
+              {chipValue && (
                 <div className="emp_chip-mini" title="Filtro activo">
-                  <span className="emp_chip-mini-text">{firstChipLabel}</span>
-                  {restCount > 0 && <span className="emp_chip-mini-more">+{restCount}</span>}
+                  {/* Desktop: muestra prefijo + valor */}
+                  <span className="emp_chip-mini-text emp_socios-desktop">
+                    {chipKind}: {chipValue}
+                  </span>
+                  {/* Mobile: solo el valor (sin 'Letra:' / 'Medio:') */}
+                  <span className="emp_chip-mini-text emp_socios-mobile">
+                    {chipValue}
+                  </span>
+
                   <button
                     className="emp_chip-mini-close"
                     onClick={removeFirstChip}
@@ -1084,22 +1110,19 @@ const GestionarEmpresas = () => {
               )}
             </div>
 
-            {/* Leyenda de estados a la derecha */}
+            {/* Leyenda estados */}
             <div className="emp_estado-pagos-container">
               <div className="emp_estado-indicador emp_al-dia">
                 <div className="emp_indicador-color"></div>
-                <span className="emp_legend-desktop">Al día</span>
-                <span className="emp_legend-mobile">Al día</span>
+                <span>Al día</span>
               </div>
               <div className="emp_estado-indicador emp_debe-1-2">
                 <div className="emp_indicador-color"></div>
-                <span className="emp_legend-desktop">Debe 1-2 meses</span>
-                <span className="emp_legend-mobile">1-2</span>
+                <span>Debe 1-2 meses</span>
               </div>
               <div className="emp_estado-indicador emp_debe-3-mas">
                 <div className="emp_indicador-color"></div>
-                <span className="emp_legend-desktop">Debe 3+ meses</span>
-                <span className="emp_legend-mobile">3+</span>
+                <span>Debe 3+</span>
               </div>
             </div>
           </div>
@@ -1160,7 +1183,7 @@ const GestionarEmpresas = () => {
             </div>
           </div>
 
-          {/* ======= TARJETAS (Mobile) ======= */}
+          {/* ======= TARJETAS ======= */}
           <div className={`emp_cards-wrapper ${animacionCascada ? "emp_cascade-animation" : ""}`}>
             {cargando ? (
               <div className="emp_no-data-message emp_no-data-mobile">
