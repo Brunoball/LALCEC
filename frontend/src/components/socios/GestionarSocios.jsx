@@ -826,7 +826,7 @@ const GestionarSocios = () => {
   );
 
   const desktopRowHeight = 48;
-  const mobileCardHeight = 200;
+  const mobileCardHeight = 226;
   const overscan = isMobile ? 6 : 10;
 
   /* ---------- Contador visibles ---------- */
@@ -1019,9 +1019,9 @@ const GestionarSocios = () => {
                 Cant socios: {cantidadVisibles}
               </span>
               <span className="gessoc_socios-totales gessoc_socios-mobile">
-                Soc: {cantidadVisibles}
+                <FontAwesomeIcon icon={faUsers} className="gessoc_icono-empresa" />
+                {cantidadVisibles}
               </span>
-              <FontAwesomeIcon icon={faUsers} className="gessoc_icono-empresa" />
             </div>
 
             {/* === NUEVOS CHIPS DE FILTROS ACTIVOS === */}

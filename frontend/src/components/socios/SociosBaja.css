@@ -173,8 +173,6 @@
 .socbaj_col-id { min-width: 60px; max-width: 60px; }
 .socbaj_col-nombre { min-width: 180px; }
 .socbaj_col-fecha { min-width: 170px; }
-.socbaj_col-motivo { justify-content: start !important; min-width: 180px; }
-.socbaj_col-acciones { min-width: 120px; max-width: 120px; }
 
 .socbaj_iconos { display: flex; justify-content: center; align-items: center; gap: 6px; font-size: 1.3rem; }
 
