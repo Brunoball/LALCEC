@@ -342,13 +342,13 @@
   }
 
   .add-emp-header {
-    padding: .9rem 1rem .8rem;
+    padding: 2rem;
     border-radius: 0;
   }
 
   .add-emp-icon { font-size: 1.5rem; }
   .add-emp-icon-title h1 { font-size: 1.1rem; }
-  .add-emp-icon-title p { font-size: .85rem; }
+  .add-emp-icon-title p { display: none; }
 
   .add-emp-box { min-height: 100vh; }
 
@@ -429,7 +429,7 @@
 
 /* ====== SMALL MOBILE (≤ 576px) ====== */
 @media (max-width: 576px) {
-  .add-emp-header { padding: 1rem; }
+  .add-emp-header { padding: 2rem; }
   .add-emp-icon-title h1 { font-size: 1.05rem; }
   .add-emp-icon-title p { font-size: .8rem; }
 

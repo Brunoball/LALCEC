@@ -13,7 +13,7 @@ import {
   faComment,
   faTags,
   faMoneyBillWave,
-  faFileInvoiceDollar
+  faFileInvoiceDollar,
 } from "@fortawesome/free-solid-svg-icons";
 import { useNavigate } from "react-router-dom";
 import BASE_URL from "../../config/config";
@@ -42,18 +42,18 @@ const AgregarEmpresa = () => {
 
   const [toast, setToast] = useState({ show: false, message: "", type: "info" });
 
-  // UI state (igual al flujo de Socio)
+  // UI state
   const [currentStep, setCurrentStep] = useState(1);
   const [activeField, setActiveField] = useState(null);
-  const [mostrarErrores, setMostrarErrores] = useState(false);
-  const [errores, setErrores] = useState({});
   const formRef = useRef(null);
 
   // ===== Fetch listas =====
   useEffect(() => {
     const fetchDatos = async () => {
       try {
-        const response = await fetch(`${BASE_URL}/api.php?action=obtener_datos_empresas`);
+        const response = await fetch(
+          `${BASE_URL}/api.php?action=obtener_datos_empresas`
+        );
         const data = await response.json();
         if (data.categorias && data.mediosPago && data.condicionesIVA) {
           setCategorias(data.categorias);
@@ -71,7 +71,7 @@ const AgregarEmpresa = () => {
 
   const showToast = (message, type = "info") => {
     setToast({ show: true, message, type });
-    setTimeout(() => setToast(prev => ({ ...prev, show: false })), 3000);
+    setTimeout(() => setToast((prev) => ({ ...prev, show: false })), 3000);
   };
 
   // ===== Handlers UI =====
@@ -80,14 +80,16 @@ const AgregarEmpresa = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    // Mantener tu comportamiento actual (sin forzar mayúsculas aquí)
     setEmpresa((prev) => ({ ...prev, [name]: value }));
   };
 
-  // ======== Validaciones frontend (tus mismas reglas) ========
+  // ======== Validaciones frontend ========
   const isValidCuit = (val) => {
     const v = (val || "").trim();
-    return /^\d{11}$/.test(v.replace(/-/g, "")) || /^\d{2}-\d{8}-\d{1}$/.test(v);
+    return (
+      /^\d{11}$/.test(v.replace(/-/g, "")) ||
+      /^\d{2}-\d{8}-\d{1}$/.test(v)
+    );
   };
 
   const isValidPhone = (val) => {
@@ -108,49 +110,116 @@ const AgregarEmpresa = () => {
     return /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9.\s]+$/.test(val);
   };
 
-  // ===== Validación de paso + global =====
+  // ===== Validación por paso (muestra toast en caso de fallas) =====
   const validarPasoActual = () => {
-    const errs = {};
     if (currentStep === 1) {
-      if (!empresa.razon_social.trim()) errs.razon_social = "La Razón Social es obligatoria";
-      if (!isValidCuit(empresa.cuit)) errs.cuit = "CUIL/CUIT inválido";
+      if (!empresa.razon_social.trim()) {
+        showToast("La Razón Social es obligatoria", "error");
+        return false;
+      }
+      if (!isValidCuit(empresa.cuit)) {
+        showToast("CUIL/CUIT inválido (use 11 dígitos o XX-XXXXXXXX-X)", "error");
+        return false;
+      }
     }
+
     if (currentStep === 2) {
-      if (!isValidPhone(empresa.telefono)) errs.telefono = "Teléfono inválido";
-      if (!isValidEmail(empresa.email)) errs.email = "Email inválido";
-      if (!isValidText(empresa.domicilio, 40)) errs.domicilio = "Domicilio inválido";
-      if (!isValidText(empresa.domicilio_2, 40)) errs.domicilio_2 = "Domicilio cobro inválido";
+      if (!isValidPhone(empresa.telefono)) {
+        showToast(
+          "Teléfono inválido (solo números, +, -, espacios, () y máx. 20)",
+          "error"
+        );
+        return false;
+      }
+      if (!isValidEmail(empresa.email)) {
+        showToast("Email inválido o demasiado largo (máx. 60)", "error");
+        return false;
+      }
+      if (!isValidText(empresa.domicilio, 40)) {
+        showToast(
+          "Domicilio inválido (letras/números/puntos/espacios; máx. 40)",
+          "error"
+        );
+        return false;
+      }
+      if (!isValidText(empresa.domicilio_2, 40)) {
+        showToast(
+          "Domicilio de cobro inválido (letras/números/puntos/espacios; máx. 40)",
+          "error"
+        );
+        return false;
+      }
     }
+
     if (currentStep === 3) {
-      if (!isValidText(empresa.observacion, 60)) errs.observacion = "Observación inválida";
-      // medios pago/categoría son opcionales (mantengo tu lógica)
+      if (!isValidText(empresa.observacion, 60)) {
+        showToast(
+          "Observación inválida (letras/números/puntos/espacios; máx. 60)",
+          "error"
+        );
+        return false;
+      }
+      // medios pago / categoría opcionales
     }
-    setErrores(errs);
-    setMostrarErrores(true);
-    return Object.keys(errs).length === 0;
+
+    return true;
   };
 
+  // ===== Validación global (ya usaba toasts) =====
   const validarTodo = () => {
-    // Usa la misma validación final que tu submit original
-    if (!empresa.razon_social.trim()) { showToast("La Razón Social es obligatoria.", "error"); return false; }
-    if (!isValidCuit(empresa.cuit)) { showToast("El CUIL/CUIT debe ser 11 dígitos o con formato XX-XXXXXXXX-X.", "error"); return false; }
-    if (!isValidPhone(empresa.telefono)) { showToast("El teléfono contiene caracteres inválidos o supera 20 caracteres.", "error"); return false; }
-    if (!isValidEmail(empresa.email)) { showToast("El email no tiene un formato válido o supera 60 caracteres.", "error"); return false; }
-    if (!isValidText(empresa.domicilio, 40)) { showToast("Domicilio inválido (solo letras, números, puntos y espacios; máx. 40).", "error"); return false; }
-    if (!isValidText(empresa.domicilio_2, 40)) { showToast("Domicilio de cobro inválido (solo letras, números, puntos y espacios; máx. 40).", "error"); return false; }
-    if (!isValidText(empresa.observacion, 60)) { showToast("Observación inválida (solo letras, números, puntos y espacios; máx. 60).", "error"); return false; }
+    if (!empresa.razon_social.trim()) {
+      showToast("La Razón Social es obligatoria.", "error");
+      return false;
+    }
+    if (!isValidCuit(empresa.cuit)) {
+      showToast(
+        "El CUIL/CUIT debe ser 11 dígitos o con formato XX-XXXXXXXX-X.",
+        "error"
+      );
+      return false;
+    }
+    if (!isValidPhone(empresa.telefono)) {
+      showToast(
+        "El teléfono contiene caracteres inválidos o supera 20 caracteres.",
+        "error"
+      );
+      return false;
+    }
+    if (!isValidEmail(empresa.email)) {
+      showToast("El email no es válido o supera 60 caracteres.", "error");
+      return false;
+    }
+    if (!isValidText(empresa.domicilio, 40)) {
+      showToast(
+        "Domicilio inválido (solo letras, números, puntos y espacios; máx. 40).",
+        "error"
+      );
+      return false;
+    }
+    if (!isValidText(empresa.domicilio_2, 40)) {
+      showToast(
+        "Domicilio de cobro inválido (solo letras, números, puntos y espacios; máx. 40).",
+        "error"
+      );
+      return false;
+    }
+    if (!isValidText(empresa.observacion, 60)) {
+      showToast(
+        "Observación inválida (solo letras, números, puntos y espacios; máx. 60).",
+        "error"
+      );
+      return false;
+    }
     return true;
   };
 
   const handleNextStep = () => {
     if (!validarPasoActual()) return;
     setCurrentStep((s) => Math.min(3, s + 1));
-    setMostrarErrores(false);
   };
 
   const handlePrevStep = () => {
     setCurrentStep((s) => Math.max(1, s - 1));
-    setMostrarErrores(false);
   };
 
   const handleFormKeyDown = (e) => {
@@ -165,11 +234,14 @@ const AgregarEmpresa = () => {
     if (!validarTodo()) return;
 
     try {
-      const response = await fetch(`${BASE_URL}/api.php?action=agregar_empresa`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(empresa),
-      });
+      const response = await fetch(
+        `${BASE_URL}/api.php?action=agregar_empresa`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(empresa),
+        }
+      );
 
       const data = await response.json();
 
@@ -205,7 +277,9 @@ const AgregarEmpresa = () => {
       {[1, 2, 3].map((step) => (
         <div
           key={step}
-          className={`progress-step ${currentStep === step ? "active" : ""} ${currentStep > step ? "completed" : ""}`}
+          className={`progress-step ${
+            currentStep === step ? "active" : ""
+          } ${currentStep > step ? "completed" : ""}`}
           onClick={() => currentStep > step && setCurrentStep(step)}
         >
           <div className="step-number">{step}</div>
@@ -225,11 +299,6 @@ const AgregarEmpresa = () => {
     </div>
   );
 
-  const errorMsg = (campo, texto) =>
-    mostrarErrores && errores[campo] ? (
-      <span className="add-emp-error">{texto}</span>
-    ) : null;
-
   return (
     <div className="add-emp-container">
       <div className="add-emp-box">
@@ -242,7 +311,7 @@ const AgregarEmpresa = () => {
           />
         )}
 
-        {/* Header igual al de Socio */}
+        {/* Header */}
         <div className="add-emp-header">
           <div className="add-emp-icon-title">
             <FontAwesomeIcon icon={faBuilding} className="add-emp-icon" />
@@ -276,10 +345,17 @@ const AgregarEmpresa = () => {
               <h3 className="add-emp-section-title">Datos de la Empresa</h3>
               <div className="add-emp-section-content">
                 <div
-                  className={`add-emp-input-wrapper ${empresa.razon_social || activeField === "razon_social" ? "has-value" : ""}`}
+                  className={`add-emp-input-wrapper ${
+                    empresa.razon_social || activeField === "razon_social"
+                      ? "has-value"
+                      : ""
+                  }`}
                 >
                   <label className="add-emp-label">
-                    <FontAwesomeIcon icon={faFileInvoiceDollar} className="input-icon" />
+                    <FontAwesomeIcon
+                      icon={faFileInvoiceDollar}
+                      className="input-icon"
+                    />
                     Razón Social
                   </label>
                   <input
@@ -291,15 +367,19 @@ const AgregarEmpresa = () => {
                     className="add-emp-input"
                   />
                   <span className="add-emp-input-highlight"></span>
-                  {errorMsg("razon_social", "La Razón Social es obligatoria")}
                 </div>
 
                 <div className="add-emp-group-row">
                   <div
-                    className={`add-emp-input-wrapper ${empresa.cuit || activeField === "cuit" ? "has-value" : ""}`}
+                    className={`add-emp-input-wrapper ${
+                      empresa.cuit || activeField === "cuit" ? "has-value" : ""
+                    }`}
                   >
                     <label className="add-emp-label">
-                      <FontAwesomeIcon icon={faHashtag} className="input-icon" />
+                      <FontAwesomeIcon
+                        icon={faHashtag}
+                        className="input-icon"
+                      />
                       CUIL/CUIT
                     </label>
                     <input
@@ -311,14 +391,20 @@ const AgregarEmpresa = () => {
                       className="add-emp-input"
                     />
                     <span className="add-emp-input-highlight"></span>
-                    {errorMsg("cuit", "El CUIL/CUIT es inválido")}
                   </div>
 
                   <div
-                    className={`add-emp-input-wrapper always-active ${empresa.cond_iva || activeField === "cond_iva" ? "has-value" : ""}`}
+                    className={`add-emp-input-wrapper always-active ${
+                      empresa.cond_iva || activeField === "cond_iva"
+                        ? "has-value"
+                        : ""
+                    }`}
                   >
                     <label className="add-emp-label">
-                      <FontAwesomeIcon icon={faTags} className="input-icon" />
+                      <FontAwesomeIcon
+                        icon={faTags}
+                        className="input-icon"
+                      />
                       Condición IVA (opcional)
                     </label>
                     <select
@@ -329,15 +415,22 @@ const AgregarEmpresa = () => {
                       onBlur={handleBlur}
                       className="add-emp-input"
                     >
-                      <option value="" hidden>Seleccione Condición IVA</option>
+                      <option value="" hidden>
+                        Seleccione Condición IVA
+                      </option>
                       {condicionesIVA.length > 0 ? (
                         condicionesIVA.map((condicion) => (
-                          <option key={condicion.id_iva} value={condicion.id_iva}>
+                          <option
+                            key={condicion.id_iva}
+                            value={condicion.id_iva}
+                          >
                             {condicion.descripcion}
                           </option>
                         ))
                       ) : (
-                        <option value="" disabled>No hay condiciones de IVA disponibles</option>
+                        <option value="" disabled>
+                          No hay condiciones de IVA disponibles
+                        </option>
                       )}
                     </select>
                     <span className="add-emp-input-highlight"></span>
@@ -354,10 +447,17 @@ const AgregarEmpresa = () => {
               <div className="add-emp-section-content">
                 <div className="add-emp-group-row">
                   <div
-                    className={`add-emp-input-wrapper ${empresa.email || activeField === "email" ? "has-value" : ""}`}
+                    className={`add-emp-input-wrapper ${
+                      empresa.email || activeField === "email"
+                        ? "has-value"
+                        : ""
+                    }`}
                   >
                     <label className="add-emp-label">
-                      <FontAwesomeIcon icon={faEnvelope} className="input-icon" />
+                      <FontAwesomeIcon
+                        icon={faEnvelope}
+                        className="input-icon"
+                      />
                       Email (opcional)
                     </label>
                     <input
@@ -370,14 +470,20 @@ const AgregarEmpresa = () => {
                       inputMode="email"
                     />
                     <span className="add-emp-input-highlight"></span>
-                    {errorMsg("email", "Email inválido")}
                   </div>
 
                   <div
-                    className={`add-emp-input-wrapper ${empresa.telefono || activeField === "telefono" ? "has-value" : ""}`}
+                    className={`add-emp-input-wrapper ${
+                      empresa.telefono || activeField === "telefono"
+                        ? "has-value"
+                        : ""
+                    }`}
                   >
                     <label className="add-emp-label">
-                      <FontAwesomeIcon icon={faPhone} className="input-icon" />
+                      <FontAwesomeIcon
+                        icon={faPhone}
+                        className="input-icon"
+                      />
                       Teléfono (opcional)
                     </label>
                     <input
@@ -390,13 +496,16 @@ const AgregarEmpresa = () => {
                       inputMode="tel"
                     />
                     <span className="add-emp-input-highlight"></span>
-                    {errorMsg("telefono", "Teléfono inválido")}
                   </div>
                 </div>
 
                 <div className="add-emp-domicilio-group">
                   <div
-                    className={`add-emp-input-wrapper ${empresa.domicilio || activeField === "domicilio" ? "has-value" : ""}`}
+                    className={`add-emp-input-wrapper ${
+                      empresa.domicilio || activeField === "domicilio"
+                        ? "has-value"
+                        : ""
+                    }`}
                   >
                     <label className="add-emp-label">
                       <FontAwesomeIcon icon={faHome} className="input-icon" />
@@ -411,14 +520,20 @@ const AgregarEmpresa = () => {
                       className="add-emp-input"
                     />
                     <span className="add-emp-input-highlight"></span>
-                    {errorMsg("domicilio", "Domicilio inválido")}
                   </div>
 
                   <div
-                    className={`add-emp-input-wrapper ${empresa.domicilio_2 || activeField === "domicilio_2" ? "has-value" : ""}`}
+                    className={`add-emp-input-wrapper ${
+                      empresa.domicilio_2 || activeField === "domicilio_2"
+                        ? "has-value"
+                        : ""
+                    }`}
                   >
                     <label className="add-emp-label">
-                      <FontAwesomeIcon icon={faMapMarkerAlt} className="input-icon" />
+                      <FontAwesomeIcon
+                        icon={faMapMarkerAlt}
+                        className="input-icon"
+                      />
                       Domicilio de Cobro (opcional)
                     </label>
                     <input
@@ -430,7 +545,6 @@ const AgregarEmpresa = () => {
                       className="add-emp-input"
                     />
                     <span className="add-emp-input-highlight"></span>
-                    {errorMsg("domicilio_2", "Domicilio de cobro inválido")}
                   </div>
                 </div>
               </div>
@@ -440,14 +554,23 @@ const AgregarEmpresa = () => {
           {/* Paso 3: Cobro e IVA */}
           {currentStep === 3 && (
             <div className="add-emp-section">
-              <h3 className="add-emp-section-title">Medio de Pago, Categoría y Observación</h3>
+              <h3 className="add-emp-section-title">
+                Medio de Pago, Categoría y Observación
+              </h3>
               <div className="add-emp-section-content">
                 <div className="add-emp-group-row">
                   <div
-                    className={`add-emp-input-wrapper always-active ${empresa.idMedios_Pago || activeField === "idMedios_Pago" ? "has-value" : ""}`}
+                    className={`add-emp-input-wrapper always-active ${
+                      empresa.idMedios_Pago || activeField === "idMedios_Pago"
+                        ? "has-value"
+                        : ""
+                    }`}
                   >
                     <label className="add-emp-label">
-                      <FontAwesomeIcon icon={faMoneyBillWave} className="input-icon" />
+                      <FontAwesomeIcon
+                        icon={faMoneyBillWave}
+                        className="input-icon"
+                      />
                       Medio de Pago (opcional)
                     </label>
                     <select
@@ -458,9 +581,14 @@ const AgregarEmpresa = () => {
                       onBlur={handleBlur}
                       className="add-emp-input"
                     >
-                      <option value="" hidden>Seleccione medio de pago</option>
+                      <option value="" hidden>
+                        Seleccione medio de pago
+                      </option>
                       {mediosPago.map((medio) => (
-                        <option key={medio.IdMedios_pago} value={medio.IdMedios_pago}>
+                        <option
+                          key={medio.IdMedios_pago}
+                          value={medio.IdMedios_pago}
+                        >
                           {medio.Medio_Pago}
                         </option>
                       ))}
@@ -469,10 +597,17 @@ const AgregarEmpresa = () => {
                   </div>
 
                   <div
-                    className={`add-emp-input-wrapper always-active ${empresa.idCategoria || activeField === "idCategoria" ? "has-value" : ""}`}
+                    className={`add-emp-input-wrapper always-active ${
+                      empresa.idCategoria || activeField === "idCategoria"
+                        ? "has-value"
+                        : ""
+                    }`}
                   >
                     <label className="add-emp-label">
-                      <FontAwesomeIcon icon={faTags} className="input-icon" />
+                      <FontAwesomeIcon
+                        icon={faTags}
+                        className="input-icon"
+                      />
                       Categoría (opcional)
                     </label>
                     <select
@@ -483,10 +618,16 @@ const AgregarEmpresa = () => {
                       onBlur={handleBlur}
                       className="add-emp-input"
                     >
-                      <option value="" hidden>Seleccione categoría</option>
+                      <option value="" hidden>
+                        Seleccione categoría
+                      </option>
                       {categorias.map((categoria) => (
-                        <option key={categoria.idCategorias} value={categoria.idCategorias}>
-                          {categoria.Nombre_categoria} - ${categoria.Precio_Categoria}
+                        <option
+                          key={categoria.idCategorias}
+                          value={categoria.idCategorias}
+                        >
+                          {categoria.Nombre_categoria} - $
+                          {categoria.Precio_Categoria}
                         </option>
                       ))}
                     </select>
@@ -495,7 +636,11 @@ const AgregarEmpresa = () => {
                 </div>
 
                 <div
-                  className={`add-emp-input-wrapper ${empresa.observacion || activeField === "observacion" ? "has-value" : ""}`}
+                  className={`add-emp-input-wrapper ${
+                    empresa.observacion || activeField === "observacion"
+                      ? "has-value"
+                      : ""
+                  }`}
                 >
                   <label className="add-emp-label">
                     <FontAwesomeIcon icon={faComment} className="input-icon" />
@@ -511,7 +656,6 @@ const AgregarEmpresa = () => {
                     rows="4"
                   />
                   <span className="add-emp-input-highlight"></span>
-                  {errorMsg("observacion", "Observación inválida")}
                 </div>
               </div>
             </div>
@@ -526,7 +670,10 @@ const AgregarEmpresa = () => {
                 onClick={handlePrevStep}
                 data-mobile-label="Volver"
               >
-                <FontAwesomeIcon icon={faArrowLeft} className="add-emp-icon-button" />
+                <FontAwesomeIcon
+                  icon={faArrowLeft}
+                  className="add-emp-icon-button"
+                />
                 <span className="add-emp-button-text">Anterior</span>
               </button>
             )}
@@ -538,7 +685,6 @@ const AgregarEmpresa = () => {
                 onClick={handleNextStep}
               >
                 <span className="add-emp-button-text">Siguiente</span>
-                {/* Reusamos el icono de guardar como “siguiente”? Mejor sin icono a la derecha. */}
               </button>
             ) : (
               <button
@@ -547,7 +693,10 @@ const AgregarEmpresa = () => {
                 onClick={handleSubmit}
                 data-mobile-label="Guardar"
               >
-                <FontAwesomeIcon icon={faSave} className="add-emp-icon-button" />
+                <FontAwesomeIcon
+                  icon={faSave}
+                  className="add-emp-icon-button"
+                />
                 <span className="add-emp-button-text">Agregar Empresa</span>
               </button>
             )}

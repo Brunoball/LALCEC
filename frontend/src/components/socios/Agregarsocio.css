@@ -351,13 +351,13 @@
   }
 
   .add-header {
-    padding: .9rem 1rem .8rem;
+    padding: 2rem;
     border-radius: 0;
   }
 
   .add-icon { font-size: 1.5rem; }
   .add-icon-title h1 { font-size: 1.1rem; }
-  .add-icon-title p { font-size: .85rem; }
+  .add-icon-title p { display: none;}
 
   .add-socio-box { min-height: 100vh; }
 
@@ -446,7 +446,7 @@
 
 /* ====== SMALL MOBILE (≤ 576px) ====== */
 @media (max-width: 576px) {
-  .add-header { padding: 1rem; }
+  .add-header { padding: 2rem; }
   .add-icon-title h1 { font-size: 1.05rem; }
   .add-icon-title p { font-size: .8rem; }
 

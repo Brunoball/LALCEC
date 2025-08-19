@@ -620,13 +620,26 @@ input:-webkit-autofill { background-color: transparent !important; }
 
 /* ================================
    MOBILE — tarjetas + navbar fija
+   (MODS aplicadas: 100svh + scroll central)
 ==================================*/
 @media (max-width: 768px) {
+  /* Estabilizar el viewport y centralizar el scroll (LOCK global) */
+  html, body {
+    height: 100%;
+    overflow: hidden;              /* 👈 único scroll será el del área central */
+    overscroll-behavior: none;     /* corta rebote del viewport */
+  }
+
+  .gessoc_empresa-container {
+    height: 100svh;                /* viewport estable en móviles */
+    overflow: hidden;
+  }
+
   .gessoc_empresa-box {
-    min-height: unset;
-    height: 100dvh;
+    min-height: 100svh;
     display: flex;
     flex-direction: column;
+    overflow: hidden;              /* sin scroll aquí */
   }
 
   .gessoc_front-row-emp {
@@ -638,11 +651,14 @@ input:-webkit-autofill { background-color: transparent !important; }
   }
   .gessoc_empresa-title { font-size: 1.3rem; margin: 0; flex: 1 0 auto;  width: 100%; justify-content: center;}
 
+  /* Área central scrolleable (único scroll) */
   .gessoc_empresas-list {
     flex: 1 1 auto;
-    overflow-y: hidden;
-    -webkit-overflow-scrolling: touch;
-    padding: 8px 12px 90px;
+    overflow-y: auto;                  /* 🔥 clave */
+    -webkit-overflow-scrolling: touch; /* suave iOS */
+    overscroll-behavior: contain; 
+    padding: .5rem 1.5rem 0;     /* no “arrastra” al body */
+         /* espacio para no tapar con footer */
   }
 
   .gessoc_search-input-container { width: 100%; max-width: none; order: 3; }
@@ -659,15 +675,16 @@ input:-webkit-autofill { background-color: transparent !important; }
   .gessoc_filtros-menu {
     position: absolute;
     top: calc(100% + 8px);
-    left: -120px;
+    left: auto;
     right: 0;
     margin: 0;
     border-radius: 12px;
-    width: auto;
+    width: min(90vw, 420px);
     box-shadow: 0 10px 30px rgba(0,0,0,0.15);
     z-index: 1000;
     max-height: 60vh;
     overflow: auto;
+    animation: gessoc_dropDown 0.3s ease-out;
   }
 
   .gessoc_filtros-submenu { padding: 0.75rem; }
@@ -677,7 +694,6 @@ input:-webkit-autofill { background-color: transparent !important; }
   /* Contador + indicadores */
   .gessoc_contenedor-list-items {
     height: auto;
-
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -722,11 +738,15 @@ input:-webkit-autofill { background-color: transparent !important; }
 
   /* === Tarjetas Mobile (actualizado) === */
   .gessoc_cards-wrapper { display: grid !important; } /* compat antigua */
-  /* IMPLEMENTACIÓN RECOMENDADA: usar block para listas virtualizadas */
   .gessoc_cards_wrapper_virtual {
-    display: block !important;
-    padding: 12px;          /* más espacio alrededor */
-    /* el gap no aplica en block, la separación va en .gessoc_card */
+    display: block !important;   /* necesario para listas virtualizadas */
+    padding: 12px;               /* más espacio alrededor */
+    max-height: 100%;            /* no superar contenedor */
+    overflow: hidden;            /* el scroll real está en .gessoc_empresas-list */
+  }
+  .gessoc_cards_list {
+    max-height: 100%;
+    overflow: hidden;
   }
 
   .gessoc_card {
@@ -734,12 +754,10 @@ input:-webkit-autofill { background-color: transparent !important; }
     background: #fff;
     border: 1px solid var(--gray-200);
     border-radius: 12px;
-    /* separación uniforme entre tarjetas (coincidir con itemSize si hace falta) */
-    margin-bottom: 16px;
-    /* ayuda visual a separar */
+    margin-bottom: 16px;        /* separación uniforme entre tarjetas */
     box-shadow: 0 4px 12px rgba(0,0,0,0.08);
     padding: 12px;
-    overflow: hidden;       /* para que el shadow no se corte */
+    overflow: hidden;
     transition: all 0.2s ease;
     display: flex;
     flex-direction: column;
@@ -880,7 +898,7 @@ input:-webkit-autofill { background-color: transparent !important; }
   .gessoc_scrollableE { min-height: unset; max-height: none; }
 
   .gessoc_no-data-message.gessoc_no-data-mobile {
-    min-height: calc(100dvh - 180px);
+    min-height: calc(100svh - 180px);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -894,7 +912,7 @@ input:-webkit-autofill { background-color: transparent !important; }
 @media (max-width: 480px) {
   .gessoc_card { border-radius: 12px; padding: 12px; }
   .gessoc_card-title { font-size: 1rem; }
-  .gessoc_card-value { font-size: 12.5px; }
+  .gessoc_card-value { font-size: 12.5px; text-align: right; }
 }
 
 /* Accesibilidad */
@@ -994,19 +1012,18 @@ input:-webkit-autofill { background-color: transparent !important; }
 
 /* Botón cerrar (NUEVO) */
 .gessoc_filter-chip-close {
-  width: 18px;
-  height: 18px;
-  display: grid;
-  place-items: center;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-self: flex-start;
+  justify-content: center;
   border: none;
   background: transparent;
   color: var(--danger-600);
   border-radius: 50%;
   cursor: pointer;
   font-weight: 700;
-  line-height: 1;
   transition: transform 0.15s ease, background-color 0.15s ease, color 0.15s ease;
-  margin-left: 2px;
 }
 .gessoc_filter-chip-close:hover {
   transform: scale(1.1);
@@ -1094,7 +1111,7 @@ input:-webkit-autofill { background-color: transparent !important; }
 
 /* ================================
    CORRECCIÓN MENÚ FILTROS SOCIOS MOBILE
-   (Para que sea igual al de empresas)
+   (igual que empresas)
 ==================================*/
 @media (max-width: 768px) {
   .gessoc_filtros-menu {

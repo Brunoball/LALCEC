@@ -1,7 +1,7 @@
 /* =========================== 
    ROOT: permitir scroll global 
    =========================== */
-html, body, #root {
+html, body {
   height: auto;
   min-height: 100%;
   overflow-y: auto;
@@ -741,7 +741,7 @@ html, body, #root {
    MOBILE (≤ 768px)
    =========================== */
 @media (max-width: 768px) {
-  html, body, #root {
+  html, body {
     height: auto !important;
     min-height: 100% !important;
     overflow-y: auto !important;

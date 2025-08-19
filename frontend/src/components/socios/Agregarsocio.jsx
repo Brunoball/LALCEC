@@ -41,8 +41,6 @@ const AgregarSocio = () => {
     setToast({ visible: true, tipo, mensaje, duracion });
   const closeToast = () => setToast(t => ({ ...t, visible: false }));
 
-  const [mostrarErrores, setMostrarErrores] = useState(false);
-  const [errores, setErrores] = useState({});
   const [activeField, setActiveField] = useState(null);
 
   // Campo crudo "Nombre y Apellido"
@@ -121,13 +119,10 @@ const AgregarSocio = () => {
     setSocio((prev) => ({ ...prev, nombre, apellido }));
   };
 
+  // Validación: ahora solo devuelve boolean y NO setea errores locales
   const validar = () => {
-    const errs = {};
-    if (!socio.nombre.trim()) errs.nombre = 'El nombre es obligatorio';
-    if (!socio.apellido.trim()) errs.apellido = 'El apellido es obligatorio';
-    setErrores(errs);
-    setMostrarErrores(true);
-    return Object.keys(errs).length === 0;
+    const ok = socio.nombre.trim() && socio.apellido.trim();
+    return !!ok;
   };
 
   const handleNextStep = () => {
@@ -136,12 +131,10 @@ const AgregarSocio = () => {
       return;
     }
     setCurrentStep((s) => Math.min(s + 1, 3));
-    setMostrarErrores(false);
   };
 
   const handlePrevStep = () => {
     setCurrentStep((s) => Math.max(s - 1, 1));
-    setMostrarErrores(false);
   };
 
   const handleFormKeyDown = (e) => {
@@ -256,8 +249,7 @@ const AgregarSocio = () => {
               <div className="add-socio-section-content">
                 <div
                   className={`add-socio-input-wrapper 
-                    ${nombreCompleto || activeField === 'nombreCompleto' ? 'has-value' : ''} 
-                    ${mostrarErrores && (errores.nombre || errores.apellido) ? 'has-error' : ''}`}
+                    ${nombreCompleto || activeField === 'nombreCompleto' ? 'has-value' : ''}`}
                 >
                   <label className="add-socio-label">
                     <FontAwesomeIcon icon={faUser} className="input-icon" />
@@ -272,9 +264,7 @@ const AgregarSocio = () => {
                     className="add-socio-input"
                   />
                   <span className="add-socio-input-highlight"></span>
-                  {mostrarErrores && (errores.nombre || errores.apellido) && (
-                    <span className="add-socio-error">Nombre y apellido son obligatorios</span>
-                  )}
+                  {/* Error inline eliminado: solo Toast */}
                 </div>
 
                 <div className="add-socio-group-row">

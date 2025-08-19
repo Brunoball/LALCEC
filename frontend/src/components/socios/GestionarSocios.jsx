@@ -1,3 +1,4 @@
+// src/components/socios/GestionarSocios.jsx
 import React, {
   useState,
   useEffect,
@@ -34,7 +35,6 @@ import Toast from "../global/Toast";
 /* =====================
    Utils súper livianos
 ===================== */
-
 const getSocioId = (s) =>
   s?.id ?? s?.idSocios ?? s?.id_socio ?? s?.idSocio ?? null;
 
@@ -103,9 +103,7 @@ const medioLabel = (m) => {
 ===================== */
 const SocioRow = React.memo(
   function SocioRow({ index, style, data }) {
-    // MOD: cascada
     const stagger = clamp(index, 0, 14);
-
     const socio = data.items[index];
     const selected = data.filaSeleccionada === index;
 
@@ -127,10 +125,14 @@ const SocioRow = React.memo(
         <div className="gessoc_column gessoc_column-iva">
           {socio.categoria} ${socio.precio_categoria || "0"}
         </div>
-        <div className="gessoc_column gessoc_column-medio">{socio.medio_pago}</div>
+        <div className="gessoc_column gessoc_column-medio">
+          {socio.medio_pago}
+        </div>
         <div className="gessoc_column gessoc_column-dom">{socio.domicilio_2}</div>
         <div className="gessoc_column gessoc_column-obs">
-          {socio.observacion && String(socio.observacion).trim() !== "" ? socio.observacion : "-"}
+          {socio.observacion && String(socio.observacion).trim() !== ""
+            ? socio.observacion
+            : "-"}
         </div>
         <div className="gessoc_column gessoc_icons-column">
           {selected && (
@@ -185,16 +187,14 @@ const SocioRow = React.memo(
 );
 
 /* =====================
-   Row virtualizado (tarjetas mobile) — CON GAP REAL
+   Row virtualizado (tarjetas mobile) — gap real
 ===================== */
 const SocioCardRow = React.memo(
   function SocioCardRow({ index, style, data }) {
     const socio = data.items[index];
     const gap = data.gap ?? 12;
-    // MOD: cascada
     const stagger = clamp(index, 0, 14);
 
-    // Ajuste de separación: damos gap/2 arriba y abajo.
     const top =
       typeof style.top === "number" ? style.top : parseFloat(style.top) || 0;
     const height =
@@ -253,7 +253,7 @@ const SocioCardRow = React.memo(
             <span className="gessoc_card-value">{socio.domicilio_2}</span>
           </div>
 
-          {/* SIEMPRE mostrar la fila de Observaciones; usar "-" si falta */}
+          {/* SIEMPRE mostrar Observaciones; usar "-" si falta */}
           <div className="gessoc_card-row">
             <span className="gessoc_card-label">Obs.</span>
             <span className="gessoc_card-value">
@@ -319,6 +319,10 @@ const GestionarSocios = () => {
   const navigate = useNavigate();
   const filtrosRef = useRef(null);
 
+  // NEW: refs para medir header y footer en mobile
+  const headerRef = useRef(null);
+  const footerRef = useRef(null);
+
   /* ---------- Estado base ---------- */
   const [sociosRaw, setSociosRaw] = useState([]);
   const [cargando, setCargando] = useState(false);
@@ -329,8 +333,8 @@ const GestionarSocios = () => {
   const CACHE_KEY = "sociosCache:v1";
 
   /* ---------- Revalidación ---------- */
-  const refreshingRef = useRef(false); // evita llamadas concurrentes
-  const [lastSync, setLastSync] = useState(0); // opcional, por si querés mostrarlo
+  const refreshingRef = useRef(false);
+  const [lastSync, setLastSync] = useState(0);
 
   /* ---------- Selecciones / modales ---------- */
   const [filaSeleccionada, setFilaSeleccionada] = useState(null);
@@ -619,7 +623,7 @@ const GestionarSocios = () => {
     });
   }, [sociosRaw, getEstadoPago]);
 
-  /* ---------- Medios de pago (API + fallback, como Empresas) ---------- */
+  /* ---------- Medios de pago (API + fallback) ---------- */
   const [mediosDePago, setMediosDePago] = useState([]);
 
   useEffect(() => {
@@ -674,7 +678,6 @@ const GestionarSocios = () => {
     };
 
     cargarMedios();
-
     return () => { cancelled = true; };
   }, [BASE_URL, socios]);
 
@@ -925,25 +928,56 @@ const GestionarSocios = () => {
     ]
   );
 
-  /* ---------- Altura lista ---------- */
+  /* ---------- Layout/Altura lista ---------- */
   const isMobile = useMediaQuery("(max-width: 900px)");
   const reducedMotion = useReducedMotion();
 
-  const windowHeight = useWindowHeight(isMobile ? 180 : 360);
+  // Altura base para desktop (con tu offset)
+  const baseWindowHeight = useWindowHeight(isMobile ? 0 : 360);
 
-  const listHeight = useMemo(
-    () => clamp(windowHeight, isMobile ? 360 : 300, isMobile ? 1000 : 880),
-    [windowHeight, isMobile]
-  );
+  // NEW: alto disponible exacto para mobile midiendo header + footer
+  const [availableHeight, setAvailableHeight] = useState(520);
+
+  useEffect(() => {
+    const calc = () => {
+      const H = window.innerHeight;
+      const hHeader = headerRef.current?.offsetHeight ?? 0;
+      const hFooter = footerRef.current?.offsetHeight ?? 0;
+      // Ajustá este paddingExtra si tu CSS cambia (coincidir con paddings de la zona de lista)
+      const paddingExtras = isMobile ? 16 + 60 : 24;
+      const h = Math.max(330, H - hHeader - hFooter - paddingExtras);
+      setAvailableHeight(h);
+    };
+
+    // calcular al montar
+    calc();
+
+    // eventos que cambian el viewport en mobile
+    window.addEventListener("resize", calc, { passive: true });
+    window.addEventListener("orientationchange", calc, { passive: true });
+
+    // observar cambios dinámicos en header/footer
+    const ro = new ResizeObserver(calc);
+    if (headerRef.current) ro.observe(headerRef.current);
+    if (footerRef.current) ro.observe(footerRef.current);
+
+    return () => {
+      window.removeEventListener("resize", calc);
+      window.removeEventListener("orientationchange", calc);
+      ro.disconnect();
+    };
+  }, [isMobile]);
 
   const desktopRowHeight = 48;
-
-  // gap real entre tarjetas virtualizadas
   const cardGap = 12;
   const mobileCardHeight = 226;
   const itemSizeMobile = mobileCardHeight + cardGap;
-
   const overscan = isMobile ? 6 : 10;
+
+  const listHeight = useMemo(
+    () => (isMobile ? availableHeight : clamp(baseWindowHeight, 300, 880)),
+    [isMobile, availableHeight, baseWindowHeight]
+  );
 
   /* ---------- Contador visibles ---------- */
   const cantidadVisibles = useMemo(
@@ -995,9 +1029,7 @@ const GestionarSocios = () => {
          RENDER
   ===================== */
   return (
-    <div
-      className={`gessoc_empresa-container ${isMobile ? "gessoc_mobile" : ""}`}
-    >
+    <div className={`gessoc_empresa-container ${isMobile ? "gessoc_mobile" : ""}`}>
       {toast.show && (
         <Toast
           tipo={toast.tipo}
@@ -1010,9 +1042,8 @@ const GestionarSocios = () => {
       <div className="gessoc_empresa-box">
         {/* HEADER */}
         <div
-          className={`gessoc_front-row-emp ${
-            isMobile ? "gessoc_front-row-emp--mobile" : ""
-          }`}
+          className={`gessoc_front-row-emp ${isMobile ? "gessoc_front-row-emp--mobile" : ""}`}
+          ref={headerRef}
         >
           <span className="gessoc_empresa-title">Gestionar Socios</span>
 
@@ -1044,10 +1075,7 @@ const GestionarSocios = () => {
                 revalidate();
               }}
             >
-              <FontAwesomeIcon
-                icon={faMagnifyingGlass}
-                className="gessoc_search-icon"
-              />
+              <FontAwesomeIcon icon={faMagnifyingGlass} className="gessoc_search-icon" />
             </button>
           </div>
 
@@ -1057,16 +1085,11 @@ const GestionarSocios = () => {
               className="gessoc_filtros-button"
               onClick={() => setMostrarMenuFiltros((v) => !v)}
             >
-              <FontAwesomeIcon
-                icon={faFilter}
-                className="gessoc_icon-button"
-              />
+              <FontAwesomeIcon icon={faFilter} className="gessoc_icon-button" />
               <span>Aplicar Filtros</span>
               <FontAwesomeIcon
                 icon={faChevronDown}
-                className={`gessoc_chevron-icon ${
-                  mostrarMenuFiltros ? "gessoc_rotate" : ""
-                }`}
+                className={`gessoc_chevron-icon ${mostrarMenuFiltros ? "gessoc_rotate" : ""}`}
               />
             </button>
 
@@ -1079,9 +1102,7 @@ const GestionarSocios = () => {
                   <span>Filtrar de la A a la Z</span>
                   <FontAwesomeIcon
                     icon={faChevronDown}
-                    className={`gessoc_chevron-icon ${
-                      mostrarSubmenuAlfabetico ? "gessoc_rotate" : ""
-                    }`}
+                    className={`gessoc_chevron-icon ${mostrarSubmenuAlfabetico ? "gessoc_rotate" : ""}`}
                   />
                 </div>
 
@@ -1092,9 +1113,7 @@ const GestionarSocios = () => {
                         <button
                           key={letra}
                           className={`gessoc_letra-filtro ${
-                            filtrosActivos.letras.includes(letra)
-                              ? "gessoc_active"
-                              : ""
+                            filtrosActivos.letras.includes(letra) ? "gessoc_active" : ""
                           }`}
                           onClick={() => handleFiltrarPorLetra(letra)}
                           title={`Filtrar por ${letra}`}
@@ -1113,9 +1132,7 @@ const GestionarSocios = () => {
                   <span>Medios de Pago</span>
                   <FontAwesomeIcon
                     icon={faChevronDown}
-                    className={`gessoc_chevron-icon ${
-                      mostrarSubmenuTransferencia ? "gessoc_rotate" : ""
-                    }`}
+                    className={`gessoc_chevron-icon ${mostrarSubmenuTransferencia ? "gessoc_rotate" : ""}`}
                   />
                 </div>
 
@@ -1128,9 +1145,7 @@ const GestionarSocios = () => {
                       return (
                         <div
                           key={label}
-                          className={`gessoc_filtros-submenu-item ${
-                            isActive ? "gessoc_active" : ""
-                          }`}
+                          className={`gessoc_filtros-submenu-item ${isActive ? "gessoc_active" : ""}`}
                           onClick={() => handleFiltrarPorMedioPago(label)}
                           title={`Filtrar por ${label}`}
                         >
@@ -1154,7 +1169,7 @@ const GestionarSocios = () => {
           {error && <p className="gessoc_error">{error}</p>}
         </div>
 
-        {/* CONTADOR + CHIPS DE FILTRO + LEYENDA + LISTADO */}
+        {/* CONTADOR + CHIPS + LEYENDA + LISTADO */}
         <div className="gessoc_empresas-list">
           <div className="gessoc_contenedor-list-items">
             <div className="gessoc_contador-container">
@@ -1162,17 +1177,13 @@ const GestionarSocios = () => {
                 Cant socios: {cantidadVisibles}
               </span>
               <span className="gessoc_socios-totales gessoc_socios-mobile">
-                <FontAwesomeIcon
-                  icon={faUsers}
-                  className="gessoc_icono-empresa"
-                />
+                <FontAwesomeIcon icon={faUsers} className="gessoc_icono-empresa" />
                 {cantidadVisibles}
               </span>
             </div>
 
             {/* CHIPS de filtros activos */}
             <div className="gessoc_filtros-activos-container">
-              {/* CHIP: SOLO LETRA */}
               {filtrosActivos.letras?.length > 0 && (
                 <div className="gessoc_filter-chip">
                   <span className="gessoc_filter-chip-text">
@@ -1185,7 +1196,7 @@ const GestionarSocios = () => {
                   )}
                   <button
                     className="gessoc_filter-chip-close"
-                    onClick={() => setExclusiveFilter("none")}
+                    onClick={() => limpiarFiltros()}
                     title="Quitar filtro por letra"
                     aria-label="Quitar filtro por letra"
                   >
@@ -1194,7 +1205,6 @@ const GestionarSocios = () => {
                 </div>
               )}
 
-              {/* CHIP: MEDIO */}
               {filtrosActivos.mediosPago?.length > 0 && (
                 <div className="gessoc_filter-chip gessoc_chip-medio">
                   <span className="gessoc_filter-chip-text">Medio: </span>
@@ -1206,7 +1216,7 @@ const GestionarSocios = () => {
                   )}
                   <button
                     className="gessoc_filter-chip-close"
-                    onClick={() => setExclusiveFilter("none")}
+                    onClick={() => limpiarFiltros()}
                     title="Quitar filtro de medio de pago"
                     aria-label="Quitar filtro de medio de pago"
                   >
@@ -1243,9 +1253,7 @@ const GestionarSocios = () => {
                 <div className="gessoc_column-header">Medio de Pago</div>
                 <div className="gessoc_column-header">Domicilio Cobro</div>
                 <div className="gessoc_column-header">Observación</div>
-                <div className="gessoc_column-header gessoc_icons-column">
-                  Acciones
-                </div>
+                <div className="gessoc_column-header gessoc_icons-column">Acciones</div>
               </div>
 
               <div className="gessoc_body">
@@ -1254,10 +1262,7 @@ const GestionarSocios = () => {
                     <div className="gessoc_loading-spinner"></div>
                   </div>
                 ) : sociosFiltrados.length > 0 ? (
-                  <div
-                    className="gessoc_scrollableE"
-                    style={{ padding: 0, height: listHeight }}
-                  >
+                  <div className="gessoc_scrollableE" style={{ padding: 0, height: listHeight }}>
                     <List
                       height={listHeight}
                       itemCount={sociosFiltrados.length}
@@ -1265,23 +1270,16 @@ const GestionarSocios = () => {
                       width="100%"
                       overscanCount={overscan}
                       itemData={itemData}
-                      // MOD: reinicio suave para nodos reciclados
                       itemKey={(idx, data) => data.items[idx]?.id ?? idx}
                     >
                       {SocioRow}
                     </List>
                   </div>
                 ) : (
-                  <div
-                    className="gessoc_no-data-message"
-                    style={{ width: "100%" }}
-                  >
+                  <div className="gessoc_no-data-message" style={{ width: "100%" }}>
                     <div className="gessoc_message-content">
                       <p>Usá la búsqueda o aplicá filtros para ver los socios</p>
-                      <button
-                        className="gessoc_btn-show-all"
-                        onClick={handleMostrarTodos}
-                      >
+                      <button className="gessoc_btn-show-all" onClick={handleMostrarTodos}>
                         Mostrar todos los socios
                       </button>
                     </div>
@@ -1305,7 +1303,6 @@ const GestionarSocios = () => {
                   overscanCount={overscan}
                   itemData={{ ...itemData, gap: cardGap }}
                   className="gessoc_cards_list"
-                  // MOD: reinicio suave para nodos reciclados
                   itemKey={(idx, data) => data.items[idx]?.id ?? idx}
                 >
                   {SocioCardRow}
@@ -1314,10 +1311,7 @@ const GestionarSocios = () => {
                 <div className="gessoc_no-data-message gessoc_no-data-mobile">
                   <div className="gessoc_message-content">
                     <p>Usá la búsqueda o aplicá filtros para ver resultados</p>
-                    <button
-                      className="gessoc_btn-show-all"
-                      onClick={handleMostrarTodos}
-                    >
+                    <button className="gessoc_btn-show-all" onClick={handleMostrarTodos}>
                       Mostrar todos los socios
                     </button>
                   </div>
@@ -1328,7 +1322,7 @@ const GestionarSocios = () => {
         </div>
 
         {/* BOTONERA INFERIOR */}
-        <div className="gessoc_down-container">
+        <div className="gessoc_down-container" ref={footerRef}>
           <button
             className="gessoc_socio-button gessoc_hover-effect gessoc_volver-atras"
             onClick={() => {
@@ -1339,10 +1333,7 @@ const GestionarSocios = () => {
             aria-label="Volver"
             title="Volver"
           >
-            <FontAwesomeIcon
-              icon={faArrowLeft}
-              className="gessoc_socio-icon-button"
-            />
+            <FontAwesomeIcon icon={faArrowLeft} className="gessoc_socio-icon-button" />
             <p>Volver Atrás</p>
           </button>
 
@@ -1353,10 +1344,7 @@ const GestionarSocios = () => {
               aria-label="Agregar"
               title="Agregar socio"
             >
-              <FontAwesomeIcon
-                icon={faUserPlus}
-                className="gessoc_socio-icon-button"
-              />
+              <FontAwesomeIcon icon={faUserPlus} className="gessoc_socio-icon-button" />
               <p>Agregar Socio</p>
             </button>
 
@@ -1366,10 +1354,7 @@ const GestionarSocios = () => {
               aria-label="Exportar"
               title="Exportar a Excel"
             >
-              <FontAwesomeIcon
-                icon={faFileExcel}
-                className="gessoc_socio-icon-button"
-              />
+              <FontAwesomeIcon icon={faFileExcel} className="gessoc_socio-icon-button" />
               <p>Exportar a Excel</p>
             </button>
 
@@ -1379,10 +1364,7 @@ const GestionarSocios = () => {
               title="Dados de Baja"
               aria-label="Dados de Baja"
             >
-              <FontAwesomeIcon
-                icon={faUserMinus}
-                className="gessoc_socio-icon-button"
-              />
+              <FontAwesomeIcon icon={faUserMinus} className="gessoc_socio-icon-button" />
               <p>Dados de Baja</p>
             </button>
           </div>
