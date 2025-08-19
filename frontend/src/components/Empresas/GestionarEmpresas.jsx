@@ -1095,6 +1095,7 @@ const GestionarEmpresas = () => {
                   </span>
                   {/* Mobile: solo el valor (sin 'Letra:' / 'Medio:') */}
                   <span className="emp_chip-mini-text emp_socios-mobile">
+
                     {chipValue}
                   </span>
 
@@ -1111,20 +1112,26 @@ const GestionarEmpresas = () => {
             </div>
 
             {/* Leyenda estados */}
-            <div className="emp_estado-pagos-container">
-              <div className="emp_estado-indicador emp_al-dia">
-                <div className="emp_indicador-color"></div>
-                <span>Al día</span>
-              </div>
-              <div className="emp_estado-indicador emp_debe-1-2">
-                <div className="emp_indicador-color"></div>
-                <span>Debe 1-2 meses</span>
-              </div>
-              <div className="emp_estado-indicador emp_debe-3-mas">
-                <div className="emp_indicador-color"></div>
-                <span>Debe 3+</span>
-              </div>
-            </div>
+{/* Leyenda estados */}
+<div className="emp_estado-pagos-container">
+  <div className="emp_estado-indicador emp_al-dia">
+    <div className="emp_indicador-color"></div>
+    <span className="emp_legend-desktop">Al día</span>
+    <span className="emp_legend-mobile">al dia</span>
+  </div>
+
+  <div className="emp_estado-indicador emp_debe-1-2">
+    <div className="emp_indicador-color"></div>
+    <span className="emp_legend-desktop">Debe 1-2 meses</span>
+    <span className="emp_legend-mobile">1-2</span>
+  </div>
+
+  <div className="emp_estado-indicador emp_debe-3-mas">
+    <div className="emp_indicador-color"></div>
+    <span className="emp_legend-desktop">Debe 3+</span>
+    <span className="emp_legend-mobile">3+</span>
+  </div>
+</div>
           </div>
 
           {/* ======= TABLA ======= */}

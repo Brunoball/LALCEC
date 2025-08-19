@@ -822,7 +822,7 @@ input:-webkit-autofill { background-color: transparent !important; }
     display: flex;
     align-items: center;
     justify-content: flex-start;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     overflow: visible;
     margin-bottom: 6px;
     padding-bottom: 2px;
@@ -1078,4 +1078,23 @@ input:-webkit-autofill { background-color: transparent !important; }
   outline: 2px solid white;
   outline-offset: 2px;
   transition: outline var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+
+  .emp_socios-mobile{
+      max-width: 60px;
+  white-space: nowrap;     /* evita saltos de línea */
+  overflow: hidden;        /* oculta lo que sobra */
+  text-overflow: ellipsis; /* agrega los "..." */
+  }
+
+
+  @media (max-width: 768px) {
+
+  .emp_socios-mobile{
+      max-width: 60px;
+  white-space: nowrap;     /* evita saltos de línea */
+  overflow: hidden;        /* oculta lo que sobra */
+  text-overflow: ellipsis; /* agrega los "..." */
+  }
 }

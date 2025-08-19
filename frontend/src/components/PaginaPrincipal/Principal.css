@@ -94,10 +94,17 @@
 
 /* Grid de botones */
 .menu-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 20px; 
-  margin-bottom: 20px;
+  display: flex;           /* antes: grid */
+  flex-wrap: wrap;         /* permite que bajen */
+  gap: 20px;
+  justify-content: center; /* centra cada fila */
+}
+
+/* Dales un ancho “estable” a las tarjetas para que el centrado se note */
+.menu-button {
+  width: clamp(220px, 28vw, 260px); /* ancho fijo/responsivo */
+  flex: 0 0 auto;                   /* no estirar */
+  /* el resto de tus estilos queda igual */
 }
 
 /* Botones del menú */
@@ -615,4 +622,11 @@
     font-size: .8rem;
     min-width: 90px;
   }
+}
+@media (max-width: 768px) {
+  .menu-button { width: clamp(200px, 42vw, 240px); }
+}
+
+@media (max-width: 480px) {
+  .menu-button { width: calc(50% - 10px); } /* dos por fila bien centradas */
 }

@@ -90,11 +90,22 @@ const useReducedMotion = () => {
   return reduced;
 };
 
+// Normalizador común (mapea objeto/string a label)
+const medioLabel = (m) => {
+  if (m == null) return "";
+  if (typeof m === "string") return m.trim();
+  // mismo esquema que Empresas: { Medio_Pago: "Transferencia", ... }
+  return String(m.Medio_Pago ?? m.label ?? m.name ?? "").trim();
+};
+
 /* =====================
    Row virtualizado (tabla desktop)
 ===================== */
 const SocioRow = React.memo(
   function SocioRow({ index, style, data }) {
+    // MOD: cascada
+    const stagger = clamp(index, 0, 14);
+
     const socio = data.items[index];
     const selected = data.filaSeleccionada === index;
 
@@ -106,8 +117,8 @@ const SocioRow = React.memo(
 
     return (
       <div
-        style={style}
-        className={`gessoc_row ${rowClass}`}
+        style={{ ...style, "--stagger": stagger }}
+        className={`gessoc_row gessoc_cascade ${rowClass}`}
         onClick={() => data.onSelect(index, socio)}
       >
         <div className="gessoc_column gessoc_column-razon">
@@ -118,7 +129,9 @@ const SocioRow = React.memo(
         </div>
         <div className="gessoc_column gessoc_column-medio">{socio.medio_pago}</div>
         <div className="gessoc_column gessoc_column-dom">{socio.domicilio_2}</div>
-        <div className="gessoc_column gessoc_column-obs">{socio.observacion}</div>
+        <div className="gessoc_column gessoc_column-obs">
+          {socio.observacion && String(socio.observacion).trim() !== "" ? socio.observacion : "-"}
+        </div>
         <div className="gessoc_column gessoc_icons-column">
           {selected && (
             <div className="gessoc_icons-container">
@@ -172,16 +185,34 @@ const SocioRow = React.memo(
 );
 
 /* =====================
-   Row virtualizado ( tarjetas mobile )
+   Row virtualizado (tarjetas mobile) — CON GAP REAL
 ===================== */
 const SocioCardRow = React.memo(
   function SocioCardRow({ index, style, data }) {
     const socio = data.items[index];
+    const gap = data.gap ?? 12;
+    // MOD: cascada
+    const stagger = clamp(index, 0, 14);
+
+    // Ajuste de separación: damos gap/2 arriba y abajo.
+    const top =
+      typeof style.top === "number" ? style.top : parseFloat(style.top) || 0;
+    const height =
+      typeof style.height === "number"
+        ? style.height
+        : parseFloat(style.height) || 0;
+
+    const rowStyle = {
+      ...style,
+      top: top + gap / 2,
+      height: height - gap,
+      "--stagger": stagger,
+    };
 
     return (
       <div
-        style={style}
-        className={`gessoc_card ${socio._estadoClase}`}
+        style={rowStyle}
+        className={`gessoc_card gessoc_cascade ${socio._estadoClase}`}
         onClick={() => data.onSelect(index, socio)}
       >
         <div className="gessoc_card-status-strip" />
@@ -221,12 +252,16 @@ const SocioCardRow = React.memo(
             <span className="gessoc_card-label">Domicilio cobro</span>
             <span className="gessoc_card-value">{socio.domicilio_2}</span>
           </div>
-          {socio.observacion && (
-            <div className="gessoc_card-row">
-              <span className="gessoc_card-label">Obs.</span>
-              <span className="gessoc_card-value">{socio.observacion}</span>
-            </div>
-          )}
+
+          {/* SIEMPRE mostrar la fila de Observaciones; usar "-" si falta */}
+          <div className="gessoc_card-row">
+            <span className="gessoc_card-label">Obs.</span>
+            <span className="gessoc_card-value">
+              {socio.observacion && String(socio.observacion).trim() !== ""
+                ? socio.observacion
+                : "-"}
+            </span>
+          </div>
         </div>
 
         <div className="gessoc_card-actions">
@@ -455,7 +490,7 @@ const GestionarSocios = () => {
     } finally {
       refreshingRef.current = false;
     }
-  }, [BASE_URL, sociosRaw]);
+  }, [sociosRaw]);
 
   /* ---------- Carga perezosa inicial + revalidación ---------- */
   const ensureDataLoaded = useCallback(async () => {
@@ -584,15 +619,64 @@ const GestionarSocios = () => {
     });
   }, [sociosRaw, getEstadoPago]);
 
-  /* ---------- Catálogo de medios ---------- */
-  const mediosDePago = useMemo(() => {
-    const set = new Set();
-    for (let i = 0; i < socios.length; i++) {
-      const m = socios[i]._medioStr;
-      if (m) set.add(m);
-    }
-    return Array.from(set).sort();
-  }, [socios]);
+  /* ---------- Medios de pago (API + fallback, como Empresas) ---------- */
+  const [mediosDePago, setMediosDePago] = useState([]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const cargarMedios = async () => {
+      const trySocios = async () => {
+        try {
+          const r = await fetch(`${BASE_URL}/api.php?action=obtener_datos_socios`, { cache: "no-store" });
+          if (!r.ok) throw new Error("obtener_datos_socios no OK");
+          const j = await r.json();
+          const arr = Array.isArray(j?.mediosPago) ? j.mediosPago : [];
+          const labels = arr.map(medioLabel).filter(Boolean);
+          if (labels.length) return labels;
+          throw new Error("Sin labels en obtener_datos_socios");
+        } catch {
+          return null;
+        }
+      };
+
+      const tryEmpresas = async () => {
+        try {
+          const r = await fetch(`${BASE_URL}/api.php?action=obtener_datos_empresas`, { cache: "no-store" });
+          if (!r.ok) throw new Error("obtener_datos_empresas no OK");
+          const j = await r.json();
+          const arr = Array.isArray(j?.mediosPago) ? j.mediosPago : [];
+          const labels = arr.map(medioLabel).filter(Boolean);
+          if (labels.length) return labels;
+          throw new Error("Sin labels en obtener_datos_empresas");
+        } catch {
+          return null;
+        }
+      };
+
+      const deriveFromSocios = () => {
+        const set = new Map();
+        for (const s of socios) {
+          const raw = medioLabel(s?.medio_pago ?? s?._medioStr ?? "");
+          if (!raw) continue;
+          set.set(raw.toUpperCase(), raw);
+        }
+        return Array.from(set.values());
+      };
+
+      let labels = await trySocios();
+      if (!labels) labels = await tryEmpresas();
+      if (!labels) labels = deriveFromSocios();
+
+      labels.sort((a, b) => a.localeCompare(b, "es", { sensitivity: "base" }));
+
+      if (!cancelled) setMediosDePago(labels);
+    };
+
+    cargarMedios();
+
+    return () => { cancelled = true; };
+  }, [BASE_URL, socios]);
 
   /* ---------- Filtrado ---------- */
   const sociosFiltrados = useMemo(() => {
@@ -630,20 +714,23 @@ const GestionarSocios = () => {
   }, [socios, deferredBusqueda, filtrosActivos]);
 
   /* ---------- Handlers (exclusivos) ---------- */
-  const handleBusquedaInputChange = useCallback(async (e) => {
-    const value = e.target.value;
-    setExclusiveFilter("search", value);
+  const handleBusquedaInputChange = useCallback(
+    async (e) => {
+      const value = e.target.value;
+      setExclusiveFilter("search", value);
 
-    if (!dataLoaded) {
-      window.requestIdleCallback
-        ? window.requestIdleCallback(() => ensureDataLoaded())
-        : ensureDataLoaded();
-    } else {
-      window.requestIdleCallback
-        ? window.requestIdleCallback(() => revalidate())
-        : setTimeout(revalidate, 0);
-    }
-  }, [dataLoaded, ensureDataLoaded, revalidate, setExclusiveFilter]);
+      if (!dataLoaded) {
+        window.requestIdleCallback
+          ? window.requestIdleCallback(() => ensureDataLoaded())
+          : ensureDataLoaded();
+      } else {
+        window.requestIdleCallback
+          ? window.requestIdleCallback(() => revalidate())
+          : setTimeout(revalidate, 0);
+      }
+    },
+    [dataLoaded, ensureDataLoaded, revalidate, setExclusiveFilter]
+  );
 
   const limpiarFiltros = useCallback(() => {
     setExclusiveFilter("none");
@@ -651,22 +738,40 @@ const GestionarSocios = () => {
     setSocioSeleccionado(null);
   }, [setExclusiveFilter]);
 
-  const handleFiltrarPorLetra = useCallback(async (letra) => {
-    const isSame = filtrosActivos.letras?.[0] === letra;
-    setExclusiveFilter(isSame ? "none" : "letra", isSame ? null : letra);
+  const handleFiltrarPorLetra = useCallback(
+    async (letra) => {
+      const isSame = filtrosActivos.letras?.[0] === letra;
+      setExclusiveFilter(isSame ? "none" : "letra", isSame ? null : letra);
 
-    if (!dataLoaded) await ensureDataLoaded();
-    else revalidate();
-  }, [dataLoaded, ensureDataLoaded, revalidate, filtrosActivos.letras, setExclusiveFilter]);
+      if (!dataLoaded) await ensureDataLoaded();
+      else revalidate();
+    },
+    [
+      dataLoaded,
+      ensureDataLoaded,
+      revalidate,
+      filtrosActivos.letras,
+      setExclusiveFilter,
+    ]
+  );
 
-  const handleFiltrarPorMedioPago = useCallback(async (medio) => {
-    const actual = filtrosActivos.mediosPago?.[0] ?? null;
-    const isSame = actual === medio;
-    setExclusiveFilter(isSame ? "none" : "medio", isSame ? null : medio);
+  const handleFiltrarPorMedioPago = useCallback(
+    async (medio) => {
+      const actual = filtrosActivos.mediosPago?.[0] ?? null;
+      const isSame = actual === medio;
+      setExclusiveFilter(isSame ? "none" : "medio", isSame ? null : medio);
 
-    if (!dataLoaded) await ensureDataLoaded();
-    else revalidate();
-  }, [dataLoaded, ensureDataLoaded, revalidate, filtrosActivos.mediosPago, setExclusiveFilter]);
+      if (!dataLoaded) await ensureDataLoaded();
+      else revalidate();
+    },
+    [
+      dataLoaded,
+      ensureDataLoaded,
+      revalidate,
+      filtrosActivos.mediosPago,
+      setExclusiveFilter,
+    ]
+  );
 
   const handleMostrarTodos = useCallback(async () => {
     setExclusiveFilter("todos");
@@ -715,34 +820,40 @@ const GestionarSocios = () => {
   }, []);
 
   /* ---------- Acciones server ---------- */
-  const handleEliminarSocio = useCallback(async () => {
-    if (!socioSeleccionado) return;
-    try {
-      const idSel = getSocioId(socioSeleccionado);
-      const response = await fetch(`${BASE_URL}/api.php?action=eliminar_socio`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id_socio: idSel }),
-      });
-      const data = await response.json();
-      if (data?.exito || data?.success) {
-        setSociosRaw((prev) => {
-          const next = prev.filter((s) => getSocioId(s) !== idSel);
-          try {
-            sessionStorage.setItem(CACHE_KEY, JSON.stringify(next));
-          } catch {}
-          return next;
-        });
-        setMostrarModalEliminar(false);
-        showToast("Socio eliminado correctamente");
-        revalidate();
-      } else {
-        showToast(data?.mensaje || "Error al eliminar", "error");
+  const handleEliminarSocio = useCallback(
+    async () => {
+      if (!socioSeleccionado) return;
+      try {
+        const idSel = getSocioId(socioSeleccionado);
+        const response = await fetch(
+          `${BASE_URL}/api.php?action=eliminar_socio`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id_socio: idSel }),
+          }
+        );
+        const data = await response.json();
+        if (data?.exito || data?.success) {
+          setSociosRaw((prev) => {
+            const next = prev.filter((s) => getSocioId(s) !== idSel);
+            try {
+              sessionStorage.setItem(CACHE_KEY, JSON.stringify(next));
+            } catch {}
+            return next;
+          });
+          setMostrarModalEliminar(false);
+          showToast("Socio eliminado correctamente");
+          revalidate();
+        } else {
+          showToast(data?.mensaje || "Error al eliminar", "error");
+        }
+      } catch {
+        showToast("Problema al eliminar el socio", "error");
       }
-    } catch {
-      showToast("Problema al eliminar el socio", "error");
-    }
-  }, [socioSeleccionado, showToast, revalidate]);
+    },
+    [socioSeleccionado, showToast, revalidate]
+  );
 
   const handleConfirmarBajaSocio = useCallback(
     async (socio, motivo) => {
@@ -826,54 +937,67 @@ const GestionarSocios = () => {
   );
 
   const desktopRowHeight = 48;
+
+  // gap real entre tarjetas virtualizadas
+  const cardGap = 12;
   const mobileCardHeight = 226;
+  const itemSizeMobile = mobileCardHeight + cardGap;
+
   const overscan = isMobile ? 6 : 10;
 
   /* ---------- Contador visibles ---------- */
-  const cantidadVisibles = useMemo(() => sociosFiltrados.length, [sociosFiltrados]);
+  const cantidadVisibles = useMemo(
+    () => sociosFiltrados.length,
+    [sociosFiltrados]
+  );
 
   /* ---------- Exportar Excel ---------- */
-  const exportarAExcel = useCallback(async () => {
-    if (!dataLoaded) await ensureDataLoaded();
-    if (sociosFiltrados.length === 0) {
-      showToast("No hay socios para exportar.", "error");
-      return;
-    }
-    const datos = sociosFiltrados.map(
-      ({
-        id,
-        nombre,
-        apellido,
-        categoria,
-        precio_categoria,
-        medio_pago,
-        domicilio_2,
-        observacion,
-        ...rest
-      }) => ({
-        id,
-        apellido,
-        nombre,
-        categoria,
-        precio_categoria,
-        medio_pago,
-        domicilio_2,
-        observacion,
-        ...rest,
-      })
-    );
-    const ws = XLSX.utils.json_to_sheet(datos);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Socios");
-    XLSX.writeFile(wb, "Socios.xlsx");
-    showToast("Exportación a Excel completada");
-  }, [sociosFiltrados, showToast, dataLoaded, ensureDataLoaded]);
+  const exportarAExcel = useCallback(
+    async () => {
+      if (!dataLoaded) await ensureDataLoaded();
+      if (sociosFiltrados.length === 0) {
+        showToast("No hay socios para exportar.", "error");
+        return;
+      }
+      const datos = sociosFiltrados.map(
+        ({
+          id,
+          nombre,
+          apellido,
+          categoria,
+          precio_categoria,
+          medio_pago,
+          domicilio_2,
+          observacion,
+          ...rest
+        }) => ({
+          id,
+          apellido,
+          nombre,
+          categoria,
+          precio_categoria,
+          medio_pago,
+          domicilio_2,
+          observacion,
+          ...rest,
+        })
+      );
+      const ws = XLSX.utils.json_to_sheet(datos);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Socios");
+      XLSX.writeFile(wb, "Socios.xlsx");
+      showToast("Exportación a Excel completada");
+    },
+    [sociosFiltrados, showToast, dataLoaded, ensureDataLoaded]
+  );
 
   /* =====================
          RENDER
   ===================== */
   return (
-    <div className={`gessoc_empresa-container ${isMobile ? "gessoc_mobile" : ""}`}>
+    <div
+      className={`gessoc_empresa-container ${isMobile ? "gessoc_mobile" : ""}`}
+    >
       {toast.show && (
         <Toast
           tipo={toast.tipo}
@@ -885,7 +1009,11 @@ const GestionarSocios = () => {
 
       <div className="gessoc_empresa-box">
         {/* HEADER */}
-        <div className={`gessoc_front-row-emp ${isMobile ? "gessoc_front-row-emp--mobile" : ""}`}>
+        <div
+          className={`gessoc_front-row-emp ${
+            isMobile ? "gessoc_front-row-emp--mobile" : ""
+          }`}
+        >
           <span className="gessoc_empresa-title">Gestionar Socios</span>
 
           {/* Búsqueda */}
@@ -916,7 +1044,10 @@ const GestionarSocios = () => {
                 revalidate();
               }}
             >
-              <FontAwesomeIcon icon={faMagnifyingGlass} className="gessoc_search-icon" />
+              <FontAwesomeIcon
+                icon={faMagnifyingGlass}
+                className="gessoc_search-icon"
+              />
             </button>
           </div>
 
@@ -926,11 +1057,16 @@ const GestionarSocios = () => {
               className="gessoc_filtros-button"
               onClick={() => setMostrarMenuFiltros((v) => !v)}
             >
-              <FontAwesomeIcon icon={faFilter} className="gessoc_icon-button" />
+              <FontAwesomeIcon
+                icon={faFilter}
+                className="gessoc_icon-button"
+              />
               <span>Aplicar Filtros</span>
               <FontAwesomeIcon
                 icon={faChevronDown}
-                className={`gessoc_chevron-icon ${mostrarMenuFiltros ? "gessoc_rotate" : ""}`}
+                className={`gessoc_chevron-icon ${
+                  mostrarMenuFiltros ? "gessoc_rotate" : ""
+                }`}
               />
             </button>
 
@@ -956,7 +1092,9 @@ const GestionarSocios = () => {
                         <button
                           key={letra}
                           className={`gessoc_letra-filtro ${
-                            filtrosActivos.letras.includes(letra) ? "gessoc_active" : ""
+                            filtrosActivos.letras.includes(letra)
+                              ? "gessoc_active"
+                              : ""
                           }`}
                           onClick={() => handleFiltrarPorLetra(letra)}
                           title={`Filtrar por ${letra}`}
@@ -983,18 +1121,23 @@ const GestionarSocios = () => {
 
                 {mostrarSubmenuTransferencia && (
                   <div className="gessoc_filtros-submenu">
-                    {mediosDePago.map((medio) => (
-                      <div
-                        key={medio}
-                        className={`gessoc_filtros-submenu-item ${
-                          filtrosActivos.mediosPago.includes(medio) ? "gessoc_active" : ""
-                        }`}
-                        onClick={() => handleFiltrarPorMedioPago(medio)}
-                        title={`Filtrar por ${medio}`}
-                      >
-                        {medio}
-                      </div>
-                    ))}
+                    {mediosDePago.map((medio) => {
+                      const label = medioLabel(medio);
+                      if (!label) return null;
+                      const isActive = filtrosActivos.mediosPago.includes(label);
+                      return (
+                        <div
+                          key={label}
+                          className={`gessoc_filtros-submenu-item ${
+                            isActive ? "gessoc_active" : ""
+                          }`}
+                          onClick={() => handleFiltrarPorMedioPago(label)}
+                          title={`Filtrar por ${label}`}
+                        >
+                          {label}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
 
@@ -1019,16 +1162,27 @@ const GestionarSocios = () => {
                 Cant socios: {cantidadVisibles}
               </span>
               <span className="gessoc_socios-totales gessoc_socios-mobile">
-                <FontAwesomeIcon icon={faUsers} className="gessoc_icono-empresa" />
+                <FontAwesomeIcon
+                  icon={faUsers}
+                  className="gessoc_icono-empresa"
+                />
                 {cantidadVisibles}
               </span>
             </div>
 
-            {/* === NUEVOS CHIPS DE FILTROS ACTIVOS === */}
+            {/* CHIPS de filtros activos */}
             <div className="gessoc_filtros-activos-container">
-              {/* Filtro por letra */}
+              {/* CHIP: SOLO LETRA */}
               {filtrosActivos.letras?.length > 0 && (
-                <div className="gessoc_filter-chip gessoc_filter-chip--letter">
+                <div className="gessoc_filter-chip">
+                  <span className="gessoc_filter-chip-text">
+                    Letra: {filtrosActivos.letras[0]}
+                  </span>
+                  {filtrosActivos.letras.length > 1 && (
+                    <span className="gessoc_filter-chip-more">
+                      +{filtrosActivos.letras.length - 1}
+                    </span>
+                  )}
                   <button
                     className="gessoc_filter-chip-close"
                     onClick={() => setExclusiveFilter("none")}
@@ -1037,16 +1191,19 @@ const GestionarSocios = () => {
                   >
                     ×
                   </button>
-                  <span className="gessoc_filter-chip-label">Letra:</span>
-                  <span className="gessoc_filter-chip-badge">
-                    {filtrosActivos.letras[0]}
-                  </span>
                 </div>
               )}
 
-              {/* Filtro por medio de pago */}
+              {/* CHIP: MEDIO */}
               {filtrosActivos.mediosPago?.length > 0 && (
-                <div className="gessoc_filter-chip gessoc_filter-chip--medio">
+                <div className="gessoc_filter-chip gessoc_chip-medio">
+                  <span className="gessoc_filter-chip-text">Medio: </span>
+                  <span className="texto">{filtrosActivos.mediosPago[0]}</span>
+                  {filtrosActivos.mediosPago.length > 1 && (
+                    <span className="gessoc_filter-chip-more">
+                      +{filtrosActivos.mediosPago.length - 1}
+                    </span>
+                  )}
                   <button
                     className="gessoc_filter-chip-close"
                     onClick={() => setExclusiveFilter("none")}
@@ -1055,31 +1212,23 @@ const GestionarSocios = () => {
                   >
                     ×
                   </button>
-                  <span className="gessoc_filter-chip-label">Medio:</span>
-                  <span className="gessoc_filter-chip-value">
-                    {filtrosActivos.mediosPago.join(", ")}
-                  </span>
                 </div>
               )}
-
-              {/* NO renderizar chip “Mostrando todos” */}
-              {/* (se mantiene la lógica de filtrosActivos.todos para el listado) */}
             </div>
-            {/* === FIN chips === */}
 
             {/* Leyenda de estados */}
             <div className="gessoc_estado-pagos-container">
               <div className="gessoc_estado-indicador gessoc_al-dia">
                 <div className="gessoc_indicador-color"></div>
-                <span>Al día</span>
+                <span>{isMobile ? "al dia" : "Al día"}</span>
               </div>
               <div className="gessoc_estado-indicador gessoc_debe-1-2">
                 <div className="gessoc_indicador-color"></div>
-                <span>Debe 1-2 meses</span>
+                <span>{isMobile ? "1-2" : "Debe 1-2 meses"}</span>
               </div>
               <div className="gessoc_estado-indicador gessoc_debe-3-mas">
                 <div className="gessoc_indicador-color"></div>
-                <span>Debe 3+ meses</span>
+                <span>{isMobile ? "3+" : "Debe 3+ meses"}</span>
               </div>
             </div>
           </div>
@@ -1094,7 +1243,9 @@ const GestionarSocios = () => {
                 <div className="gessoc_column-header">Medio de Pago</div>
                 <div className="gessoc_column-header">Domicilio Cobro</div>
                 <div className="gessoc_column-header">Observación</div>
-                <div className="gessoc_column-header gessoc_icons-column">Acciones</div>
+                <div className="gessoc_column-header gessoc_icons-column">
+                  Acciones
+                </div>
               </div>
 
               <div className="gessoc_body">
@@ -1114,15 +1265,23 @@ const GestionarSocios = () => {
                       width="100%"
                       overscanCount={overscan}
                       itemData={itemData}
+                      // MOD: reinicio suave para nodos reciclados
+                      itemKey={(idx, data) => data.items[idx]?.id ?? idx}
                     >
                       {SocioRow}
                     </List>
                   </div>
                 ) : (
-                  <div className="gessoc_no-data-message" style={{ width: "100%" }}>
+                  <div
+                    className="gessoc_no-data-message"
+                    style={{ width: "100%" }}
+                  >
                     <div className="gessoc_message-content">
                       <p>Usá la búsqueda o aplicá filtros para ver los socios</p>
-                      <button className="gessoc_btn-show-all" onClick={handleMostrarTodos}>
+                      <button
+                        className="gessoc_btn-show-all"
+                        onClick={handleMostrarTodos}
+                      >
                         Mostrar todos los socios
                       </button>
                     </div>
@@ -1141,10 +1300,13 @@ const GestionarSocios = () => {
                 <List
                   height={listHeight}
                   itemCount={sociosFiltrados.length}
-                  itemSize={mobileCardHeight}
+                  itemSize={itemSizeMobile}
                   width="100%"
                   overscanCount={overscan}
-                  itemData={itemData}
+                  itemData={{ ...itemData, gap: cardGap }}
+                  className="gessoc_cards_list"
+                  // MOD: reinicio suave para nodos reciclados
+                  itemKey={(idx, data) => data.items[idx]?.id ?? idx}
                 >
                   {SocioCardRow}
                 </List>
@@ -1152,7 +1314,10 @@ const GestionarSocios = () => {
                 <div className="gessoc_no-data-message gessoc_no-data-mobile">
                   <div className="gessoc_message-content">
                     <p>Usá la búsqueda o aplicá filtros para ver resultados</p>
-                    <button className="gessoc_btn-show-all" onClick={handleMostrarTodos}>
+                    <button
+                      className="gessoc_btn-show-all"
+                      onClick={handleMostrarTodos}
+                    >
                       Mostrar todos los socios
                     </button>
                   </div>
@@ -1174,7 +1339,10 @@ const GestionarSocios = () => {
             aria-label="Volver"
             title="Volver"
           >
-            <FontAwesomeIcon icon={faArrowLeft} className="gessoc_socio-icon-button" />
+            <FontAwesomeIcon
+              icon={faArrowLeft}
+              className="gessoc_socio-icon-button"
+            />
             <p>Volver Atrás</p>
           </button>
 
@@ -1185,7 +1353,10 @@ const GestionarSocios = () => {
               aria-label="Agregar"
               title="Agregar socio"
             >
-              <FontAwesomeIcon icon={faUserPlus} className="gessoc_socio-icon-button" />
+              <FontAwesomeIcon
+                icon={faUserPlus}
+                className="gessoc_socio-icon-button"
+              />
               <p>Agregar Socio</p>
             </button>
 
@@ -1195,7 +1366,10 @@ const GestionarSocios = () => {
               aria-label="Exportar"
               title="Exportar a Excel"
             >
-              <FontAwesomeIcon icon={faFileExcel} className="gessoc_socio-icon-button" />
+              <FontAwesomeIcon
+                icon={faFileExcel}
+                className="gessoc_socio-icon-button"
+              />
               <p>Exportar a Excel</p>
             </button>
 
@@ -1205,7 +1379,10 @@ const GestionarSocios = () => {
               title="Dados de Baja"
               aria-label="Dados de Baja"
             >
-              <FontAwesomeIcon icon={faUserMinus} className="gessoc_socio-icon-button" />
+              <FontAwesomeIcon
+                icon={faUserMinus}
+                className="gessoc_socio-icon-button"
+              />
               <p>Dados de Baja</p>
             </button>
           </div>

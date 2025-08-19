@@ -170,9 +170,7 @@
   padding: 0 8px; text-transform: none;
 }
 
-.socbaj_col-id { min-width: 60px; max-width: 60px; }
-.socbaj_col-nombre { min-width: 180px; }
-.socbaj_col-fecha { min-width: 170px; }
+
 
 .socbaj_iconos { display: flex; justify-content: center; align-items: center; gap: 6px; font-size: 1.3rem; }
 

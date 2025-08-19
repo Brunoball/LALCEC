@@ -153,17 +153,11 @@
 }
 .emp-baja-fila:nth-child(even) { background: #f7f7f7; }
 
-.emp-baja-col-id { min-width: 60px; max-width: 60px; }
-.emp-baja-col-nombre { min-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.emp-baja-col-fecha { min-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
 
 /* Motivo en desktop: izquierda (clic para ver completo) */
-.emp-baja-col-motivo {
-  justify-content: start !important;
-  min-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
 
-.emp-baja-col-acciones { min-width: 120px; max-width: 120px; }
+
 
 .emp-baja-col-motivo--click {
   cursor: pointer;
@@ -364,10 +358,7 @@
   }
 
   /* 🔧 FIX: Motivo (SD) a la derecha en mobile, venciendo el !important de desktop */
-  .emp-baja-col-motivo {
-    justify-content: flex-end !important;
-    text-align: right !important;
-  }
+
 
   .emp-baja-col-nombre,
   .emp-baja-col-fecha,
@@ -409,6 +400,5 @@
     width: 100%;
   }
 
-  .emp-baja-fila > div::before { min-width: 185px; }
   .emp-baja-fila > div { max-width: 100%; grid-template-columns: unset; }
 }

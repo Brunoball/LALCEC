@@ -411,156 +411,36 @@ input:-webkit-autofill { background-color: transparent !important; }
 }
 
 /* ================================
-   💨 Efecto CASCADA FLUIDO (performante)
+   💨 Efecto CASCADA FLUIDO (optimizado)
 ==================================*/
 @keyframes gessoc_cascadeIn {
   0%   { opacity: 0; transform: translateY(8px); }
   100% { opacity: 1; transform: translateY(0); }
 }
+
+/* Clase única para aplicar cascada con variable --stagger */
+.gessoc_cascade {
+  opacity: 0;
+  animation: gessoc_cascadeIn var(--cascade-duration) ease-out both;
+  animation-delay: calc(var(--cascade-stagger) * var(--stagger, 0));
+  backface-visibility: hidden;
+  transform: translateZ(0);
+  will-change: transform, opacity;
+  contain: content;
+}
+
+/* Compatibilidad con bandera existente */
+.gessoc_cascade-animation .gessoc_cascade {
+  animation-name: gessoc_cascadeIn;
+}
+
+/* 🔙 Compatibilidad/perf base en filas y tarjetas */
 .gessoc_row,
 .gessoc_card {
   backface-visibility: hidden;
   transform: translateZ(0);
   will-change: transform, opacity;
   contain: content;
-}
-/* Cascada para filas de TABLA (desktop) */
-.gessoc_body .gessoc_row {
-  opacity: 0;
-  animation: gessoc_cascadeIn var(--cascade-duration) ease-out both;
-}
-/* Cascada para TARJETAS (mobile) */
-.gessoc_cards_wrapper_virtual .gessoc_card {
-  opacity: 0;
-  animation: gessoc_cascadeIn calc(var(--cascade-duration) + 40ms) ease-out both;
-}
-
-/* Stagger por índice (1..60) */
-.gessoc_body .gessoc_row:nth-child(1),
-.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(1) { animation-delay: calc(var(--cascade-stagger) * 0); }
-.gessoc_body .gessoc_row:nth-child(2),
-.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(2) { animation-delay: calc(var(--cascade-stagger) * 1); }
-.gessoc_body .gessoc_row:nth-child(3),
-.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(3) { animation-delay: calc(var(--cascade-stagger) * 2); }
-.gessoc_body .gessoc_row:nth-child(4),
-.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(4) { animation-delay: calc(var(--cascade-stagger) * 3); }
-.gessoc_body .gessoc_row:nth-child(5),
-.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(5) { animation-delay: calc(var(--cascade-stagger) * 4); }
-.gessoc_body .gessoc_row:nth-child(6),
-.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(6) { animation-delay: calc(var(--cascade-stagger) * 5); }
-.gessoc_body .gessoc_row:nth-child(7),
-.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(7) { animation-delay: calc(var(--cascade-stagger) * 6); }
-.gessoc_body .gessoc_row:nth-child(8),
-.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(8) { animation-delay: calc(var(--cascade-stagger) * 7); }
-.gessoc_body .gessoc_row:nth-child(9),
-.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(9) { animation-delay: calc(var(--cascade-stagger) * 8); }
-.gessoc_body .gessoc_row:nth-child(10),
-.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(10) { animation-delay: calc(var(--cascade-stagger) * 9); }
-.gessoc_body .gessoc_row:nth-child(11),
-.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(11) { animation-delay: calc(var(--cascade-stagger) * 10); }
-.gessoc_body .gessoc_row:nth-child(12),
-.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(12) { animation-delay: calc(var(--cascade-stagger) * 11); }
-.gessoc_body .gessoc_row:nth-child(13),
-.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(13) { animation-delay: calc(var(--cascade-stagger) * 12); }
-.gessoc_body .gessoc_row:nth-child(14),
-.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(14) { animation-delay: calc(var(--cascade-stagger) * 13); }
-.gessoc_body .gessoc_row:nth-child(15),
-.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(15) { animation-delay: calc(var(--cascade-stagger) * 14); }
-.gessoc_body .gessoc_row:nth-child(16),
-.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(16) { animation-delay: calc(var(--cascade-stagger) * 15); }
-.gessoc_body .gessoc_row:nth-child(17),
-.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(17) { animation-delay: calc(var(--cascade-stagger) * 16); }
-.gessoc_body .gessoc_row:nth-child(18),
-.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(18) { animation-delay: calc(var(--cascade-stagger) * 17); }
-.gessoc_body .gessoc_row:nth-child(19),
-.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(19) { animation-delay: calc(var(--cascade-stagger) * 18); }
-.gessoc_body .gessoc_row:nth-child(20),
-.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(20) { animation-delay: calc(var(--cascade-stagger) * 19); }
-.gessoc_body .gessoc_row:nth-child(21),
-.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(21) { animation-delay: calc(var(--cascade-stagger) * 20); }
-.gessoc_body .gessoc_row:nth-child(22),
-.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(22) { animation-delay: calc(var(--cascade-stagger) * 21); }
-.gessoc_body .gessoc_row:nth-child(23),
-.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(23) { animation-delay: calc(var(--cascade-stagger) * 22); }
-.gessoc_body .gessoc_row:nth-child(24),
-.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(24) { animation-delay: calc(var(--cascade-stagger) * 23); }
-.gessoc_body .gessoc_row:nth-child(25),
-.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(25) { animation-delay: calc(var(--cascade-stagger) * 24); }
-.gessoc_body .gessoc_row:nth-child(26),
-.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(26) { animation-delay: calc(var(--cascade-stagger) * 25); }
-.gessoc_body .gessoc_row:nth-child(27),
-.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(27) { animation-delay: calc(var(--cascade-stagger) * 26); }
-.gessoc_body .gessoc_row:nth-child(28),
-.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(28) { animation-delay: calc(var(--cascade-stagger) * 27); }
-.gessoc_body .gessoc_row:nth-child(29),
-.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(29) { animation-delay: calc(var(--cascade-stagger) * 28); }
-.gessoc_body .gessoc_row:nth-child(30),
-.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(30) { animation-delay: calc(var(--cascade-stagger) * 29); }
-.gessoc_body .gessoc_row:nth-child(31),
-.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(31) { animation-delay: calc(var(--cascade-stagger) * 30); }
-.gessoc_body .gessoc_row:nth-child(32),
-.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(32) { animation-delay: calc(var(--cascade-stagger) * 31); }
-.gessoc_body .gessoc_row:nth-child(33),
-.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(33) { animation-delay: calc(var(--cascade-stagger) * 32); }
-.gessoc_body .gessoc_row:nth-child(34),
-.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(34) { animation-delay: calc(var(--cascade-stagger) * 33); }
-.gessoc_body .gessoc_row:nth-child(35),
-.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(35) { animation-delay: calc(var(--cascade-stagger) * 34); }
-.gessoc_body .gessoc_row:nth-child(36),
-.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(36) { animation-delay: calc(var(--cascade-stagger) * 35); }
-.gessoc_body .gessoc_row:nth-child(37),
-.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(37) { animation-delay: calc(var(--cascade-stagger) * 36); }
-.gessoc_body .gessoc_row:nth-child(38),
-.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(38) { animation-delay: calc(var(--cascade-stagger) * 37); }
-.gessoc_body .gessoc_row:nth-child(39),
-.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(39) { animation-delay: calc(var(--cascade-stagger) * 38); }
-.gessoc_body .gessoc_row:nth-child(40),
-.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(40) { animation-delay: calc(var(--cascade-stagger) * 39); }
-.gessoc_body .gessoc_row:nth-child(41),
-.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(41) { animation-delay: calc(var(--cascade-stagger) * 40); }
-.gessoc_body .gessoc_row:nth-child(42),
-.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(42) { animation-delay: calc(var(--cascade-stagger) * 41); }
-.gessoc_body .gessoc_row:nth-child(43),
-.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(43) { animation-delay: calc(var(--cascade-stagger) * 42); }
-.gessoc_body .gessoc_row:nth-child(44),
-.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(44) { animation-delay: calc(var(--cascade-stagger) * 43); }
-.gessoc_body .gessoc_row:nth-child(45),
-.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(45) { animation-delay: calc(var(--cascade-stagger) * 44); }
-.gessoc_body .gessoc_row:nth-child(46),
-.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(46) { animation-delay: calc(var(--cascade-stagger) * 45); }
-.gessoc_body .gessoc_row:nth-child(47),
-.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(47) { animation-delay: calc(var(--cascade-stagger) * 46); }
-.gessoc_body .gessoc_row:nth-child(48),
-.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(48) { animation-delay: calc(var(--cascade-stagger) * 47); }
-.gessoc_body .gessoc_row:nth-child(49),
-.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(49) { animation-delay: calc(var(--cascade-stagger) * 48); }
-.gessoc_body .gessoc_row:nth-child(50),
-.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(50) { animation-delay: calc(var(--cascade-stagger) * 49); }
-.gessoc_body .gessoc_row:nth-child(51),
-.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(51) { animation-delay: calc(var(--cascade-stagger) * 50); }
-.gessoc_body .gessoc_row:nth-child(52),
-.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(52) { animation-delay: calc(var(--cascade-stagger) * 51); }
-.gessoc_body .gessoc_row:nth-child(53),
-.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(53) { animation-delay: calc(var(--cascade-stagger) * 52); }
-.gessoc_body .gessoc_row:nth-child(54),
-.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(54) { animation-delay: calc(var(--cascade-stagger) * 53); }
-.gessoc_body .gessoc_row:nth-child(55),
-.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(55) { animation-delay: calc(var(--cascade-stagger) * 54); }
-.gessoc_body .gessoc_row:nth-child(56),
-.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(56) { animation-delay: calc(var(--cascade-stagger) * 55); }
-.gessoc_body .gessoc_row:nth-child(57),
-.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(57) { animation-delay: calc(var(--cascade-stagger) * 56); }
-.gessoc_body .gessoc_row:nth-child(58),
-.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(58) { animation-delay: calc(var(--cascade-stagger) * 57); }
-.gessoc_body .gessoc_row:nth-child(59),
-.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(59) { animation-delay: calc(var(--cascade-stagger) * 58); }
-.gessoc_body .gessoc_row:nth-child(60),
-.gessoc_cards_wrapper_virtual .gessoc_card:nth-child(60) { animation-delay: calc(var(--cascade-stagger) * 59); }
-
-/* 🔙 Compatibilidad */
-.gessoc_cascade-animation .gessoc_row,
-.gessoc_cascade-animation .gessoc_card {
-  animation-name: gessoc_cascadeIn;
 }
 
 /* ====== Hover/Selected ====== */
@@ -699,7 +579,6 @@ input:-webkit-autofill { background-color: transparent !important; }
   border-radius: var(--border-radius);
   box-shadow: var(--shadow-sm);
   font-size: 0.9rem;
-  font-weight: 500;
   display: flex;
   width: 100%;
   max-width: max-content;
@@ -798,11 +677,11 @@ input:-webkit-autofill { background-color: transparent !important; }
   /* Contador + indicadores */
   .gessoc_contenedor-list-items {
     height: auto;
-    gap: 8px;
+
     display: flex;
     align-items: center;
-    justify-content: flex-start;
-    flex-wrap: wrap;
+    justify-content: space-between;
+    flex-wrap: nowrap;
     overflow: visible;
     margin-bottom: 6px;
     padding-bottom: 2px;
@@ -821,6 +700,7 @@ input:-webkit-autofill { background-color: transparent !important; }
   .gessoc_contador-container .gessoc_icono-empresa { width: 16px; height: 16px; color: var(--primary-500); padding-left: 6px; }
 
   .gessoc_estado-pagos-container {
+    width: fit-content;
     flex: 0 0 auto;
     display: flex;
     gap: 8px;
@@ -840,15 +720,13 @@ input:-webkit-autofill { background-color: transparent !important; }
 
   .gessoc_box-table { display: none !important; }
 
-  /* === Tarjetas Mobile (actualizado, coherente con empresas) === */
-  .gessoc_cards-wrapper { display: grid !important; } /* si existe la clase antigua */
+  /* === Tarjetas Mobile (actualizado) === */
+  .gessoc_cards-wrapper { display: grid !important; } /* compat antigua */
+  /* IMPLEMENTACIÓN RECOMENDADA: usar block para listas virtualizadas */
   .gessoc_cards_wrapper_virtual {
-    display: grid !important;
-    grid-template-columns: 1fr; /* default en mobile */
-    gap: 12px;
-    margin-top: 8px;
-    padding: 8px;
-    width: 100%;
+    display: block !important;
+    padding: 12px;          /* más espacio alrededor */
+    /* el gap no aplica en block, la separación va en .gessoc_card */
   }
 
   .gessoc_card {
@@ -856,14 +734,18 @@ input:-webkit-autofill { background-color: transparent !important; }
     background: #fff;
     border: 1px solid var(--gray-200);
     border-radius: 12px;
-    box-shadow: var(--shadow-sm);
+    /* separación uniforme entre tarjetas (coincidir con itemSize si hace falta) */
+    margin-bottom: 16px;
+    /* ayuda visual a separar */
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
     padding: 12px;
-    overflow: hidden;
+    overflow: hidden;       /* para que el shadow no se corte */
     transition: all 0.2s ease;
     display: flex;
     flex-direction: column;
-    opacity: 1; /* la animación de cascada la maneja arriba */
+    opacity: 1;
   }
+  .gessoc_card:last-child { margin-bottom: 0; }
   .gessoc_card:active { transform: scale(0.997); }
 
   .gessoc_card-status-strip {
@@ -974,7 +856,7 @@ input:-webkit-autofill { background-color: transparent !important; }
   }
   .gessoc_down-container .gessoc_socio-button p { display: none; }
   .gessoc_down-container .gessoc_socio-icon-button { width: 20px; height: 20px; }
-  .gessoc_volver-atras{ color: var(--primary-500);}
+  .gessoc_volver-atras{ color: var(--primary-500); }
   .gessoc_down-container .gessoc_socio-button:hover { filter: brightness(0.98); }
   .gessoc_down-container .gessoc_socio-button:active { transform: translateY(1px) !important; }
 
@@ -1003,11 +885,13 @@ input:-webkit-autofill { background-color: transparent !important; }
     align-items: center;
     justify-content: center;
   }
+
+  /* Asegura espacio interno del contenedor del List virtualizado */
+  .List { padding: 8px !important; }
 }
 
 /* XS */
 @media (max-width: 480px) {
-  .gessoc_cards_wrapper_virtual { grid-template-columns: 1fr; }
   .gessoc_card { border-radius: 12px; padding: 12px; }
   .gessoc_card-title { font-size: 1rem; }
   .gessoc_card-value { font-size: 12.5px; }
@@ -1039,6 +923,7 @@ input:-webkit-autofill { background-color: transparent !important; }
 
 /* ================================
    ESTILOS UNIFICADOS PARA FILTROS ACTIVOS
+   (MODERNIZADOS)
 ================================== */
 .gessoc_filtros-activos-container {
   display: flex;
@@ -1048,6 +933,8 @@ input:-webkit-autofill { background-color: transparent !important; }
   padding: 0 2rem;
   align-items: center;
 }
+
+/* Submenú de Medios de pago: elipsis si el texto es largo */
 .gessoc_filtros-submenu-item {
   background-color: white;
   color: #000;
@@ -1057,62 +944,99 @@ input:-webkit-autofill { background-color: transparent !important; }
   cursor: pointer;
   transition: all .3s;
   border-radius: 8px;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .gessoc_filtros-submenu-item:hover{
   background-color: var(--primary-500);
   color: white;
 }
+
+/* ====== NUEVO CHIP ====== */
 .gessoc_filter-chip {
-  height: 40px;
-  width: max-content;
-  position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px 14px 8px 18px;
+  gap: 8px;
+  padding: 6px 10px;
+  border: 1.5px solid var(--primary-400);
+  border-radius: 9999px;
   background: #fff;
-  border: 1px solid var(--gray-200);
-  border-radius: 8px;
-  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.06), inset 0 0 0 1px rgba(0,0,0,0.02);
+  box-shadow: var(--shadow-sm);
+  white-space: nowrap;
+  max-width: 320px;
+  overflow: hidden;
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  height: auto;
   line-height: 1;
-  user-select: none;
-  font-size: 14px;
-  transition: all 0.2s ease;
 }
-.gessoc_filter-chip-label { color: var(--gray-600); font-weight: 500; }
-.gessoc_filter-chip-value { font-weight: 600; color: var(--gray-800); }
-.gessoc_filter-chip-badge {
-  display: inline-grid; place-items: center;
-  width: 26px; height: 26px; border-radius: 50%;
-  background: var(--primary-500); color: #fff; font-weight: 800;
-  font-size: 14px; letter-spacing: 0.02em;
-  box-shadow: 0 2px 6px rgba(29, 78, 216, 0.35);
+
+/* Texto principal del chip */
+.gessoc_filter-chip-text {
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
+
+/* Contador adicional (ej: "+2") */
+.gessoc_filter-chip-more {
+  padding: 0 6px;
+  border-radius: 9999px;
+  border: 1px solid var(--primary-200);
+  background: var(--primary-50);
+  color: var(--primary-700);
+  font-weight: 600;
+  font-size: 0.75rem;
+}
+
+/* Botón cerrar (NUEVO) */
 .gessoc_filter-chip-close {
-  position: absolute; top: -8px; left: -8px;
-  width: 22px; height: 22px; border-radius: 50%;
-  border: none; background: var(--danger-500); color: #fff;
-  font-size: 14px; line-height: 1; display: grid; place-items: center;
+  width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  border: none;
+  background: transparent;
+  color: var(--danger-600);
+  border-radius: 50%;
   cursor: pointer;
-  box-shadow: 0 4px 10px rgba(239, 68, 68, 0.35);
-  transition: transform 0.15s ease, filter 0.15s ease, box-shadow 0.15s ease;
+  font-weight: 700;
+  line-height: 1;
+  transition: transform 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+  margin-left: 2px;
 }
-.gessoc_filter-chip-close:hover { filter: brightness(0.95); transform: scale(1.03); }
-.gessoc_filter-chip-close:active { transform: scale(0.97); }
+.gessoc_filter-chip-close:hover {
+  transform: scale(1.1);
+  background: #fee2e2;
+}
 
-.gessoc_filter-chip--letter { background: var(--primary-50);  border-color: var(--primary-200); }
-.gessoc_filter-chip--medio  { background: var(--secondary-50); border-color: var(--secondary-200); }
-.gessoc_filter-chip--todos  { background: var(--success-50);   border-color: var(--success-200); }
+/* Utilidades */
+.gessoc_chip-ellipsis { max-width: 260px; }
+.gessoc_truncate {
+  display: inline-block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
+/* Ajustes para móvil del chip */
 @media (max-width: 768px) {
-  .gessoc_filtros-activos-container { padding: 0 16px; gap: 8px; }
-  .gessoc_filter-chip { padding: 7px 12px 7px 16px; font-size: 13px; }
-  .gessoc_filter-chip-badge { width: 24px; height: 24px; font-size: 13px; }
-  .gessoc_filter-chip-close { width: 20px; height: 20px; font-size: 12px; }
+  .gessoc_filtros-activos-container { padding: 0 0 0 8px; gap: 8px; margin: 0; }
+
+  .gessoc_filter-chip {
+    padding: 4px ;
+    gap: 0;
+    max-width: 70vw;
+  }
+  .gessoc_filter-chip-text { font-size: 0.8rem; }
+  .gessoc_filter-chip-more { font-size: 0.7rem; }
+  .gessoc_filter-chip-close { width: 16px; height: 16px;  align-items: baseline;}
 }
 
 /* Quitar focus negro de iconos (para evitar borde al cerrar modal) */
-
 .gessoc_icon:focus,
 .gessoc_icon:focus-visible {
   outline: none;
@@ -1120,9 +1044,9 @@ input:-webkit-autofill { background-color: transparent !important; }
 }
 
 /* ===== SOLO ICONO + NÚMERO EN CELULAR ===== */
-/* En móvil, el contador debe mostrar únicamente el ícono y el número.
-   Asegurate en JSX de colocar el ícono dentro de .gessoc_socios-mobile junto al número. */
 @media (max-width: 768px) {
+  .gessoc_filter-chip-label{ display: none; }
+
   .gessoc_socios-mobile {
     display: inline-flex !important;
     align-items: center;
@@ -1130,11 +1054,75 @@ input:-webkit-autofill { background-color: transparent !important; }
     font-weight: 700;
     color: var(--gray-800);
   }
-  /* Tamaño del ícono en el contador móvil */
   .gessoc_socios-mobile .gessoc_icono-empresa {
     padding-left: 0;
     width: 18px;
     height: 18px;
     color: var(--primary-600);
+  }
+}
+
+/* ======= Ajustes globales de tarjetas (desktop/base) ======= */
+.gessoc_cards_wrapper_virtual {
+  gap: 120px !important;      /* referencia cuando NO se usa block */
+  padding: 8px;               /* base (overridden en mobile a 12px) */
+}
+.gessoc_card {
+  margin-bottom: 12px;                        /* separación base */
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);      /* ayuda visual */
+}
+
+/* Utilidad para truncado en móvil dentro del chip de medio */
+@media (max-width: 768px) {
+  .texto{
+    max-width: 60px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+/* Mostrar solo el label del chip de letra en móvil; ocultar label del chip de medio */
+@media (max-width: 768px) {
+  .gessoc_chip-medio .gessoc_filter-chip-text {
+    display: none !important;
+  }
+  .gessoc_filter-chip-text {
+    display: inline !important;
+  }
+}
+
+/* ================================
+   CORRECCIÓN MENÚ FILTROS SOCIOS MOBILE
+   (Para que sea igual al de empresas)
+==================================*/
+@media (max-width: 768px) {
+  .gessoc_filtros-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    left: auto;
+    margin: 0;
+    border-radius: 12px;
+    width: min(90vw, 420px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    z-index: 1000;
+    max-height: 60vh;
+    overflow: auto;
+    animation: gessoc_dropDown 0.3s ease-out;
+  }
+
+  .gessoc_filtros-submenu {
+    padding: 0.75rem;
+  }
+
+  .gessoc_alfabeto-filtros {
+    grid-template-columns: repeat(6, 1fr);
+    gap: 0.5rem;
+  }
+
+  .gessoc_letra-filtro {
+    padding: 0.4rem;
+    font-size: 0.85rem;
   }
 }
