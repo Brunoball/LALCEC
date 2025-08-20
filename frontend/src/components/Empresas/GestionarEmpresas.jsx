@@ -79,7 +79,7 @@ const useReducedMotion = () => {
 const getEmpresaId = (e) =>
   e?.id ?? e?.idEmp ?? e?.id_empresa ?? e?.idEmpresa ?? null;
 
-/* ===== Abreviador genérico SOLO para tarjetas ===== */
+/* ===== Abreviador genérico SOLO para tarjetas (ya no se usa para mostrar) ===== */
 const shortMedio = (label = "") => {
   const raw = String(label).trim();
   if (!raw) return "";
@@ -90,6 +90,12 @@ const shortMedio = (label = "") => {
   }
   if (raw.length <= 8) return raw.toLowerCase();
   return raw.slice(0, 7).toLowerCase();
+};
+
+/* === Formateador de MEDIO DE PAGO para mostrar (MAYÚSCULAS o “-”) === */
+const fmtMedio = (v) => {
+  const s = (v ?? "").toString().trim();
+  return s ? s.toUpperCase() : "-";
 };
 
 /* ================================
@@ -163,8 +169,8 @@ const Row = memo(function Row({
       <div className="emp_column emp_column-dom">{empresa?.domicilio_2}</div>
       <div className="emp_column emp_column-obs">{empresa?.observacion}</div>
 
-      {/* Medio de Pago: SIEMPRE COMPLETO en la tabla (igual web y mobile) */}
-      <div className="emp_column emp_column-medio">{empresa?.medio_pago}</div>
+      {/* Medio de Pago: SIEMPRE COMPLETO y en MAYÚSCULAS; si no hay, “-” */}
+      <div className="emp_column emp_column-medio">{fmtMedio(empresa?.medio_pago)}</div>
 
       <div className="emp_column emp_icons-column">
         {selected && (
@@ -299,8 +305,8 @@ const Card = memo(function Card({
         )}
         <div className="emp_card-row">
           <span className="emp_card-label">Medio de Pago</span>
-          {/* En tarjeta: abreviado dinámico */}
-          <span className="emp_card-value">{shortMedio(empresa?.medio_pago)}</span>
+          {/* En tarjeta (MOBILE): mostrar completo en MAYÚSCULAS; si no hay, “-” */}
+          <span className="emp_card-value">{fmtMedio(empresa?.medio_pago)}</span>
         </div>
       </div>
 
@@ -1050,7 +1056,7 @@ const GestionarEmpresas = () => {
                           onClick={() => aplicarFiltroTransferencia(label)}
                           title={`Filtrar por ${label}`}
                         >
-                          {/* IGUAL en web y mobile: texto completo */}
+                          {/* Mostrar texto completo del backend en el menú */}
                           {label}
                         </div>
                       );
@@ -1093,9 +1099,8 @@ const GestionarEmpresas = () => {
                   <span className="emp_chip-mini-text emp_socios-desktop">
                     {chipKind}: {chipValue}
                   </span>
-                  {/* Mobile: solo el valor (sin 'Letra:' / 'Medio:') */}
+                  {/* Mobile: solo el valor */}
                   <span className="emp_chip-mini-text emp_socios-mobile">
-
                     {chipValue}
                   </span>
 
@@ -1112,26 +1117,25 @@ const GestionarEmpresas = () => {
             </div>
 
             {/* Leyenda estados */}
-{/* Leyenda estados */}
-<div className="emp_estado-pagos-container">
-  <div className="emp_estado-indicador emp_al-dia">
-    <div className="emp_indicador-color"></div>
-    <span className="emp_legend-desktop">Al día</span>
-    <span className="emp_legend-mobile">Al dia</span>
-  </div>
+            <div className="emp_estado-pagos-container">
+              <div className="emp_estado-indicador emp_al-dia">
+                <div className="emp_indicador-color"></div>
+                <span className="emp_legend-desktop">Al día</span>
+                <span className="emp_legend-mobile">Al dia</span>
+              </div>
 
-  <div className="emp_estado-indicador emp_debe-1-2">
-    <div className="emp_indicador-color"></div>
-    <span className="emp_legend-desktop">Debe 1-2 meses</span>
-    <span className="emp_legend-mobile">1-2</span>
-  </div>
+              <div className="emp_estado-indicador emp_debe-1-2">
+                <div className="emp_indicador-color"></div>
+                <span className="emp_legend-desktop">Debe 1-2 meses</span>
+                <span className="emp_legend-mobile">1-2</span>
+              </div>
 
-  <div className="emp_estado-indicador emp_debe-3-mas">
-    <div className="emp_indicador-color"></div>
-    <span className="emp_legend-desktop">Debe 3+</span>
-    <span className="emp_legend-mobile">3+</span>
-  </div>
-</div>
+              <div className="emp_estado-indicador emp_debe-3-mas">
+                <div className="emp_indicador-color"></div>
+                <span className="emp_legend-desktop">Debe 3+</span>
+                <span className="emp_legend-mobile">3+</span>
+              </div>
+            </div>
           </div>
 
           {/* ======= TABLA ======= */}
