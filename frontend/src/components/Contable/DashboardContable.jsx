@@ -42,7 +42,7 @@ export default function DashboardContable() {
   const [totalRecaudado, setTotalRecaudado] = useState(0);
   const [registrosMes, setRegistrosMes] = useState([]);
 
-  // UI (sin usar para bloquear UI; sólo para manejar errores)
+  // UI (errores)
   const [error, setError] = useState(null);
 
   // Modal Gráficos
@@ -70,7 +70,7 @@ export default function DashboardContable() {
     return data;
   };
 
-  // Carga inicial SIN mostrar “cargando”
+  // Carga inicial
   useEffect(() => {
     sessionStorage.removeItem("datos_contables");
     sessionStorage.removeItem("precios_categorias");
@@ -134,7 +134,6 @@ export default function DashboardContable() {
     if (mesSeleccionado !== "Selecciona un mes") {
       updateMonthData();
     } else {
-      // Limpiar al no tener mes
       setCategoriasAgrupadas([]);
       setRegistrosMes([]);
       setTotalRecaudado(0);
@@ -322,15 +321,18 @@ export default function DashboardContable() {
             <h2>
               {mostrarTablaDetalle ? (
                 <>
-                  <FontAwesomeIcon icon={faTable} /> Detalle de Pagos - {mesSeleccionado || "—"} (
-                  {tipoEntidad === "socio" ? "Socios" : "Empresas"})
+                  <FontAwesomeIcon icon={faTable} /> Detalle
                 </>
               ) : (
                 <>
-                  <FontAwesomeIcon icon={faTags} /> Resumen por Categoría - {mesSeleccionado || "—"} (
-                  {tipoEntidad === "socio" ? "Socios" : "Empresas"})
+                  <FontAwesomeIcon icon={faTags} /> Resumen
                 </>
               )}
+              {/* Subtítulo corto y liviano */}
+              <small className="contable-subtitle">
+                {mesSeleccionado !== "Selecciona un mes" ? ` · ${mesSeleccionado}` : ""}
+                {` · ${tipoEntidad === "socio" ? "Socios" : "Empresas"}`}
+              </small>
             </h2>
 
             <div className="contable-selectors-container">
@@ -344,11 +346,7 @@ export default function DashboardContable() {
                 >
                   {meses.map((mes, index) => (
                     <option key={index} value={mes}>
-                      {mes === "Selecciona un mes"
-                        ? window.innerWidth <= 768
-                          ? "Mes"
-                          : "Selecciona un mes"
-                        : mes}
+                      {mes === "Selecciona un mes" ? "Mes" : mes}
                     </option>
                   ))}
                 </select>
@@ -376,9 +374,7 @@ export default function DashboardContable() {
                   className="contable-payment-select"
                   title="Filtrar por medio de pago"
                 >
-                  <option value="todos">
-                    {window.innerWidth <= 768 ? "Medio Pago" : "Todos los medios"}
-                  </option>
+                  <option value="todos">Todos los medios</option>
                   {mediosPago.map((mp, idx) => (
                     <option key={idx} value={mp}>
                       {mp}
@@ -387,7 +383,7 @@ export default function DashboardContable() {
                 </select>
               </div>
 
-              {/* Botón Detalle/Resumen (siempre activo) */}
+              {/* Botón Detalle/Resumen */}
               <button
                 className="contable-detail-view-button"
                 onClick={toggleVistaDetalle}
@@ -397,7 +393,7 @@ export default function DashboardContable() {
                 {mostrarTablaDetalle ? "Ver Resumen" : "Ver Detalle"}
               </button>
 
-              {/* Botón Ver Gráficos (siempre activo) */}
+              {/* Botón Ver Gráficos */}
               <button
                 className="contable-charts-button"
                 type="button"
@@ -410,7 +406,7 @@ export default function DashboardContable() {
             </div>
           </div>
 
-          {/* ==== Contenido dinámico (sin “cargando…”) ==== */}
+          {/* ==== Contenido dinámico ==== */}
           <div className="contable-categories-scroll-container">
             {mostrarTablaDetalle ? (
               <div className="contable-detail-table-container">
@@ -486,7 +482,7 @@ export default function DashboardContable() {
                   ))
                 ) : (
                   <p className="contable-no-data">
-                    {mesSeleccionado === "Selecciona un mes"
+                    {mesSeleccionado === ""
                       ? "Seleccione un mes para ver los detalles"
                       : "No hay datos para mostrar para este mes"}
                   </p>

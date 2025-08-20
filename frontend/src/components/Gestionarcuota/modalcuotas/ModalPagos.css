@@ -36,7 +36,7 @@
   --modpag_shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
-* { 
+* {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -154,8 +154,7 @@
   background-color: var(--modpag_white);
   overflow-y: auto;
   flex: 1;
-  /* Añadido para evitar que los botones tapen contenido */
-  padding-bottom: 80px; /* Espacio equivalente al alto del footer */
+  /* antes había padding-bottom: 80px; lo quitamos para evitar hueco */
 }
 .modpag_loading-state {
   display: flex;
@@ -481,18 +480,11 @@
   background-color: var(--modpag_success-hover);
 }
 
-/* Media Queries para mejor adaptación */
+/* Media Queries */
 @media (min-width: 400px) {
-  .modpag_header {
-    padding: 1rem 1.25rem;
-  }
-  .modpag_body {
-    padding: 1.25rem;
-    padding-bottom: 80px; /* Mantener el espacio para el footer */
-  }
-  .modpag_footer {
-    padding: 1rem 1.25rem;
-  }
+  .modpag_header { padding: 1rem 1.25rem; }
+  .modpag_body { padding: 1.25rem; }
+  .modpag_footer { padding: 1rem 1.25rem; }
   .modpag_periodos-grid {
     grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
     gap: .75rem;
@@ -501,9 +493,7 @@
     flex-direction: row;
     flex-wrap: wrap;
   }
-  .modpag_info-item {
-    min-width: calc(50% - 0.5rem);
-  }
+  .modpag_info-item { min-width: calc(50% - 0.5rem); }
 }
 
 @media (min-width: 500px) {
@@ -512,56 +502,21 @@
     justify-content: space-between;
     align-items: center;
   }
-  .modpag_footer-left {
-    order: 1;
-    justify-content: flex-start;
-  }
-  .modpag_footer-right {
-    order: 2;
-    justify-content: flex-end;
-  }
-  .modpag_btn {
-    flex: 0 1 auto;
-    min-width: 120px;
-  }
-  .modpag_section-header {
-    flex-direction: row;
-    align-items: center;
-  }
-  .modpag_section-header-actions {
-    justify-content: flex-end;
-    width: auto;
-  }
+  .modpag_footer-left { order: 1; justify-content: flex-start; }
+  .modpag_footer-right { order: 2; justify-content: flex-end; }
+  .modpag_btn { flex: 0 1 auto; min-width: 120px; }
+  .modpag_section-header { flex-direction: row; align-items: center; }
+  .modpag_section-header-actions { justify-content: flex-end; width: auto; }
 }
 
 @media (min-width: 600px) {
-  .modpag_contenido {
-    max-height: 85vh;
-  }
-  .modpag_header {
-    padding: 1.25rem 1.5rem;
-  }
-  .modpag_icon-circle {
-    width: 42px;
-    height: 42px;
-  }
-  .modpag_title {
-    font-size: 1.3rem;
-  }
-  .modpag_subtitle {
-    font-size: 0.875rem;
-  }
-  .modpag_body {
-    padding: 1.5rem;
-    padding-bottom: 80px; /* Mantener el espacio para el footer */
-  }
-  .modpag_periodos-grid {
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  }
-  .modpag_info-value {
-    font-size: 1rem;
-  }
-  .modpag_info-value-highlight {
-    font-size: 1.05rem;
-  }
+  .modpag_contenido { max-height: 85vh; }
+  .modpag_header { padding: 1.25rem 1.5rem; }
+  .modpag_icon-circle { width: 42px; height: 42px; }
+  .modpag_title { font-size: 1.3rem; }
+  .modpag_subtitle { font-size: 0.875rem; }
+  .modpag_body { padding: 1.5rem; }
+  .modpag_periodos-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+  .modpag_info-value { font-size: 1rem; }
+  .modpag_info-value-highlight { font-size: 1.05rem; }
 }
