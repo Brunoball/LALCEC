@@ -142,7 +142,8 @@ const EmpresasBaja = () => {
         setToast({
           show: true,
           tipo: "exito",
-          mensaje: data?.message || data?.mensaje || "Empresa eliminada correctamente",
+          mensaje:
+            data?.message || data?.mensaje || "Empresa eliminada correctamente",
         });
       } else {
         throw new Error(data?.message || data?.mensaje || "No se pudo eliminar");
@@ -181,7 +182,7 @@ const EmpresasBaja = () => {
           <h2 className="emp-baja-titulo">Empresas Dadas de Baja</h2>
         </div>
         <button
-          className="emp-baja-boton-volver"
+          className="emp-baja-boton-volver arriva"
           onClick={() => navigate("/GestionarEmpresas")}
         >
           ← Volver
@@ -439,6 +440,16 @@ const EmpresasBaja = () => {
           </div>
         </div>
       )}
+
+      {/* Barra inferior móvil con botón Volver */}
+      <div className="emp-baja-navbar-mobile">
+        <button
+          className="emp-baja-boton-volver"
+          onClick={() => navigate("/GestionarEmpresas")}
+        >
+          ← Volver
+        </button>
+      </div>
     </div>
   );
 };

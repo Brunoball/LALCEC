@@ -88,7 +88,7 @@
   border-radius: 10px;
   font-family: 'Inter', sans-serif; font-weight: 600;
   cursor: pointer; transition: var(--emp-transition);
-  display: inline-flex; align-items: center; gap: 0.45rem;
+  display: inline-flex;align-items: center; gap: 0.45rem;
   border: 1px solid var(--emp-gray-300);
   background-color: var(--emp-glass);
   color: var(--emp-dark);
@@ -96,6 +96,7 @@
   position: relative; z-index: 1;
   font-size: .92rem;
 }
+.emp-baja-boton-volver{ display: none}
 .emp-baja-boton-volver:hover { background-color: var(--emp-danger); color: white; border-color: var(--emp-danger); }
 
 /* ===========================
@@ -152,12 +153,6 @@
   position: relative; font-size: 0.9rem;
 }
 .emp-baja-fila:nth-child(even) { background: #f7f7f7; }
-
-
-
-/* Motivo en desktop: izquierda (clic para ver completo) */
-
-
 
 .emp-baja-col-motivo--click {
   cursor: pointer;
@@ -229,9 +224,7 @@
 .emp-baja-modal__body strong { color: var(--emp-dark); }
 .emp-baja-modal__body--scroll { max-height: 40vh; overflow: auto; text-align: left; white-space: pre-wrap; }
 
-.emp-baja-modal__actions {
-  display: flex; gap: 1rem; justify-content: center; margin-top: 1rem;
-}
+.emp-baja-modal__actions { display: flex; gap: 1rem; justify-content: center; margin-top: 1rem; }
 .emp-baja-btn {
   flex: 1; max-width: 220px;
   padding: .75rem 1.25rem;
@@ -240,26 +233,12 @@
   transition: var(--emp-transition);
   border: 1px solid transparent;
 }
-.emp-baja-btn--ghost {
-  background: #fff; color: var(--emp-gray-700); border-color: var(--emp-gray-300);
-}
-.emp-baja-btn--ghost:hover {
-  background: var(--emp-gray-100);
-  transform: translateY(-2px);
-  box-shadow: var(--emp-shadow-md);
-}
-.emp-baja-btn--solid-success {
-  background: var(--emp-success); color: #fff; border-color: var(--emp-success);
-}
-.emp-baja-btn--solid-success:hover {
-  filter: brightness(.95); transform: translateY(-2px); box-shadow: var(--emp-shadow-md);
-}
-.emp-baja-btn--solid-danger {
-  background: var(--emp-danger); color: #fff; border-color: var(--emp-danger);
-}
-.emp-baja-btn--solid-danger:hover {
-  filter: brightness(.95); transform: translateY(-2px); box-shadow: var(--emp-shadow-md);
-}
+.emp-baja-btn--ghost { background: #fff; color: var(--emp-gray-700); border-color: var(--emp-gray-300); }
+.emp-baja-btn--ghost:hover { background: var(--emp-gray-100); transform: translateY(-2px); box-shadow: var(--emp-shadow-md); }
+.emp-baja-btn--solid-success { background: var(--emp-success); color: #fff; border-color: var(--emp-success); }
+.emp-baja-btn--solid-success:hover { filter: brightness(.95); transform: translateY(-2px); box-shadow: var(--emp-shadow-md); }
+.emp-baja-btn--solid-danger { background: var(--emp-danger); color: #fff; border-color: var(--emp-danger); }
+.emp-baja-btn--solid-danger:hover { filter: brightness(.95); transform: translateY(-2px); box-shadow: var(--emp-shadow-md); }
 .emp-baja-btn:disabled { opacity: .7; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
 
 @keyframes empb-fadeIn { from { opacity: 0 } to { opacity: 1 } }
@@ -275,24 +254,21 @@
     grid-template-columns: 60px 1.6fr 1fr 1.1fr 110px;
   }
 }
-
+.arriva{display: block;}
 /* ===== MOBILE (≤768px) ===== */
 @media (max-width: 768px) {
+  .emp-baja-boton-volver{ display: inline-flex}
+  .arriva{display: none;}
   .emp-baja-buscador-container{ margin: 0; }
   .emp-baja-barra-superior { position: static; margin-bottom: 3rem; margin-top: 1rem; }
-  .emp-baja-tabla-container{ margin-top: 1rem; border-bottom: none; }
-  .emp-baja-boton-volver {
-    position: absolute;
-    bottom: 1rem;
-    padding: .45rem .7rem;
-    font-size: .85rem;
-    border: 2px solid var(--emp-accent);
-    color: var(--emp-accent);
-    background: #fff;
-  }
+  .emp-baja-tabla-container{  margin:0;margin-top: 1rem; border-bottom: none; }
+
+  /* Ocultar botón superior y dejar espacio para la barra inferior */
+  .emp-baja-barra-superior .emp-baja-boton-volver { display: none; }
+  .emp-baja-container { padding-bottom: 90px; } /* evita que la barra tape contenido */
 
   .emp-baja-tabla-header { display: none; }
-  .emp-baja-tabla-body { max-height: 60vh; overflow: auto; }
+  .emp-baja-tabla-body { max-height: 50vh; overflow: auto; }
 
   .emp-baja-fila {
     display: block;
@@ -346,7 +322,6 @@
     flex: 0 0 auto;
   }
 
-  /* Valores a la derecha */
   .emp-baja-col-id,
   .emp-baja-col-nombre,
   .emp-baja-col-fecha,
@@ -356,9 +331,6 @@
     text-align: right;
     width: 100%;
   }
-
-  /* 🔧 FIX: Motivo (SD) a la derecha en mobile, venciendo el !important de desktop */
-
 
   .emp-baja-col-nombre,
   .emp-baja-col-fecha,
@@ -370,27 +342,54 @@
     color: var(--emp-dark);
   }
 
-  .emp-baja-col-acciones {
-    padding-top: 10px;
-    border-bottom: none !important;
-  }
-  .emp-baja-iconos {
-    justify-content: flex-end;
-    gap: 12px;
-    font-size: 1.4rem;
-    width: 100%;
-  }
+  .emp-baja-col-acciones { padding-top: 10px; border-bottom: none !important; }
+  .emp-baja-iconos { justify-content: flex-end; gap: 12px; font-size: 1.4rem; width: 100%; }
 
   .emp-baja-modal__actions { flex-direction: row; flex-wrap: wrap; }
   .emp-baja-btn { min-width: 120px; max-width: calc(50% - .5rem); }
 
   .emp-baja-sin-resultados { padding: 20px; font-size: 0.9rem; }
+
+  /* ===== Barra inferior fija (móvil) ===== */
+  .emp-baja-navbar-mobile {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: 60px;
+    background: #fff;
+    border-top: 1px solid var(--emp-gray-200);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem 1rem;
+    box-shadow: 0 -2px 6px rgba(0,0,0,0.05);
+    z-index: 999;
+  }
+
+  .emp-baja-navbar-mobile .emp-baja-boton-volver {
+    width: 100%;
+    max-width: 280px;
+    text-align: center;
+    justify-content: center;
+    font-size: 1rem;
+    border-radius: var(--emp-border-radius);
+    border: 2px solid var(--emp-danger);
+    color: var(--emp-danger);
+    background-color: #fff;
+    font-weight: 600;
+    box-shadow: var(--emp-shadow-sm);
+  }
+
+  .emp-baja-navbar-mobile .emp-baja-boton-volver:hover {
+    background: var(--emp-danger);
+    color: #fff;
+    border-color: var(--emp-danger);
+  }
 }
 
 @media (max-width: 576px) {
   .emp-baja-container { padding: 1rem; }
-  .emp-baja-titulo { 
-    font-size: 1.4rem; 
+  .emp-baja-titulo {
+    font-size: 1.4rem;
     text-align: center;
     width: 100%;
   }

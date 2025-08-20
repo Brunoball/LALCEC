@@ -1053,7 +1053,7 @@ input:-webkit-autofill { background-color: transparent !important; }
   }
   .gessoc_filter-chip-text { font-size: 0.8rem; }
   .gessoc_filter-chip-more { font-size: 0.7rem; }
-  .gessoc_filter-chip-close { width: 16px; height: 16px;  align-items: baseline;}
+  .gessoc_filter-chip-close { width: 16px; height: 16px;  align-items: flex-end;}
 }
 
 /* Quitar focus negro de iconos (para evitar borde al cerrar modal) */

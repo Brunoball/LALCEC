@@ -102,6 +102,7 @@
   position: relative; z-index: 1;
   font-size: .92rem;
 }
+.socbaj_boton-volver {display: none;} 
 .socbaj_boton-volver:hover { background-color: var(--socbaj-danger); color: white; border-color: var(--socbaj-danger); }
 
 /* ===========================
@@ -141,7 +142,6 @@
 
 .socbaj_tabla-header-container { display: flex; flex-direction: column; gap: 7px; }
 
-/* 6 columnas: ID | Apellido | Nombre | Fecha | Motivo | Acciones */
 .socbaj_tabla-header {
   display: grid; border-radius: 14px 14px 0 0;
   grid-template-columns: 60px 1.3fr 1.3fr 1fr 1.2fr 120px;
@@ -157,7 +157,7 @@
 
 .socbaj_fila {
   display: grid;
-  grid-template-columns: 60px 1.3fr 1.3fr 1fr 1.2fr 120px; /* 6 columnas */
+  grid-template-columns: 60px 1.3fr 1.3fr 1fr 1.2fr 120px;
   padding: 10px 0; border-bottom: 1px solid rgba(237, 242, 247, 0.7);
   align-items: center; cursor: pointer; background: #ffffff;
   position: relative; font-size: 0.9rem; transition: background 0.2s;
@@ -169,8 +169,6 @@
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%;
   padding: 0 8px; text-transform: none;
 }
-
-
 
 .socbaj_iconos { display: flex; justify-content: center; align-items: center; gap: 6px; font-size: 1.3rem; }
 
@@ -237,38 +235,21 @@
   animation: socbaj-pop .18s ease-out;
 }
 
-/* Variantes */
 .socbaj_modal--success { border-top-color: var(--socbaj-success); }
 .socbaj_modal--danger  { border-top-color: var(--socbaj-danger); }
 
-/* Iconos */
-.socbaj_modal__icon {
-  font-size: 2.5rem; color: var(--socbaj-success);
-  margin-bottom: 1rem;
-}
+.socbaj_modal__icon { font-size: 2.5rem; color: var(--socbaj_success); margin-bottom: 1rem; }
 .socbaj_modal__icon--danger { color: var(--socbaj-danger); }
 
-/* Títulos */
-.socbaj_modal__title {
-  margin: 0 0 1rem; font-size: 1.4rem; font-weight: 600; color: var(--socbaj-success);
-}
+.socbaj_modal__title { margin: 0 0 1rem; font-size: 1.4rem; font-weight: 600; color: var(--socbaj-success); }
 .socbaj_modal__title--danger  { color: var(--socbaj-danger) !important; }
 .socbaj_modal__title--success { color: var(--socbaj-success) !important; }
 
-/* Cuerpo */
 .socbaj_modal__body { color: var(--socbaj-gray-700); line-height: 1.5; margin: 0 0 1rem; }
 .socbaj_modal__body strong { color: var(--socbaj-dark); }
-.socbaj_modal__body--scroll {
-  max-height: 40vh;
-  overflow: auto;
-  text-align: left;
-  white-space: pre-wrap;
-}
+.socbaj_modal__body--scroll { max-height: 40vh; overflow: auto; text-align: left; white-space: pre-wrap; }
 
-/* Acciones */
-.socbaj_modal__actions {
-  display: flex; gap: 1rem; justify-content: center; margin-top: 1rem;
-}
+.socbaj_modal__actions { display: flex; gap: 1rem; justify-content: center; margin-top: 1rem; }
 .socbaj_btn {
   flex: 1; max-width: 220px;
   padding: .75rem 1.25rem;
@@ -277,38 +258,14 @@
   transition: var(--socbaj-transition);
   border: 1px solid transparent;
 }
+.socbaj_btn--ghost { background: #fff; color: var(--socbaj-gray-700); border-color: var(--socbaj-gray-300); }
+.socbaj_btn--ghost:hover { background: var(--socbaj-gray-100); transform: translateY(-2px); box-shadow: var(--socbaj-shadow-md); }
+.socbaj_btn--solid-success { background: var(--socbaj-success); color: #fff; border-color: var(--socbaj-success); }
+.socbaj_btn--solid-success:hover { filter: brightness(.95); transform: translateY(-2px); box-shadow: var(--socbaj-shadow-md); }
+.socbaj_btn--solid-danger { background: var(--socbaj-danger); color: #fff; border-color: var(--socbaj-danger); }
+.socbaj_btn--solid-danger:hover { filter: brightness(.95); transform: translateY(-2px); box-shadow: var(--socbaj-shadow-md); }
+.socbaj_btn:disabled { opacity: .7; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
 
-/* Ghost */
-.socbaj_btn--ghost {
-  background: #fff; color: var(--socbaj-gray-700); border-color: var(--socbaj-gray-300);
-}
-.socbaj_btn--ghost:hover {
-  background: var(--socbaj-gray-100);
-  transform: translateY(-2px);
-  box-shadow: var(--socbaj-shadow-md);
-}
-
-/* Solid success/danger */
-.socbaj_btn--solid-success {
-  background: var(--socbaj-success); color: #fff; border-color: var(--socbaj-success);
-}
-.socbaj_btn--solid-success:hover {
-  filter: brightness(.95); transform: translateY(-2px); box-shadow: var(--socbaj-shadow-md);
-}
-
-.socbaj_btn--solid-danger {
-  background: var(--socbaj-danger); color: #fff; border-color: var(--socbaj-danger);
-}
-.socbaj_btn--solid-danger:hover {
-  filter: brightness(.95); transform: translateY(-2px); box-shadow: var(--socbaj-shadow-md);
-}
-
-/* Disabled */
-.socbaj_btn:disabled {
-  opacity: .7; cursor: not-allowed; transform: none !important; box-shadow: none !important;
-}
-
-/* Animaciones */
 @keyframes socbaj-fadeIn { from { opacity: 0 } to { opacity: 1 } }
 @keyframes socbaj-pop { from { transform: translateY(4px); opacity: .98 } to { transform: translateY(0); opacity: 1 } }
 
@@ -318,33 +275,32 @@
 @media (max-width: 992px) {
   .socbaj_container { padding: 1.5rem; }
   .socbaj_titulo { font-size: 1.6rem; }
-  /* 6 columnas también en tablet */
   .socbaj_tabla-header, .socbaj_fila {
     grid-template-columns: 60px 1.2fr 1.2fr 1fr 1.1fr 110px;
   }
 }
-
+.arriba{display: block;}
 /* ===== MOBILE (≤768px) ===== */
 @media (max-width: 768px) {
+  .arriba{display: none;}
+  .socbaj_boton-volver{display: inline-flex;}
   .socbaj_buscador-container{ margin: 0;}
   .socbaj_barra-superior { position: static; margin-bottom: 3rem; margin-top: 1rem;}
-  .socbaj_tabla-container{ margin-top: 1rem;}
+  .socbaj_tabla-container{margin: 0; margin-top: 1rem;}
   .socbaj_titulo-container, .socbaj_buscador-container { width: 100%; min-width: auto; }
-  .socbaj_boton-volver {
-    position: absolute;
-    bottom: 1rem;
-    padding: .45rem .7rem;
-    font-size: .85rem;
-    border: 2px solid var(--socbaj-accent);
-    color: var(--socbaj-accent);
-  }
+
+  /* Ocultar botón superior en móvil */
+  .socbaj_barra-superior .socbaj_boton-volver { display: none; }
+
+  /* Espacio para que no tape la barra inferior fija */
+  .socbaj_container { padding-bottom: 90px; }
 
   .socbaj_tabla-header { display: none; }
   .socbaj_tabla-container { height: auto; border-bottom: none; }
-  .socbaj_tabla-body { max-height: 60vh; overflow: auto; }
+  .socbaj_tabla-body { max-height: 50vh; overflow: auto; }
 
   .socbaj_fila {
-    display: block;              /* tarjeta */
+    display: block;
     position: relative;
     background: #ffffff;
     border-radius: 12px;
@@ -364,16 +320,15 @@
     background: linear-gradient(180deg, var(--socbaj-danger), var(--socbaj-accent));
   }
 
-  /* === CAMBIO CLAVE: cada renglón pasa a flex (label izq + valor der) === */
   .socbaj_fila > div {
     width: 100%;
-    display: flex;                      /* antes: grid */
+    display: flex;
     align-items: center;
-    justify-content: space-between;     /* valor a la derecha */
+    justify-content: space-between;
     padding: 3px 0;
     border-bottom: 1px dashed rgba(226, 232, 240, 0.9);
-    text-align: right;                  /* el contenido del valor queda a la derecha */
-    grid-template-columns: unset;       /* limpia definición previa */
+    text-align: right;
+    grid-template-columns: unset;
   }
 
   .socbaj_fila > div:last-child {
@@ -381,7 +336,6 @@
     padding-bottom: 2px;
   }
 
-  /* Labels móviles por fila (ID, Apellido, Nombre, Fecha, Motivo, Acciones) */
   .socbaj_col-id::before      { content: "ID"; }
   .socbaj_fila > div.socbaj_col-nombre:nth-child(2)::before { content: "Apellido"; }
   .socbaj_fila > div.socbaj_col-nombre:nth-child(3)::before { content: "Nombre"; }
@@ -389,25 +343,21 @@
   .socbaj_col-motivo::before  { content: "Motivo"; }
   .socbaj_col-acciones::before{ content: "Acciones"; }
 
-  /* Estilo del label (pseudo-elemento) a la izquierda */
   .socbaj_fila > div::before {
     font-weight: 600;
     color: var(--socbaj-gray-700);
     opacity: 0.95;
-    min-width: 130px;                   /* ancho de etiqueta */
-    text-align: left;                   /* pegado a la izquierda */
+    min-width: 130px;
+    text-align: left;
     margin-right: 8px;
     flex: 0 0 auto;
   }
 
-  /* El contenido/valor de cada celda se alinea a la derecha */
   .socbaj_col-id,
   .socbaj_col-nombre,
   .socbaj_col-fecha,
   .socbaj_col-motivo,
-  .socbaj_col-acciones {
-    justify-content: flex-end;          /* empuja contenido hacia la derecha */
-  }
+  .socbaj_col-acciones { justify-content: flex-end; }
 
   .socbaj_col-nombre,
   .socbaj_col-fecha,
@@ -419,33 +369,51 @@
     color: var(--socbaj-dark);
   }
 
-  .socbaj_col-acciones {
-    padding-top: 10px;
-    border-bottom: none !important;
-  }
-  .socbaj_iconos {
-    justify-content: flex-end;          /* íconos a la derecha */
-    gap: 12px;
-    font-size: 1.4rem;
-    width: 100%;
-  }
+  .socbaj_col-acciones { padding-top: 10px; border-bottom: none !important; }
+  .socbaj_iconos { justify-content: flex-end; gap: 12px; font-size: 1.4rem; width: 100%; }
 
   .socbaj_btn { max-width: 100%; width: 100%; }
   .socbaj_sin-resultados { padding: 20px; font-size: 0.9rem; }
+
+  /* ===== Barra inferior fija (móvil) ===== */
+  .socbaj_navbar-mobile {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: 60px;
+    background: #fff;
+    border-top: 1px solid var(--socbaj-gray-200);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem 1rem;
+    box-shadow: 0 -2px 6px rgba(0,0,0,0.05);
+    z-index: 999;
+  }
+
+  .socbaj_navbar-mobile .socbaj_boton-volver {
+    width: 100%;
+    max-width: 280px;
+    text-align: center;
+    justify-content: center;
+    font-size: 1rem;
+    border-radius: var(--socbaj-border-radius);
+    border: 2px solid var(--socbaj-danger);
+    color: var(--socbaj-danger);
+    background-color: #fff;
+    font-weight: 600;
+    box-shadow: var(--socbaj-shadow-sm);
+  }
+
+  .socbaj_navbar-mobile .socbaj_boton-volver:hover {
+    background: var(--socbaj-danger);
+    color: #fff;
+    border-color: var(--socbaj-danger);
+  }
 }
 
 @media (max-width: 576px) {
   .socbaj_container { padding: 1rem; }
   .socbaj_titulo { font-size: 1.4rem; text-align: center; }
-
-  /* Ajuste de ancho de etiqueta en móviles muy chicos */
-  .socbaj_fila > div::before {
-    min-width: 185px;
-  }
-
-  /* por si quedó alguna traza de grid en overrides viejos */
-  .socbaj_fila > div {
-    max-width: 100%;
-    grid-template-columns: unset;
-  }
+  .socbaj_fila > div::before { min-width: 185px; }
+  .socbaj_fila > div { max-width: 100%; grid-template-columns: unset; }
 }

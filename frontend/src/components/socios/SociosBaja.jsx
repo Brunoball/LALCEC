@@ -29,7 +29,7 @@ const SociosBaja = () => {
     obtenerSociosBaja();
   }, []);
 
-  // 👇 useEffect global para cerrar modales con ESC
+  // Cerrar modales con ESC
   useEffect(() => {
     const handleEsc = (e) => {
       if (e.key === "Escape") {
@@ -80,7 +80,11 @@ const SociosBaja = () => {
     return socios.filter((s) => {
       const ape = (s.apellido || "").toLowerCase();
       const nom = (s.nombre || "").toLowerCase();
-      return ape.includes(term) || nom.includes(term) || `${ape} ${nom}`.includes(term);
+      return (
+        ape.includes(term) ||
+        nom.includes(term) ||
+        `${ape} ${nom}`.includes(term)
+      );
     });
   }, [socios, busqueda]);
 
@@ -145,7 +149,8 @@ const SociosBaja = () => {
         setToast({
           show: true,
           tipo: "exito",
-          mensaje: data?.message || data?.mensaje || "Socio eliminado correctamente",
+          mensaje:
+            data?.message || data?.mensaje || "Socio eliminado correctamente",
         });
       } else {
         throw new Error(data?.message || data?.mensaje || "No se pudo eliminar");
@@ -184,7 +189,7 @@ const SociosBaja = () => {
           <h2 className="socbaj_titulo">Socios Dados de Baja</h2>
         </div>
         <button
-          className="socbaj_boton-volver"
+          className="socbaj_boton-volver arriba"
           onClick={() => navigate("/Gestionarsocios")}
         >
           ← Volver
@@ -454,6 +459,16 @@ const SociosBaja = () => {
           </div>
         </div>
       )}
+
+      {/* Barra inferior móvil con botón Volver */}
+      <div className="socbaj_navbar-mobile">
+        <button
+          className="socbaj_boton-volver "
+          onClick={() => navigate("/Gestionarsocios")}
+        >
+          ← Volver
+        </button>
+      </div>
     </div>
   );
 };

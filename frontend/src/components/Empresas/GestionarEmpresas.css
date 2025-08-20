@@ -862,7 +862,7 @@ input:-webkit-autofill { background-color: transparent !important; }
   }
   .emp_chip-mini-text{ font-size: 0.8rem; }
   .emp_chip-mini-more{ font-size: 0.7rem; }
-  .emp_chip-mini-close{ width: 16px; height: 16px; }
+  .emp_chip-mini-close{ width: 16px; height: 16px; align-self: baseline; }
 
   .emp_estado-pagos-container {
     flex: 0 0 auto;
@@ -892,7 +892,7 @@ input:-webkit-autofill { background-color: transparent !important; }
     display: grid !important;
     grid-template-columns: 1fr;
     gap: 12px;
-    margin-top: 65px;
+    margin: 70px 0;
     padding: 0 1.5rem;
   }
 
