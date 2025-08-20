@@ -813,18 +813,23 @@ input:-webkit-autofill { background-color: transparent !important; }
     flex: 1 1 auto;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    padding: .5rem 1.5rem 0;
+    padding: 0 ;
+    
   }
 
   .emp_contenedor-list-items {
     height: auto;
     gap: 8px;
     display: flex;
+    position: fixed;
+    z-index: 99999999999;
+    background-color: white;
     align-items: center;
     justify-content: flex-start;
     flex-wrap: nowrap;
     overflow: visible;
     margin-bottom: 6px;
+    padding: 0 1.5rem;
     padding-bottom: 2px;
   }
 
@@ -887,7 +892,8 @@ input:-webkit-autofill { background-color: transparent !important; }
     display: grid !important;
     grid-template-columns: 1fr;
     gap: 12px;
-    margin-top: 8px;
+    margin-top: 45px;
+    padding: 0 1.5rem;
   }
 
   .emp_card {

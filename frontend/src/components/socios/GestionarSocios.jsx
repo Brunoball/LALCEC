@@ -94,7 +94,6 @@ const useReducedMotion = () => {
 const medioLabel = (m) => {
   if (m == null) return "";
   if (typeof m === "string") return m.trim();
-  // mismo esquema que Empresas: { Medio_Pago: "Transferencia", ... }
   return String(m.Medio_Pago ?? m.label ?? m.name ?? "").trim();
 };
 
@@ -187,7 +186,7 @@ const SocioRow = React.memo(
 );
 
 /* =====================
-   Row virtualizado (tarjetas mobile) — gap real
+   Row virtualizado (tarjetas mobile) — CON WRAPPER
 ===================== */
 const SocioCardRow = React.memo(
   function SocioCardRow({ index, style, data }) {
@@ -207,104 +206,109 @@ const SocioCardRow = React.memo(
       top: top + gap / 2,
       height: height - gap,
       "--stagger": stagger,
+      // width viene 100% inline desde react-window → lo dejamos
     };
 
     return (
+      // ⬇️ Wrapper absoluto full-width (item de react-window)
       <div
         style={rowStyle}
-        className={`gessoc_card gessoc_cascade ${socio._estadoClase}`}
+        className="gessoc_card-row"
         onClick={() => data.onSelect(index, socio)}
       >
-        <div className="gessoc_card-status-strip" />
-        <div className="gessoc_card-header">
-          <h3 className="gessoc_card-title">
-            {socio.apellido} {socio.nombre}
-          </h3>
-          <span
-            className={`gessoc_badge ${
-              socio._estadoClase === "gessoc_verde"
-                ? "gessoc_badge-success"
+        {/* ⬇️ Card real (acá limitás/centrás con CSS en mobile) */}
+        <div className={`gessoc_card gessoc_cascade ${socio._estadoClase}`}>
+          <div className="gessoc_card-status-strip" />
+          <div className="gessoc_card-header">
+            <h3 className="gessoc_card-title">
+              {socio.apellido} {socio.nombre}
+            </h3>
+            <span
+              className={`gessoc_badge ${
+                socio._estadoClase === "gessoc_verde"
+                  ? "gessoc_badge-success"
+                  : socio._estadoClase === "gessoc_amarillo"
+                  ? "gessoc_badge-warn"
+                  : "gessoc_badge-danger"
+              }`}
+            >
+              {socio._estadoClase === "gessoc_verde"
+                ? "Al día"
                 : socio._estadoClase === "gessoc_amarillo"
-                ? "gessoc_badge-warn"
-                : "gessoc_badge-danger"
-            }`}
-          >
-            {socio._estadoClase === "gessoc_verde"
-              ? "Al día"
-              : socio._estadoClase === "gessoc_amarillo"
-              ? "Debe 1-2"
-              : "Debe 3+"}
-          </span>
-        </div>
-
-        <div className="gessoc_card-body">
-          <div className="gessoc_card-row">
-            <span className="gessoc_card-label">Categoría</span>
-            <span className="gessoc_card-value">
-              {socio.categoria} ${socio.precio_categoria || "0"}
+                ? "Debe 1-2"
+                : "Debe 3+"}
             </span>
           </div>
-          <div className="gessoc_card-row">
-            <span className="gessoc_card-label">Medio de Pago</span>
-            <span className="gessoc_card-value">{socio.medio_pago}</span>
-          </div>
-          <div className="gessoc_card-row">
-            <span className="gessoc_card-label">Domicilio cobro</span>
-            <span className="gessoc_card-value">{socio.domicilio_2}</span>
+
+          <div className="gessoc_card-body">
+            <div className="gessoc_card-rowline">
+              <span className="gessoc_card-label">Categoría</span>
+              <span className="gessoc_card-value">
+                {socio.categoria} ${socio.precio_categoria || "0"}
+              </span>
+            </div>
+            <div className="gessoc_card-rowline">
+              <span className="gessoc_card-label">Medio de Pago</span>
+              <span className="gessoc_card-value">{socio.medio_pago}</span>
+            </div>
+            <div className="gessoc_card-rowline">
+              <span className="gessoc_card-label">Domicilio cobro</span>
+              <span className="gessoc_card-value">{socio.domicilio_2}</span>
+            </div>
+
+            {/* SIEMPRE mostrar Observaciones; usar "-" si falta */}
+            <div className="gessoc_card-rowline">
+              <span className="gessoc_card-label">Obs.</span>
+              <span className="gessoc_card-value">
+                {socio.observacion && String(socio.observacion).trim() !== ""
+                  ? socio.observacion
+                  : "-"}
+              </span>
+            </div>
           </div>
 
-          {/* SIEMPRE mostrar Observaciones; usar "-" si falta */}
-          <div className="gessoc_card-row">
-            <span className="gessoc_card-label">Obs.</span>
-            <span className="gessoc_card-value">
-              {socio.observacion && String(socio.observacion).trim() !== ""
-                ? socio.observacion
-                : "-"}
-            </span>
+          <div className="gessoc_card-actions">
+            <button
+              className="gessoc_action-btn"
+              title="Información"
+              onClick={(e) => {
+                e.stopPropagation();
+                data.onInfo(socio);
+              }}
+            >
+              <FontAwesomeIcon icon={faInfoCircle} />
+            </button>
+            <button
+              className="gessoc_action-btn"
+              title="Editar"
+              onClick={(e) => {
+                e.stopPropagation();
+                data.onEdit(socio);
+              }}
+            >
+              <FontAwesomeIcon icon={faEdit} />
+            </button>
+            <button
+              className="gessoc_action-btn"
+              title="Eliminar"
+              onClick={(e) => {
+                e.stopPropagation();
+                data.onDelete(socio);
+              }}
+            >
+              <FontAwesomeIcon icon={faTrash} />
+            </button>
+            <button
+              className="gessoc_action-btn gessoc_action-danger"
+              title="Dar de baja"
+              onClick={(e) => {
+                e.stopPropagation();
+                data.onBaja(socio);
+              }}
+            >
+              <FontAwesomeIcon icon={faUserMinus} />
+            </button>
           </div>
-        </div>
-
-        <div className="gessoc_card-actions">
-          <button
-            className="gessoc_action-btn"
-            title="Información"
-            onClick={(e) => {
-              e.stopPropagation();
-              data.onInfo(socio);
-            }}
-          >
-            <FontAwesomeIcon icon={faInfoCircle} />
-          </button>
-          <button
-            className="gessoc_action-btn"
-            title="Editar"
-            onClick={(e) => {
-              e.stopPropagation();
-              data.onEdit(socio);
-            }}
-          >
-            <FontAwesomeIcon icon={faEdit} />
-          </button>
-          <button
-            className="gessoc_action-btn"
-            title="Eliminar"
-            onClick={(e) => {
-              e.stopPropagation();
-              data.onDelete(socio);
-            }}
-          >
-            <FontAwesomeIcon icon={faTrash} />
-          </button>
-          <button
-            className="gessoc_action-btn gessoc_action-danger"
-            title="Dar de baja"
-            onClick={(e) => {
-              e.stopPropagation();
-              data.onBaja(socio);
-            }}
-          >
-            <FontAwesomeIcon icon={faUserMinus} />
-          </button>
         </div>
       </div>
     );
@@ -943,20 +947,16 @@ const GestionarSocios = () => {
       const H = window.innerHeight;
       const hHeader = headerRef.current?.offsetHeight ?? 0;
       const hFooter = footerRef.current?.offsetHeight ?? 0;
-      // Ajustá este paddingExtra si tu CSS cambia (coincidir con paddings de la zona de lista)
-      const paddingExtras = isMobile ? 16 + 60 : 24;
-      const h = Math.max(330, H - hHeader - hFooter - paddingExtras);
+      const paddingExtras = isMobile ? 16 + 40 : 24;
+      const h = Math.max(350, H - hHeader - hFooter - paddingExtras);
       setAvailableHeight(h);
     };
 
-    // calcular al montar
     calc();
 
-    // eventos que cambian el viewport en mobile
     window.addEventListener("resize", calc, { passive: true });
     window.addEventListener("orientationchange", calc, { passive: true });
 
-    // observar cambios dinámicos en header/footer
     const ro = new ResizeObserver(calc);
     if (headerRef.current) ro.observe(headerRef.current);
     if (footerRef.current) ro.observe(footerRef.current);
@@ -1230,7 +1230,7 @@ const GestionarSocios = () => {
             <div className="gessoc_estado-pagos-container">
               <div className="gessoc_estado-indicador gessoc_al-dia">
                 <div className="gessoc_indicador-color"></div>
-                <span>{isMobile ? "al dia" : "Al día"}</span>
+                <span>{isMobile ? "Al dia" : "Al día"}</span>
               </div>
               <div className="gessoc_estado-indicador gessoc_debe-1-2">
                 <div className="gessoc_indicador-color"></div>

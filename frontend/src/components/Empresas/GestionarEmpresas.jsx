@@ -1,4 +1,13 @@
-import React, {   useState,   useEffect,   useRef,   useMemo,   useCallback,   useDeferredValue,   useTransition,   memo, } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useMemo,
+  useCallback,
+  useDeferredValue,
+  useTransition,
+  memo,
+} from "react";
 import { useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -290,8 +299,8 @@ const Card = memo(function Card({
         )}
         <div className="emp_card-row">
           <span className="emp_card-label">Medio de Pago</span>
-          {/* En tarjeta: TEXTO COMPLETO (igual que web) */}
-          <span className="emp_card-value">{empresa?.medio_pago}</span>
+          {/* En tarjeta: abreviado dinámico */}
+          <span className="emp_card-value">{shortMedio(empresa?.medio_pago)}</span>
         </div>
       </div>
 
@@ -1086,7 +1095,8 @@ const GestionarEmpresas = () => {
                   </span>
                   {/* Mobile: solo el valor (sin 'Letra:' / 'Medio:') */}
                   <span className="emp_chip-mini-text emp_socios-mobile">
-                     {chipValue}
+
+                    {chipValue}
                   </span>
 
                   <button
@@ -1101,26 +1111,27 @@ const GestionarEmpresas = () => {
               )}
             </div>
 
-            {/* Leyenda estados */} {/* Leyenda estados */}
-            <div className="emp_estado-pagos-container">
-              <div className="emp_estado-indicador emp_al-dia">
-                <div className="emp_indicador-color"></div>
-                <span className="emp_legend-desktop">Al día</span>
-                <span className="emp_legend-mobile">al dia</span>
-              </div>
+            {/* Leyenda estados */}
+{/* Leyenda estados */}
+<div className="emp_estado-pagos-container">
+  <div className="emp_estado-indicador emp_al-dia">
+    <div className="emp_indicador-color"></div>
+    <span className="emp_legend-desktop">Al día</span>
+    <span className="emp_legend-mobile">Al dia</span>
+  </div>
 
-              <div className="emp_estado-indicador emp_debe-1-2">
-                <div className="emp_indicador-color"></div>
-                <span className="emp_legend-desktop">Debe 1-2 meses</span>
-                <span className="emp_legend-mobile">1-2</span>
-              </div>
+  <div className="emp_estado-indicador emp_debe-1-2">
+    <div className="emp_indicador-color"></div>
+    <span className="emp_legend-desktop">Debe 1-2 meses</span>
+    <span className="emp_legend-mobile">1-2</span>
+  </div>
 
-              <div className="emp_estado-indicador emp_debe-3-mas">
-                <div className="emp_indicador-color"></div>
-                <span className="emp_legend-desktop">Debe 3+</span>
-                <span className="emp_legend-mobile">3+</span>
-              </div>
-            </div>
+  <div className="emp_estado-indicador emp_debe-3-mas">
+    <div className="emp_indicador-color"></div>
+    <span className="emp_legend-desktop">Debe 3+</span>
+    <span className="emp_legend-mobile">3+</span>
+  </div>
+</div>
           </div>
 
           {/* ======= TABLA ======= */}
