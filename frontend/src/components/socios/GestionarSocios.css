@@ -397,7 +397,7 @@ input:-webkit-autofill { background-color: transparent !important; }
   flex-wrap: nowrap;
   justify-content: center;
   overflow-y: auto;
-  min-height: 54vh;
+  min-height: 50vh;
   transition: min-height 0.3s ease, max-height 0.3s ease;
 }
 .gessoc_scrollableE {
@@ -901,7 +901,7 @@ input:-webkit-autofill { background-color: transparent !important; }
   .gessoc_scrollableE { min-height: unset; max-height: none; }
 
   .gessoc_no-data-message.gessoc_no-data-mobile {
-    min-height: calc(100svh - 180px);
+    min-height: calc(88svh - 180px);
     display: flex;
     align-items: center;
     justify-content: center;

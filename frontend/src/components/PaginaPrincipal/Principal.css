@@ -17,7 +17,7 @@
   background-color: #ffffff;
   border-radius: 12px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-  padding: 30px;
+  padding: 30px 30px 20px;
   margin: auto;
   max-height: 90vh;
   display: flex;
@@ -629,4 +629,22 @@
 
 @media (max-width: 480px) {
   .menu-button { width: calc(50% - 10px); } /* dos por fila bien centradas */
+}
+/* ... todo tu CSS que ya tenías ... */
+
+/* === FOOTER === */
+.pagina-principal-footer {
+  text-align: right;
+  font-size: 14px;
+  color: #718096;
+}
+
+.pagina-principal-footer a {
+  color: #ff6e00;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.pagina-principal-footer a:hover {
+  text-decoration: underline;
 }

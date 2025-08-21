@@ -668,7 +668,22 @@ input:-webkit-autofill { background-color: transparent !important; }
   transform: scale(1.1);
   background: #fee2e2;
 }
+.emp_filtros-submenu-item{
+    background-color: white;
+  color: #000;
+  font-weight: 400;
+  margin: .5rem 0;
+  padding: .5rem;
+  cursor: pointer;
+  transition: all .3s;
+  border-radius: 8px;
 
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.emp_filtros-submenu-item:hover{  background-color: var(--primary-500);
+  color: white;}
 /* Leyenda de estados a la derecha */
 .emp_socios-desktop { display: inline; }
 .emp_socios-mobile { display: none; }
@@ -1052,7 +1067,7 @@ input:-webkit-autofill { background-color: transparent !important; }
   .emp_scrollableE { min-height: unset; max-height: none; }
 
   .emp_no-data-message.emp_no-data-mobile {
-    min-height: calc(100dvh - 180px);
+    min-height: calc(80dvh - 180px);
     display: flex;
     align-items: center;
     justify-content: center;

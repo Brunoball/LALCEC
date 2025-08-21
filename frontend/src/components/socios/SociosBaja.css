@@ -384,14 +384,13 @@
     border-top: 1px solid var(--socbaj-gray-200);
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     padding: 0.5rem 1rem;
     box-shadow: 0 -2px 6px rgba(0,0,0,0.05);
     z-index: 999;
   }
 
   .socbaj_navbar-mobile .socbaj_boton-volver {
-    width: 100%;
     max-width: 280px;
     text-align: center;
     justify-content: center;

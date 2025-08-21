@@ -32,7 +32,7 @@ const PaginaPrincipal = () => {
       sessionStorage.clear();
       setShowModal(false);
       navigate("/", { replace: true });
-    }, 400); // Coincide con la duración de la animación CSS
+    }, 400);
   };
 
   const menuItems = [
@@ -87,6 +87,14 @@ const PaginaPrincipal = () => {
           <FontAwesomeIcon icon={faSignOutAlt} className="logout-icon" />
           <span>Cerrar Sesión</span>
         </button>
+
+        {/* === Footer con tu página === */}
+        <footer className="pagina-principal-footer">
+          © {new Date().getFullYear()} LALCEC |{" "}
+          <a href="https://3devsnet.com" target="_blank" rel="noopener noreferrer">
+            3devsnet.com
+          </a>
+        </footer>
       </div>
 
       {showModal && (

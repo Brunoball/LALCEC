@@ -284,7 +284,7 @@ const ModalPagos = ({ nombre, apellido, cerrarModal, onPagoRealizado }) => {
             <p className="modpag_error-banner">{error}</p>
           </div>
           <div className="modpag_footer modpag_footer-sides">
-            <div className="modpag_footer-left" />
+            <div className="modpag_footer-left" />$4444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444
             <div className="modpag_footer-right">
               <button className="modpag_btn modpag_btn-secondary" onClick={cerrarModal}>Cerrar</button>
             </div>
@@ -405,9 +405,7 @@ const ModalPagos = ({ nombre, apellido, cerrarModal, onPagoRealizado }) => {
                 >
                   {todosSeleccionados ? 'Deseleccionar todos' : 'Seleccionar todos'}
                 </button>
-                <div className="modpag_selection-info">
-                  {mesesSeleccionados.length > 0 ? `${mesesSeleccionados.length} seleccionados` : 'Ninguno seleccionado'}
-                </div>
+                {/* ❌ antes estaba acá la selection-info, la quitamos del header */}
               </div>
             </div>
 
@@ -447,6 +445,8 @@ const ModalPagos = ({ nombre, apellido, cerrarModal, onPagoRealizado }) => {
                   );
                 })}
               </div>
+
+              {/* ✅ AHORA ABAJO DEL GRID */}
             </div>
           </div>
         </div>
@@ -457,13 +457,20 @@ const ModalPagos = ({ nombre, apellido, cerrarModal, onPagoRealizado }) => {
           </div>
           <div className="modpag_footer-right">
             <button className="modpag_btn modpag_btn-secondary" onClick={cerrarModal}>Cerrar</button>
-            <button
+            <div className='contador-mes'>
+                                                  <div className="modpag_selection-info">
+                {mesesSeleccionados.length > 0
+                  ? `${mesesSeleccionados.length} seleccionados`
+                  : 'Ninguno seleccionado'}
+              </div>
+              <button
               className="modpag_btn modpag_btn-primary"
               onClick={handleRealizarPago}
               disabled={mesesSeleccionados.length === 0}
             >
               Realizar Pago
             </button>
+            </div>
           </div>
         </div>
       </div>
