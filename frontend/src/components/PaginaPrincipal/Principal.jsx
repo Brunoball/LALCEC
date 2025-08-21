@@ -90,9 +90,9 @@ const PaginaPrincipal = () => {
 
         {/* === Footer con tu página === */}
         <footer className="pagina-principal-footer">
-          © {new Date().getFullYear()} LALCEC |{" "}
+          Desarrollado por{" "}
           <a href="https://3devsnet.com" target="_blank" rel="noopener noreferrer">
-            3devsnet.com
+            3devs.solutions
           </a>
         </footer>
       </div>
