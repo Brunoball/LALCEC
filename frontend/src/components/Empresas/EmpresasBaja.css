@@ -215,11 +215,20 @@
 }
 .emp-baja-modal--success { border-top-color: var(--emp-success); }
 .emp-baja-modal--danger  { border-top-color: var(--emp-danger); }
+/* Nuevo: variante informativa (motivo) */
+.emp-baja-modal--info    { border-top-color: var(--emp-primary); }
+
 .emp-baja-modal__icon { font-size: 2.5rem; color: var(--emp-success); margin-bottom: 1rem; }
 .emp-baja-modal__icon--danger { color: var(--emp-danger); }
+/* Nuevo: icono info en primario */
+.emp-baja-modal__icon--info { color: var(--emp-primary); }
+
 .emp-baja-modal__title { margin: 0 0 1rem; font-size: 1.4rem; font-weight: 600; color: var(--emp-success); }
 .emp-baja-modal__title--danger  { color: var(--emp-danger) !important; }
 .emp-baja-modal__title--success { color: var(--emp-success) !important; }
+/* Nuevo: título info en primario */
+.emp-baja-modal__title--info { color: var(--emp-primary) !important; }
+
 .emp-baja-modal__body { color: var(--emp-gray-700); line-height: 1.5; margin: 0 0 1rem; }
 .emp-baja-modal__body strong { color: var(--emp-dark); }
 .emp-baja-modal__body--scroll { max-height: 40vh; overflow: auto; text-align: left; white-space: pre-wrap; }
@@ -361,7 +370,7 @@
     align-items: center;
     justify-content: flex-start;
     padding: 0.5rem 1rem;
-    box-shadow: 0 -2px 6px rgba(0,0,0,0.05);
+    box-shadow: var(--emp-shadow-sm);
     z-index: 999;
   }
 

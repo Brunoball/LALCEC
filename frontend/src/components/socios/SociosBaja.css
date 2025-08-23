@@ -237,13 +237,19 @@
 
 .socbaj_modal--success { border-top-color: var(--socbaj-success); }
 .socbaj_modal--danger  { border-top-color: var(--socbaj-danger); }
+/* Nuevo: modal informativo (motivo) */
+.socbaj_modal--info    { border-top-color: var(--socbaj-primary); }
 
-.socbaj_modal__icon { font-size: 2.5rem; color: var(--socbaj_success); margin-bottom: 1rem; }
+.socbaj_modal__icon { font-size: 2.5rem; color: var(--socbaj-success); margin-bottom: 1rem; }
 .socbaj_modal__icon--danger { color: var(--socbaj-danger); }
+/* Nuevo: icono info en azul */
+.socbaj_modal__icon--info { color: var(--socbaj-primary); }
 
 .socbaj_modal__title { margin: 0 0 1rem; font-size: 1.4rem; font-weight: 600; color: var(--socbaj-success); }
 .socbaj_modal__title--danger  { color: var(--socbaj-danger) !important; }
 .socbaj_modal__title--success { color: var(--socbaj-success) !important; }
+/* Nuevo: título info en azul */
+.socbaj_modal__title--info { color: var(--socbaj-primary) !important; }
 
 .socbaj_modal__body { color: var(--socbaj-gray-700); line-height: 1.5; margin: 0 0 1rem; }
 .socbaj_modal__body strong { color: var(--socbaj-dark); }

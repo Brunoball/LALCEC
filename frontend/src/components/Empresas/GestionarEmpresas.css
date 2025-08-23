@@ -112,6 +112,11 @@
   --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   --transition-normal: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   --transition-smooth: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ===== CASCADA (NUEVO) ===== */
+  --cascade-stagger: 50ms;                 /* 0.05s por ítem */
+  --cascade-duration: .45s;                /* igual que antes */
+  --cascade-ease: cubic-bezier(.2,.7,.2,1);
 }
 
 /* Reset y base */
@@ -501,19 +506,24 @@ input:-webkit-autofill { background-color: transparent !important; }
 .emp_icon:hover { transform: scale(1.1); color: var(--primary-700); }
 
 /* ================================
-   Animaciones en cascada
+   Animaciones en cascada (NUEVO)
 ==================================*/
 @keyframes emp_cascadeFadeUp {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translate3d(0, 8px, 0); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0); }
 }
-@keyframes emp_fadeIn { from {opacity:0} to {opacity:1} }
 
-.emp_scrollableE.emp_cascade-animation .emp_row,
-.emp_cascade-animation .emp_row {
+/* Activador de cascada con GPU y delay por item (--i) */
+.emp_cascade-animation .emp_row,
+.emp_cascade-animation .emp_card {
   opacity: 0;
-  will-change: opacity, transform;
-  animation: emp_cascadeFadeUp 0.45s ease-out forwards;
+  transform: translate3d(0, 8px, 0);
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  contain: content;
+  animation: emp_cascadeFadeUp var(--cascade-duration) var(--cascade-ease) forwards;
+  animation-delay: calc(var(--i) * var(--cascade-stagger));
+  box-shadow: none !important; /* sombras livianas durante la animación */
 }
 
 /* Loading */
@@ -669,7 +679,7 @@ input:-webkit-autofill { background-color: transparent !important; }
   background: #fee2e2;
 }
 .emp_filtros-submenu-item{
-    background-color: white;
+  background-color: white;
   color: #000;
   font-weight: 400;
   margin: .5rem 0;
@@ -682,8 +692,10 @@ input:-webkit-autofill { background-color: transparent !important; }
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.emp_filtros-submenu-item:hover{  background-color: var(--primary-500);
-  color: white;}
+.emp_filtros-submenu-item:hover{
+  background-color: var(--primary-500);
+  color: white;
+}
 /* Leyenda de estados a la derecha */
 .emp_socios-desktop { display: inline; }
 .emp_socios-mobile { display: none; }
@@ -730,7 +742,6 @@ input:-webkit-autofill { background-color: transparent !important; }
    MOBILE — tarjetas + navbar fija
    (Título arriba; debajo buscador + filtros lado a lado)
 ==================================*/
-
 @media (max-width: 768px) {
 
   .emp_empresa-box {
@@ -829,7 +840,6 @@ input:-webkit-autofill { background-color: transparent !important; }
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     padding: 0;
-    
   }
 
   .emp_contenedor-list-items {
@@ -964,13 +974,7 @@ input:-webkit-autofill { background-color: transparent !important; }
   .emp_action-btn:active { transform: translateY(1px); }
   .emp_action-danger { color: var(--danger-600); border-color: #fecaca; background: #fff5f5; }
 
-  /* === CASCADA EN MOBILE === */
-  .emp_cards-wrapper.emp_cascade-animation .emp_card,
-  .emp_cascade-animation .emp_cards-wrapper .emp_card {
-    opacity: 0;
-    will-change: opacity, transform;
-    animation: emp_cascadeFadeUp 0.45s ease-out forwards;
-  }
+  /* Cascada en mobile ya cubierta por la regla general (.emp_cascade-animation ...) */
 
   /* ====== BOTONERA INFERIOR (MOBILE)  ====== */
   .emp_down-container {
@@ -1074,8 +1078,6 @@ input:-webkit-autofill { background-color: transparent !important; }
   }
 }
 
-
-
 /* XS */
 @media (max-width: 480px) {
   .emp_card { border-radius: 12px; padding: 10px 10px 8px 10px; }
@@ -1101,21 +1103,18 @@ input:-webkit-autofill { background-color: transparent !important; }
   transition: outline var(--transition-fast), box-shadow var(--transition-fast);
 }
 
+.emp_socios-mobile{
+  max-width: 60px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
+@media (max-width: 768px) {
   .emp_socios-mobile{
-      max-width: 60px;
-  white-space: nowrap;     /* evita saltos de línea */
-  overflow: hidden;        /* oculta lo que sobra */
-  text-overflow: ellipsis; /* agrega los "..." */
-  }
-
-
-  @media (max-width: 768px) {
-
-  .emp_socios-mobile{
-      max-width: 60px;
-  white-space: nowrap;     /* evita saltos de línea */
-  overflow: hidden;        /* oculta lo que sobra */
-  text-overflow: ellipsis; /* agrega los "..." */
+    max-width: 60px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }

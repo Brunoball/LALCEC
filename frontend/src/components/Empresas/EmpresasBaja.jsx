@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import BASE_URL from "../../config/config";
-import { FaUserCheck, FaTrash } from "react-icons/fa";
+import { FaUserCheck, FaTrash, FaInfoCircle } from "react-icons/fa";
 import Toast from "../global/Toast";
 import "./EmpresasBaja.css";
 
@@ -408,7 +408,7 @@ const EmpresasBaja = () => {
         </div>
       )}
 
-      {/* Modal MOTIVO COMPLETO */}
+      {/* Modal MOTIVO COMPLETO (estilo informativo unificado) */}
       {mostrarMotivo && empresaMotivo && (
         <div
           className="emp-baja-modal-overlay"
@@ -416,13 +416,25 @@ const EmpresasBaja = () => {
           aria-modal="true"
           aria-labelledby="modal-motivo-title"
         >
-          <div className="emp-baja-modal">
-            <h3 id="modal-motivo-title" className="emp-baja-modal__title">
+          <div className="emp-baja-modal emp-baja-modal--info">
+            <div
+              className="emp-baja-modal__icon emp-baja-modal__icon--info"
+              aria-hidden="true"
+            >
+              <FaInfoCircle />
+            </div>
+
+            <h3
+              id="modal-motivo-title"
+              className="emp-baja-modal__title emp-baja-modal__title--info"
+            >
               Motivo de baja
             </h3>
+
             <p className="emp-baja-modal__body emp-baja-modal__body--scroll">
               {empresaMotivo.motivo}
             </p>
+
             <div className="emp-baja-modal__actions">
               <button
                 className="emp-baja-btn emp-baja-btn--ghost"

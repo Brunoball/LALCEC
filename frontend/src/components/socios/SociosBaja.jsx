@@ -2,7 +2,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import BASE_URL from "../../config/config";
-import { FaUserCheck, FaTrash } from "react-icons/fa";
+import { FaUserCheck, FaTrash, FaInfoCircle } from "react-icons/fa";
 import Toast from "../global/Toast";
 import "./SociosBaja.css";
 
@@ -427,7 +427,7 @@ const SociosBaja = () => {
         </div>
       )}
 
-      {/* Modal MOTIVO COMPLETO */}
+      {/* Modal MOTIVO COMPLETO (unificado estética) */}
       {mostrarMotivo && socioMotivo && (
         <div
           className="socbaj_modal-overlay"
@@ -435,13 +435,25 @@ const SociosBaja = () => {
           aria-modal="true"
           aria-labelledby="modal-motivo-title"
         >
-          <div className="socbaj_modal">
-            <h3 id="modal-motivo-title" className="socbaj_modal__title">
+          <div className="socbaj_modal socbaj_modal--info">
+            <div
+              className="socbaj_modal__icon socbaj_modal__icon--info"
+              aria-hidden="true"
+            >
+              <FaInfoCircle />
+            </div>
+
+            <h3
+              id="modal-motivo-title"
+              className="socbaj_modal__title socbaj_modal__title--info"
+            >
               Motivo de baja
             </h3>
+
             <p className="socbaj_modal__body socbaj_modal__body--scroll">
               {socioMotivo.motivo}
             </p>
+
             <div className="socbaj_modal__actions">
               <button
                 className="socbaj_btn socbaj_btn--ghost"

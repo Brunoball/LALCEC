@@ -102,9 +102,12 @@ const medioLabel = (m) => {
 ===================== */
 const SocioRow = React.memo(
   function SocioRow({ index, style, data }) {
-    const stagger = clamp(index, 0, 14);
     const socio = data.items[index];
     const selected = data.filaSeleccionada === index;
+
+    // Solo los primeros 10 con cascada
+    const applyCascade = index < 10;
+    const stagger = applyCascade ? clamp(index, 0, 14) : 0;
 
     const rowClass = selected
       ? `gessoc_selected-row ${socio._estadoClase}`
@@ -114,8 +117,11 @@ const SocioRow = React.memo(
 
     return (
       <div
-        style={{ ...style, "--stagger": stagger }}
-        className={`gessoc_row gessoc_cascade ${rowClass}`}
+        style={{
+          ...style,
+          ...(applyCascade ? { "--stagger": stagger } : {}),
+        }}
+        className={`gessoc_row ${applyCascade ? "gessoc_cascade" : ""} ${rowClass}`}
         onClick={() => data.onSelect(index, socio)}
       >
         <div className="gessoc_column gessoc_column-razon">
@@ -192,7 +198,10 @@ const SocioCardRow = React.memo(
   function SocioCardRow({ index, style, data }) {
     const socio = data.items[index];
     const gap = data.gap ?? 12;
-    const stagger = clamp(index, 0, 14);
+
+    // Solo los primeros 10 con cascada
+    const applyCascade = index < 10;
+    const stagger = applyCascade ? clamp(index, 0, 14) : 0;
 
     const top =
       typeof style.top === "number" ? style.top : parseFloat(style.top) || 0;
@@ -205,7 +214,7 @@ const SocioCardRow = React.memo(
       ...style,
       top: top + gap / 2,
       height: height - gap,
-      "--stagger": stagger,
+      ...(applyCascade ? { "--stagger": stagger } : {}),
       // width viene 100% inline desde react-window → lo dejamos
     };
 
@@ -217,7 +226,7 @@ const SocioCardRow = React.memo(
         onClick={() => data.onSelect(index, socio)}
       >
         {/* ⬇️ Card real (acá limitás/centrás con CSS en mobile) */}
-        <div className={`gessoc_card gessoc_cascade ${socio._estadoClase}`}>
+        <div className={`gessoc_card ${applyCascade ? "gessoc_cascade" : ""} ${socio._estadoClase}`}>
           <div className="gessoc_card-status-strip" />
           <div className="gessoc_card-header">
             <h3 className="gessoc_card-title">
@@ -250,7 +259,7 @@ const SocioCardRow = React.memo(
             <div className="gessoc_card-rowline">
               <span className="gessoc_card-label">Medio de Pago</span>
               <span className="gessoc_card-value">{socio.medio_pago}</span>
-            </div>
+            </div> 
             <div className="gessoc_card-rowline">
               <span className="gessoc_card-label">Domicilio cobro</span>
               <span className="gessoc_card-value">{socio.domicilio_2}</span>
@@ -1187,7 +1196,7 @@ const GestionarSocios = () => {
               {filtrosActivos.letras?.length > 0 && (
                 <div className="gessoc_filter-chip">
                   <span className="gessoc_filter-chip-text">
-                    Letra: {filtrosActivos.letras[0]}
+                    {filtrosActivos.letras[0]}
                   </span>
                   {filtrosActivos.letras.length > 1 && (
                     <span className="gessoc_filter-chip-more">

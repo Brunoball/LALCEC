@@ -10,6 +10,7 @@ import React, {
 } from "react";
 import { useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx";
+import { FixedSizeList as List, areEqual } from "react-window"; // ⬅️ virtualización
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faPlus,
@@ -36,19 +37,42 @@ import Toast from "../global/Toast";
    Constantes & Utils
 ================================ */
 const MESES_ANIO = [
-  "ENERO","FEBRERO","MARZO","ABRIL","MAYO","JUNIO",
-  "JULIO","AGOSTO","SEPTIEMBRE","OCTUBRE","NOVIEMBRE","DICIEMBRE",
+  "ENERO",
+  "FEBRERO",
+  "MARZO",
+  "ABRIL",
+  "MAYO",
+  "JUNIO",
+  "JULIO",
+  "AGOSTO",
+  "SEPTIEMBRE",
+  "OCTUBRE",
+  "NOVIEMBRE",
+  "DICIEMBRE",
 ];
 
 const CACHE_KEY = "empresas_cache_v2";
 const CACHE_TTL_MS = 5 * 60 * 1000;
 const CASCADE_FLAG = "empresas_cascade_on_return";
 const CHUNK_SIZE = 120;
+const ROW_HEIGHT = 52; // altura por fila para react-window
 
 const nowTs = () => Date.now();
 const safeJSON = {
-  parse: (v, d = null) => { try { return JSON.parse(v); } catch { return d; } },
-  stringify: (v) => { try { return JSON.stringify(v); } catch { return ""; } },
+  parse: (v, d = null) => {
+    try {
+      return JSON.parse(v);
+    } catch {
+      return d;
+    }
+  },
+  stringify: (v) => {
+    try {
+      return JSON.stringify(v);
+    } catch {
+      return "";
+    }
+  },
 };
 
 // Hook: click fuera
@@ -85,7 +109,10 @@ const shortMedio = (label = "") => {
   if (!raw) return "";
   const words = raw.split(/[\s\-_]+/).filter(Boolean);
   if (words.length > 1) {
-    const initials = words.map(w => w[0]).join("").slice(0, 6);
+    const initials = words
+      .map((w) => w[0])
+      .join("")
+      .slice(0, 6);
     if (initials.length >= 2) return initials.toLowerCase();
   }
   if (raw.length <= 8) return raw.toLowerCase();
@@ -178,7 +205,10 @@ const Row = memo(function Row({
             <button
               className="emp_icon emp_btn-info"
               title="Ver información"
-              onClick={(e) => { e.stopPropagation(); onInfo(empresa); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onInfo(empresa);
+              }}
             >
               <FontAwesomeIcon icon={faInfoCircle} />
             </button>
@@ -186,7 +216,10 @@ const Row = memo(function Row({
             <button
               className="emp_icon emp_btn-edit"
               title="Editar empresa"
-              onClick={(e) => { e.stopPropagation(); onEdit(empresa?.razon_social); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit(empresa?.razon_social);
+              }}
             >
               <FontAwesomeIcon icon={faEdit} />
             </button>
@@ -194,7 +227,10 @@ const Row = memo(function Row({
             <button
               className="emp_icon emp_btn-delete"
               title="Eliminar empresa"
-              onClick={(e) => { e.stopPropagation(); onDelete(empresa); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(empresa);
+              }}
             >
               <FontAwesomeIcon icon={faTrash} />
             </button>
@@ -202,7 +238,10 @@ const Row = memo(function Row({
             <button
               className="emp_icon emp_btn-baja"
               title="Dar de baja"
-              onClick={(e) => { e.stopPropagation(); onBaja(empresa); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onBaja(empresa);
+              }}
             >
               <FontAwesomeIcon icon={faUserMinus} />
               <span className="emp_btn-baja-text"></span>
@@ -280,7 +319,11 @@ const Card = memo(function Card({
               : "emp_badge-danger"
           }`}
         >
-          {estadoPago === "emp_verde" ? "Al día" : estadoPago === "emp_amarillo" ? "Debe 1-2" : "Debe 3+"}
+          {estadoPago === "emp_verde"
+            ? "Al día"
+            : estadoPago === "emp_amarillo"
+            ? "Debe 1-2"
+            : "Debe 3+"}
         </span>
       </div>
 
@@ -314,28 +357,40 @@ const Card = memo(function Card({
         <button
           className="emp_action-btn"
           title="Información"
-          onClick={(e) => { e.stopPropagation(); onInfo(empresa); }}
+          onClick={(e) => {
+            e.stopPropagation();
+            onInfo(empresa);
+          }}
         >
           <FontAwesomeIcon icon={faInfoCircle} />
         </button>
         <button
           className="emp_action-btn"
           title="Editar"
-          onClick={(e) => { e.stopPropagation(); onEdit(empresa?.razon_social); }}
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit(empresa?.razon_social);
+          }}
         >
           <FontAwesomeIcon icon={faEdit} />
         </button>
         <button
           className="emp_action-btn"
           title="Eliminar"
-          onClick={(e) => { e.stopPropagation(); onDelete(empresa); }}
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete(empresa);
+          }}
         >
           <FontAwesomeIcon icon={faTrash} />
         </button>
         <button
           className="emp_action-btn emp_action-danger"
           title="Dar de baja"
-          onClick={(e) => { e.stopPropagation(); onBaja(empresa); }}
+          onClick={(e) => {
+            e.stopPropagation();
+            onBaja(empresa);
+          }}
         >
           <FontAwesomeIcon icon={faUserMinus} />
         </button>
@@ -379,7 +434,7 @@ const GestionarEmpresas = () => {
   const [animacionCascada, setAnimacionCascada] = useState(false);
   const [datosCargados, setDatosCargados] = useState(false);
   const [primeraCarga, setPrimeraCarga] = useState(true);
-  const [actualizar, setActualizar] = useState(false);
+  const [actualizar, setActualizar] = useState(false); // se usa en eliminar/baja para toast
 
   const [filtrosActivos, setFiltrosActivos] = useState({
     letras: [],
@@ -402,7 +457,7 @@ const GestionarEmpresas = () => {
   const abortRef = useRef(null);
   const [, startTransition] = useTransition();
 
-  // Render incremental
+  // Render incremental (lo conservamos para MOBILE/cards)
   const [visibleCount, setVisibleCount] = useState(CHUNK_SIZE);
 
   const bumpVisibleGradually = useCallback((target) => {
@@ -436,9 +491,10 @@ const GestionarEmpresas = () => {
     const savedSearch = localStorage.getItem("empresasSearchTerm");
     if (savedFilters) setFiltrosActivos(safeJSON.parse(savedFilters, filtrosActivos));
     if (savedSearch) setBusqueda(savedSearch);
-  }, []); // eslint-disable-line
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  // Toast post-acción
+  // Toast post-acción (eliminar/baja)
   useEffect(() => {
     if (!primeraCarga && actualizar) {
       setToastMensaje("Operación realizada correctamente");
@@ -447,24 +503,38 @@ const GestionarEmpresas = () => {
     }
   }, [actualizar, primeraCarga]);
 
-  // Carga inicial con caché + AbortController
+  /* ========= Carga inicial con SWR (stale-while-revalidate) ========= */
   useEffect(() => {
     let cancelled = false;
 
     const fromCache = safeJSON.parse(sessionStorage.getItem(CACHE_KEY));
+    const hasCache = fromCache && Array.isArray(fromCache.empresas);
     const isFresh =
-      fromCache &&
-      typeof fromCache === "object" &&
-      nowTs() - (fromCache.timestamp || 0) < CACHE_TTL_MS;
+      hasCache && nowTs() - (fromCache.timestamp || 0) < CACHE_TTL_MS;
+    const isReturning = sessionStorage.getItem(CASCADE_FLAG) === "1";
 
-    const loadFromNetwork = async () => {
-      if (abortRef.current) {
-        try { abortRef.current.abort(); } catch {}
-      }
-      const controller = new AbortController();
-      abortRef.current = controller;
+    const showCacheFirst = hasCache && (isFresh || isReturning);
 
+    const setFromPayload = (mp, lista) => {
+      startTransition(() => {
+        setMediosDePago(Array.isArray(mp) ? mp : []);
+        setEmpresas(Array.isArray(lista) ? lista : []);
+        setError(null);
+        setDatosCargados(true);
+        setVisibleCount(CHUNK_SIZE);
+      });
+    };
+
+    const revalidateInBackground = async () => {
       try {
+        if (abortRef.current) {
+          try {
+            abortRef.current.abort();
+          } catch {}
+        }
+        const controller = new AbortController();
+        abortRef.current = controller;
+
         const [mediosResponse, empresasResponse] = await Promise.all([
           fetch(`${BASE_URL}/api.php?action=obtener_datos_empresas`, {
             cache: "no-store",
@@ -487,16 +557,14 @@ const GestionarEmpresas = () => {
 
         if (cancelled) return;
 
-        const mp = Array.isArray(mediosData?.mediosPago) ? mediosData.mediosPago : [];
-        const lista = Array.isArray(empresasData?.empresas) ? empresasData.empresas : [];
+        const mp = Array.isArray(mediosData?.mediosPago)
+          ? mediosData.mediosPago
+          : [];
+        const lista = Array.isArray(empresasData?.empresas)
+          ? empresasData.empresas
+          : [];
 
-        startTransition(() => {
-          setMediosDePago(mp);
-          setEmpresas(lista);
-          setError(null);
-          setDatosCargados(true);
-          setVisibleCount(CHUNK_SIZE);
-        });
+        setFromPayload(mp, lista);
 
         sessionStorage.setItem(
           CACHE_KEY,
@@ -508,47 +576,40 @@ const GestionarEmpresas = () => {
           })
         );
       } catch (err) {
-        if (err?.name === "AbortError") return;
-        console.error("Error:", err);
-        setError("Error al cargar los datos iniciales");
+        if (err?.name !== "AbortError") {
+          console.error("Error:", err);
+          if (!hasCache) setError("Error al cargar los datos iniciales");
+        }
       } finally {
         if (!cancelled) {
           setCargando(false);
           setPrimeraCarga(false);
+          if (isReturning) sessionStorage.removeItem(CASCADE_FLAG);
         }
       }
     };
 
-    if (isFresh && !actualizar) {
-      const mp = fromCache.mediosDePago || [];
-      const lista = fromCache.empresas || [];
-      startTransition(() => {
-        setMediosDePago(mp);
-        setEmpresas(lista);
-        setError(null);
-        setDatosCargados(true);
-        setVisibleCount(CHUNK_SIZE);
-      });
+    if (showCacheFirst) {
+      // 1) Mostrar cache inmediato (sin spinner)
+      setFromPayload(fromCache.mediosDePago, fromCache.empresas);
       setCargando(false);
       setPrimeraCarga(false);
+      // 2) Revalidar en segundo plano
+      revalidateInBackground();
     } else {
-      const id = window.requestIdleCallback
-        ? window.requestIdleCallback(loadFromNetwork, { timeout: 500 })
-        : setTimeout(loadFromNetwork, 0);
-
-      return () => {
-        cancelled = true;
-        if (typeof id === "number") clearTimeout(id);
-        else window.cancelIdleCallback?.(id);
-        abortRef.current?.abort?.();
-      };
+      // No hay cache utilizable -> flujo normal con spinner
+      (async () => {
+        setCargando(true);
+        await revalidateInBackground();
+      })();
     }
 
     return () => {
       cancelled = true;
       abortRef.current?.abort?.();
     };
-  }, [actualizar]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // ← sin depender de "actualizar" para no forzar recargas al navegar
 
   /* ======== FILTRADO LOCAL ======== */
   const empresasFiltradas = useMemo(() => {
@@ -556,7 +617,12 @@ const GestionarEmpresas = () => {
     const filtros = filtrosActivos;
     const texto = (deferredBusqueda || "").trim().toLowerCase();
 
-    if (!filtros.todos && filtros.letras.length === 0 && filtros.mediosPago.length === 0 && texto === "") {
+    if (
+      !filtros.todos &&
+      filtros.letras.length === 0 &&
+      filtros.mediosPago.length === 0 &&
+      texto === ""
+    ) {
       return [];
     }
 
@@ -609,7 +675,7 @@ const GestionarEmpresas = () => {
     return () => cancelAnimationFrame(id);
   }, [empresasFiltradas, datosCargados, reducedMotion, bumpVisibleGradually]);
 
-  // Al volver desde Editar
+  // Al volver desde Editar (sólo trigger visual, datos ya quedan por SWR)
   useEffect(() => {
     if (!datosCargados) return;
     if (sessionStorage.getItem(CASCADE_FLAG) === "1") {
@@ -627,71 +693,83 @@ const GestionarEmpresas = () => {
   }, []);
 
   /* === Selección ÚNICA: o 1 letra o 1 medio, nunca ambos === */
-  const handleFiltrarPorLetra = useCallback((letra) => {
-    startTransition(() => {
-      setFiltrosActivos((prev) => {
-        const yaSeleccionada = prev.letras[0] === letra;
-        const newLetras = yaSeleccionada ? [] : [letra];
-        const next = {
-          letras: newLetras,
-          mediosPago: [],
-          todos: false,
-          hasFilters: newLetras.length > 0,
-        };
-        persistFilters(next);
-        return next;
+  const handleFiltrarPorLetra = useCallback(
+    (letra) => {
+      startTransition(() => {
+        setFiltrosActivos((prev) => {
+          const yaSeleccionada = prev.letras[0] === letra;
+          const newLetras = yaSeleccionada ? [] : [letra];
+          const next = {
+            letras: newLetras,
+            mediosPago: [],
+            todos: false,
+            hasFilters: newLetras.length > 0,
+          };
+          persistFilters(next);
+          return next;
+        });
       });
-    });
-  }, [persistFilters]);
+    },
+    [persistFilters]
+  );
 
-  const handleFiltrarPorMedioPago = useCallback((medio) => {
-    startTransition(() => {
-      setFiltrosActivos((prev) => {
-        const yaSeleccionado = prev.mediosPago[0] === medio;
-        const newMedios = yaSeleccionado ? [] : [medio];
-        const next = {
-          letras: [],
-          mediosPago: newMedios,
-          todos: false,
-          hasFilters: newMedios.length > 0,
-        };
-        persistFilters(next);
-        return next;
+  const handleFiltrarPorMedioPago = useCallback(
+    (medio) => {
+      startTransition(() => {
+        setFiltrosActivos((prev) => {
+          const yaSeleccionado = prev.mediosPago[0] === medio;
+          const newMedios = yaSeleccionado ? [] : [medio];
+          const next = {
+            letras: [],
+            mediosPago: newMedios,
+            todos: false,
+            hasFilters: newMedios.length > 0,
+          };
+          persistFilters(next);
+          return next;
+        });
       });
-    });
-  }, [persistFilters]);
+    },
+    [persistFilters]
+  );
 
-  const eliminarFiltroLetra = useCallback((letra) => {
-    startTransition(() => {
-      setFiltrosActivos((prev) => {
-        const newLetras = prev.letras.filter((l) => l !== letra);
-        const next = {
-          letras: newLetras,
-          mediosPago: [],
-          todos: false,
-          hasFilters: newLetras.length > 0,
-        };
-        persistFilters(next);
-        return next;
+  const eliminarFiltroLetra = useCallback(
+    (letra) => {
+      startTransition(() => {
+        setFiltrosActivos((prev) => {
+          const newLetras = prev.letras.filter((l) => l !== letra);
+          const next = {
+            letras: newLetras,
+            mediosPago: [],
+            todos: false,
+            hasFilters: newLetras.length > 0,
+          };
+          persistFilters(next);
+          return next;
+        });
       });
-    });
-  }, [persistFilters]);
+    },
+    [persistFilters]
+  );
 
-  const eliminarFiltroMedioPago = useCallback((medio) => {
-    startTransition(() => {
-      setFiltrosActivos((prev) => {
-        const newMedios = prev.mediosPago.filter((m) => m !== medio);
-        const next = {
-          letras: [],
-          mediosPago: newMedios,
-          todos: false,
-          hasFilters: newMedios.length > 0,
-        };
-        persistFilters(next);
-        return next;
+  const eliminarFiltroMedioPago = useCallback(
+    (medio) => {
+      startTransition(() => {
+        setFiltrosActivos((prev) => {
+          const newMedios = prev.mediosPago.filter((m) => m !== medio);
+          const next = {
+            letras: [],
+            mediosPago: newMedios,
+            todos: false,
+            hasFilters: newMedios.length > 0,
+          };
+          persistFilters(next);
+          return next;
+        });
       });
-    });
-  }, [persistFilters]);
+    },
+    [persistFilters]
+  );
 
   const limpiarFiltros = useCallback(() => {
     const reset = { letras: [], mediosPago: [], todos: false, hasFilters: false };
@@ -760,18 +838,16 @@ const GestionarEmpresas = () => {
     navigate("/PaginaPrincipal");
   }, [navigate]);
 
+  // ⬇️ NO borramos caché, marcamos flag y navegamos
   const handleAgregarEmpresa = useCallback(() => {
-    navigate("/AgregarEmpresa");
-    setActualizar((p) => !p);
-    sessionStorage.removeItem(CACHE_KEY);
+    sessionStorage.setItem(CASCADE_FLAG, "1");
+    navigate("/AgregarEmpresa", { state: { from: "empresas" } });
   }, [navigate]);
 
   const handleEditarEmpresa = useCallback(
     (razonSocial) => {
       sessionStorage.setItem(CASCADE_FLAG, "1");
-      navigate(`/editarEmpresa/${razonSocial}`);
-      setActualizar((p) => !p);
-      sessionStorage.removeItem(CACHE_KEY);
+      navigate(`/editarEmpresa/${razonSocial}`, { state: { from: "empresas" } });
     },
     [navigate]
   );
@@ -804,7 +880,8 @@ const GestionarEmpresas = () => {
         setToastMensaje("Empresa eliminada correctamente");
         setToastTipo("exito");
         setMostrarToast(true);
-        sessionStorage.removeItem(CACHE_KEY);
+        sessionStorage.removeItem(CACHE_KEY); // invalidamos para próxima carga “fría”
+        setActualizar((p) => !p);
       } else {
         setToastMensaje(data?.message || "Error al eliminar la empresa.");
         setToastTipo("error");
@@ -834,14 +911,11 @@ const GestionarEmpresas = () => {
       return;
     }
     try {
-      const response = await fetch(
-        `${BASE_URL}/api.php?action=estado_empresa&op=dar_baja`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id_empresa: id, motivo: m }),
-        }
-      );
+      const response = await fetch(`${BASE_URL}/api.php?action=estado_empresa&op=dar_baja`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id_empresa: id, motivo: m }),
+      });
       const result = await response.json();
       if (response.ok && (result?.success || result?.exito)) {
         startTransition(() => {
@@ -853,6 +927,7 @@ const GestionarEmpresas = () => {
         setToastTipo("exito");
         setMostrarToast(true);
         sessionStorage.removeItem(CACHE_KEY);
+        setActualizar((p) => !p);
       } else {
         setToastMensaje(result?.mensaje || "No se pudo dar de baja");
         setToastTipo("error");
@@ -933,14 +1008,14 @@ const GestionarEmpresas = () => {
   );
 
   const cantidadVisibles =
-    (filtrosActivos.todos ||
-      filtrosActivos.letras.length > 0 ||
-      filtrosActivos.mediosPago.length > 0 ||
-      (deferredBusqueda || "").trim() !== "")
+    filtrosActivos.todos ||
+    filtrosActivos.letras.length > 0 ||
+    filtrosActivos.mediosPago.length > 0 ||
+    (deferredBusqueda || "").trim() !== ""
       ? empresasFiltradas.length
       : 0;
 
-  // Subconjunto incremental que realmente se pinta
+  // Subconjunto incremental para MOBILE/cards
   const subEmpresas = useMemo(() => {
     if (!empresasFiltradas) return [];
     return empresasFiltradas.slice(0, visibleCount);
@@ -958,6 +1033,37 @@ const GestionarEmpresas = () => {
     if (firstLetter) eliminarFiltroLetra(firstLetter);
     if (firstMedio) eliminarFiltroMedioPago(firstMedio);
   };
+
+  /* ========= Row virtual para react-window ========= */
+  const RowVirtual = memo(
+    ({ index, style, data }) => {
+      const {
+        items,
+        filaSeleccionada,
+        onSelect,
+        onInfo,
+        onEdit,
+        onDelete,
+        onBaja,
+      } = data;
+      const empresa = items[index];
+      return (
+        <div style={style}>
+          <Row
+            empresa={empresa}
+            index={index}
+            selected={filaSeleccionada === index}
+            onSelect={onSelect}
+            onInfo={onInfo}
+            onEdit={onEdit}
+            onDelete={onDelete}
+            onBaja={onBaja}
+          />
+        </div>
+      );
+    },
+    areEqual
+  );
 
   return (
     <div className="emp_empresa-container">
@@ -1022,7 +1128,9 @@ const GestionarEmpresas = () => {
                       {"ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").map((letra) => (
                         <button
                           key={letra}
-                          className={`emp_letra-filtro ${filtrosActivos.letras.includes(letra) ? "emp_active" : ""}`}
+                          className={`emp_letra-filtro ${
+                            filtrosActivos.letras.includes(letra) ? "emp_active" : ""
+                          }`}
                           onClick={() => aplicarFiltroAlfabetico(letra)}
                           title={`Filtrar por ${letra}`}
                         >
@@ -1040,7 +1148,9 @@ const GestionarEmpresas = () => {
                   <span>Medios de Pago</span>
                   <FontAwesomeIcon
                     icon={faChevronDown}
-                    className={`emp_chevron-icon ${mostrarSubmenuTransferencia ? "emp_rotate" : ""}`}
+                    className={`emp_chevron-icon ${
+                      mostrarSubmenuTransferencia ? "emp_rotate" : ""
+                    }`}
                   />
                 </div>
 
@@ -1100,9 +1210,7 @@ const GestionarEmpresas = () => {
                     {chipKind}: {chipValue}
                   </span>
                   {/* Mobile: solo el valor */}
-                  <span className="emp_chip-mini-text emp_socios-mobile">
-                    {chipValue}
-                  </span>
+                  <span className="emp_chip-mini-text emp_socios-mobile">{chipValue}</span>
 
                   <button
                     className="emp_chip-mini-close"
@@ -1138,7 +1246,7 @@ const GestionarEmpresas = () => {
             </div>
           </div>
 
-          {/* ======= TABLA ======= */}
+          {/* ======= TABLA (Desktop) ======= */}
           <div className="emp_box-table">
             <div className="emp_header">
               <div className="emp_column-header emp_header-razon">Razón Social</div>
@@ -1166,21 +1274,27 @@ const GestionarEmpresas = () => {
                   filtrosActivos.mediosPago.length > 0 ||
                   (deferredBusqueda || "").trim() !== "") &&
                 empresasFiltradas.length > 0 ? (
-                <div className={`emp_scrollableE ${animacionCascada ? "emp_cascade-animation" : ""}`}>
-                  {subEmpresas.map((empresa, index) => (
-                    <Row
-                      key={getEmpresaId(empresa) || empresa?.cuit || `row-${index}`}
-                      empresa={empresa}
-                      index={index}
-                      selected={filaSeleccionada === index}
-                      onSelect={handleFilaSeleccionada}
-                      onInfo={handleMostrarInfoEmpresa}
-                      onEdit={handleEditarEmpresa}
-                      onDelete={handleConfirmarEliminar}
-                      onBaja={handleConfirmarBajaEmpresa}
-                    />
-                  ))}
-                </div>
+                // ⬇️ react-window para virtualizar filas
+                <List
+                  className={`emp_scrollableE ${
+                    animacionCascada ? "emp_cascade-animation" : ""
+                  }`}
+                  height={520} // ~55vh; ajustá a gusto
+                  itemCount={empresasFiltradas.length}
+                  itemSize={ROW_HEIGHT}
+                  width={"100%"}
+                  itemData={{
+                    items: empresasFiltradas,
+                    filaSeleccionada,
+                    onSelect: handleFilaSeleccionada,
+                    onInfo: handleMostrarInfoEmpresa,
+                    onEdit: handleEditarEmpresa,
+                    onDelete: handleConfirmarEliminar,
+                    onBaja: handleConfirmarBajaEmpresa,
+                  }}
+                >
+                  {RowVirtual}
+                </List>
               ) : (
                 <div className="emp_no-data-message">
                   <div className="emp_message-content">
@@ -1194,8 +1308,12 @@ const GestionarEmpresas = () => {
             </div>
           </div>
 
-          {/* ======= TARJETAS ======= */}
-          <div className={`emp_cards-wrapper ${animacionCascada ? "emp_cascade-animation" : ""}`}>
+          {/* ======= TARJETAS (Mobile) ======= */}
+          <div
+            className={`emp_cards-wrapper ${
+              animacionCascada ? "emp_cascade-animation" : ""
+            }`}
+          >
             {cargando ? (
               <div className="emp_no-data-message emp_no-data-mobile">
                 <div className="emp_message-content">

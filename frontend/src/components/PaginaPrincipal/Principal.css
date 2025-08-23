@@ -624,6 +624,7 @@
   }
 }
 @media (max-width: 768px) {
+  .pagina-principal-footer{text-align: center;}
   .menu-button { width: clamp(200px, 42vw, 240px); }
 }
 
@@ -648,3 +649,7 @@
 .pagina-principal-footer a:hover {
   text-decoration: underline;
 }
+
+
+@media (max-width: 768px) {
+  .pagina-principal-footer{text-align: center;}}

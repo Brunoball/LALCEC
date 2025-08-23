@@ -114,8 +114,8 @@
   --transition-smooth: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 
   /* ===== CASCADA (fluida y liviana) ===== */
-  --cascade-stagger: 28ms;
-  --cascade-duration: 220ms;
+  --cascade-stagger: 50ms;
+  --cascade-duration: 450ms;
 }
 
 /* Reset y base */
@@ -473,7 +473,7 @@ input:-webkit-autofill { background-color: transparent !important; }
 }
 
 /* 🔧 MOD: columna razón social */
-.gessoc_column-razon { font-weight: 500; color: var(--text-primary); }
+.gessoc_column-razon { font-weight: 500; color: var(--text-primary); text-align: start; }
 .gessoc_column-cuit { font-family: 'JetBrains Mono', monospace; color: var(--text-secondary); }
 
 .gessoc_icons-column { justify-content: center; }
@@ -1047,13 +1047,15 @@ input:-webkit-autofill { background-color: transparent !important; }
   .gessoc_filtros-activos-container { padding: 0 0 0 8px; gap: 8px; margin: 0; }
 
   .gessoc_filter-chip {
-    padding: 4px ;
+    padding: 4px  6px;
     gap: 0;
     max-width: 70vw;
+    display: flex;
+    align-items: end;
   }
   .gessoc_filter-chip-text { font-size: 0.8rem; }
   .gessoc_filter-chip-more { font-size: 0.7rem; }
-  .gessoc_filter-chip-close { width: 16px; height: 16px;  align-items: flex-end;}
+  .gessoc_filter-chip-close { width: 16px; height: 16px;display: flex;  align-items: inherit;}
 }
 
 /* Quitar focus negro de iconos (para evitar borde al cerrar modal) */

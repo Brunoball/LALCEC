@@ -454,3 +454,13 @@ html, body {
   }
   .contable-detail-table td[colspan] { grid-template-columns: 1fr !important; }
 }
+/* desktop */
+.contable-month-select{
+  width: 120px;
+  box-sizing: border-box;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+/* mobile ya tienes width:100%, así que no hace falta tocar */
