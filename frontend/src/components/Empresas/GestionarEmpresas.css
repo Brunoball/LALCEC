@@ -113,9 +113,9 @@
   --transition-normal: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   --transition-smooth: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 
-  /* ===== CASCADA (NUEVO) ===== */
+  /* ===== CASCADA ===== */
   --cascade-stagger: 50ms;                 /* 0.05s por ítem */
-  --cascade-duration: .45s;                /* igual que antes */
+  --cascade-duration: .45s;
   --cascade-ease: cubic-bezier(.2,.7,.2,1);
 }
 
@@ -442,7 +442,7 @@ input:-webkit-autofill { background-color: transparent !important; }
   flex-wrap: nowrap;
   justify-content: center;
   overflow-y: auto;
-  min-height: 54vh;
+  min-height: 55vh;
   transition: min-height 0.3s ease, max-height 0.3s ease;
 }
 .emp_scrollableE {
@@ -463,6 +463,12 @@ input:-webkit-autofill { background-color: transparent !important; }
   transition: background-color var(--transition-fast), box-shadow var(--transition-fast);
   border-bottom: 1px solid var(--border-color);
   cursor: pointer;
+
+  /* Optimización de rendimiento (cascada / hover) */
+  backface-visibility: hidden;
+  transform: translateZ(0);
+  will-change: transform, opacity;
+  contain: content;
 }
 .emp_row:hover { background-color: var(--primary-50); box-shadow: var(--shadow-sm); }
 .emp_row.emp_selected-row { background-color: #ffedd59e; border-color: var(--primary-color); box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1); }
@@ -506,24 +512,65 @@ input:-webkit-autofill { background-color: transparent !important; }
 .emp_icon:hover { transform: scale(1.1); color: var(--primary-700); }
 
 /* ================================
-   Animaciones en cascada (NUEVO)
+   Animaciones en cascada (ACTUALIZADO)
+   - Aplica directo en cada fila/tarjeta con .emp_cascade
+   - Usa variable CSS --stagger (0,1,2,...)
+   - Compatibilidad con prefers-reduced-motion
 ==================================*/
-@keyframes emp_cascadeFadeUp {
-  from { opacity: 0; transform: translate3d(0, 8px, 0); }
-  to   { opacity: 1; transform: translate3d(0, 0, 0); }
+
+/* Keyframes */
+@keyframes emp_cascadeIn {
+  0% { opacity: 0; transform: translate3d(0, 8px, 0); }
+  100% { opacity: 1; transform: translate3d(0, 0, 0); }
 }
 
-/* Activador de cascada con GPU y delay por item (--i) */
+/* Clase para aplicar la cascada por elemento (fila o tarjeta) */
+.emp_cascade {
+  opacity: 0;
+  animation: emp_cascadeIn var(--cascade-duration) var(--cascade-ease) both;
+  animation-delay: calc(var(--cascade-stagger) * var(--stagger, 0));
+  backface-visibility: hidden;
+  transform: translateZ(0);
+  will-change: transform, opacity;
+  contain: content;
+}
+
+/* Optimización de rendimiento para tarjetas también */
+.emp_card {
+  position: relative;
+  background: #fff;
+  border: 1px solid var(--gray-200);
+  border-radius: 14px;
+  box-shadow: var(--shadow-sm);
+  padding: 12px 12px 8px 12px;
+  overflow: hidden;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+
+  /* Optimización */
+  backface-visibility: hidden;
+  transform: translateZ(0);
+  will-change: transform, opacity;
+  contain: content;
+}
+
+/* Fallback COMPAT: si se sigue usando la clase de contenedor antigua,
+   se animan igual los hijos (fila/tarjeta) usando --stagger si está seteado */
 .emp_cascade-animation .emp_row,
 .emp_cascade-animation .emp_card {
   opacity: 0;
-  transform: translate3d(0, 8px, 0);
-  will-change: transform, opacity;
-  backface-visibility: hidden;
-  contain: content;
-  animation: emp_cascadeFadeUp var(--cascade-duration) var(--cascade-ease) forwards;
-  animation-delay: calc(var(--i) * var(--cascade-stagger));
-  box-shadow: none !important; /* sombras livianas durante la animación */
+  animation: emp_cascadeIn var(--cascade-duration) var(--cascade-ease) both;
+  animation-delay: calc(var(--cascade-stagger) * var(--stagger, 0));
+}
+
+/* Accesibilidad: reduce motion */
+@media (prefers-reduced-motion: reduce) {
+  .emp_cascade,
+  .emp_cascade-animation .emp_row,
+  .emp_cascade-animation .emp_card {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
 }
 
 /* Loading */
@@ -907,7 +954,7 @@ input:-webkit-autofill { background-color: transparent !important; }
   .emp_socios-desktop { display: none; }
   .emp_socios-mobile { display: inline; }
 
-  /* >>> NUEVO: textos de leyenda responsivos en mobile */
+  /* >>> textos de leyenda responsivos en mobile */
   .emp_legend-desktop { display: none; }
   .emp_legend-mobile  { display: inline; }
 
@@ -921,18 +968,7 @@ input:-webkit-autofill { background-color: transparent !important; }
     padding: 0 1.5rem;
   }
 
-  .emp_card {
-    position: relative;
-    background: #fff;
-    border: 1px solid var(--gray-200);
-    border-radius: 14px;
-    box-shadow: var(--shadow-sm);
-    padding: 12px 12px 8px 12px;
-    overflow: hidden;
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
-    opacity: 1;
-  }
-  .emp_card:active { transform: scale(0.997); }
+  /* Colores/estado en tarjeta */
   .emp_card.emp_verde { border-left: 4px solid var(--success-500); }
   .emp_card.emp_amarillo { border-left: 4px solid var(--warning-500); }
   .emp_card.emp_rojo { border-left: 4px solid var(--danger-500); }
@@ -973,8 +1009,6 @@ input:-webkit-autofill { background-color: transparent !important; }
   }
   .emp_action-btn:active { transform: translateY(1px); }
   .emp_action-danger { color: var(--danger-600); border-color: #fecaca; background: #fff5f5; }
-
-  /* Cascada en mobile ya cubierta por la regla general (.emp_cascade-animation ...) */
 
   /* ====== BOTONERA INFERIOR (MOBILE)  ====== */
   .emp_down-container {
@@ -1085,7 +1119,7 @@ input:-webkit-autofill { background-color: transparent !important; }
   .emp_card-value { font-size: 12.5px; }
 }
 
-/* Accesibilidad */
+/* Accesibilidad (fallback general) */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
@@ -1118,3 +1152,4 @@ input:-webkit-autofill { background-color: transparent !important; }
     text-overflow: ellipsis;
   }
 }
+
