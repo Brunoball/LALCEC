@@ -969,9 +969,9 @@ input:-webkit-autofill { background-color: transparent !important; }
   }
 
   /* Colores/estado en tarjeta */
-  .emp_card.emp_verde { border-left: 4px solid var(--success-500); }
-  .emp_card.emp_amarillo { border-left: 4px solid var(--warning-500); }
-  .emp_card.emp_rojo { border-left: 4px solid var(--danger-500); }
+  .emp_card.emp_verde { border-left: 1px solid var(--success-500); }
+  .emp_card.emp_amarillo { border-left: 1px solid var(--warning-500); }
+  .emp_card.emp_rojo { border-left: 1px solid var(--danger-500); }
 
   .emp_card-status-strip {
     position: absolute; inset: 0 auto 0 0; width: 3px; opacity: 0; pointer-events: none;

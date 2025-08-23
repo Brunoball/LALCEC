@@ -1271,19 +1271,19 @@ const GestionarSocios = () => {
                     <div className="gessoc_loading-spinner"></div>
                   </div>
                 ) : sociosFiltrados.length > 0 ? (
-                  <div className="gessoc_scrollableE" style={{ padding: 0, height: listHeight }}>
-                    <List
-                      height={listHeight}
-                      itemCount={sociosFiltrados.length}
-                      itemSize={desktopRowHeight}
-                      width="100%"
-                      overscanCount={overscan}
-                      itemData={itemData}
-                      itemKey={(idx, data) => data.items[idx]?.id ?? idx}
-                    >
-                      {SocioRow}
-                    </List>
-                  </div>
+<div className="gessoc_scrollableE" style={{ padding: 0 }}>
+  <List
+    height={listHeight}               // 👈 ventana visible, no 20000
+    itemCount={sociosFiltrados.length}
+    itemSize={desktopRowHeight}
+    width="100%"
+    overscanCount={overscan}
+    itemData={itemData}
+    itemKey={(idx, data) => data.items[idx]?.id ?? idx}
+  >
+    {SocioRow}
+  </List>
+</div>
                 ) : (
                   <div className="gessoc_no-data-message" style={{ width: "100%" }}>
                     <div className="gessoc_message-content">

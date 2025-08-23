@@ -699,15 +699,22 @@ const GestionarEmpresas = () => {
     persistFilters(reset);
   }, [persistFilters]);
 
-  const handleMostrarTodos = useCallback(() => {
-    const allFilters = { letras: [], mediosPago: [], todos: true, hasFilters: false };
-    startTransition(() => setFiltrosActivos(allFilters));
-    persistFilters(allFilters);
-    if (!reducedMotion) {
-      setAnimacionCascada(true);
-      setTimeout(() => setAnimacionCascada(false), 600);
-    }
-  }, [persistFilters, reducedMotion]);
+const handleMostrarTodos = useCallback(() => {
+  const allFilters = { letras: [], mediosPago: [], todos: true, hasFilters: false };
+
+  startTransition(() => {
+    setFiltrosActivos(allFilters);
+    setBusqueda("");                 // ⬅️ limpia el input visible
+  });
+
+  persistFilters(allFilters);
+  localStorage.removeItem("empresasSearchTerm"); // ⬅️ limpia lo persistido
+
+  if (!reducedMotion) {
+    setAnimacionCascada(true);
+    setTimeout(() => setAnimacionCascada(false), 600);
+  }
+}, [persistFilters, reducedMotion]);
 
   // === Menú de filtros ===
   const toggleMenuFiltros = useCallback(() => {
