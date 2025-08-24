@@ -396,6 +396,7 @@ input:-webkit-autofill { background-color: transparent !important; }
 .gessoc_body {
   display: flex;
   flex-wrap: nowrap;
+  min-height: 55vh;
   max-height: 55vh;
   justify-content: center;
   transition: min-height 0.3s ease, max-height 0.3s ease;
@@ -1118,6 +1119,10 @@ input:-webkit-autofill { background-color: transparent !important; }
    (igual que empresas)
 ==================================*/
 @media (max-width: 768px) {
+  html, body {
+  margin: 0;          /* <- elimina la franja */
+  padding: 0;
+}
   .gessoc_filtros-menu {
     position: absolute;
     top: calc(100% + 8px);
