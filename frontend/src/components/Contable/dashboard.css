@@ -85,6 +85,8 @@ html, body {
   to { opacity: 1; transform: translateY(0); }
 }
 
+
+
 /* SUMMARY CARDS */
 .contable-summary-cards {
   display: flex;
@@ -104,6 +106,7 @@ html, body {
   align-items: center;
   gap: 20px;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
+  min-width: 0; /* evita overflow en grid */
 }
 .contable-summary-card:hover {
   transform: translateY(-3px);
@@ -127,8 +130,12 @@ html, body {
 .contable-card-content p {
   font-size: 1.5rem; font-weight: bold; margin: 0; color: #333;
 }
+.contable-card-subtext {
+  display: block;
+  color: #888;
+}
 
-/* CATEGORIES SECTION */
+/* CATEGORIES SECTION (caja gris) */
 .contable-categories-section {
   background-color: #f9f9f9;
   padding: 20px;
@@ -347,13 +354,39 @@ html, body {
   .contable-title { font-size: 1.35rem; }
   .contable-back-button { padding: 8px 12px; font-size: 0.9rem; border-radius: 20px; }
 
-  .contable-summary-cards {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;
+  /* --- NUEVO: misma “caja” que la gris de abajo --- */
+  .contable-summary-area {
+    background: #f9f9f9;
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 12px;
   }
-  .contable-summary-card { padding: 14px; gap: 12px; }
+
+  .contable-summary-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 0; /* el margen lo da el wrapper */
+  }
+
+  .contable-summary-card {
+    padding: 14px;
+    gap: 12px;
+  }
+
+  .contable-card-icon {
+    width: 42px;
+    height: 42px;
+    font-size: 22px;
+  }
+
+  .contable-card-content h3 { font-size: .95rem; }
+  .contable-card-content p { font-size: 1.25rem; }
+  /* Ocultamos subtexto para achicar altura */
+  .contable-card-subtext { display: none; }
+
+  /* La tercera tarjeta ocupa toda la fila (como en tu screenshot) */
   .contable-summary-card:nth-child(3) { grid-column: 1 / -1; }
-  .contable-card-content h3 { font-size: 0.95rem; }
-  .contable-card-content p { font-size: 1.3rem; }
 
   .contable-section-header {
     position: static; padding-top: 0; padding-bottom: 0; border-bottom: none;
@@ -493,5 +526,3 @@ html, body {
   text-overflow: ellipsis;
   overflow: hidden;
 }
-
-/* mobile ya tienes width:100%, así que no hace falta tocar */

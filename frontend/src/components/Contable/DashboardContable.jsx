@@ -228,18 +228,19 @@ export default function DashboardContable() {
   // Vista detalle/resumen
   const [mostrarTablaDetalle, setMostrarTablaDetalle] = useState(false);
 
-  // Meses presentes (para encabezados)
+  // Meses presentes (para encabezados, por si lo usás luego)
   const MESES_ORDEN = [
     "Enero","Febrero","Marzo","Abril","Mayo","Junio",
     "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre",
   ];
   const norm = (s) => (s || "").toString().trim().toLowerCase();
-  const mesesPresentesTodos = useMemo(() => {
+  useMemo(() => {
     const set = new Set([
       ...datosMeses.map((m) => norm(m?.nombre)),
       ...datosEmpresas.map((m) => norm(m?.nombre)),
     ]);
     return MESES_ORDEN.filter((m) => set.has(norm(m)));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [datosMeses, datosEmpresas]);
 
   return (
@@ -264,58 +265,60 @@ export default function DashboardContable() {
           </button>
         </div>
 
-        {/* ==== Tarjetas resumen ==== */}
-        <div className="contable-summary-cards">
-          {/* Total recaudado */}
-          <div className="contable-summary-card total-card">
-            <div className="contable-card-icon">
-              <FontAwesomeIcon icon={faDollarSign} />
+        {/* ==== Tarjetas resumen (envueltas para que en mobile tengan mismo ancho que la caja gris) ==== */}
+        <div className="contable-summary-area">
+          <div className="contable-summary-cards">
+            {/* Total recaudado */}
+            <div className="contable-summary-card total-card">
+              <div className="contable-card-icon">
+                <FontAwesomeIcon icon={faDollarSign} />
+              </div>
+              <div className="contable-card-content">
+                <h3>Total recaudado</h3>
+                <p>${totalRecaudado.toLocaleString("es-AR")}</p>
+                <small className="contable-card-subtext">
+                  {mesSeleccionado !== "Selecciona un mes"
+                    ? `En ${mesSeleccionado}${medioSeleccionado !== "todos" ? ` · ${medioSeleccionado}` : ""}`
+                    : "Seleccione un mes"}
+                </small>
+              </div>
             </div>
-            <div className="contable-card-content">
-              <h3>Total recaudado</h3>
-              <p>${totalRecaudado.toLocaleString("es-AR")}</p>
-              <small className="contable-card-subtext">
-                {mesSeleccionado !== "Selecciona un mes"
-                  ? `En ${mesSeleccionado}${medioSeleccionado !== "todos" ? ` · ${medioSeleccionado}` : ""}`
-                  : "Seleccione un mes"}
-              </small>
-            </div>
-          </div>
 
-          {/* Categorías */}
-          <div className="contable-summary-card">
-            <div className="contable-card-icon">
-              <FontAwesomeIcon icon={faTags} />
+            {/* Categorías */}
+            <div className="contable-summary-card">
+              <div className="contable-card-icon">
+                <FontAwesomeIcon icon={faTags} />
+              </div>
+              <div className="contable-card-content">
+                <h3>Categorías</h3>
+                <p>{categoriasAgrupadas.length}</p>
+                <small className="contable-card-subtext">
+                  {mesSeleccionado !== "Selecciona un mes"
+                    ? `En ${mesSeleccionado}`
+                    : "Seleccione un mes"}
+                </small>
+              </div>
             </div>
-            <div className="contable-card-content">
-              <h3>Categorías</h3>
-              <p>{categoriasAgrupadas.length}</p>
-              <small className="contable-card-subtext">
-                {mesSeleccionado !== "Selecciona un mes"
-                  ? `En ${mesSeleccionado}`
-                  : "Seleccione un mes"}
-              </small>
-            </div>
-          </div>
 
-          {/* Total registros */}
-          <div className="contable-summary-card">
-            <div className="contable-card-icon">
-              <FontAwesomeIcon icon={faListAlt} />
-            </div>
-            <div className="contable-card-content">
-              <h3>Total registros</h3>
-              <p>{calcularTotalRegistros()}</p>
-              <small className="contable-card-subtext">
-                {mesSeleccionado !== "Selecciona un mes"
-                  ? `En ${mesSeleccionado}`
-                  : "Seleccione un mes"}
-              </small>
+            {/* Total registros */}
+            <div className="contable-summary-card">
+              <div className="contable-card-icon">
+                <FontAwesomeIcon icon={faListAlt} />
+              </div>
+              <div className="contable-card-content">
+                <h3>Registros</h3>
+                <p>{calcularTotalRegistros()}</p>
+                <small className="contable-card-subtext">
+                  {mesSeleccionado !== "Selecciona un mes"
+                    ? `En ${mesSeleccionado}`
+                    : "Seleccione un mes"}
+                </small>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* ==== Sección categorías ==== */}
+        {/* ==== Sección categorías (la “caja gris”) ==== */}
         <div className="contable-categories-section">
           <div className="contable-section-header">
             <h2>
@@ -328,7 +331,6 @@ export default function DashboardContable() {
                   <FontAwesomeIcon icon={faTags} /> Resumen
                 </>
               )}
-              {/* Subtítulo corto y liviano */}
               <small className="contable-subtitle">
                 {mesSeleccionado !== "Selecciona un mes" ? ` · ${mesSeleccionado}` : ""}
                 {` · ${tipoEntidad === "socio" ? "Socios" : "Empresas"}`}

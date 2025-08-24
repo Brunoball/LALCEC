@@ -17,7 +17,7 @@ import {
   faTrash,
   faFileExcel,
   faInfoCircle,
-  faUserPlus,
+  faPlus,
   faUserMinus,
   faTimes,
   faFilter,
@@ -994,6 +994,9 @@ const GestionarSocios = () => {
     [sociosFiltrados]
   );
 
+  /* ---------- Etiqueta del botón Mostrar todos ---------- */
+  const showAllLabel = isMobile ? "Mostrar todos" : "Mostrar todos los socios";
+
   /* ---------- Exportar Excel ---------- */
   const exportarAExcel = useCallback(
     async () => {
@@ -1272,25 +1275,25 @@ const GestionarSocios = () => {
                     <div className="gessoc_loading-spinner"></div>
                   </div>
                 ) : sociosFiltrados.length > 0 ? (
-<div className="gessoc_scrollableE" style={{ padding: 0 }}>
-  <List
-    height={listHeight}               // 👈 ventana visible, no 20000
-    itemCount={sociosFiltrados.length}
-    itemSize={desktopRowHeight}
-    width="100%"
-    overscanCount={overscan}
-    itemData={itemData}
-    itemKey={(idx, data) => data.items[idx]?.id ?? idx}
-  >
-    {SocioRow}
-  </List>
-</div>
+                  <div className="gessoc_scrollableE" style={{ padding: 0 }}>
+                    <List
+                      height={listHeight}               // ventana visible
+                      itemCount={sociosFiltrados.length}
+                      itemSize={desktopRowHeight}
+                      width="100%"
+                      overscanCount={overscan}
+                      itemData={itemData}
+                      itemKey={(idx, data) => data.items[idx]?.id ?? idx}
+                    >
+                      {SocioRow}
+                    </List>
+                  </div>
                 ) : (
                   <div className="gessoc_no-data-message" style={{ width: "100%" }}>
                     <div className="gessoc_message-content">
                       <p>Usá la búsqueda o aplicá filtros para ver los socios</p>
                       <button className="gessoc_btn-show-all" onClick={handleMostrarTodos}>
-                        Mostrar todos los socios
+                        {showAllLabel}
                       </button>
                     </div>
                   </div>
@@ -1322,7 +1325,7 @@ const GestionarSocios = () => {
                   <div className="gessoc_message-content">
                     <p>Usá la búsqueda o aplicá filtros para ver resultados</p>
                     <button className="gessoc_btn-show-all" onClick={handleMostrarTodos}>
-                      Mostrar todos los socios
+                      {showAllLabel}
                     </button>
                   </div>
                 </div>
@@ -1354,7 +1357,7 @@ const GestionarSocios = () => {
               aria-label="Agregar"
               title="Agregar socio"
             >
-              <FontAwesomeIcon icon={faUserPlus} className="gessoc_socio-icon-button" />
+              <FontAwesomeIcon icon={faPlus} className="gessoc_socio-icon-button" />
               <p>Agregar Socio</p>
             </button>
 
