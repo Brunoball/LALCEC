@@ -1,4 +1,4 @@
-/* GENERAL */
+/* ========== GENERAL ========== */
 html, body {
   margin: 0;
   padding: 0;
@@ -33,7 +33,7 @@ html, body {
   overflow: visible; /* mobile: scroll global */
 }
 
-/* HEADER */
+/* ========== HEADER ========== */
 .contable-header {
   display: flex;
   justify-content: space-between;
@@ -50,10 +50,9 @@ html, body {
   align-items: center;
   gap: 12px;
 }
-
 .contable-title svg { font-size: 1.6rem; }
 
-/* MESSAGES */
+/* ========== MESSAGES ========== */
 .contable-warning {
   background-color: #fff3cd;
   color: #856404;
@@ -86,8 +85,6 @@ html, body {
 }
 
 
-
-/* SUMMARY CARDS */
 .contable-summary-cards {
   display: flex;
   gap: 20px;
@@ -130,12 +127,9 @@ html, body {
 .contable-card-content p {
   font-size: 1.5rem; font-weight: bold; margin: 0; color: #333;
 }
-.contable-card-subtext {
-  display: block;
-  color: #888;
-}
+.contable-card-subtext { display: block; color: #888; }
 
-/* CATEGORIES SECTION (caja gris) */
+/* ========== CATEGORIES SECTION (caja gris) ========== */
 .contable-categories-section {
   background-color: #f9f9f9;
   padding: 20px;
@@ -147,7 +141,7 @@ html, body {
   overflow: visible; /* mobile: scroll global */
 }
 
-/* HEADER DE SECCION */
+/* Header de sección */
 .contable-section-header {
   display: flex;
   justify-content: space-between;
@@ -159,7 +153,7 @@ html, body {
   color: #333; margin: 0; font-size: 1.3rem; display: flex; align-items: center; gap: 10px;
 }
 
-/* CONTENEDOR DE SELECTORES */
+/* Selectores */
 .contable-selectors-container {
   display: flex;
   gap: 15px;
@@ -167,7 +161,6 @@ html, body {
   flex-wrap: wrap;
 }
 
-/* SELECTOR DE MES / PAGO / ENTIDAD */
 .contable-month-selector,
 .contable-payment-selector,
 .contable-entity-selector {
@@ -203,13 +196,10 @@ html, body {
   transition: all 0.2s ease;
 }
 
-/* === Ancho estable selector de medio de pago (desktop) === */
-.contable-payment-select {
-  width: 220px;
-  min-width: 220px;
-}
+/* Ancho estable selector de medio de pago (desktop) */
+.contable-payment-select { width: 220px; min-width: 220px; }
 
-/* CONTENEDOR SCROLL INTERNO (solo desktop) */
+/* Scroll interno (solo desktop) */
 .contable-categories-scroll-container {
   overflow: visible;
   padding-right: 10px;
@@ -217,7 +207,7 @@ html, body {
   padding: 10px 10px 10px 0;
 }
 
-/* TARJETAS DE CATEGORÍAS */
+/* Tarjetas categorías */
 .contable-categories-cards {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -268,17 +258,13 @@ html, body {
 
 .contable-no-data { text-align: center; color: #666; padding: 20px; grid-column: 1 / -1; }
 
-/* LOADING */
-.contable-loading-categories { padding: 20px; text-align: center; color: #666; font-style: italic; }
-
-/* BOTÓN VOLVER */
+/* Botones */
 .contable-back-button {
   background-color: #ff6e00; color: #ffffff; padding: 9px 16px; border-radius: 30px; font-weight: 500;
   cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.3s ease; outline: none; border: none;
 }
 .contable-back-button:hover { transform: scale(1.05); }
 
-/* BOTÓN DETALLE/RESUMEN */
 .contable-detail-view-button {
   display: flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 8px; border: none;
   background-color: #ff7b00; color: white; font-weight: 500; cursor: pointer; transition: all 0.3s ease;
@@ -288,12 +274,9 @@ html, body {
   background-color: #e56e00; transform: translateY(-1px); box-shadow: 0 4px 8px rgba(255, 123, 0, 0.2);
 }
 .contable-detail-view-button:active:not(:disabled) { transform: translateY(0); }
-.contable-detail-view-button:disabled {
-  opacity: 0.7; cursor: not-allowed; background-color: #cccccc; color: #666666;
-}
+.contable-detail-view-button:disabled { opacity: 0.7; cursor: not-allowed; background-color: #cccccc; color: #666666; }
 .contable-detail-view-button svg { font-size: 0.95rem; }
 
-/* ======= BOTÓN VER GRÁFICOS ======= */
 .contable-charts-button {
   display: flex; align-items: center; gap: 8px; padding: 8px 16px;
   border-radius: 8px; border: none; background-color: #1f2937; color: #fff;
@@ -303,7 +286,7 @@ html, body {
 .contable-charts-button:hover { background-color: #111827; transform: translateY(-1px); }
 .contable-charts-button:disabled { opacity: .6; cursor: not-allowed; }
 
-/* TABLA DETALLE (base desktop) */
+/* ========== TABLA DETALLE (desktop) ========== */
 .contable-detail-table-container { overflow-x: auto; margin-top: 15px; }
 .contable-detail-table { width: 100%; border-collapse: collapse; }
 .contable-detail-table th {
@@ -314,16 +297,14 @@ html, body {
 }
 .contable-detail-table tr:hover { background-color: #f5f5f5; }
 
-/* SPINNER */
+/* ========== SPINNER ========== */
 .contable-spinner {
   width: 20px; height: 20px; border: 3px solid rgba(255, 123, 0, 0.3); border-radius: 50%;
   border-top-color: #ff7b00; animation: spin 1s ease-in-out infinite; margin-right: 10px;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* =========================
-   DESKTOP: ALTURA 100% + SCROLL INTERNO
-   ========================= */
+/* ========== DESKTOP: altura 100% + scroll interno ========== */
 @media (min-width: 769px) {
   html, body { overflow: hidden; }
   .dashboard-contable-fullscreen { height: 100vh; }
@@ -335,9 +316,7 @@ html, body {
   }
 }
 
-/* =========================
-   RESPONSIVE (DESKTOP INTACTO)
-   ========================= */
+/* ========== RESPONSIVE (desktop intacto) ========== */
 @media (max-width: 1200px) {
   .contable-categories-cards { grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
 }
@@ -345,114 +324,115 @@ html, body {
   .contable-categories-cards { grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
 }
 
-/* ====== MOBILE OPTIMIZADO ====== */
+/* ========== MOBILE OPTIMIZADO ========== */
 @media (max-width: 768px) {
   .dashboard-contable-fullscreen { min-height: 100dvh; }
   .contable-fullscreen-container { padding: 16px; min-height: 100dvh; }
 
-  .contable-header { flex-direction: row; align-items: center; gap: 8px; margin-bottom: 18px; }
+  .contable-header { flex-direction: row; align-items: center; gap: 8px; margin-bottom: 16px; }
   .contable-title { font-size: 1.35rem; }
   .contable-back-button { padding: 8px 12px; font-size: 0.9rem; border-radius: 20px; }
 
-  /* --- NUEVO: misma “caja” que la gris de abajo --- */
+  /* Summary envuelto igual que caja gris */
   .contable-summary-area {
     background: #f9f9f9;
     border-radius: 12px;
-    padding: 12px;
-    margin-bottom: 12px;
+    padding: 10px;
+    margin-bottom: 10px;
   }
 
   .contable-summary-cards {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    margin-bottom: 0; /* el margen lo da el wrapper */
+    gap: 10px;
+    margin-bottom: 0;
   }
 
-  .contable-summary-card {
-    padding: 14px;
-    gap: 12px;
-  }
-
-  .contable-card-icon {
-    width: 42px;
-    height: 42px;
-    font-size: 22px;
-  }
-
-  .contable-card-content h3 { font-size: .95rem; }
-  .contable-card-content p { font-size: 1.25rem; }
-  /* Ocultamos subtexto para achicar altura */
+  .contable-summary-card { padding: 12px; gap: 10px; }
+  .contable-card-icon { width: 40px; height: 40px; font-size: 20px; }
+  .contable-card-content h3 { font-size: .9rem; }
+  .contable-card-content p { font-size: 1.2rem; }
   .contable-card-subtext { display: none; }
-
-  /* La tercera tarjeta ocupa toda la fila (como en tu screenshot) */
   .contable-summary-card:nth-child(3) { grid-column: 1 / -1; }
 
   .contable-section-header {
     position: static; padding-top: 0; padding-bottom: 0; border-bottom: none;
-    flex-direction: column; align-items: stretch; gap: 10px; margin-bottom: 12px;
+    flex-direction: column; align-items: stretch; gap: 10px; margin-bottom: 10px;
   }
   .contable-section-header h2 { font-size: 1.05rem; line-height: 1.2; margin-bottom: 2px; }
 
   .contable-selectors-container {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%;
   }
 
   .contable-month-selector,
   .contable-payment-selector,
   .contable-entity-selector {
-    width: 100%; padding: 10px 12px;
+    width: 100%; padding: 9px 10px;
   }
 
   .contable-month-selector select,
   .contable-payment-selector select,
   .contable-entity-select {
-    width: 100%; font-size: 0.98rem; padding: 10px 12px;
+    width: 100%; font-size: 0.95rem; padding: 9px 10px;
   }
 
   /* Medio de pago ocupa toda la fila */
   .full-row-mobile { grid-column: 1 / -1; }
 
-  /* Botones lado a lado */
+  /* Botones lado a lado, con texto optimizado */
   .contable-detail-view-button,
   .contable-charts-button {
     width: 100%;
     justify-content: center;
-    padding: 10px 14px;
-    font-size: 0.98rem;
+    padding: 10px 12px;
+    font-size: 0.95rem;
   }
 
-  .contable-categories-cards { grid-template-columns: 1fr 1fr; gap: 12px; }
+  /* Ocultar SOLO la palabra "Ver " en mobile para el botón naranja */
+  .hide-on-mobile { display: none; }
 
-  .contable-categories-scroll-container { padding: 8px 6px 12px 0; margin: 0; overflow: visible; }
-  .contable-category-card { min-height: 150px; }
-  .contable-category-header { padding: 14px; }
-  .contable-category-header h3, .monthly-price { font-size: 1.05rem; }
-  .contable-category-body { padding: 14px; }
-  .contable-category-label { font-size: 0.95rem; }
-  .contable-category-value { font-size: 1rem; }
+  /* Grid de categorías: 2 por fila, con mejor aire */
+  .contable-categories-cards {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    padding-bottom: 8px; /* margen final, que no se pegue al borde */
+  }
 
-  /* ====== DETALLE EN MÓVIL: VALOR PEGADO A LA DERECHA ====== */
+  .contable-categories-scroll-container {
+    padding: 8px 4px 12px 0; margin: 0; overflow: visible;
+  }
+
+  .contable-category-card {
+    min-height: 140px;
+    border-radius: 12px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.06);
+  }
+  .contable-category-header { padding: 12px; }
+  .contable-category-header h3, .monthly-price { font-size: 1rem; }
+  .contable-category-body { padding: 12px; }
+  .contable-category-label { font-size: 0.92rem; }
+  .contable-category-value { font-size: 0.98rem; }
+
+  /* ===== Detalle tipo “cards” en móvil ===== */
   .contable-detail-table { display: block; }
   .contable-detail-table thead { display: none; }
-  .contable-detail-table tbody { display: grid; gap: 12px; }
+  .contable-detail-table tbody { display: grid; gap: 10px; }
   .contable-detail-table tr {
     display: block;
     background: #fff;
     border: 1px solid #eee;
     border-radius: 10px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-    padding: 12px;
+    padding: 10px;
   }
   .contable-detail-table td {
     display: grid;
-    grid-template-columns: 42% 58%;
+    grid-template-columns: 44% 56%;
     gap: 6px;
-    padding: 6px 0;
+    padding: 5px 0;
     border: none;
     white-space: normal;
-
-    /* ALINEACIÓN: valor a la derecha */
     justify-items: end;
     text-align: right;
   }
@@ -460,8 +440,6 @@ html, body {
     content: attr(data-label);
     font-weight: 600;
     color: #666;
-
-    /* Mantener la etiqueta a la izquierda */
     justify-self: start;
     text-align: left;
   }
@@ -474,51 +452,24 @@ html, body {
   }
   .contable-detail-table td:nth-child(1) { font-weight: 600; color: #2b2d42; }
   .contable-detail-table td:nth-child(3) { font-feature-settings: "tnum"; }
-  .contable-detail-table-container { margin-top: 8px; overflow: visible; }
+  .contable-detail-table-container { margin-top: 6px; overflow: visible; }
 }
 
 @media (max-width: 576px) {
-  .contable-categories-cards { grid-template-columns: 1fr 1fr; gap: 10px; }
-
-  .contable-category-card { min-height: 140px; }
-  .contable-title { font-size: 1.25rem; }
-  .contable-card-content p { font-size: 1.2rem; }
-
-  .contable-detail-table td {
-    grid-template-columns: 46% 54%;
-    padding: 5px 0;
-
-    /* Reafirmamos alineaciones en pantallas más chicas */
-    justify-items: end;
-    text-align: right;
-  }
-  .contable-detail-table td::before {
-    justify-self: start;
-    text-align: left;
-  }
-  .contable-detail-table td[colspan] { grid-template-columns: 1fr !important; }
+  .contable-categories-cards { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .contable-category-card { min-height: 132px; }
+  .contable-title { font-size: 1.22rem; }
+  .contable-card-content p { font-size: 1.15rem; }
+  .contable-detail-table td { grid-template-columns: 46% 54%; }
 }
 
 @media (max-width: 480px) {
   .contable-title { font-size: 1.18rem; }
   .contable-back-button { padding: 7px 10px; font-size: 0.85rem; }
-
-  .contable-detail-table td {
-    grid-template-columns: 48% 52%;
-    gap: 5px;
-
-    /* Reafirmamos alineaciones en XS */
-    justify-items: end;
-    text-align: right;
-  }
-  .contable-detail-table td::before {
-    justify-self: start;
-    text-align: left;
-  }
-  .contable-detail-table td[colspan] { grid-template-columns: 1fr !important; }
+  .contable-detail-table td { grid-template-columns: 48% 52%; gap: 5px; }
 }
 
-/* desktop */
+/* Desktop: ancho estable del select Mes */
 .contable-month-select{
   width: 120px;
   box-sizing: border-box;

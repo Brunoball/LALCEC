@@ -265,7 +265,7 @@ export default function DashboardContable() {
           </button>
         </div>
 
-        {/* ==== Tarjetas resumen (envueltas para que en mobile tengan mismo ancho que la caja gris) ==== */}
+        {/* ==== Tarjetas resumen ==== */}
         <div className="contable-summary-area">
           <div className="contable-summary-cards">
             {/* Total recaudado */}
@@ -318,7 +318,7 @@ export default function DashboardContable() {
           </div>
         </div>
 
-        {/* ==== Sección categorías (la “caja gris”) ==== */}
+        {/* ==== Sección categorías (caja gris) ==== */}
         <div className="contable-categories-section">
           <div className="contable-section-header">
             <h2>
@@ -385,14 +385,15 @@ export default function DashboardContable() {
                 </select>
               </div>
 
-              {/* Botón Detalle/Resumen */}
+              {/* Botón Detalle/Resumen  */}
               <button
                 className="contable-detail-view-button"
                 onClick={toggleVistaDetalle}
                 type="button"
               >
                 <FontAwesomeIcon icon={mostrarTablaDetalle ? faTags : faTable} />
-                {mostrarTablaDetalle ? "Ver Resumen" : "Ver Detalle"}
+                <span className="hide-on-mobile">Ver </span>
+                {mostrarTablaDetalle ? "Resumen" : "Detalle"}
               </button>
 
               {/* Botón Ver Gráficos */}
