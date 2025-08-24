@@ -396,6 +396,7 @@ input:-webkit-autofill { background-color: transparent !important; }
 .gessoc_body {
   display: flex;
   flex-wrap: nowrap;
+  max-height: 55vh;
   justify-content: center;
   transition: min-height 0.3s ease, max-height 0.3s ease;
 }
@@ -513,7 +514,7 @@ input:-webkit-autofill { background-color: transparent !important; }
 @keyframes gessoc_spin { to { transform: rotate(360deg); } }
 
 /* Mensaje sin datos */
-.gessoc_no-data-message { display: flex; align-items: center; justify-content: center; text-align: center;  height: 50vh; }
+.gessoc_no-data-message { display: flex; align-items: center; justify-content: center; text-align: center;  height: 55vh; }
 .gessoc_message-content { max-width: 400px; }
 .gessoc_message-content p { font-size: 1.125rem; color: var(--text-secondary); margin-bottom: 1rem; }
 .gessoc_btn-show-all {

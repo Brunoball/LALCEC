@@ -97,6 +97,55 @@ const medioLabel = (m) => {
   return String(m.Medio_Pago ?? m.label ?? m.name ?? "").trim();
 };
 
+/* ======= Hooks para arreglar barra/alto móvil ======= */
+// 1) Altura real del viewport móvil (define --vh)
+const useFixMobileVh = () => {
+  useEffect(() => {
+    const setVh = () => {
+      const vh = window.innerHeight * 0.01;
+      document.documentElement.style.setProperty("--vh", `${vh}px`);
+    };
+    setVh();
+    window.addEventListener("resize", setVh);
+    window.addEventListener("orientationchange", setVh);
+    return () => {
+      window.removeEventListener("resize", setVh);
+      window.removeEventListener("orientationchange", setVh);
+    };
+  }, []);
+};
+
+// 2) Estiliza barra del navegador + safe areas
+const useMobileChromeStyling = (color = "#fa7815") => {
+  useEffect(() => {
+    // theme-color
+    let metaTheme = document.querySelector('meta[name="theme-color"]');
+    if (!metaTheme) {
+      metaTheme = document.createElement("meta");
+      metaTheme.setAttribute("name", "theme-color");
+      document.head.appendChild(metaTheme);
+    }
+    metaTheme.setAttribute("content", color);
+
+    // asegura viewport-fit=cover
+    const metaViewport = document.querySelector('meta[name="viewport"]');
+    if (metaViewport && !/viewport-fit=cover/.test(metaViewport.content)) {
+      metaViewport.setAttribute(
+        "content",
+        `${metaViewport.content}, viewport-fit=cover`
+      );
+    }
+
+    // color de fondo del <html> para evitar "flash" blanco en la barra
+    const prevHtmlBg = document.documentElement.style.backgroundColor;
+    document.documentElement.style.backgroundColor = color;
+
+    return () => {
+      document.documentElement.style.backgroundColor = prevHtmlBg;
+    };
+  }, [color]);
+};
+
 /* =====================
    Row virtualizado (tabla desktop)
 ===================== */
@@ -105,8 +154,8 @@ const SocioRow = React.memo(
     const socio = data.items[index];
     const selected = data.filaSeleccionada === index;
 
-    // Solo los primeros 10 con cascada
-    const applyCascade = index < 10;
+    // Solo los primeros 10 con cascada y si el flag está activo
+    const applyCascade = data.cascadeEnabled && index < 10;
     const stagger = applyCascade ? clamp(index, 0, 14) : 0;
 
     const rowClass = selected
@@ -192,15 +241,15 @@ const SocioRow = React.memo(
 );
 
 /* =====================
-   Row virtualizado (tarjetas mobile) — CON WRAPPER
+   Row virtualizado (tarjetas mobile)
 ===================== */
 const SocioCardRow = React.memo(
   function SocioCardRow({ index, style, data }) {
     const socio = data.items[index];
     const gap = data.gap ?? 12;
 
-    // Solo los primeros 10 con cascada
-    const applyCascade = index < 10;
+    // Solo los primeros 10 con cascada y si el flag está activo
+    const applyCascade = data.cascadeEnabled && index < 10;
     const stagger = applyCascade ? clamp(index, 0, 14) : 0;
 
     const top =
@@ -215,17 +264,14 @@ const SocioCardRow = React.memo(
       top: top + gap / 2,
       height: height - gap,
       ...(applyCascade ? { "--stagger": stagger } : {}),
-      // width viene 100% inline desde react-window → lo dejamos
     };
 
     return (
-      // ⬇️ Wrapper absoluto full-width (item de react-window)
       <div
         style={rowStyle}
         className="gessoc_card-row"
         onClick={() => data.onSelect(index, socio)}
       >
-        {/* ⬇️ Card real (acá limitás/centrás con CSS en mobile) */}
         <div className={`gessoc_card ${applyCascade ? "gessoc_cascade" : ""} ${socio._estadoClase}`}>
           <div className="gessoc_card-status-strip" />
           <div className="gessoc_card-header">
@@ -259,13 +305,11 @@ const SocioCardRow = React.memo(
             <div className="gessoc_card-rowline">
               <span className="gessoc_card-label">Medio de Pago</span>
               <span className="gessoc_card-value">{socio.medio_pago}</span>
-            </div> 
+            </div>
             <div className="gessoc_card-rowline">
               <span className="gessoc_card-label">Domicilio cobro</span>
               <span className="gessoc_card-value">{socio.domicilio_2}</span>
             </div>
-
-            {/* SIEMPRE mostrar Observaciones; usar "-" si falta */}
             <div className="gessoc_card-rowline">
               <span className="gessoc_card-label">Obs.</span>
               <span className="gessoc_card-value">
@@ -335,6 +379,10 @@ const GestionarSocios = () => {
   // NEW: refs para medir header y footer en mobile
   const headerRef = useRef(null);
   const footerRef = useRef(null);
+
+  // 🔧 FIX móviles: alto real + barra del navegador con color de marca
+  useFixMobileVh();
+  useMobileChromeStyling("#fa7815");
 
   /* ---------- Estado base ---------- */
   const [sociosRaw, setSociosRaw] = useState([]);
@@ -744,15 +792,68 @@ const GestionarSocios = () => {
           ? window.requestIdleCallback(() => revalidate())
           : setTimeout(revalidate, 0);
       }
+      // La cascada se dispara en Enter, en el botón Buscar, o por debounce (ver más abajo).
     },
     [dataLoaded, ensureDataLoaded, revalidate, setExclusiveFilter]
   );
+
+  /* === Trigger cascada controlado === */
+  const isMobile = useMediaQuery("(max-width: 900px)");
+  const reducedMotion = useReducedMotion();
+
+  const CASCADE_COUNT = 10;
+  const CASCADE_STAGGER_MS = 50;   // debe coincidir con CSS --cascade-stagger
+  const CASCADE_DURATION_MS = 450; // debe coincidir con CSS --cascade-duration
+  const CASCADE_OFF_DELAY =
+    CASCADE_DURATION_MS + CASCADE_STAGGER_MS * (CASCADE_COUNT - 1) + 150;
+
+  const [cascadeEnabled, setCascadeEnabled] = useState(false);
+  const cascadeTimerRef = useRef(null);
+  const searchCascadeTimerRef = useRef(null); // ⬅️ debounce para el buscador
+
+  const triggerCascade = useCallback(() => {
+    if (reducedMotion) return;
+    setCascadeEnabled(true);
+    if (cascadeTimerRef.current) clearTimeout(cascadeTimerRef.current);
+    cascadeTimerRef.current = setTimeout(
+      () => setCascadeEnabled(false),
+      CASCADE_OFF_DELAY
+    );
+  }, [reducedMotion, CASCADE_OFF_DELAY]);
+
+  // Cascada inicial al montar
+  useEffect(() => {
+    triggerCascade();
+    return () => {
+      if (cascadeTimerRef.current) clearTimeout(cascadeTimerRef.current);
+      if (searchCascadeTimerRef.current) clearTimeout(searchCascadeTimerRef.current);
+    };
+  }, [triggerCascade]);
+
+  // ⏱️ Cascada por "pausa" al escribir en el buscador (debounce corto)
+  useEffect(() => {
+    if (reducedMotion) return;
+    const term = (deferredBusqueda || "").trim();
+    if (searchCascadeTimerRef.current) {
+      clearTimeout(searchCascadeTimerRef.current);
+    }
+    if (term.length === 0) return;
+    searchCascadeTimerRef.current = setTimeout(() => {
+      triggerCascade();
+    }, 10);
+    return () => {
+      if (searchCascadeTimerRef.current) {
+        clearTimeout(searchCascadeTimerRef.current);
+      }
+    };
+  }, [deferredBusqueda, triggerCascade, reducedMotion]);
 
   const limpiarFiltros = useCallback(() => {
     setExclusiveFilter("none");
     setFilaSeleccionada(null);
     setSocioSeleccionado(null);
-  }, [setExclusiveFilter]);
+    triggerCascade(); // 👈 reactiva cascada al limpiar
+  }, [setExclusiveFilter, triggerCascade]);
 
   const handleFiltrarPorLetra = useCallback(
     async (letra) => {
@@ -761,6 +862,7 @@ const GestionarSocios = () => {
 
       if (!dataLoaded) await ensureDataLoaded();
       else revalidate();
+      triggerCascade(); // 👈 cascada al aplicar filtro
     },
     [
       dataLoaded,
@@ -768,6 +870,7 @@ const GestionarSocios = () => {
       revalidate,
       filtrosActivos.letras,
       setExclusiveFilter,
+      triggerCascade,
     ]
   );
 
@@ -779,6 +882,7 @@ const GestionarSocios = () => {
 
       if (!dataLoaded) await ensureDataLoaded();
       else revalidate();
+      triggerCascade(); // 👈 cascada al aplicar filtro
     },
     [
       dataLoaded,
@@ -786,6 +890,7 @@ const GestionarSocios = () => {
       revalidate,
       filtrosActivos.mediosPago,
       setExclusiveFilter,
+      triggerCascade,
     ]
   );
 
@@ -796,7 +901,8 @@ const GestionarSocios = () => {
     setSocioSeleccionado(null);
     await ensureDataLoaded();
     revalidate();
-  }, [ensureDataLoaded, revalidate, setExclusiveFilter]);
+    triggerCascade(); // 👈 cascada al mostrar todos
+  }, [ensureDataLoaded, revalidate, setExclusiveFilter, triggerCascade]);
 
   const onSelect = useCallback((index, socio) => {
     setFilaSeleccionada((prev) => (prev === index ? null : index));
@@ -919,36 +1025,8 @@ const GestionarSocios = () => {
     }
   });
 
-  /* ---------- itemData ---------- */
-  const itemData = useMemo(
-    () => ({
-      items: sociosFiltrados,
-      filaSeleccionada,
-      onSelect,
-      onEdit: handleEditarSocio,
-      onDelete: handleConfirmarEliminar,
-      onInfo: handleMostrarInfoSocio,
-      onBaja: handleConfirmarBaja,
-    }),
-    [
-      sociosFiltrados,
-      filaSeleccionada,
-      onSelect,
-      handleEditarSocio,
-      handleConfirmarEliminar,
-      handleMostrarInfoSocio,
-      handleConfirmarBaja,
-    ]
-  );
-
   /* ---------- Layout/Altura lista ---------- */
-  const isMobile = useMediaQuery("(max-width: 900px)");
-  const reducedMotion = useReducedMotion();
-
-  // Altura base para desktop (con tu offset)
   const baseWindowHeight = useWindowHeight(isMobile ? 0 : 360);
-
-  // NEW: alto disponible exacto para mobile midiendo header + footer
   const [availableHeight, setAvailableHeight] = useState(520);
 
   useEffect(() => {
@@ -1037,6 +1115,31 @@ const GestionarSocios = () => {
     [sociosFiltrados, showToast, dataLoaded, ensureDataLoaded]
   );
 
+  /* ---------- itemData (incluye flag de cascada) ---------- */
+  const itemData = useMemo(
+    () => ({
+      items: sociosFiltrados,
+      filaSeleccionada,
+      onSelect,
+      onEdit: handleEditarSocio,
+      onDelete: handleConfirmarEliminar,
+      onInfo: handleMostrarInfoSocio,
+      onBaja: handleConfirmarBaja,
+      cascadeEnabled: cascadeEnabled && !reducedMotion,
+    }),
+    [
+      sociosFiltrados,
+      filaSeleccionada,
+      onSelect,
+      handleEditarSocio,
+      handleConfirmarEliminar,
+      handleMostrarInfoSocio,
+      handleConfirmarBaja,
+      cascadeEnabled,
+      reducedMotion,
+    ]
+  );
+
   /* =====================
          RENDER
   ===================== */
@@ -1068,14 +1171,19 @@ const GestionarSocios = () => {
               className="gessoc_search-input"
               value={busqueda}
               onChange={handleBusquedaInputChange}
-              onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.currentTarget.blur();
+                  triggerCascade(); // 👈 Enter dispara cascada
+                }
+              }}
               inputMode="search"
             />
             {busqueda && (
               <FontAwesomeIcon
                 icon={faTimes}
                 className="gessoc_clear-search-icon"
-                onClick={() => setExclusiveFilter("none")}
+                onClick={limpiarFiltros} // 👈 usar limpiarFiltros para reactivar cascada
                 title="Limpiar búsqueda"
               />
             )}
@@ -1085,6 +1193,7 @@ const GestionarSocios = () => {
               onClick={async () => {
                 if (!dataLoaded) await ensureDataLoaded();
                 revalidate();
+                triggerCascade(); // 👈 cascada al “confirmar” búsqueda
               }}
             >
               <FontAwesomeIcon icon={faMagnifyingGlass} className="gessoc_search-icon" />
@@ -1277,7 +1386,7 @@ const GestionarSocios = () => {
                 ) : sociosFiltrados.length > 0 ? (
                   <div className="gessoc_scrollableE" style={{ padding: 0 }}>
                     <List
-                      height={listHeight}               // ventana visible
+                      height={listHeight}
                       itemCount={sociosFiltrados.length}
                       itemSize={desktopRowHeight}
                       width="100%"
