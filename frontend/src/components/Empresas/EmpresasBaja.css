@@ -266,6 +266,12 @@
 .arriva{display: block;}
 /* ===== MOBILE (≤768px) ===== */
 @media (max-width: 768px) {
+
+  html, body {
+  margin: 0;          /* <- elimina la franja */
+  padding: 0;
+}
+
   .emp-baja-boton-volver{ display: inline-flex}
   .arriva{display: none;}
   .emp-baja-buscador-container{ margin: 0; }
