@@ -441,7 +441,7 @@ html, body {
 .gcuotas-selected-row { background-color: #e0e7ff !important; }
 
 /* Botones inline de la fila */
-.gcuotas-actions-inline { display: inline-flex; gap: 8px; align-items: center; justify-content: center; }
+.gcuotas-actions-inline { display: flex; gap: 8px; align-items: center; justify-content: center; }
 
 .gcuotas-action-button {
   background: none;

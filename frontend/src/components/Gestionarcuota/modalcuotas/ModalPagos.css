@@ -276,9 +276,6 @@
   font-weight: 500;
   text-align: right;
   white-space: nowrap;
-  position: absolute;
-  top: -2px;
-  left: 2rem;
 }
 
 .modpag_periodos-grid-container {
@@ -531,19 +528,9 @@
   .modpag_periodos-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
   .modpag_info-value { font-size: 1rem; }
   .modpag_info-value-highlight { font-size: 1.05rem; }
-  
-
 }
 
-@media (max-width: 768px) {
 .contador-mes{
   display: flex;
   flex-direction: column;
- width: 100%;
-}
-.modpag_btn-secondary{
- width: 100%;
- flex: auto;
-}
-.modpag_contenido{margin: 0;}
 }
