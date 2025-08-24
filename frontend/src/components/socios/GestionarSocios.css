@@ -377,6 +377,7 @@ input:-webkit-autofill { background-color: transparent !important; }
   position: sticky;
   top: 0;
   z-index: 10;
+  padding-right:1.4rem ;
 }
 .gessoc_column-header {
   padding: 0.5rem;
@@ -470,7 +471,7 @@ input:-webkit-autofill { background-color: transparent !important; }
 }
 
 /* 🔧 MOD: columna razón social */
-.gessoc_column-razon { font-weight: 500; color: var(--text-primary); text-align: start; }
+.gessoc_column-razon { font-weight: 500; color: var(--text-primary);  }
 .gessoc_column-cuit { font-family: 'JetBrains Mono', monospace; color: var(--text-secondary); }
 
 .gessoc_icons-column { justify-content: center; }
@@ -478,7 +479,7 @@ input:-webkit-autofill { background-color: transparent !important; }
   display: flex;
   gap: 0.6rem;
   align-items: center;
-  justify-content: end;
+  justify-content: center;
 }
 
 /* Íconos tabla */
@@ -583,7 +584,7 @@ input:-webkit-autofill { background-color: transparent !important; }
 }
 
 /* Mostrar etiqueta desktop por defecto, ocultar móvil */
-.gessoc_socios-desktop { display: inline; }
+.gessoc_socios-desktop { display: inline; font-weight: 500; }
 .gessoc_socios-mobile { display: none; }
 
 .gessoc_estado-pagos-container { display: flex; flex-wrap: nowrap; width: 100%; height: auto; align-items: end; justify-content: end; }

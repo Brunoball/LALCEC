@@ -1184,6 +1184,7 @@ const GestionarSocios = () => {
             <div className="gessoc_contador-container">
               <span className="gessoc_socios-totales gessoc_socios-desktop">
                 Cant socios: {cantidadVisibles}
+                <FontAwesomeIcon icon={faUsers} className="gessoc_icono-empresa" />
               </span>
               <span className="gessoc_socios-totales gessoc_socios-mobile">
                 <FontAwesomeIcon icon={faUsers} className="gessoc_icono-empresa" />

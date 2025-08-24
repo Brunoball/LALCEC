@@ -70,14 +70,7 @@
 .mpago-body strong{ color:var(--soc-dark); }
 
 .mpago-note{
-  font-size:.9rem;
-  color:var(--soc-gray-500);
-  margin-top:.5rem;
-  background:var(--soc-gray-50);
-  border:1px solid var(--soc-gray-200);
-  padding:.5rem .75rem;
-  border-radius:10px;
-  display:inline-block;
+  display:none;
 }
 .mpago-note code{
   font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
