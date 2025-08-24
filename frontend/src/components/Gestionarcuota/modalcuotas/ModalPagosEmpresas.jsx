@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaCoins } from 'react-icons/fa';
+import { FaCoins, FaTimes, FaCheck } from 'react-icons/fa';
 import BASE_URL from '../../../config/config';
 import Toast from '../../global/Toast';
 import './ModalPagos.css';
@@ -14,18 +14,18 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
   const [fechaUnion, setFechaUnion] = useState(null);
   const [empresaData, setEmpresaData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [toast, setToast] = useState(null); // { tipo: 'error'|'success'|'info', mensaje: string }
+  const [toast, setToast] = useState(null);
 
-  // ⌨️ Cerrar modal con ESC
+  // ESC para cerrar
   useEffect(() => {
     const onKeyDown = (e) => {
-      if (e.key === "Escape" || e.key === "Esc" || e.keyCode === 27) {
+      if (e.key === 'Escape' || e.key === 'Esc' || e.keyCode === 27) {
         e.preventDefault();
         cerrarModal?.();
       }
     };
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
   }, [cerrarModal]);
 
   const mostrarToast = (tipo, mensaje, duracion = 3200) => {
@@ -42,11 +42,10 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
     const obtenerDatosEmpresa = async () => {
       try {
         const response = await fetch(`${BASE_URL}/api.php?action=monto_pago_empresas`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ razonSocial, tipoEntidad: "empresa" })
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ razonSocial, tipoEntidad: 'empresa' }),
         });
-
         const result = await response.json();
 
         if (result.success) {
@@ -57,18 +56,17 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
           setEmpresaData({
             domicilio: result.domicilio_2 || result.domicilio || '',
             categoria: result.categoria || '',
-            cobrador: result.cobrador || ''
+            cobrador: result.cobrador || '',
           });
 
-          // Si no hay monto/categoría mostramos el mismo toast que en socios
           if (!precio || precio <= 0 || !result.categoria) {
             mostrarToast('error', 'El socio no tiene categoría asignada. No se puede registrar el pago.');
           }
         } else {
-          setError(result.message || "Error al obtener datos de la empresa");
+          setError(result.message || 'Error al obtener datos de la empresa');
         }
       } catch (e) {
-        setError("Ocurrió un error al obtener los datos de la empresa.");
+        setError('Ocurrió un error al obtener los datos de la empresa.');
         console.error(e);
       } finally {
         setLoading(false);
@@ -88,7 +86,7 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
 
       const makeMes = (id) => ({
         id,
-        nombre: new Date(0, id - 1).toLocaleString('es-AR', { month: 'long' }).toUpperCase()
+        nombre: new Date(0, id - 1).toLocaleString('es-AR', { month: 'long' }).toUpperCase(),
       });
 
       if (añoUnion === añoActual) {
@@ -96,7 +94,7 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
       }
       return [...Array(12)].map((_, i) => makeMes(i + 1));
     } catch (e) {
-      console.error("Error al procesar fecha de unión:", e);
+      console.error('Error al procesar fecha de unión:', e);
       return [];
     }
   };
@@ -106,59 +104,42 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
 
   const handleSeleccionarMes = (mesId, yaPagado) => {
     if (yaPagado) return;
-    setMesesSeleccionados(prev =>
-      prev.includes(mesId) ? prev.filter(m => m !== mesId) : [...prev, mesId]
+    setMesesSeleccionados((prev) =>
+      prev.includes(mesId) ? prev.filter((m) => m !== mesId) : [...prev, mesId]
     );
   };
 
   const handleSeleccionarTodos = () => {
-    const disponibles = meses
-      .filter(m => !mesesPagados.includes(m.id))
-      .map(m => m.id);
-
-    if (todosSeleccionados) {
-      setMesesSeleccionados([]);
-    } else {
-      setMesesSeleccionados(disponibles);
-    }
+    const disponibles = meses.filter((m) => !mesesPagados.includes(m.id)).map((m) => m.id);
+    setMesesSeleccionados(todosSeleccionados ? [] : disponibles);
     setTodosSeleccionados(!todosSeleccionados);
   };
 
   useEffect(() => {
-    const disponibles = meses.filter(m => !mesesPagados.includes(m.id)).map(m => m.id);
-    const todos = disponibles.length > 0 && disponibles.every(id => mesesSeleccionados.includes(id));
+    const disponibles = meses.filter((m) => !mesesPagados.includes(m.id)).map((m) => m.id);
+    const todos = disponibles.length > 0 && disponibles.every((id) => mesesSeleccionados.includes(id));
     setTodosSeleccionados(todos);
-  }, [mesesSeleccionados, mesesPagados, fechaUnion]);
+  }, [mesesSeleccionados, mesesPagados, fechaUnion, meses]);
 
   const handleRealizarPago = async () => {
-    // Bloqueo si no hay categoría/monto
     if (!precioMensual || precioMensual <= 0 || !empresaData?.categoria) {
       mostrarToast('error', 'El socio no tiene categoría asignada. No se puede registrar el pago.');
       return;
     }
-
     if (mesesSeleccionados.length === 0) return;
 
     try {
       const response = await fetch(`${BASE_URL}/api.php?action=registrar_pago_empresas`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          razonSocial,
-          meses: mesesSeleccionados,
-          tipoEntidad: "empresa"
-        })
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ razonSocial, meses: mesesSeleccionados, tipoEntidad: 'empresa' }),
       });
-
       const result = await response.json();
 
-      if (result.success) {
-        setPagoExitoso(true);
-      } else {
-        setError(result.message || "Error al registrar el pago");
-      }
+      if (result.success) setPagoExitoso(true);
+      else setError(result.message || 'Error al registrar el pago');
     } catch (e) {
-      setError("Ocurrió un error al realizar el pago.");
+      setError('Ocurrió un error al realizar el pago.');
       console.error(e);
     }
   };
@@ -167,9 +148,9 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
     if (!empresaData || mesesSeleccionados.length === 0) return;
 
     const mesesPagadosStr = meses
-      .filter(m => mesesSeleccionados.includes(m.id))
-      .map(m => m.nombre)
-      .join(", ");
+      .filter((m) => mesesSeleccionados.includes(m.id))
+      .map((m) => m.nombre)
+      .join(', ');
 
     const comprobanteHTML = `
       <html>
@@ -279,7 +260,10 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
           <div className="modpag_footer modpag_footer-sides">
             <div className="modpag_footer-left" />
             <div className="modpag_footer-right">
-              <button className="modpag_btn modpag_btn-secondary" onClick={cerrarModal}>Cerrar</button>
+              <button className="modpag_btn modpag_btn-secondary" onClick={cerrarModal}>
+                <span className="only-desktop">Cerrar</span>
+                <FaTimes className="only-mobile-inline" />
+              </button>
             </div>
           </div>
         </div>
@@ -340,21 +324,26 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
 
           <div className="modpag_footer modpag_footer-sides">
             <div className="modpag_footer-left">
-              <div className="modpag_total-pill modpag_total-pill-inline">Total: ${totalPagar}</div>
+              <div className="modpag_total-pill modpag_total-pill-inline">
+                <span className="only-desktop">Total: ${totalPagar}</span>
+                <span className="only-mobile-inline"><FaCoins />&nbsp;${totalPagar}</span>
+              </div>
             </div>
             <div className="modpag_footer-right">
               <button
                 className="modpag_btn modpag_btn-secondary"
                 onClick={() => { if (onPagoRealizado) onPagoRealizado(); cerrarModal(); }}
               >
-                Cerrar
+                <span className="only-desktop">Cerrar</span>
+                <FaTimes className="only-mobile-inline" />
               </button>
               <button
                 className="modpag_btn modpag_btn-success"
                 onClick={handleImprimirComprobante}
                 disabled={mesesSeleccionados.length === 0}
               >
-                Comprobante
+                <span className="only-desktop">Comprobante</span>
+                <FaCheck className="only-mobile-inline" />
               </button>
             </div>
           </div>
@@ -413,13 +402,13 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
                 <button
                   className="modpag_btn modpag_btn-small modpag_btn-terciario"
                   onClick={handleSeleccionarTodos}
-                  disabled={meses.filter(m => !mesesPagados.includes(m.id)).length === 0}
+                  disabled={meses.filter((m) => !mesesPagados.includes(m.id)).length === 0}
                 >
                   {todosSeleccionados ? 'Deseleccionar todos' : 'Seleccionar todos'}
+                  {mesesSeleccionados.length > 0 && (
+                    <span className="only-desktop"> ({mesesSeleccionados.length})</span>
+                  )}
                 </button>
-                <div className="modpag_selection-info">
-                  {mesesSeleccionados.length > 0 ? `${mesesSeleccionados.length} seleccionados` : 'Ninguno seleccionado'}
-                </div>
               </div>
             </div>
 
@@ -451,7 +440,7 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
                             <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                               <path d="M10 3L4.5 8.5L2 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                             </svg>
-                            Pagado
+                            <span className="modpag_periodo-status-text">Pagado</span>
                           </span>
                         )}
                       </label>
@@ -465,16 +454,23 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
 
         <div className="modpag_footer modpag_footer-sides">
           <div className="modpag_footer-left">
-            <div className="modpag_total-pill modpag_total-pill-inline">Total a pagar: ${totalPagar}</div>
+            <div className="modpag_total-pill modpag_total-pill-inline">
+              <span className="only-desktop">Total a pagar: ${totalPagar}</span>
+              <span className="only-mobile-inline"><FaCoins />&nbsp;${totalPagar}</span>
+            </div>
           </div>
           <div className="modpag_footer-right">
-            <button className="modpag_btn modpag_btn-secondary" onClick={cerrarModal}>Cerrar</button>
+            <button className="modpag_btn modpag_btn-secondary" onClick={cerrarModal}>
+              <span className="only-desktop">Cerrar</span>
+              <FaTimes className="only-mobile-inline" />
+            </button>
             <button
               className="modpag_btn modpag_btn-primary"
               onClick={handleRealizarPago}
               disabled={mesesSeleccionados.length === 0}
             >
-              Realizar Pago
+              <span className="only-desktop">Realizar Pago</span>
+              <FaCheck className="only-mobile-inline" />
             </button>
           </div>
         </div>

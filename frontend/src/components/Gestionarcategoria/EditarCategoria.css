@@ -54,12 +54,12 @@
   animation: fadeInClean 0.4s ease forwards;
   margin: 1rem;
 
-  /* 🔹 Para poder pegar los botones al fondo dentro del contenedor en mobile */
+  /* Para pegar los botones al fondo en mobile */
   display: flex;
   flex-direction: column;
 }
 
-/* Contenido que debe ocupar el espacio disponible */
+/* Contenido */
 .edit-cat-content {
   display: flex;
   flex-direction: column;
@@ -70,7 +70,7 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Skeleton loaders */
+/* Skeletons */
 .skeleton {
   background: linear-gradient(90deg, #eeeeee 25%, #dddddd 37%, #eeeeee 63%);
   background-size: 400% 100%;
@@ -78,15 +78,10 @@
   border-radius: 8px;
   margin-bottom: 1.2rem;
 }
-
 .skeleton-title { width: 60%; height: 32px; margin: 0 auto 2rem; }
 .skeleton-input { width: 100%; height: 48px; }
 .skeleton-button { width: 100%; height: 45px; margin-top: 2rem; }
-
-@keyframes shimmer {
-  0% { background-position: -400px 0; }
-  100% { background-position: 400px 0; }
-}
+@keyframes shimmer { 0% { background-position: -400px 0; } 100% { background-position: 400px 0; } }
 
 /* Título */
 .edit-cat-title {
@@ -99,7 +94,6 @@
   position: relative;
   padding-bottom: 1rem;
 }
-
 .edit-cat-title::after {
   content: '';
   position: absolute;
@@ -113,7 +107,7 @@
   opacity: 0.8;
 }
 
-/* Formulario */
+/* Form */
 .edit-cat-form { display: flex; flex-direction: column; gap: 1.5rem; }
 .edit-cat-input-row { position: relative; }
 .edit-cat-input-wrapper { position: relative; }
@@ -130,7 +124,6 @@
   font-weight: 500;
   box-sizing: border-box;
 }
-
 .edit-cat-input:focus {
   outline: none;
   border-color: var(--edit-cat-primary);
@@ -149,7 +142,6 @@
   padding: 0 0.5rem;
   font-size: 1rem;
 }
-
 .edit-cat-floating-label-active {
   top: -0.6rem;
   left: 0.8rem;
@@ -160,14 +152,13 @@
   z-index: 1;
 }
 
-/* Botones (desktop/web) */
+/* Botones (desktop) */
 .edit-cat-buttons-container {
   display: flex;
   flex-direction: column;
   gap: 1rem;
   margin-top: 0.5rem;
 }
-
 .edit-cat-save-button {
   background: var(--edit-cat-white);
   color: var(--edit-cat-primary-dark);
@@ -181,7 +172,6 @@
   display: flex; align-items: center; justify-content: center;
   width: 100%; font-size: 1rem;
 }
-
 .edit-cat-save-button:hover { transform: translateY(-2px); box-shadow: 0 6px 12px rgba(255, 110, 0, 0.3); }
 
 .edit-cat-back-button {
@@ -197,16 +187,14 @@
   display: flex; align-items: center; justify-content: center;
   width: 100%; font-size: 1rem;
 }
-
 .edit-cat-back-button:hover { transform: translateY(-2px); background: var(--edit-cat-primary-dark); }
 .edit-cat-icon-spacing { margin-right: 0.8rem; font-size: 1.1rem; }
 
-/* Texto de botones (web/desktop visible; mobile se oculta) */
+/* Texto botones (web visible; mobile oculto) */
 .btn-text { display: inline; }
 
-/* Botón de histórico (debajo del formulario / arriba en mobile) */
+/* Botón historial */
 .history-btn-wrapper { margin-top: 1rem; }
-
 .edit-cat-view-history-button {
   background-color: transparent;
   color: var(--edit-cat-dark);
@@ -221,7 +209,6 @@
   margin: 0 auto;
   width: 100%; max-width: 300px;
 }
-
 .edit-cat-view-history-button:hover {
   background-color: var(--edit-cat-light);
   border-color: var(--edit-cat-dark);
@@ -246,7 +233,6 @@
   transition: var(--edit-cat-transition-slow);
   padding-top: 5vh;
 }
-
 .edit-cat-modal-overlay.active { opacity: 1; visibility: visible; }
 
 .edit-cat-modal-container {
@@ -265,7 +251,6 @@
   display: flex;
   flex-direction: column;
 }
-
 .edit-cat-modal-overlay.active .edit-cat-modal-container {
   opacity: 1; transform: translateY(0);
 }
@@ -276,12 +261,10 @@
   border-bottom: 1px solid var(--edit-cat-medium);
   flex: 0 0 auto;
 }
-
 .edit-cat-modal-title {
   color: var(--edit-cat-primary-dark);
   font-size: 1.5rem; font-weight: 600; margin: 0;
 }
-
 .edit-cat-modal-close {
   background: none; border: none; font-size: 1.5rem; cursor: pointer;
   color: var(--edit-cat-dark-gray); transition: var(--edit-cat-transition-fast);
@@ -296,7 +279,6 @@
   display: flex;
   min-height: 0;
 }
-
 .edit-cat-table-responsive {
   width: 100%;
   max-height: 60vh;
@@ -305,7 +287,6 @@
   border-radius: 8px;
   background: var(--edit-cat-white);
 }
-
 .edit-cat-historico-table { width: 100%; border-collapse: collapse; box-shadow: var(--edit-cat-shadow-sm); }
 .edit-cat-table-header {
   background-color: var(--edit-cat-primary);
@@ -327,7 +308,6 @@
 }
 .edit-cat-even-row { background-color: var(--edit-cat-white); }
 .edit-cat-odd-row { background-color: var(--edit-cat-light); }
-
 .edit-cat-no-history-text {
   text-align: center;
   color: var(--edit-cat-dark);
@@ -359,40 +339,25 @@
   .edit-cat-floating-label { top: 0.9rem; font-size: 0.9rem; }
   .edit-cat-floating-label-active { font-size: 0.8rem; top: -0.5rem; }
 
-  /* Ocultar botones del formulario en mobile (usaremos los del fondo) */
+  /* Ocultar botones del formulario en mobile (se usan los del fondo) */
   .edit-cat-buttons-container { display: none; }
-
-  /* Oculta el texto de los botones en mobile (solo iconos) */
   .btn-text { display: none; }
-  .edit-cat-icon-spacing {
-    margin-right: 0; /* sin espacio si no hay texto */
-    font-size: 1.25rem;
-  }
+  .edit-cat-icon-spacing { margin-right: 0; font-size: 1.25rem; }
 
-  /* Centrar verticalmente el modal del histórico y permitir scroll interno */
-  .edit-cat-modal-overlay {
-    align-items: center;   /* centrado vertical */
-    padding-top: 0;        /* sin offset superior */
-  }
-
+  /* Centrar verticalmente el modal y permitir scroll interno */
+  .edit-cat-modal-overlay { align-items: center; padding-top: 0; }
   .edit-cat-modal-container {
     padding: 1rem;
     width: 95%;
     margin: 0 auto;
-    max-height: 85vh;      /* un poco más alto */
-    overflow-y: auto;      /* scroll vertical interno */
-    -webkit-overflow-scrolling: touch; /* inercia iOS */
+    max-height: 85vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
-
   .edit-cat-modal-title { font-size: 1.2rem; }
 
   /* Historial como tarjetas */
-  .edit-cat-table-responsive {
-    max-height: none;
-    overflow: visible;
-    border: none;
-    border-radius: 0;
-  }
+  .edit-cat-table-responsive { max-height: none; overflow: visible; border: none; border-radius: 0; }
 
   .edit-cat-historico-table,
   .edit-cat-historico-table thead,
@@ -403,7 +368,6 @@
     display: block;
     width: 100%;
   }
-
   .edit-cat-historico-table thead { display: none; }
 
   .edit-cat-historico-table tbody tr {
@@ -414,17 +378,33 @@
     margin: 0 0 12px 0;
     padding: 12px 12px 8px 12px;
   }
-
   .edit-cat-even-row, .edit-cat-odd-row { background: transparent; }
 
+  /* === AQUÍ EL CAMBIO: valor pegado a la derecha === */
   .edit-cat-historico-table td {
     border: none;
     padding: 8px 0;
     position: relative;
     font-size: 0.95rem;
-    display: flex;
+
+    /* De flex a grid con 2 columnas: etiqueta | valor */
+    display: grid;
+    grid-template-columns: auto 1fr;
     gap: 8px;
-    align-items: baseline;
+
+    /* El contenido (valor) a la derecha */
+    justify-items: end;
+    text-align: right;
+  }
+
+  /* Etiquetas (generadas por ::before) a la izquierda */
+  .edit-cat-historico-table td::before {
+    /* Contenido set por nth-child abajo */
+    font-weight: 600;
+    color: var(--edit-cat-dark);
+    justify-self: start;
+    text-align: left;
+    min-width: 120px;
   }
 
   .edit-cat-historico-table td:nth-child(1)::before { content: "Fecha"; }
@@ -432,30 +412,20 @@
   .edit-cat-historico-table td:nth-child(3)::before { content: "Precio Nuevo"; }
   .edit-cat-historico-table td:nth-child(4)::before { content: "Cambio"; }
 
-  .edit-cat-historico-table td::before {
-    flex: 0 0 auto;
-    min-width: 120px;
-    font-weight: 600;
-    color: var(--edit-cat-dark);
-  }
-
-  .edit-cat-historico-table td { color: var(--edit-cat-black); }
-
   .edit-cat-historico-table tbody tr td:first-child {
     padding-top: 2px;
     font-weight: 600;
     color: var(--edit-cat-primary-dark);
   }
-
   .edit-cat-historico-table tbody tr td + td {
     border-top: 1px dashed var(--edit-cat-medium);
     padding-top: 10px;
     margin-top: 8px;
   }
 
-  /* 🔹 Botones DENTRO del contenedor, pegados abajo en mobile */
+  /* Botones al fondo del contenedor en mobile */
   .mobile-bottom-buttons {
-    margin-top: auto;              /* empuja este bloque al fondo del contenedor */
+    margin-top: auto;
     display: flex;
     gap: 0.6rem;
     padding-top: 0.75rem;
@@ -463,9 +433,7 @@
     background: var(--edit-cat-white);
   }
   .mobile-bottom-buttons .edit-cat-back-button,
-  .mobile-bottom-buttons .edit-cat-save-button {
-    flex: 1;
-  }
+  .mobile-bottom-buttons .edit-cat-save-button { flex: 1; }
 }
 
 /* =========================
@@ -482,9 +450,10 @@
 @media (min-width: 769px) {
   .edit-cat-buttons-container { flex-direction: row; }
   .edit-cat-view-history-button { width: auto; }
-  .mobile-bottom-buttons { display: none; } /* solo mobile */
+  .mobile-bottom-buttons { display: none; }
 }
 
+/* Borde superior decorativo */
 .edit-cat-box::before {
   content: '';
   position: absolute;

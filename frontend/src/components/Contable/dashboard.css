@@ -399,6 +399,7 @@ html, body {
   .contable-category-label { font-size: 0.95rem; }
   .contable-category-value { font-size: 1rem; }
 
+  /* ====== DETALLE EN MÓVIL: VALOR PEGADO A LA DERECHA ====== */
   .contable-detail-table { display: block; }
   .contable-detail-table thead { display: none; }
   .contable-detail-table tbody { display: grid; gap: 12px; }
@@ -417,14 +418,27 @@ html, body {
     padding: 6px 0;
     border: none;
     white-space: normal;
+
+    /* ALINEACIÓN: valor a la derecha */
+    justify-items: end;
+    text-align: right;
   }
   .contable-detail-table td::before {
     content: attr(data-label);
     font-weight: 600;
     color: #666;
+
+    /* Mantener la etiqueta a la izquierda */
+    justify-self: start;
+    text-align: left;
   }
   .contable-detail-table td[colspan]::before { content: none !important; }
-  .contable-detail-table td[colspan] { grid-template-columns: 1fr !important; text-align: center; padding: 10px 0; }
+  .contable-detail-table td[colspan] {
+    grid-template-columns: 1fr !important;
+    text-align: center;
+    padding: 10px 0;
+    justify-items: center;
+  }
   .contable-detail-table td:nth-child(1) { font-weight: 600; color: #2b2d42; }
   .contable-detail-table td:nth-child(3) { font-feature-settings: "tnum"; }
   .contable-detail-table-container { margin-top: 8px; overflow: visible; }
@@ -440,6 +454,14 @@ html, body {
   .contable-detail-table td {
     grid-template-columns: 46% 54%;
     padding: 5px 0;
+
+    /* Reafirmamos alineaciones en pantallas más chicas */
+    justify-items: end;
+    text-align: right;
+  }
+  .contable-detail-table td::before {
+    justify-self: start;
+    text-align: left;
   }
   .contable-detail-table td[colspan] { grid-template-columns: 1fr !important; }
 }
@@ -451,9 +473,18 @@ html, body {
   .contable-detail-table td {
     grid-template-columns: 48% 52%;
     gap: 5px;
+
+    /* Reafirmamos alineaciones en XS */
+    justify-items: end;
+    text-align: right;
+  }
+  .contable-detail-table td::before {
+    justify-self: start;
+    text-align: left;
   }
   .contable-detail-table td[colspan] { grid-template-columns: 1fr !important; }
 }
+
 /* desktop */
 .contable-month-select{
   width: 120px;

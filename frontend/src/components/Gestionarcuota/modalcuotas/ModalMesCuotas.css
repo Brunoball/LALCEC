@@ -147,6 +147,7 @@
   padding: 1rem 1rem 0;
   background-color: var(--mescuot_white);
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   flex: 1;
 }
 
@@ -373,24 +374,23 @@
 }
 
 @media (min-width: 600px) {
-        .mescuot_header{margin: 0;}
+  .mescuot_header{margin: 0;}
   .mescuot_contenido { max-height: 85vh; margin: 0; }
   .mescuot_header { padding: 1.25rem 1.5rem; }
   .mescuot_icon-circle { width: 42px; height: 42px; }
   .mescuot_title { font-size: 1.3rem; }
   .mescuot_subtitle { font-size: 0.875rem; }
-  
   .mescuot_body { padding: 1.5rem 1.5rem 0; }
   .mescuot_periodos-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
 }
-@media (max-width: 768px) {
-    .mescuot_section-header-actions{width: fit-content;}
-    .mescuot_section-header{flex-direction: row; justify-content: space-between;}
-    .mescuot_btn{flex: none;}
-    .mescuot_footer-left{width: fit-content;}
-    .mescuot_footer-sides{flex-direction: row; justify-content: space-between;}
-    .mescuot_footer-left{order: 0;}
 
+@media (max-width: 768px) {
+  .mescuot_section-header-actions{width: fit-content;}
+  .mescuot_section-header{flex-direction: row; justify-content: space-between;}
+  .mescuot_btn{flex: none;}
+  .mescuot_footer-left{width: fit-content;}
+  .mescuot_footer-sides{flex-direction: row; justify-content: space-between;}
+  .mescuot_footer-left{order: 0;}
 }
 
 /* Badge contador que se ve solo en móvil */
@@ -411,12 +411,33 @@
   gap: .5rem;
 }
 
-/* ===== Vista móvil: solo íconos y mostramos contador ===== */
+/* ===== Vista móvil (≤480px): 2 columnas, contenedor más bajo ===== */
 @media (max-width: 480px) {
-  /* mostrar contador junto al título */
+  .mescuot_periodos-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: .5rem !important;
+  }
+
+  .mescuot_contenido {
+    max-height: 80vh; /* más bajo */
+  }
+
+  .mescuot_body {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 12px; /* mismo margen que en web, no tanto espacio extra */
+  }
+
+  .mescuot_periodo-card {
+    padding: .6rem;
+    min-height: 48px;
+  }
+  .mescuot_periodo-label {
+    font-size: .8rem;
+  }
+
   .mescuot_mobile-count { display: inline-flex; align-items: center; }
 
-  /* ocultar texto de los botones y hacerlos cuadrados táctiles */
   .mescuot_action-btn {
     width: 44px;
     height: 44px;
@@ -428,11 +449,23 @@
     width: 1px; height: 1px;
     padding: 0; margin: -1px;
     overflow: hidden; clip: rect(0,0,0,0);
-    white-space: nowrap; border: 0; /* ♿️ oculto accesible */
+    white-space: nowrap; border: 0;
   }
 
-  /* mantener la fila de acciones prolija */
   .mescuot_footer-right {
     gap: .5rem;
+  }
+}
+
+/* ===== Web (≥769px): 3 columnas fijas + separador inferior ===== */
+@media (min-width: 769px) {
+  .mescuot_periodos-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+  .mescuot_periodos-grid::after {
+    content: "";
+    display: block;
+    height: 12px;
+    grid-column: 1 / -1;
   }
 }

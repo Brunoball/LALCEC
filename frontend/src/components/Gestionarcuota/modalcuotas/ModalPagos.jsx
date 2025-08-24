@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaCoins } from 'react-icons/fa';
+import { FaCoins, FaTimes, FaCheck } from 'react-icons/fa';
 import BASE_URL from '../../../config/config';
 import './ModalPagos.css';
 
@@ -14,16 +14,16 @@ const ModalPagos = ({ nombre, apellido, cerrarModal, onPagoRealizado }) => {
   const [socioData, setSocioData] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // ⌨️ Cerrar modal con ESC
+  // ESC para cerrar
   useEffect(() => {
     const onKeyDown = (e) => {
-      if (e.key === "Escape" || e.key === "Esc" || e.keyCode === 27) {
+      if (e.key === 'Escape' || e.key === 'Esc' || e.keyCode === 27) {
         e.preventDefault();
         cerrarModal?.();
       }
     };
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
   }, [cerrarModal]);
 
   const formatDate = (dateString) => {
@@ -36,11 +36,10 @@ const ModalPagos = ({ nombre, apellido, cerrarModal, onPagoRealizado }) => {
     const obtenerDatosSocio = async () => {
       try {
         const response = await fetch(`${BASE_URL}/api.php?action=monto_pago`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ nombre, apellido })
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nombre, apellido }),
         });
-
         const result = await response.json();
 
         if (result.success) {
@@ -51,14 +50,14 @@ const ModalPagos = ({ nombre, apellido, cerrarModal, onPagoRealizado }) => {
             domicilio: result.domicilio || '',
             domicilio_2: result.domicilio_2 || '',
             categoria: result.categoria || '',
-            cobrador: result.cobrador || ''
+            cobrador: result.cobrador || '',
           });
         } else {
-          setError(result.message || "Error al obtener datos del socio");
+          setError(result.message || 'Error al obtener datos del socio');
         }
-      } catch (error) {
-        setError("Ocurrió un error al obtener los datos del socio.");
-        console.error(error);
+      } catch (e) {
+        setError('Ocurrió un error al obtener los datos del socio.');
+        console.error(e);
       } finally {
         setLoading(false);
       }
@@ -77,7 +76,7 @@ const ModalPagos = ({ nombre, apellido, cerrarModal, onPagoRealizado }) => {
 
       const makeMes = (id) => ({
         id,
-        nombre: new Date(0, id - 1).toLocaleString('es', { month: 'long' }).toUpperCase()
+        nombre: new Date(0, id - 1).toLocaleString('es', { month: 'long' }).toUpperCase(),
       });
 
       if (añoUnion === añoActual) {
@@ -85,7 +84,7 @@ const ModalPagos = ({ nombre, apellido, cerrarModal, onPagoRealizado }) => {
       }
       return [...Array(12)].map((_, i) => makeMes(i + 1));
     } catch (e) {
-      console.error("Error al procesar fecha de unión:", e);
+      console.error('Error al procesar fecha de unión:', e);
       return [];
     }
   };
@@ -95,65 +94,49 @@ const ModalPagos = ({ nombre, apellido, cerrarModal, onPagoRealizado }) => {
 
   const handleSeleccionarMes = (mesId, yaPagado) => {
     if (yaPagado) return;
-    setMesesSeleccionados(prev =>
-      prev.includes(mesId) ? prev.filter(m => m !== mesId) : [...prev, mesId]
+    setMesesSeleccionados((prev) =>
+      prev.includes(mesId) ? prev.filter((m) => m !== mesId) : [...prev, mesId]
     );
   };
 
   const handleSeleccionarTodos = () => {
-    const disponibles = meses
-      .filter(m => !mesesPagados.includes(m.id))
-      .map(m => m.id);
-
-    if (todosSeleccionados) {
-      setMesesSeleccionados([]);
-    } else {
-      setMesesSeleccionados(disponibles);
-    }
+    const disponibles = meses.filter((m) => !mesesPagados.includes(m.id)).map((m) => m.id);
+    setMesesSeleccionados(todosSeleccionados ? [] : disponibles);
     setTodosSeleccionados(!todosSeleccionados);
   };
 
   useEffect(() => {
-    const disponibles = meses.filter(m => !mesesPagados.includes(m.id)).map(m => m.id);
-    const todos = disponibles.length > 0 && disponibles.every(id => mesesSeleccionados.includes(id));
+    const disponibles = meses.filter((m) => !mesesPagados.includes(m.id)).map((m) => m.id);
+    const todos = disponibles.length > 0 && disponibles.every((id) => mesesSeleccionados.includes(id));
     setTodosSeleccionados(todos);
-  }, [mesesSeleccionados, mesesPagados, fechaUnion]);
+  }, [mesesSeleccionados, mesesPagados, fechaUnion, meses]);
 
   const handleRealizarPago = async () => {
     if (mesesSeleccionados.length === 0) return;
-
     try {
       const response = await fetch(`${BASE_URL}/api.php?action=registrar_pago`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          nombre,
-          apellido,
-          meses: mesesSeleccionados
-        })
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombre, apellido, meses: mesesSeleccionados }),
       });
-
       const result = await response.json();
-
-      if (result.success) {
-        setPagoExitoso(true);
-      } else {
-        setError(result.message || "Error al registrar el pago");
-      }
-    } catch (error) {
-      setError("Ocurrió un error al realizar el pago.");
-      console.error(error);
+      if (result.success) setPagoExitoso(true);
+      else setError(result.message || 'Error al registrar el pago');
+    } catch (e) {
+      setError('Ocurrió un error al realizar el pago.');
+      console.error(e);
     }
   };
 
   const handleImprimirComprobante = () => {
     if (!socioData || mesesSeleccionados.length === 0) return;
 
-    const domicilioMostrar = socioData.domicilio_2 || socioData.domicilio || 'Domicilio no registrado';
+    const domicilioMostrar =
+      socioData.domicilio_2 || socioData.domicilio || 'Domicilio no registrado';
     const mesesPagadosStr = meses
-      .filter(m => mesesSeleccionados.includes(m.id))
-      .map(m => m.nombre)
-      .join(", ");
+      .filter((m) => mesesSeleccionados.includes(m.id))
+      .map((m) => m.nombre)
+      .join(', ');
 
     const comprobanteHTML = `
       <html>
@@ -161,31 +144,11 @@ const ModalPagos = ({ nombre, apellido, cerrarModal, onPagoRealizado }) => {
         <title>Comprobante de Pago</title>
         <style>
           @page { size: A4 portrait; margin: 0; }
-          body {
-            width: 210mm; height: 297mm;
-            margin: 0; padding: 0;
-            font-family: Arial, sans-serif;
-            font-size: 12px;
-            display: flex; justify-content: center; align-items: center;
-          }
-          .contenedor {
-            width: 210mm; height: 70mm;
-            position: absolute;
-            top: 33%; left: 50%;
-            transform: translate(-50%, -50%) rotate(90deg);
-            transform-origin: center center;
-            box-sizing: border-box;
-          }
-          .comprobante {
-            width: 100%; height: 100%;
-            display: flex; box-sizing: border-box;
-          }
-          .talon-socio {
-            width: 60%; padding-left: 20mm; padding-top: 13mm;
-          }
-          .talon-cobrador {
-            width: 60mm; padding-left: 10mm; padding-top: 16mm;
-          }
+          body { width: 210mm; height: 297mm; margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 12px; display: flex; justify-content: center; align-items: center; }
+          .contenedor { width: 210mm; height: 70mm; position: absolute; top: 33%; left: 50%; transform: translate(-50%, -50%) rotate(90deg); transform-origin: center center; box-sizing: border-box; }
+          .comprobante { width: 100%; height: 100%; display: flex; box-sizing: border-box; }
+          .talon-socio { width: 60%; padding-left: 20mm; padding-top: 13mm; }
+          .talon-cobrador { width: 60mm; padding-left: 10mm; padding-top: 16mm; }
           p { margin-top: 5px; font-size: 13px; }
         </style>
       </head>
@@ -280,13 +243,15 @@ const ModalPagos = ({ nombre, apellido, cerrarModal, onPagoRealizado }) => {
                 )}
               </div>
             </div>
-
             <p className="modpag_error-banner">{error}</p>
           </div>
           <div className="modpag_footer modpag_footer-sides">
-            <div className="modpag_footer-left" />$4444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444
+            <div className="modpag_footer-left" />
             <div className="modpag_footer-right">
-              <button className="modpag_btn modpag_btn-secondary" onClick={cerrarModal}>Cerrar</button>
+              <button className="modpag_btn modpag_btn-secondary" onClick={cerrarModal}>
+                <span className="only-desktop">Cerrar</span>
+                <FaTimes className="only-mobile-inline" />
+              </button>
             </div>
           </div>
         </div>
@@ -336,21 +301,26 @@ const ModalPagos = ({ nombre, apellido, cerrarModal, onPagoRealizado }) => {
 
           <div className="modpag_footer modpag_footer-sides">
             <div className="modpag_footer-left">
-              <div className="modpag_total-pill modpag_total-pill-inline">Total: ${totalPagar}</div>
+              <div className="modpag_total-pill modpag_total-pill-inline">
+                <span className="only-desktop">Total: ${totalPagar}</span>
+                <span className="only-mobile-inline"><FaCoins />&nbsp;${totalPagar}</span>
+              </div>
             </div>
             <div className="modpag_footer-right">
               <button
                 className="modpag_btn modpag_btn-secondary"
                 onClick={() => { if (onPagoRealizado) onPagoRealizado(); cerrarModal(); }}
               >
-                Cerrar
+                <span className="only-desktop">Cerrar</span>
+                <FaTimes className="only-mobile-inline" />
               </button>
               <button
                 className="modpag_btn modpag_btn-success"
                 onClick={handleImprimirComprobante}
                 disabled={mesesSeleccionados.length === 0}
               >
-                Comprobante
+                <span className="only-desktop">Comprobante</span>
+                <FaCheck className="only-mobile-inline" />
               </button>
             </div>
           </div>
@@ -401,11 +371,13 @@ const ModalPagos = ({ nombre, apellido, cerrarModal, onPagoRealizado }) => {
                 <button
                   className="modpag_btn modpag_btn-small modpag_btn-terciario"
                   onClick={handleSeleccionarTodos}
-                  disabled={meses.filter(m => !mesesPagados.includes(m.id)).length === 0}
+                  disabled={meses.filter((m) => !mesesPagados.includes(m.id)).length === 0}
                 >
                   {todosSeleccionados ? 'Deseleccionar todos' : 'Seleccionar todos'}
+                  {mesesSeleccionados.length > 0 && (
+                    <span className="only-desktop"> ({mesesSeleccionados.length})</span>
+                  )}
                 </button>
-                {/* ❌ antes estaba acá la selection-info, la quitamos del header */}
               </div>
             </div>
 
@@ -437,7 +409,7 @@ const ModalPagos = ({ nombre, apellido, cerrarModal, onPagoRealizado }) => {
                             <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                               <path d="M10 3L4.5 8.5L2 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                             </svg>
-                            Pagado
+                            <span className="modpag_periodo-status-text">Pagado</span>
                           </span>
                         )}
                       </label>
@@ -445,32 +417,30 @@ const ModalPagos = ({ nombre, apellido, cerrarModal, onPagoRealizado }) => {
                   );
                 })}
               </div>
-
-              {/* ✅ AHORA ABAJO DEL GRID */}
             </div>
           </div>
         </div>
 
         <div className="modpag_footer modpag_footer-sides">
           <div className="modpag_footer-left">
-            <div className="modpag_total-pill modpag_total-pill-inline">Total a pagar: ${totalPagar}</div>
+            <div className="modpag_total-pill modpag_total-pill-inline">
+              <span className="only-desktop">Total a pagar: ${totalPagar}</span>
+              <span className="only-mobile-inline"><FaCoins />&nbsp;${totalPagar}</span>
+            </div>
           </div>
           <div className="modpag_footer-right">
-            <button className="modpag_btn modpag_btn-secondary" onClick={cerrarModal}>Cerrar</button>
-            <div className='contador-mes'>
-                                                  <div className="modpag_selection-info">
-                {mesesSeleccionados.length > 0
-                  ? `${mesesSeleccionados.length} seleccionados`
-                  : 'Ninguno seleccionado'}
-              </div>
-              <button
+            <button className="modpag_btn modpag_btn-secondary" onClick={cerrarModal}>
+              <span className="only-desktop">Cerrar</span>
+              <FaTimes className="only-mobile-inline" />
+            </button>
+            <button
               className="modpag_btn modpag_btn-primary"
               onClick={handleRealizarPago}
               disabled={mesesSeleccionados.length === 0}
             >
-              Realizar Pago
+              <span className="only-desktop">Realizar Pago</span>
+              <FaCheck className="only-mobile-inline" />
             </button>
-            </div>
           </div>
         </div>
       </div>
