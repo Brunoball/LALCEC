@@ -799,8 +799,28 @@ input:-webkit-autofill { background-color: transparent !important; }
 /* ================================
    MOBILE — tarjetas + navbar fija
    (Título arriba; debajo buscador + filtros lado a lado)
+   + FIX franja blanca superior
 ==================================*/
 @media (max-width: 768px) {
+
+  /* FIX: que el status bar no muestre franja blanca.
+     Forzamos el fondo global al gradiente naranja
+     y rellenamos el safe-area superior. */
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: linear-gradient(90deg, #fa7815, #ee6914) !important;
+    background-color: #fa7815 !important;
+  }
+  body::before{
+    content:"";
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: env(safe-area-inset-top, 0px);
+    background: linear-gradient(90deg, #fa7815, #ee6914);
+    z-index: 999;
+    pointer-events: none;
+  }
 
   .emp_empresa-box {
     min-height: unset;
@@ -825,6 +845,9 @@ input:-webkit-autofill { background-color: transparent !important; }
       "title title"
       "search filters";
     align-items: center;
+
+    /* aseguramos el mismo gradiente en el header */
+    background: linear-gradient(90deg, #fa7815, #ee6914);
   }
 
   /* Asignación de áreas sin tocar el JSX */
@@ -898,6 +921,7 @@ input:-webkit-autofill { background-color: transparent !important; }
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     padding: 0;
+    background: #fff; /* contenido principal blanco bajo el header */
   }
 
   .emp_contenedor-list-items {
