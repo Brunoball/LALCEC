@@ -378,7 +378,7 @@ html, body {
 
 .gcuotas-virtual-header.gsocios > .gcuotas-virtual-cell:nth-child(3),
 .gcuotas-virtual-row.gsocios   > .gcuotas-virtual-cell:nth-child(3) {
-  width: 26%;
+  width: 16%;
   white-space: normal;
   word-break: break-word;
   line-height: 1.25;
@@ -394,7 +394,7 @@ html, body {
 
 .gcuotas-virtual-header.gsocios > .gcuotas-virtual-cell:nth-child(5),
 .gcuotas-virtual-row.gsocios   > .gcuotas-virtual-cell:nth-child(5) {
-  width: 10%;
+  width: 20%;
   text-align: center;
   min-width: 72px;
 }

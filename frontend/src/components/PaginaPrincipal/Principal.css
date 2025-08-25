@@ -97,6 +97,7 @@
   display: flex;           /* antes: grid */
   flex-wrap: wrap;         /* permite que bajen */
   gap: 20px;
+  padding: 5px 0;
   justify-content: center; /* centra cada fila */
 }
 

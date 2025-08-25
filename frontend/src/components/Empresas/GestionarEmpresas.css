@@ -421,7 +421,7 @@ input:-webkit-autofill { background-color: transparent !important; }
   border-bottom: 2px solid var(--border-color);
   position: sticky;
   top: 0;
-  padding-right: 1.4rem;
+  padding-right: 1rem;
   z-index: 10;
 }
 .emp_column-header {
@@ -490,7 +490,7 @@ input:-webkit-autofill { background-color: transparent !important; }
   flex: 1;
 }
 .emp_column-razon { font-weight: 500; color: var(--text-primary); }
-.emp_column-cuit { font-family: 'JetBrains Mono', monospace; color: var(--text-secondary); }
+.emp_column-cuit { font-family: 'JetBrains Mono', monospace;  }
 
 .emp_icons-column { justify-content: center; }
 .emp_icons-container {

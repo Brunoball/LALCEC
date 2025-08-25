@@ -77,7 +77,7 @@ html, body {
 }
 
 @media (min-width: 768px) {
-  .ini_contenedor { padding: 40px; }
+  .ini_contenedor { padding: 40px; gap: 0;}
   .ini_contenedor::before {
     content: '';
     position: absolute;
