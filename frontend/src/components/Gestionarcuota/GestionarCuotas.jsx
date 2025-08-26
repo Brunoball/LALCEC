@@ -181,6 +181,18 @@ const NoFiltersApplied = memo(() => (
   </div>
 ));
 
+
+const Outer = React.forwardRef((props, ref) => {
+  const { className, ...rest } = props;
+  return (
+    <div
+      ref={ref}
+      className={`gcuotas-viewport ${className || ""}`}
+      {...rest}
+    />
+  );
+});
+
 const GestionarCuotas = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("pagado");
@@ -1028,7 +1040,7 @@ const GestionarCuotas = () => {
     const tableHeight = window.innerHeight * 0.85 - headerHeight;
     
     return (
-      <div className="gcuotas-virtual-table" style={{ height: "85vh" }}>
+      <div className="gcuotas-virtual-tables" style={{ height: "85vh" }}>
         <div className={`gcuotas-virtual-header ${viewType === 'empresa' ? 'gempresas' : 'gsocios'}`}>
           {viewType === "socio" ? (
             <>
@@ -1048,20 +1060,21 @@ const GestionarCuotas = () => {
           )}
         </div>
 
-        <List
-          ref={listRef}
-          key={listKey}
-          height={Math.max(tableHeight, 300)}
-          itemCount={datosFiltradosPaginated.length + (hasMore ? 1 : 0)}
-          itemSize={50}
-          itemData={datosFiltradosPaginated}
-          width={"100%"}
-          onItemsRendered={({ visibleStopIndex }) => {
-            if (visibleStopIndex >= datosFiltradosPaginated.length - 5 && hasMore) {
-              loadMoreItems();
-            }
-          }}
-        >
+<List
+  ref={listRef}
+  key={listKey}
+  height={Math.max(tableHeight, 300)}
+  itemCount={datosFiltradosPaginated.length + (hasMore ? 1 : 0)}
+  itemSize={50}
+  itemData={datosFiltradosPaginated}
+  width={"100%"}
+  outerElementType={Outer}   // 👈 wrapper custom
+  onItemsRendered={({ visibleStopIndex }) => {
+    if (visibleStopIndex >= datosFiltradosPaginated.length - 5 && hasMore) {
+      loadMoreItems();
+    }
+  }}
+>
           {(props) => {
             if (props.index >= datosFiltradosPaginated.length) {
               return (

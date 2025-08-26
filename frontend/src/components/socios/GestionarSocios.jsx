@@ -1092,7 +1092,7 @@ const GestionarSocios = () => {
   const overscan = isMobile ? 6 : 10;
 
   const listHeight = useMemo(
-    () => (isMobile ? availableHeight : clamp(baseWindowHeight, 300, 880)),
+    () => (isMobile ? availableHeight : clamp(baseWindowHeight, 300, 1000)),
     [isMobile, availableHeight, baseWindowHeight]
   );
 
@@ -1416,7 +1416,7 @@ const GestionarSocios = () => {
                 ) : sociosFiltrados.length > 0 ? (
                   <div className="gessoc_scrollableE" style={{ padding: 0 }}>
                     <List
-                      height={listHeight}
+                      height={2000}
                       itemCount={sociosFiltrados.length}
                       itemSize={desktopRowHeight}
                       width="100%"

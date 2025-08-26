@@ -325,6 +325,7 @@ html, body {
   display: flex;
   align-items: center;
   gap: 6px;
+  min-width: 90px;
 }
 
 .gcuotas-table-container {
@@ -336,7 +337,7 @@ html, body {
    Tabla virtual (desktop)
    =========================== */
 
-.gcuotas-virtual-table {
+.gcuotas-virtual-tables {
   width: 100%;
   font-size: 15px;
   margin: 16px 0;
@@ -349,10 +350,8 @@ html, body {
   background-color: #f8f9fa;
   color: #2b2d42;
   border-bottom: 1px solid #e0e3e7;
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  padding-right: var(--scrollbar-comp, 16px); /* un cachito menos */
+  overflow: auto;
+  scrollbar-gutter: stable;
 }
 .gcuotas-virtual-header .gcuotas-virtual-cell {
   font-size: 15px;
@@ -995,45 +994,15 @@ html, body {
    =========================================================== */
 
 /* Marco general de la tabla virtual */
-.gcuotas-table-container .gcuotas-virtual-table {
-  border: 2px solid #000;
+.gcuotas-table-container .gcuotas-virtual-tables {
   border-radius: 4px;
   overflow: hidden;
 }
 
-/* Cabecera con líneas negras (padding der. compensado) */
-.gcuotas-table-container .gcuotas-virtual-header {
-  border-top: 2px solid #000 !important;
-  border-bottom: 2px solid #000 !important;
-  padding-right: var(--scrollbar-comp, 16px);
-}
-
-/* Separadores verticales NEGROS en cabecera y filas */
-.gcuotas-table-container .gcuotas-virtual-header .gcuotas-virtual-cell,
-.gcuotas-table-container .gcuotas-virtual-row .gcuotas-virtual-cell {
-  border-right: 1px solid #000;
-}
-.gcuotas-table-container .gcuotas-virtual-header .gcuotas-virtual-cell:last-child,
-.gcuotas-table-container .gcuotas-virtual-row .gcuotas-virtual-cell:last-child {
-  border-right: none;
-}
-
-/* Línea inferior negra en cada fila */
-.gcuotas-table-container .gcuotas-virtual-row {
-  border-bottom: 1px solid #000 !important;
-}
-
-/* Línea superior e inferior negras en la cabecera superior de la sección derecha */
-.gcuotas-right-section .gcuotas-table-header {
-  border-top: 2px solid #000;
-  border-bottom: 2px solid #000 !important;
-}
 
 /* En móvil: destacar también con líneas negras para visualizar estructura */
 @media (max-width: 768px) {
-  .gcuotas-mobile-card {
-    border: 2px solid #000 !important;
-  }
+
   .gcuotas-mobile-row {
     border-bottom: 1px dashed #000;
     padding-bottom: 6px;
@@ -1043,10 +1012,16 @@ html, body {
     padding-bottom: 0;
   }
   .gcuotas-right-section {
-    border: 2px solid #000;
     border-radius: 12px;
   }
   .gcuotas-header-section {
     border-bottom: 2px solid #000;
   }
+}
+
+.gcuotas-viewport {
+  overflow: auto;              /* lo mismo que react-window */
+  scrollbar-gutter: stable;    /* 👈 ahora sí lo aplica */
+  /* opcional para probar mejor efecto */
+  scrollbar-gutter: stable ;
 }

@@ -432,7 +432,6 @@ input:-webkit-autofill { background-color: transparent !important; }
   border-bottom: 2px solid var(--border-color);
   position: sticky;
   top: 0;
-  padding-right: 1rem;
   z-index: 10;
 }
 
@@ -780,7 +779,9 @@ input:-webkit-autofill { background-color: transparent !important; }
    + FIX franja blanca superior
 ==================================*/
 @media (max-width: 768px) {
-
+.emp_empresa-box {
+  background: linear-gradient(90deg, #fa7815, #ee6914); /* #fff */
+}
   /* FIX: que el status bar no muestre franja blanca. */
   html, body {
     margin: 0;
