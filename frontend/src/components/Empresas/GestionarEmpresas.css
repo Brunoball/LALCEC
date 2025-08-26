@@ -415,8 +415,11 @@ input:-webkit-autofill { background-color: transparent !important; }
   border: 1px solid var(--border-color);
   background: var(--surface-color);
 }
+
+/* >>> CAMBIO A GRID EN HEADER */
 .emp_header {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   background: linear-gradient(90deg, #fa7815, #ef6a14);
   border-bottom: 2px solid var(--border-color);
   position: sticky;
@@ -424,6 +427,7 @@ input:-webkit-autofill { background-color: transparent !important; }
   padding-right: 1rem;
   z-index: 10;
 }
+
 .emp_column-header {
   padding: 0.5rem;
   font-weight: 400;
@@ -432,12 +436,17 @@ input:-webkit-autofill { background-color: transparent !important; }
   text-transform: uppercase;
   letter-spacing: 0.05em;
   border-right: 1px solid var(--primary-color);
-  display: flex;
+  display: flex;              /* centrado interno sin depender de flex del contenedor */
   align-items: center;
   justify-content: center;
+  text-align: center;
+  padding: 10px 5px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-.emp_column-header { text-align: center; padding: 10px 5px; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 
+/* Cuerpo/scroll se mantiene igual */
 .emp_body {
   display: flex;
   flex-wrap: nowrap;
@@ -456,8 +465,10 @@ input:-webkit-autofill { background-color: transparent !important; }
   transition: min-height 0.3s ease, max-height 0.3s ease;
 }
 
+/* >>> CAMBIO A GRID EN FILAS */
 .emp_row {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   align-items: center;
   padding: 0;
   position: relative;
@@ -487,7 +498,6 @@ input:-webkit-autofill { background-color: transparent !important; }
   overflow: hidden;
   text-overflow: ellipsis;
   min-width: 0;
-  flex: 1;
 }
 .emp_column-razon { font-weight: 500; color: var(--text-primary); }
 .emp_column-cuit { font-family: 'JetBrains Mono', monospace;  }
@@ -1153,4 +1163,3 @@ input:-webkit-autofill { background-color: transparent !important; }
     text-overflow: ellipsis;
   }
 }
-
