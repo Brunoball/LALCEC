@@ -1,3 +1,4 @@
+// src/components/empresas/GestionarEmpresas.jsx
 import React, {
   useState,
   useEffect,
@@ -7,6 +8,7 @@ import React, {
   useDeferredValue,
   useTransition,
   memo,
+  useLayoutEffect, // ⬅️ para meta/tema antes del paint
 } from "react";
 import { useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx";
@@ -31,6 +33,90 @@ import ModalInfoEmpresa from "./modales_emp/ModalInfoEmpresa";
 import ModalBajaEmpresa from "./modales_emp/ModalBajaEmpresa";
 import BASE_URL from "../../config/config";
 import Toast from "../global/Toast";
+
+/* ================================
+   Hooks para mobile safe areas y theme-color (IGUAL QUE EN SOCIOS)
+================================ */
+const useFixMobileVh = () => {
+  useEffect(() => {
+    const setVh = () => {
+      const vh = window.innerHeight * 0.01;
+      document.documentElement.style.setProperty("--vh", `${vh}px`);
+    };
+    setVh();
+    window.addEventListener("resize", setVh);
+    window.addEventListener("orientationchange", setVh);
+    return () => {
+      window.removeEventListener("resize", setVh);
+      window.removeEventListener("orientationchange", setVh);
+    };
+  }, []);
+};
+
+const useMobileChromeStyling = (color = "#fa7815") => {
+  useLayoutEffect(() => {
+    const upsertMeta = (name, content, attrs = {}) => {
+      let q = `meta[name="${name}"]`;
+      if (attrs.media) q += `[media="${attrs.media}"]`;
+      let el = document.querySelector(q);
+      if (!el) {
+        el = document.createElement("meta");
+        el.setAttribute("name", name);
+        if (attrs.media) el.setAttribute("media", attrs.media);
+        document.head.appendChild(el);
+      }
+      el.setAttribute("content", content);
+      return el;
+    };
+
+    // theme-color con media (claro/oscuro)
+    upsertMeta("theme-color", color, { media: "(prefers-color-scheme: light)" });
+    upsertMeta("theme-color", color, { media: "(prefers-color-scheme: dark)" });
+
+    // viewport-fit=cover para usar notch
+    const metaViewport = document.querySelector('meta[name="viewport"]');
+    if (metaViewport && !/viewport-fit=cover/.test(metaViewport.content)) {
+      metaViewport.setAttribute(
+        "content",
+        `${metaViewport.content}, viewport-fit=cover`
+      );
+    }
+
+    // iOS PWA translucido
+    let metaCapable = document.querySelector(
+      'meta[name="apple-mobile-web-app-capable"]'
+    );
+    if (!metaCapable) {
+      metaCapable = document.createElement("meta");
+      metaCapable.setAttribute("name", "apple-mobile-web-app-capable");
+      document.head.appendChild(metaCapable);
+    }
+    metaCapable.setAttribute("content", "yes");
+
+    let metaStatus = document.querySelector(
+      'meta[name="apple-mobile-web-app-status-bar-style"]'
+    );
+    if (!metaStatus) {
+      metaStatus = document.createElement("meta");
+      metaStatus.setAttribute("name", "apple-mobile-web-app-status-bar-style");
+      document.head.appendChild(metaStatus);
+    }
+    metaStatus.setAttribute("content", "black-translucent");
+
+    // fondo de html/body al color de marca durante el 1er paint
+    const prevHtmlBg = document.documentElement.style.backgroundColor;
+    const prevBodyBg = document.body.style.backgroundColor;
+    document.documentElement.style.backgroundColor = color;
+    if (!document.body.style.backgroundColor) {
+      document.body.style.backgroundColor = color;
+    }
+
+    return () => {
+      document.documentElement.style.backgroundColor = prevHtmlBg;
+      document.body.style.backgroundColor = prevBodyBg;
+    };
+  }, [color]);
+};
 
 /* ================================
    Constantes & Utils
@@ -78,19 +164,6 @@ const useReducedMotion = () => {
 
 const getEmpresaId = (e) =>
   e?.id ?? e?.idEmp ?? e?.id_empresa ?? e?.idEmpresa ?? null;
-
-/* ===== Abreviador genérico SOLO para tarjetas (ya no se usa para mostrar) ===== */
-const shortMedio = (label = "") => {
-  const raw = String(label).trim();
-  if (!raw) return "";
-  const words = raw.split(/[\s\-_]+/).filter(Boolean);
-  if (words.length > 1) {
-    const initials = words.map(w => w[0]).join("").slice(0, 6);
-    if (initials.length >= 2) return initials.toLowerCase();
-  }
-  if (raw.length <= 8) return raw.toLowerCase();
-  return raw.slice(0, 7).toLowerCase();
-};
 
 /* === Formateador de MEDIO DE PAGO para mostrar (MAYÚSCULAS o “-”) === */
 const fmtMedio = (v) => {
@@ -168,10 +241,7 @@ const Row = memo(function Row({
       <div className="emp_column emp_column-iva">{empresa?.descripcion_iva}</div>
       <div className="emp_column emp_column-dom">{empresa?.domicilio_2}</div>
       <div className="emp_column emp_column-obs">{empresa?.observacion}</div>
-
-      {/* Medio de Pago: SIEMPRE COMPLETO y en MAYÚSCULAS; si no hay, “-” */}
       <div className="emp_column emp_column-medio">{fmtMedio(empresa?.medio_pago)}</div>
-
       <div className="emp_column emp_icons-column">
         {selected && (
           <div className="emp_icons-container">
@@ -182,7 +252,6 @@ const Row = memo(function Row({
             >
               <FontAwesomeIcon icon={faInfoCircle} />
             </button>
-
             <button
               className="emp_icon emp_btn-edit"
               title="Editar empresa"
@@ -190,7 +259,6 @@ const Row = memo(function Row({
             >
               <FontAwesomeIcon icon={faEdit} />
             </button>
-
             <button
               className="emp_icon emp_btn-delete"
               title="Eliminar empresa"
@@ -198,7 +266,6 @@ const Row = memo(function Row({
             >
               <FontAwesomeIcon icon={faTrash} />
             </button>
-
             <button
               className="emp_icon emp_btn-baja"
               title="Dar de baja"
@@ -305,7 +372,6 @@ const Card = memo(function Card({
         )}
         <div className="emp_card-row">
           <span className="emp_card-label">Medio de Pago</span>
-          {/* En tarjeta (MOBILE): mostrar completo en MAYÚSCULAS; si no hay, “-” */}
           <span className="emp_card-value">{fmtMedio(empresa?.medio_pago)}</span>
         </div>
       </div>
@@ -349,6 +415,10 @@ const Card = memo(function Card({
 ================================ */
 const GestionarEmpresas = () => {
   const navigate = useNavigate();
+
+  // ⬅️ FIX móviles: alto real + barra del navegador con color de marca (pre-paint)
+  useFixMobileVh();
+  useMobileChromeStyling("#fa7815");
 
   // Data base
   const [empresas, setEmpresas] = useState([]);
@@ -699,22 +769,22 @@ const GestionarEmpresas = () => {
     persistFilters(reset);
   }, [persistFilters]);
 
-const handleMostrarTodos = useCallback(() => {
-  const allFilters = { letras: [], mediosPago: [], todos: true, hasFilters: false };
+  const handleMostrarTodos = useCallback(() => {
+    const allFilters = { letras: [], mediosPago: [], todos: true, hasFilters: false };
 
-  startTransition(() => {
-    setFiltrosActivos(allFilters);
-    setBusqueda("");                 // ⬅️ limpia el input visible
-  });
+    startTransition(() => {
+      setFiltrosActivos(allFilters);
+      setBusqueda("");
+    });
 
-  persistFilters(allFilters);
-  localStorage.removeItem("empresasSearchTerm"); // ⬅️ limpia lo persistido
+    persistFilters(allFilters);
+    localStorage.removeItem("empresasSearchTerm");
 
-  if (!reducedMotion) {
-    setAnimacionCascada(true);
-    setTimeout(() => setAnimacionCascada(false), 600);
-  }
-}, [persistFilters, reducedMotion]);
+    if (!reducedMotion) {
+      setAnimacionCascada(true);
+      setTimeout(() => setAnimacionCascada(false), 600);
+    }
+  }, [persistFilters, reducedMotion]);
 
   // === Menú de filtros ===
   const toggleMenuFiltros = useCallback(() => {
@@ -957,7 +1027,6 @@ const handleMostrarTodos = useCallback(() => {
   const firstLetter = filtrosActivos.letras[0];
   const firstMedio = filtrosActivos.mediosPago[0];
 
-  // Desktop: "Letra: X" o "Medio: X" | Mobile: "X"
   const chipValue = firstLetter || firstMedio || null;
   const chipKind = firstLetter ? "Letra" : firstMedio ? "Medio" : "";
 
@@ -971,7 +1040,6 @@ const handleMostrarTodos = useCallback(() => {
       <div className="emp_empresa-box">
         {/* HEADER */}
         <div className="emp_front-row-emp">
-          {/* Título */}
           <span className="emp_empresa-title emp_title-wrap">Gestionar Empresas</span>
 
           {/* Búsqueda */}
@@ -1063,7 +1131,6 @@ const handleMostrarTodos = useCallback(() => {
                           onClick={() => aplicarFiltroTransferencia(label)}
                           title={`Filtrar por ${label}`}
                         >
-                          {/* Mostrar texto completo del backend en el menú */}
                           {label}
                         </div>
                       );
@@ -1102,11 +1169,9 @@ const handleMostrarTodos = useCallback(() => {
 
               {chipValue && (
                 <div className="emp_chip-mini" title="Filtro activo">
-                  {/* Desktop: muestra prefijo + valor */}
                   <span className="emp_chip-mini-text emp_socios-desktop">
                     {chipKind}: {chipValue}
                   </span>
-                  {/* Mobile: solo el valor */}
                   <span className="emp_chip-mini-text emp_socios-mobile">
                     {chipValue}
                   </span>

@@ -29,7 +29,14 @@ const PaginaPrincipal = () => {
   const confirmarCierreSesion = () => {
     setIsExiting(true);
     setTimeout(() => {
-      sessionStorage.clear();
+      // 🔒 Cierre de sesión consistente (manual)
+      try {
+        sessionStorage.clear();
+      } catch {}
+      try {
+        localStorage.removeItem("token");
+        localStorage.removeItem("usuario");
+      } catch {}
       setShowModal(false);
       navigate("/", { replace: true });
     }, 400);
@@ -88,7 +95,6 @@ const PaginaPrincipal = () => {
           <span>Cerrar Sesión</span>
         </button>
 
-        {/* === Footer con tu página === */}
         <footer className="pagina-principal-footer">
           Desarrollado por{" "}
           <a href="https://3devsnet.com" target="_blank" rel="noopener noreferrer">

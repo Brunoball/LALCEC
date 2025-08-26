@@ -6,19 +6,18 @@ header('Content-Type: application/json');
 
 include_once(__DIR__ . '/../../config/db.php');
 
-
 // Función para obtener el rango de fechas del mes seleccionado
 function obtenerRangoMes($conn, $mesNombre) {
-    // Primero obtenemos el año actual (podrías modificarlo si necesitas años diferentes)
+    // Año actual (ajustar si necesitás otros años)
     $añoActual = date('Y');
-    
-    // Creamos un objeto DateTime para el primer día del mes seleccionado
+
+    // Primer día del mes
     $fechaInicio = DateTime::createFromFormat('Y-m-d', $añoActual.'-'.obtenerNumeroMes($mesNombre).'-01');
-    
-    // Obtenemos el último día del mes
+
+    // Último día del mes
     $fechaFin = clone $fechaInicio;
     $fechaFin->modify('last day of this month');
-    
+
     return [
         'inicio' => $fechaInicio->format('Y-m-d'),
         'fin' => $fechaFin->format('Y-m-d')
@@ -71,34 +70,44 @@ function obtenerPrecioPorMes($conn, $idCategoria, $mesSeleccionado) {
     return $precioActual;
 }
 
-$tipo = $_GET['tipo'] ?? '';
+$tipo   = $_GET['tipo']   ?? '';
 $estado = $_GET['estado'] ?? '';
-$mes = $_GET['mes'] ?? '';
+$mes    = $_GET['mes']    ?? '';
 
 if (!$tipo || !$estado || !$mes) {
     echo json_encode(["error" => "Parámetros faltantes."]);
     exit;
 }
 
-// Obtenemos el rango de fechas del mes seleccionado
-$rangoMes = obtenerRangoMes($conn, $mes);
+// Rango del mes seleccionado
+$rangoMes   = obtenerRangoMes($conn, $mes);
 $fechaFinMes = $rangoMes['fin'];
 
-// SOCIOS PAGADOS
+/* ===========================
+   SOCIOS PAGADOS (activo=1)
+=========================== */
 if ($tipo === "socio" && $estado === "pagado") {
     $sql = "
-        SELECT DISTINCT s.idSocios, s.nombre, s.apellido, s.domicilio_2 AS domicilio, s.numero, 
-                        s.idCategoria, c.Nombre_Categoria AS categoria, 
-                        COALESCE(m.Medio_Pago, '-') AS medio_pago
+        SELECT DISTINCT 
+               s.idSocios, 
+               s.nombre, 
+               s.apellido, 
+               s.domicilio_2 AS domicilio, 
+               s.numero, 
+               s.idCategoria, 
+               c.Nombre_Categoria AS categoria, 
+               COALESCE(m.Medio_Pago, '-') AS medio_pago
         FROM pagos p
-        JOIN socios s ON p.idSocios = s.idSocios
+        JOIN socios s        ON p.idSocios = s.idSocios
         LEFT JOIN categorias c ON s.idCategoria = c.idCategorias
         LEFT JOIN mediospago m ON s.idMedios_Pago = m.IdMedios_pago
         WHERE p.idMes = (SELECT idMes FROM meses_pagos WHERE mes = ? LIMIT 1)
-        AND s.Fechaunion <= ?
+          AND s.Fechaunion <= ?
+          AND s.activo = 1
         GROUP BY s.idSocios
-        ORDER BY s.apellido ASC";
-    
+        ORDER BY s.apellido ASC
+    ";
+
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("ss", $mes, $fechaFinMes);
     $stmt->execute();
@@ -113,13 +122,17 @@ if ($tipo === "socio" && $estado === "pagado") {
     exit;
 }
 
-// SOCIOS DEUDORES
+/* =============================
+   SOCIOS DEUDORES (activo=1)
+============================= */
 if ($tipo === "socio" && $estado === "deudor") {
-    // Primero obtenemos los IDs de los socios que ya pagaron este mes
-    $sqlPagados = "SELECT p.idSocios 
-                   FROM pagos p 
-                   JOIN meses_pagos mp ON p.idMes = mp.idMes 
-                   WHERE mp.mes = ?";
+    // IDs de socios que ya pagaron este mes
+    $sqlPagados = "
+        SELECT p.idSocios 
+        FROM pagos p 
+        JOIN meses_pagos mp ON p.idMes = mp.idMes 
+        WHERE mp.mes = ?
+    ";
     $stmtPag = $conn->prepare($sqlPagados);
     $stmtPag->bind_param("s", $mes);
     $stmtPag->execute();
@@ -130,18 +143,24 @@ if ($tipo === "socio" && $estado === "deudor") {
         $idsPagados[] = $row['idSocios'];
     }
 
-    // Ahora obtenemos todos los socios que no pagaron y que estaban registrados en ese mes
+    // Todos los socios activos que estaban registrados en ese mes (y no pagaron)
     $sqlSocios = "
-        SELECT s.idSocios, COALESCE(s.nombre, '') AS nombre, COALESCE(s.apellido, '') AS apellido,
-               COALESCE(s.domicilio_2, '') AS domicilio, COALESCE(s.numero, '') AS numero,
-               COALESCE(s.idCategoria, 0) AS idCategoria,
-               COALESCE(c.Nombre_Categoria, '') AS categoria,
-               COALESCE(mp.Medio_Pago, '-') AS medio_pago
+        SELECT 
+            s.idSocios, 
+            COALESCE(s.nombre, '')     AS nombre, 
+            COALESCE(s.apellido, '')   AS apellido,
+            COALESCE(s.domicilio_2, '') AS domicilio, 
+            COALESCE(s.numero, '')     AS numero,
+            COALESCE(s.idCategoria, 0) AS idCategoria,
+            COALESCE(c.Nombre_Categoria, '') AS categoria,
+            COALESCE(mp.Medio_Pago, '-') AS medio_pago
         FROM socios s
         LEFT JOIN categorias c ON s.idCategoria = c.idCategorias
         LEFT JOIN mediospago mp ON s.idMedios_Pago = mp.IdMedios_pago
-        WHERE s.Fechaunion <= ?";
-    
+        WHERE s.Fechaunion <= ?
+          AND s.activo = 1
+    ";
+
     $stmtSocios = $conn->prepare($sqlSocios);
     $stmtSocios->bind_param("s", $fechaFinMes);
     $stmtSocios->execute();
@@ -160,23 +179,27 @@ if ($tipo === "socio" && $estado === "deudor") {
     exit;
 }
 
-// EMPRESAS PAGADAS
+/* ======================
+   EMPRESAS PAGADAS
+====================== */
 if ($tipo === "empresa" && $estado === "pagado") {
     $sql = "
-        SELECT DISTINCT e.idEmp, 
-                        COALESCE(e.razon_social, '') AS razon_social,
-                        COALESCE(e.domicilio_2, '') AS domicilio,
-                        COALESCE(c.Nombre_Categoria, '') AS categoria,
-                        e.idCategorias,
-                        COALESCE(mp.Medio_Pago, '-') AS medio_pago
+        SELECT DISTINCT 
+               e.idEmp, 
+               COALESCE(e.razon_social, '') AS razon_social,
+               COALESCE(e.domicilio_2, '')  AS domicilio,
+               COALESCE(c.Nombre_Categoria, '') AS categoria,
+               e.idCategorias,
+               COALESCE(mp.Medio_Pago, '-') AS medio_pago
         FROM pagos_empresas p
-        JOIN empresas e ON p.idEmp = e.idEmp
+        JOIN empresas e        ON p.idEmp = e.idEmp
         LEFT JOIN categorias c ON e.idCategorias = c.idCategorias
         LEFT JOIN mediospago mp ON e.idMedios_Pago = mp.IdMedios_pago
         WHERE p.idMes = (SELECT idMes FROM meses_pagos WHERE mes = ? LIMIT 1)
-        AND e.fechaunion <= ?
+          AND e.fechaunion <= ?
         GROUP BY e.idEmp
-        ORDER BY e.razon_social ASC";
+        ORDER BY e.razon_social ASC
+    ";
 
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("ss", $mes, $fechaFinMes);
@@ -193,13 +216,17 @@ if ($tipo === "empresa" && $estado === "pagado") {
     exit;
 }
 
-// EMPRESAS DEUDORAS
+/* =======================
+   EMPRESAS DEUDORAS
+======================= */
 if ($tipo === "empresa" && $estado === "deudor") {
-    // Primero obtenemos los IDs de las empresas que ya pagaron este mes
-    $sqlPagados = "SELECT pe.idEmp 
-                   FROM pagos_empresas pe 
-                   JOIN meses_pagos mp ON pe.idMes = mp.idMes 
-                   WHERE mp.mes = ?";
+    // IDs de empresas que ya pagaron este mes
+    $sqlPagados = "
+        SELECT pe.idEmp 
+        FROM pagos_empresas pe 
+        JOIN meses_pagos mp ON pe.idMes = mp.idMes 
+        WHERE mp.mes = ?
+    ";
     $stmtPag = $conn->prepare($sqlPagados);
     $stmtPag->bind_param("s", $mes);
     $stmtPag->execute();
@@ -210,18 +237,21 @@ if ($tipo === "empresa" && $estado === "deudor") {
         $idsPagadas[] = $row['idEmp'];
     }
 
-    // Ahora obtenemos todas las empresas que no pagaron y que estaban registradas en ese mes
+    // Todas las empresas registradas en ese mes (y que no pagaron)
     $sqlEmpresas = "
-        SELECT e.idEmp, COALESCE(e.razon_social, '') AS razon_social, 
-               COALESCE(e.domicilio_2, '') AS domicilio, 
-               COALESCE(c.Nombre_Categoria, '') AS categoria,
-               COALESCE(mp.Medio_Pago, '-') AS medio_pago,
-               e.idCategorias
+        SELECT 
+            e.idEmp, 
+            COALESCE(e.razon_social, '') AS razon_social, 
+            COALESCE(e.domicilio_2, '')  AS domicilio, 
+            COALESCE(c.Nombre_Categoria, '') AS categoria,
+            COALESCE(mp.Medio_Pago, '-') AS medio_pago,
+            e.idCategorias
         FROM empresas e
         LEFT JOIN categorias c ON e.idCategorias = c.idCategorias
         LEFT JOIN mediospago mp ON e.idMedios_Pago = mp.IdMedios_pago
-        WHERE e.fechaunion <= ?";
-    
+        WHERE e.fechaunion <= ?
+    ";
+
     $stmtEmpresas = $conn->prepare($sqlEmpresas);
     $stmtEmpresas->bind_param("s", $fechaFinMes);
     $stmtEmpresas->execute();

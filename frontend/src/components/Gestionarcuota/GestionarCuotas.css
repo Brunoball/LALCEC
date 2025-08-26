@@ -336,14 +336,13 @@ html, body {
    Tabla virtual (desktop)
    =========================== */
 
-/* ↑ AUMENTO general del tamaño de fuente de la tabla (web) */
 .gcuotas-virtual-table {
   width: 100%;
-  font-size: 15px;              /* antes 13px */
+  font-size: 15px;
   margin: 16px 0;
 }
 
-/* Header con tipografía levemente mayor y más fuerte */
+/* Header - centrado + compensación de scrollbar */
 .gcuotas-virtual-header {
   font-weight: 500;
   display: flex;
@@ -353,23 +352,35 @@ html, body {
   position: sticky;
   top: 0;
   z-index: 10;
+  padding-right: var(--scrollbar-comp, 16px); /* un cachito menos */
 }
 .gcuotas-virtual-header .gcuotas-virtual-cell {
-  font-size: 15px;              /* consistente con filas */
+  font-size: 15px;
   font-weight: 600;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
+/* Celdas: MENOS padding lateral y TODO CENTRADO */
 .gcuotas-virtual-cell {
-  padding: 10px 14px;           /* antes 8px 12px */
-  text-align: left;
+  padding: 8px 10px;                 /* ↓ menos padding lateral */
+  text-align: center;                /* centrar texto */
+  display: flex;                     /* centrar contenido horizontal/vertical */
+  align-items: center;
+  justify-content: center;
   vertical-align: middle;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  line-height: 1.4;             /* más aire vertical */
+  line-height: 1.35;
 }
 
-/* ===== SOCIOS (5 columnas: Apellido, Nombre, Categoría, Medio, Acciones) */
+/* ===== SOCIOS (5 columnas) — ajustadas como antes */
 .gcuotas-virtual-header.gsocios > .gcuotas-virtual-cell:nth-child(1),
 .gcuotas-virtual-row.gsocios   > .gcuotas-virtual-cell:nth-child(1) { width: 24%; }
 
@@ -378,7 +389,7 @@ html, body {
 
 .gcuotas-virtual-header.gsocios > .gcuotas-virtual-cell:nth-child(3),
 .gcuotas-virtual-row.gsocios   > .gcuotas-virtual-cell:nth-child(3) {
-  width: 16%;
+  width: 14%; /* antes 16% */
   white-space: normal;
   word-break: break-word;
   line-height: 1.25;
@@ -386,7 +397,7 @@ html, body {
 
 .gcuotas-virtual-header.gsocios > .gcuotas-virtual-cell:nth-child(4),
 .gcuotas-virtual-row.gsocios   > .gcuotas-virtual-cell:nth-child(4) {
-  width: 16%;
+  width: 22%; /* más ancho */
   white-space: normal;
   word-break: break-word;
   line-height: 1.25;
@@ -394,20 +405,17 @@ html, body {
 
 .gcuotas-virtual-header.gsocios > .gcuotas-virtual-cell:nth-child(5),
 .gcuotas-virtual-row.gsocios   > .gcuotas-virtual-cell:nth-child(5) {
-  width: 20%;
-  text-align: center;
+  width: 16%; /* más angosto */
   min-width: 72px;
 }
 
-/* ===== EMPRESAS (4 columnas: Razón Social, Categoría, Medio, Acciones) */
+/* ===== EMPRESAS (4 columnas) — ajustadas como antes */
 .gcuotas-virtual-header.gempresas > .gcuotas-virtual-cell:nth-child(1),
-.gcuotas-virtual-row.gempresas   > .gcuotas-virtual-cell:nth-child(1) {
-  width: 36%;
-}
+.gcuotas-virtual-row.gempresas   > .gcuotas-virtual-cell:nth-child(1) { width: 36%; }
 
 .gcuotas-virtual-header.gempresas > .gcuotas-virtual-cell:nth-child(2),
 .gcuotas-virtual-row.gempresas   > .gcuotas-virtual-cell:nth-child(2) {
-  width: 28%;
+  width: 24%; /* antes 28% */
   white-space: normal;
   word-break: break-word;
   line-height: 1.25;
@@ -415,7 +423,7 @@ html, body {
 
 .gcuotas-virtual-header.gempresas > .gcuotas-virtual-cell:nth-child(3),
 .gcuotas-virtual-row.gempresas   > .gcuotas-virtual-cell:nth-child(3) {
-  width: 26%;
+  width: 32%; /* más ancho */
   white-space: normal;
   word-break: break-word;
   line-height: 1.25;
@@ -423,8 +431,7 @@ html, body {
 
 .gcuotas-virtual-header.gempresas > .gcuotas-virtual-cell:nth-child(4),
 .gcuotas-virtual-row.gempresas   > .gcuotas-virtual-cell:nth-child(4) {
-  width: 10%;
-  text-align: center;
+  width: 8%;  /* más angosto */
   min-width: 72px;
 }
 
@@ -437,7 +444,6 @@ html, body {
   transition: background-color 0.2s;
 }
 .gcuotas-virtual-row:hover { background-color: #eef2ff; }
-
 .gcuotas-selected-row { background-color: #e0e7ff !important; }
 
 /* Botones inline de la fila */
@@ -981,5 +987,66 @@ html, body {
     height: auto !important;
     min-height: 100% !important;
     overflow: visible !important;
+  }
+}
+
+/* ===========================================================
+   LÍNEAS NEGRAS DIVISORIAS PARA VISUALIZAR LA TABLA Y CABECERAS
+   =========================================================== */
+
+/* Marco general de la tabla virtual */
+.gcuotas-table-container .gcuotas-virtual-table {
+  border: 2px solid #000;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+/* Cabecera con líneas negras (padding der. compensado) */
+.gcuotas-table-container .gcuotas-virtual-header {
+  border-top: 2px solid #000 !important;
+  border-bottom: 2px solid #000 !important;
+  padding-right: var(--scrollbar-comp, 16px);
+}
+
+/* Separadores verticales NEGROS en cabecera y filas */
+.gcuotas-table-container .gcuotas-virtual-header .gcuotas-virtual-cell,
+.gcuotas-table-container .gcuotas-virtual-row .gcuotas-virtual-cell {
+  border-right: 1px solid #000;
+}
+.gcuotas-table-container .gcuotas-virtual-header .gcuotas-virtual-cell:last-child,
+.gcuotas-table-container .gcuotas-virtual-row .gcuotas-virtual-cell:last-child {
+  border-right: none;
+}
+
+/* Línea inferior negra en cada fila */
+.gcuotas-table-container .gcuotas-virtual-row {
+  border-bottom: 1px solid #000 !important;
+}
+
+/* Línea superior e inferior negras en la cabecera superior de la sección derecha */
+.gcuotas-right-section .gcuotas-table-header {
+  border-top: 2px solid #000;
+  border-bottom: 2px solid #000 !important;
+}
+
+/* En móvil: destacar también con líneas negras para visualizar estructura */
+@media (max-width: 768px) {
+  .gcuotas-mobile-card {
+    border: 2px solid #000 !important;
+  }
+  .gcuotas-mobile-row {
+    border-bottom: 1px dashed #000;
+    padding-bottom: 6px;
+  }
+  .gcuotas-mobile-row:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+  .gcuotas-right-section {
+    border: 2px solid #000;
+    border-radius: 12px;
+  }
+  .gcuotas-header-section {
+    border-bottom: 2px solid #000;
   }
 }

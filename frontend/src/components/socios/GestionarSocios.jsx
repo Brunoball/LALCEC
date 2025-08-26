@@ -2,6 +2,7 @@
 import React, {
   useState,
   useEffect,
+  useLayoutEffect,   // ⬅️ NUEVO: para aplicar antes del primer paint
   useCallback,
   useMemo,
   useRef,
@@ -115,19 +116,28 @@ const useFixMobileVh = () => {
   }, []);
 };
 
-// 2) Estiliza barra del navegador + safe areas
+// 2) Estiliza barra del navegador + safe areas (evita franja blanca superior)
+//    ⬅️ AHORA usa useLayoutEffect para ejecutarse antes del primer paint
 const useMobileChromeStyling = (color = "#fa7815") => {
-  useEffect(() => {
-    // theme-color
-    let metaTheme = document.querySelector('meta[name="theme-color"]');
-    if (!metaTheme) {
-      metaTheme = document.createElement("meta");
-      metaTheme.setAttribute("name", "theme-color");
-      document.head.appendChild(metaTheme);
-    }
-    metaTheme.setAttribute("content", color);
+  useLayoutEffect(() => {
+    // Helper para crear/actualizar meta
+    const upsertMeta = (name, content, attrs = {}) => {
+      let meta = document.querySelector(`meta[name="${name}"]${attrs.media ? `[media="${attrs.media}"]` : ""}`);
+      if (!meta) {
+        meta = document.createElement("meta");
+        meta.setAttribute("name", name);
+        if (attrs.media) meta.setAttribute("media", attrs.media);
+        document.head.appendChild(meta);
+      }
+      meta.setAttribute("content", content);
+      return meta;
+    };
 
-    // asegura viewport-fit=cover
+    // theme-color (dos variantes por si el UA respeta media queries)
+    const metaThemeLight = upsertMeta("theme-color", color, { media: "(prefers-color-scheme: light)" });
+    const metaThemeDark  = upsertMeta("theme-color", color, { media: "(prefers-color-scheme: dark)" });
+
+    // viewport con viewport-fit=cover (para notch)
     const metaViewport = document.querySelector('meta[name="viewport"]');
     if (metaViewport && !/viewport-fit=cover/.test(metaViewport.content)) {
       metaViewport.setAttribute(
@@ -136,12 +146,37 @@ const useMobileChromeStyling = (color = "#fa7815") => {
       );
     }
 
-    // color de fondo del <html> para evitar "flash" blanco en la barra
+    // iOS status bar translucida (si aplica)
+    let metaCapable = document.querySelector('meta[name="apple-mobile-web-app-capable"]');
+    if (!metaCapable) {
+      metaCapable = document.createElement("meta");
+      metaCapable.setAttribute("name", "apple-mobile-web-app-capable");
+      document.head.appendChild(metaCapable);
+    }
+    metaCapable.setAttribute("content", "yes");
+
+    let metaStatus = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
+    if (!metaStatus) {
+      metaStatus = document.createElement("meta");
+      metaStatus.setAttribute("name", "apple-mobile-web-app-status-bar-style");
+      document.head.appendChild(metaStatus);
+    }
+    metaStatus.setAttribute("content", "black-translucent");
+
+    // color de fondo del <html> para que el área del status bar no quede blanca
     const prevHtmlBg = document.documentElement.style.backgroundColor;
     document.documentElement.style.backgroundColor = color;
 
+    // también aseguramos que el body no fuerce otro fondo durante el 1er paint
+    const prevBodyBg = document.body.style.backgroundColor;
+    if (!document.body.style.backgroundColor) {
+      document.body.style.backgroundColor = color;
+    }
+
     return () => {
       document.documentElement.style.backgroundColor = prevHtmlBg;
+      document.body.style.backgroundColor = prevBodyBg;
+      // No removemos metas (no hace falta y evita flicker si el usuario vuelve)
     };
   }, [color]);
 };
@@ -154,7 +189,6 @@ const SocioRow = React.memo(
     const socio = data.items[index];
     const selected = data.filaSeleccionada === index;
 
-    // Solo los primeros 10 con cascada y si el flag está activo
     const applyCascade = data.cascadeEnabled && index < 10;
     const stagger = applyCascade ? clamp(index, 0, 14) : 0;
 
@@ -248,7 +282,6 @@ const SocioCardRow = React.memo(
     const socio = data.items[index];
     const gap = data.gap ?? 12;
 
-    // Solo los primeros 10 con cascada y si el flag está activo
     const applyCascade = data.cascadeEnabled && index < 10;
     const stagger = applyCascade ? clamp(index, 0, 14) : 0;
 
@@ -380,7 +413,7 @@ const GestionarSocios = () => {
   const headerRef = useRef(null);
   const footerRef = useRef(null);
 
-  // 🔧 FIX móviles: alto real + barra del navegador con color de marca
+  // 🔧 FIX móviles: alto real + barra del navegador con color de marca (pre-paint)
   useFixMobileVh();
   useMobileChromeStyling("#fa7815");
 
@@ -792,7 +825,6 @@ const GestionarSocios = () => {
           ? window.requestIdleCallback(() => revalidate())
           : setTimeout(revalidate, 0);
       }
-      // La cascada se dispara en Enter, en el botón Buscar, o por debounce (ver más abajo).
     },
     [dataLoaded, ensureDataLoaded, revalidate, setExclusiveFilter]
   );
@@ -802,14 +834,14 @@ const GestionarSocios = () => {
   const reducedMotion = useReducedMotion();
 
   const CASCADE_COUNT = 10;
-  const CASCADE_STAGGER_MS = 50;   // debe coincidir con CSS --cascade-stagger
-  const CASCADE_DURATION_MS = 450; // debe coincidir con CSS --cascade-duration
+  const CASCADE_STAGGER_MS = 50; // mantiene tu animación
+  const CASCADE_DURATION_MS = 450;
   const CASCADE_OFF_DELAY =
     CASCADE_DURATION_MS + CASCADE_STAGGER_MS * (CASCADE_COUNT - 1) + 150;
 
   const [cascadeEnabled, setCascadeEnabled] = useState(false);
   const cascadeTimerRef = useRef(null);
-  const searchCascadeTimerRef = useRef(null); // ⬅️ debounce para el buscador
+  const searchCascadeTimerRef = useRef(null);
 
   const triggerCascade = useCallback(() => {
     if (reducedMotion) return;
@@ -821,7 +853,6 @@ const GestionarSocios = () => {
     );
   }, [reducedMotion, CASCADE_OFF_DELAY]);
 
-  // Cascada inicial al montar
   useEffect(() => {
     triggerCascade();
     return () => {
@@ -830,7 +861,6 @@ const GestionarSocios = () => {
     };
   }, [triggerCascade]);
 
-  // ⏱️ Cascada por "pausa" al escribir en el buscador (debounce corto)
   useEffect(() => {
     if (reducedMotion) return;
     const term = (deferredBusqueda || "").trim();
@@ -852,7 +882,7 @@ const GestionarSocios = () => {
     setExclusiveFilter("none");
     setFilaSeleccionada(null);
     setSocioSeleccionado(null);
-    triggerCascade(); // 👈 reactiva cascada al limpiar
+    triggerCascade();
   }, [setExclusiveFilter, triggerCascade]);
 
   const handleFiltrarPorLetra = useCallback(
@@ -862,7 +892,7 @@ const GestionarSocios = () => {
 
       if (!dataLoaded) await ensureDataLoaded();
       else revalidate();
-      triggerCascade(); // 👈 cascada al aplicar filtro
+      triggerCascade();
     },
     [
       dataLoaded,
@@ -882,7 +912,7 @@ const GestionarSocios = () => {
 
       if (!dataLoaded) await ensureDataLoaded();
       else revalidate();
-      triggerCascade(); // 👈 cascada al aplicar filtro
+      triggerCascade();
     },
     [
       dataLoaded,
@@ -901,7 +931,7 @@ const GestionarSocios = () => {
     setSocioSeleccionado(null);
     await ensureDataLoaded();
     revalidate();
-    triggerCascade(); // 👈 cascada al mostrar todos
+    triggerCascade();
   }, [ensureDataLoaded, revalidate, setExclusiveFilter, triggerCascade]);
 
   const onSelect = useCallback((index, socio) => {
@@ -1174,7 +1204,7 @@ const GestionarSocios = () => {
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   e.currentTarget.blur();
-                  triggerCascade(); // 👈 Enter dispara cascada
+                  triggerCascade();
                 }
               }}
               inputMode="search"
@@ -1183,7 +1213,7 @@ const GestionarSocios = () => {
               <FontAwesomeIcon
                 icon={faTimes}
                 className="gessoc_clear-search-icon"
-                onClick={limpiarFiltros} // 👈 usar limpiarFiltros para reactivar cascada
+                onClick={limpiarFiltros}
                 title="Limpiar búsqueda"
               />
             )}
@@ -1193,7 +1223,7 @@ const GestionarSocios = () => {
               onClick={async () => {
                 if (!dataLoaded) await ensureDataLoaded();
                 revalidate();
-                triggerCascade(); // 👈 cascada al “confirmar” búsqueda
+                triggerCascade();
               }}
             >
               <FontAwesomeIcon icon={faMagnifyingGlass} className="gessoc_search-icon" />
@@ -1423,7 +1453,7 @@ const GestionarSocios = () => {
                   itemSize={itemSizeMobile}
                   width="100%"
                   overscanCount={overscan}
-                  itemData={{ ...itemData, gap: cardGap }}
+                  itemData={{ ...itemData, gap: 12 }}
                   className="gessoc_cards_list"
                   itemKey={(idx, data) => data.items[idx]?.id ?? idx}
                 >

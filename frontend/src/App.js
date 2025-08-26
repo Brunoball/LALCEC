@@ -1,6 +1,6 @@
 // src/App.js
 import React from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation, useNavigate } from "react-router-dom";
 
 import Inicio from "./components/login/inicio";
 import Registro from "./components/login/Registro";
@@ -25,9 +25,95 @@ import SociosBaja from "./components/socios/SociosBaja";
 // >>> NUEVO: pantalla de empresas dadas de baja
 import EmpresasBaja from "./components/Empresas/EmpresasBaja";
 
+/* =========================================================
+   🔒 Cierre de sesión por inactividad (global)
+   - Cambiá INACTIVITY_MINUTES para ajustar el tiempo.
+   - Escucha mouse, teclado, scroll, toques y visibilidad.
+   - Solo corre cuando hay token y NO estás en "/".
+========================================================= */
+const INACTIVITY_MINUTES = 60;   
+const INACTIVITY_MS = INACTIVITY_MINUTES * 60 * 1000;
+
+
+function InactivityLogout() {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  React.useEffect(() => {
+    let timerId = null;
+
+    const hasToken = () => {
+      try {
+        return !!localStorage.getItem("token");
+      } catch {
+        return false;
+      }
+    };
+
+    const doLogout = (reason = "inactivity") => {
+      try {
+        sessionStorage.clear();
+      } catch {}
+      try {
+        localStorage.removeItem("token");
+        localStorage.removeItem("usuario");
+      } catch {}
+
+      // Opcional: podés mostrar un aviso con sessionStorage si querés
+      // sessionStorage.setItem("logout_reason", reason);
+
+      navigate("/", { replace: true });
+    };
+
+    const resetTimer = () => {
+      if (!hasToken()) return; // si no hay sesión, no corras
+      if (location.pathname === "/") return; // en login no tiene sentido
+      if (timerId) clearTimeout(timerId);
+      timerId = setTimeout(() => doLogout("inactivity"), INACTIVITY_MS);
+    };
+
+    const activityEvents = [
+      "mousemove",
+      "mousedown",
+      "keydown",
+      "scroll",
+      "touchstart",
+      "click"
+    ];
+
+    const onActivity = () => resetTimer();
+
+    // También manejar pestaña oculta/visible
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") {
+        resetTimer();
+      }
+    };
+
+    // Instalar listeners
+    activityEvents.forEach((ev) => window.addEventListener(ev, onActivity, { passive: true }));
+    document.addEventListener("visibilitychange", onVisibility);
+
+    // Disparar al montar si aplica
+    resetTimer();
+
+    // Limpiar
+    return () => {
+      if (timerId) clearTimeout(timerId);
+      activityEvents.forEach((ev) => window.removeEventListener(ev, onActivity));
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [location, navigate]);
+
+  return null; // No renderiza UI
+}
+
 const App = () => {
   return (
     <BrowserRouter>
+      {/* ⬇️ Activá el cierre por inactividad en toda la app */}
+      <InactivityLogout />
+
       <Routes>
         <Route path="/" element={<Inicio />} />
         <Route path="/registro" element={<Registro />} />

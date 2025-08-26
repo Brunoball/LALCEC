@@ -1,3 +1,5 @@
+/* src/components/empresas/GestionarEmpresas.css */
+
 /* ================================
    Variables y base
 ==================================*/
@@ -117,6 +119,12 @@
   --cascade-stagger: 50ms;                 /* 0.05s por ítem */
   --cascade-duration: .45s;
   --cascade-ease: cubic-bezier(.2,.7,.2,1);
+
+  /* ===== SAFE AREAS (fallbacks) ===== */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
 }
 
 /* Reset y base */
@@ -524,18 +532,11 @@ input:-webkit-autofill { background-color: transparent !important; }
 
 /* ================================
    Animaciones en cascada (ACTUALIZADO)
-   - Aplica directo en cada fila/tarjeta con .emp_cascade
-   - Usa variable CSS --stagger (0,1,2,...)
-   - Compatibilidad con prefers-reduced-motion
 ==================================*/
-
-/* Keyframes */
 @keyframes emp_cascadeIn {
   0% { opacity: 0; transform: translate3d(0, 8px, 0); }
   100% { opacity: 1; transform: translate3d(0, 0, 0); }
 }
-
-/* Clase para aplicar la cascada por elemento (fila o tarjeta) */
 .emp_cascade {
   opacity: 0;
   animation: emp_cascadeIn var(--cascade-duration) var(--cascade-ease) both;
@@ -545,27 +546,6 @@ input:-webkit-autofill { background-color: transparent !important; }
   will-change: transform, opacity;
   contain: content;
 }
-
-/* Optimización de rendimiento para tarjetas también */
-.emp_card {
-  position: relative;
-  background: #fff;
-  border: 1px solid var(--gray-200);
-  border-radius: 14px;
-  box-shadow: var(--shadow-sm);
-  padding: 12px 12px 8px 12px;
-  overflow: hidden;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-
-  /* Optimización */
-  backface-visibility: hidden;
-  transform: translateZ(0);
-  will-change: transform, opacity;
-  contain: content;
-}
-
-/* Fallback COMPAT: si se sigue usando la clase de contenedor antigua,
-   se animan igual los hijos (fila/tarjeta) usando --stagger si está seteado */
 .emp_cascade-animation .emp_row,
 .emp_cascade-animation .emp_card {
   opacity: 0;
@@ -573,7 +553,6 @@ input:-webkit-autofill { background-color: transparent !important; }
   animation-delay: calc(var(--cascade-stagger) * var(--stagger, 0));
 }
 
-/* Accesibilidad: reduce motion */
 @media (prefers-reduced-motion: reduce) {
   .emp_cascade,
   .emp_cascade-animation .emp_row,
@@ -798,27 +777,29 @@ input:-webkit-autofill { background-color: transparent !important; }
 
 /* ================================
    MOBILE — tarjetas + navbar fija
-   (Título arriba; debajo buscador + filtros lado a lado)
    + FIX franja blanca superior
 ==================================*/
 @media (max-width: 768px) {
 
-  /* FIX: que el status bar no muestre franja blanca.
-     Forzamos el fondo global al gradiente naranja
-     y rellenamos el safe-area superior. */
+  /* FIX: que el status bar no muestre franja blanca. */
   html, body {
     margin: 0;
     padding: 0;
     background: linear-gradient(90deg, #fa7815, #ee6914) !important;
     background-color: #fa7815 !important;
+    background-attachment: fixed;
+    overscroll-behavior-y: contain;
   }
-  body::before{
-    content:"";
+
+  body::before {
+    content: "";
     position: fixed;
-    top: 0; left: 0; right: 0;
-    height: env(safe-area-inset-top, 0px);
+    top: 0;
+    left: 0;
+    right: 0;
+    height: max(env(safe-area-inset-top, 0px), 24px);
     background: linear-gradient(90deg, #fa7815, #ee6914);
-    z-index: 999;
+    z-index: 1;
     pointer-events: none;
   }
 
@@ -829,9 +810,7 @@ input:-webkit-autofill { background-color: transparent !important; }
     flex-direction: column;
   }
 
-  /* Header como grid con 2 filas:
-     1) title
-     2) search | filters  */
+  /* Header como grid con 2 filas */
   .emp_front-row-emp {
     position: sticky;
     top: 0;
@@ -840,17 +819,15 @@ input:-webkit-autofill { background-color: transparent !important; }
     gap: 10px;
 
     display: grid;
-    grid-template-columns: 1fr 1fr;     /* ← ambos del mismo ancho */
+    grid-template-columns: 1fr 1fr;
     grid-template-areas:
       "title title"
       "search filters";
     align-items: center;
 
-    /* aseguramos el mismo gradiente en el header */
     background: linear-gradient(90deg, #fa7815, #ee6914);
   }
 
-  /* Asignación de áreas sin tocar el JSX */
   .emp_front-row-emp > .emp_empresa-title { grid-area: title; }
   .emp_front-row-emp > .emp_search-input-container { grid-area: search; }
   .emp_front-row-emp > .emp_filtros-container { grid-area: filters; }
@@ -858,11 +835,10 @@ input:-webkit-autofill { background-color: transparent !important; }
   .emp_empresa-title {
     font-size: 1.3rem;
     margin: 0;
-    justify-content: center;  /* centrado en mobile */
+    justify-content: center;
     flex: initial;
   }
 
-  /* Eliminar órdenes previos en mobile y ajustar anchos */
   .emp_search-input-container {
     width: 100%;
     max-width: none;
@@ -874,14 +850,14 @@ input:-webkit-autofill { background-color: transparent !important; }
   }
 
   .emp_filtros-container {
-    width: 100%;                 /* ← ocupa el 50% del grid */
+    width: 100%;
     order: initial !important;
     position: relative;
-    justify-self: stretch;       /* ← se estira en su celda */
+    justify-self: stretch;
     display: flex;
   }
   .emp_filtros-button {
-    width: 100%;                 /* ← botón del mismo ancho que el buscador */
+    width: 100%;
     justify-content: center;
     border: 1px dashed rgba(255,255,255,0.45);
     background: rgba(255,255,255,0.18);
@@ -890,11 +866,11 @@ input:-webkit-autofill { background-color: transparent !important; }
   .emp_filtros-menu {
     position: absolute;
     top: calc(100% + 8px);
-    right: 0;                    /* anclar al botón */
+    right: 0;
     left: auto;
     margin: 0;
     border-radius: 12px;
-    width: min(90vw, 420px);     /* ancho cómodo en mobile */
+    width: min(90vw, 420px);
     box-shadow: 0 10px 30px rgba(0,0,0,0.15);
     z-index: 1000;
     max-height: 60vh;
@@ -922,6 +898,7 @@ input:-webkit-autofill { background-color: transparent !important; }
     -webkit-overflow-scrolling: touch;
     padding: 0;
     background: #fff; /* contenido principal blanco bajo el header */
+    padding-bottom: calc(64px + var(--safe-bottom)); /* para que no tape el footer */
   }
 
   .emp_contenedor-list-items {
@@ -938,6 +915,7 @@ input:-webkit-autofill { background-color: transparent !important; }
     margin-bottom: 6px;
     padding: .5rem 1.5rem 0;
     padding-bottom: 2px;
+    width: 100%;
   }
 
   .emp_left-inline{
@@ -961,7 +939,6 @@ input:-webkit-autofill { background-color: transparent !important; }
     padding-left: 6px;
   }
 
-  /* Mini tarjeta responsive */
   .emp_chip-mini{
     padding: 4px 8px;
     gap: 6px;
@@ -989,7 +966,6 @@ input:-webkit-autofill { background-color: transparent !important; }
   .emp_socios-desktop { display: none; }
   .emp_socios-mobile { display: inline; }
 
-  /* >>> textos de leyenda responsivos en mobile */
   .emp_legend-desktop { display: none; }
   .emp_legend-mobile  { display: inline; }
 
@@ -1059,7 +1035,6 @@ input:-webkit-autofill { background-color: transparent !important; }
     z-index: 70;
   }
 
-  /* Botón “Volver” */
   .emp_volver-atras {
     flex: 0 0 auto;
     width: 44px;
@@ -1186,4 +1161,23 @@ input:-webkit-autofill { background-color: transparent !important; }
     overflow: hidden;
     text-overflow: ellipsis;
   }
+}
+
+/* ================================
+   Tarjetas (mobile / también base estilos)
+==================================*/
+.emp_card {
+  position: relative;
+  background: #fff;
+  border: 1px solid var(--gray-200);
+  border-radius: 14px;
+  box-shadow: var(--shadow-sm);
+  padding: 12px 12px 8px 12px;
+  overflow: hidden;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+
+  backface-visibility: hidden;
+  transform: translateZ(0);
+  will-change: transform, opacity;
+  contain: content;
 }
