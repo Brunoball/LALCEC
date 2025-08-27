@@ -2,7 +2,7 @@
 import React, {
   useState,
   useEffect,
-  useLayoutEffect,   // ⬅️ NUEVO: para aplicar antes del primer paint
+  useLayoutEffect,
   useCallback,
   useMemo,
   useRef,
@@ -61,7 +61,6 @@ const useWindowHeight = (offset = 0) => {
   return h;
 };
 
-// Prefiere una sola vista según media-query
 const useMediaQuery = (query) => {
   const [match, setMatch] = useState(() => window.matchMedia(query).matches);
   useEffect(() => {
@@ -77,7 +76,6 @@ const useMediaQuery = (query) => {
   return match;
 };
 
-// Detecta preferencia de "reduced motion"
 const useReducedMotion = () => {
   const [reduced, setReduced] = useState(() =>
     window.matchMedia("(prefers-reduced-motion: reduce)").matches
@@ -91,15 +89,14 @@ const useReducedMotion = () => {
   return reduced;
 };
 
-// Normalizador común (mapea objeto/string a label)
 const medioLabel = (m) => {
   if (m == null) return "";
   if (typeof m === "string") return m.trim();
   return String(m.Medio_Pago ?? m.label ?? m.name ?? "").trim();
 };
 
-/* ======= Hooks para arreglar barra/alto móvil ======= */
-// 1) Altura real del viewport móvil (define --vh)
+/* ======= Hooks mobile ======= */
+// 1) Altura real del viewport móvil: define --vh (por si lo necesitás)
 const useFixMobileVh = () => {
   useEffect(() => {
     const setVh = () => {
@@ -116,13 +113,13 @@ const useFixMobileVh = () => {
   }, []);
 };
 
-// 2) Estiliza barra del navegador + safe areas (evita franja blanca superior)
-//    ⬅️ AHORA usa useLayoutEffect para ejecutarse antes del primer paint
-const useMobileChromeStyling = (color = "#fa7815") => {
+// 2) Meta/viewport/safe-areas (sin pintar fondo naranja)
+const useMobileChromeStyling = (color = null) => {
   useLayoutEffect(() => {
-    // Helper para crear/actualizar meta
     const upsertMeta = (name, content, attrs = {}) => {
-      let meta = document.querySelector(`meta[name="${name}"]${attrs.media ? `[media="${attrs.media}"]` : ""}`);
+      let sel = `meta[name="${name}"]`;
+      if (attrs.media) sel += `[media="${attrs.media}"]`;
+      let meta = document.querySelector(sel);
       if (!meta) {
         meta = document.createElement("meta");
         meta.setAttribute("name", name);
@@ -133,20 +130,16 @@ const useMobileChromeStyling = (color = "#fa7815") => {
       return meta;
     };
 
-    // theme-color (dos variantes por si el UA respeta media queries)
-    const metaThemeLight = upsertMeta("theme-color", color, { media: "(prefers-color-scheme: light)" });
-    const metaThemeDark  = upsertMeta("theme-color", color, { media: "(prefers-color-scheme: dark)" });
-
-    // viewport con viewport-fit=cover (para notch)
-    const metaViewport = document.querySelector('meta[name="viewport"]');
-    if (metaViewport && !/viewport-fit=cover/.test(metaViewport.content)) {
-      metaViewport.setAttribute(
-        "content",
-        `${metaViewport.content}, viewport-fit=cover`
-      );
+    if (color) {
+      upsertMeta("theme-color", color, { media: "(prefers-color-scheme: light)" });
+      upsertMeta("theme-color", color, { media: "(prefers-color-scheme: dark)" });
     }
 
-    // iOS status bar translucida (si aplica)
+    const metaViewport = document.querySelector('meta[name="viewport"]');
+    if (metaViewport && !/viewport-fit=cover/.test(metaViewport.content)) {
+      metaViewport.setAttribute("content", `${metaViewport.content}, viewport-fit=cover`);
+    }
+
     let metaCapable = document.querySelector('meta[name="apple-mobile-web-app-capable"]');
     if (!metaCapable) {
       metaCapable = document.createElement("meta");
@@ -162,22 +155,6 @@ const useMobileChromeStyling = (color = "#fa7815") => {
       document.head.appendChild(metaStatus);
     }
     metaStatus.setAttribute("content", "black-translucent");
-
-    // color de fondo del <html> para que el área del status bar no quede blanca
-    const prevHtmlBg = document.documentElement.style.backgroundColor;
-    document.documentElement.style.backgroundColor = color;
-
-    // también aseguramos que el body no fuerce otro fondo durante el 1er paint
-    const prevBodyBg = document.body.style.backgroundColor;
-    if (!document.body.style.backgroundColor) {
-      document.body.style.backgroundColor = color;
-    }
-
-    return () => {
-      document.documentElement.style.backgroundColor = prevHtmlBg;
-      document.body.style.backgroundColor = prevBodyBg;
-      // No removemos metas (no hace falta y evita flicker si el usuario vuelve)
-    };
   }, [color]);
 };
 
@@ -200,10 +177,7 @@ const SocioRow = React.memo(
 
     return (
       <div
-        style={{
-          ...style,
-          ...(applyCascade ? { "--stagger": stagger } : {}),
-        }}
+        style={{ ...style, ...(applyCascade ? { "--stagger": stagger } : {}) }}
         className={`gessoc_row ${applyCascade ? "gessoc_cascade" : ""} ${rowClass}`}
         onClick={() => data.onSelect(index, socio)}
       >
@@ -409,28 +383,25 @@ const GestionarSocios = () => {
   const navigate = useNavigate();
   const filtrosRef = useRef(null);
 
-  // NEW: refs para medir header y footer en mobile
+  // refs para medir header y footer
   const headerRef = useRef(null);
   const footerRef = useRef(null);
 
-  // 🔧 FIX móviles: alto real + barra del navegador con color de marca (pre-paint)
+  // 📱 Fix altura + metas (sin fondo naranja)
   useFixMobileVh();
-  useMobileChromeStyling("#fa7815");
+  useMobileChromeStyling(null);
 
   /* ---------- Estado base ---------- */
   const [sociosRaw, setSociosRaw] = useState([]);
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState(null);
 
-  // control de carga diferida
   const [dataLoaded, setDataLoaded] = useState(false);
   const CACHE_KEY = "sociosCache:v1";
 
-  /* ---------- Revalidación ---------- */
   const refreshingRef = useRef(false);
   const [lastSync, setLastSync] = useState(0);
 
-  /* ---------- Selecciones / modales ---------- */
   const [filaSeleccionada, setFilaSeleccionada] = useState(null);
   const [socioSeleccionado, setSocioSeleccionado] = useState(null);
 
@@ -449,16 +420,12 @@ const GestionarSocios = () => {
 
   const [filtrosActivos, setFiltrosActivos] = useState(() => {
     const saved = localStorage.getItem("sociosFilters");
-    return saved
-      ? JSON.parse(saved)
-      : { letras: [], mediosPago: [], todos: false };
+    return saved ? JSON.parse(saved) : { letras: [], mediosPago: [], todos: false };
   });
 
   const [mostrarMenuFiltros, setMostrarMenuFiltros] = useState(false);
-  const [mostrarSubmenuAlfabetico, setMostrarSubmenuAlfabetico] =
-    useState(false);
-  const [mostrarSubmenuTransferencia, setMostrarSubmenuTransferencia] =
-    useState(false);
+  const [mostrarSubmenuAlfabetico, setMostrarSubmenuAlfabetico] = useState(false);
+  const [mostrarSubmenuTransferencia, setMostrarSubmenuTransferencia] = useState(false);
 
   /* ---------- Toast ---------- */
   const [toast, setToast] = useState({ show: false, tipo: "exito", msg: "" });
@@ -467,7 +434,7 @@ const GestionarSocios = () => {
     window.setTimeout(() => setToast({ show: false, tipo: "exito", msg: "" }), ms);
   }, []);
 
-  /* ---------- Persistencia filtros (micro debounce) ---------- */
+  /* ---------- Persistencia filtros ---------- */
   useEffect(() => {
     const t = window.setTimeout(() => {
       localStorage.setItem("sociosSearchTerm", busqueda);
@@ -528,12 +495,10 @@ const GestionarSocios = () => {
           setDataLoaded(true);
         }
       }
-    } catch {
-      /* ignore */
-    }
+    } catch { /* ignore */ }
   }, []);
 
-  /* ---------- Revalidación (siempre trae lo último) ---------- */
+  /* ---------- Revalidación ---------- */
   const revalidate = useCallback(async () => {
     if (refreshingRef.current) return;
     refreshingRef.current = true;
@@ -552,10 +517,7 @@ const GestionarSocios = () => {
         for (let i = 0; i < arr.length; i++) {
           const a = arr[i];
           const b = old[i];
-          if (byId(a) !== byId(b)) {
-            shouldUpdate = true;
-            break;
-          }
+          if (byId(a) !== byId(b)) { shouldUpdate = true; break; }
           if (
             a.nombre !== b?.nombre ||
             a.apellido !== b?.apellido ||
@@ -566,31 +528,25 @@ const GestionarSocios = () => {
             a.observacion !== b?.observacion ||
             a.meses_pagados !== b?.meses_pagados ||
             a.fecha_union !== b?.fecha_union
-          ) {
-            shouldUpdate = true;
-            break;
-          }
+          ) { shouldUpdate = true; break; }
         }
       }
 
       if (shouldUpdate) {
         setSociosRaw(arr);
-        try {
-          sessionStorage.setItem(CACHE_KEY, JSON.stringify(arr));
-        } catch {}
+        try { sessionStorage.setItem(CACHE_KEY, JSON.stringify(arr)); } catch {}
         setLastSync(Date.now());
       }
       setError(null);
       setDataLoaded(true);
     } catch (e) {
       console.error(e);
-      // mantenemos último bueno
     } finally {
       refreshingRef.current = false;
     }
   }, [sociosRaw]);
 
-  /* ---------- Carga perezosa inicial + revalidación ---------- */
+  /* ---------- Carga inicial ---------- */
   const ensureDataLoaded = useCallback(async () => {
     if (dataLoaded && sociosRaw.length > 0) return;
     setCargando(true);
@@ -605,9 +561,7 @@ const GestionarSocios = () => {
       setSociosRaw(arr);
       setError(null);
       setDataLoaded(true);
-      try {
-        sessionStorage.setItem(CACHE_KEY, JSON.stringify(arr));
-      } catch {}
+      try { sessionStorage.setItem(CACHE_KEY, JSON.stringify(arr)); } catch {}
     } catch (e) {
       console.error(e);
       setError("Error al cargar los datos");
@@ -628,9 +582,7 @@ const GestionarSocios = () => {
 
   useEffect(() => {
     const onFocus = () => revalidate();
-    const onVis = () => {
-      if (document.visibilityState === "visible") revalidate();
-    };
+    const onVis = () => { if (document.visibilityState === "visible") revalidate(); };
     const onPageShow = () => revalidate();
     window.addEventListener("focus", onFocus, { passive: true });
     document.addEventListener("visibilitychange", onVis, { passive: true });
@@ -642,7 +594,7 @@ const GestionarSocios = () => {
     };
   }, [revalidate]);
 
-  /* ---------- Pre-procesamiento liviano ---------- */
+  /* ---------- Estado pago ---------- */
   const getEstadoPago = useCallback((mesesPagadosStr, fechaUnion) => {
     let pagosSet = null;
     if (mesesPagadosStr && mesesPagadosStr !== "-" && mesesPagadosStr !== "NULL") {
@@ -692,11 +644,8 @@ const GestionarSocios = () => {
 
       const estado = getEstadoPago(s?.meses_pagados, s?.fecha_union);
       const estadoClase =
-        estado === "al-dia"
-          ? "gessoc_verde"
-          : estado === "debe-1-2"
-          ? "gessoc_amarillo"
-          : "gessoc_rojo";
+        estado === "al-dia" ? "gessoc_verde" :
+        estado === "debe-1-2" ? "gessoc_amarillo" : "gessoc_rojo";
 
       return {
         ...s,
@@ -717,12 +666,11 @@ const GestionarSocios = () => {
     });
   }, [sociosRaw, getEstadoPago]);
 
-  /* ---------- Medios de pago (API + fallback) ---------- */
+  /* ---------- Medios de pago ---------- */
   const [mediosDePago, setMediosDePago] = useState([]);
 
   useEffect(() => {
     let cancelled = false;
-
     const cargarMedios = async () => {
       const trySocios = async () => {
         try {
@@ -733,9 +681,7 @@ const GestionarSocios = () => {
           const labels = arr.map(medioLabel).filter(Boolean);
           if (labels.length) return labels;
           throw new Error("Sin labels en obtener_datos_socios");
-        } catch {
-          return null;
-        }
+        } catch { return null; }
       };
 
       const tryEmpresas = async () => {
@@ -747,9 +693,7 @@ const GestionarSocios = () => {
           const labels = arr.map(medioLabel).filter(Boolean);
           if (labels.length) return labels;
           throw new Error("Sin labels en obtener_datos_empresas");
-        } catch {
-          return null;
-        }
+        } catch { return null; }
       };
 
       const deriveFromSocios = () => {
@@ -767,7 +711,6 @@ const GestionarSocios = () => {
       if (!labels) labels = deriveFromSocios();
 
       labels.sort((a, b) => a.localeCompare(b, "es", { sensitivity: "base" }));
-
       if (!cancelled) setMediosDePago(labels);
     };
 
@@ -783,9 +726,7 @@ const GestionarSocios = () => {
     const letrasArr = filtrosActivos.letras?.length ? filtrosActivos.letras : null;
     const mediosArr = filtrosActivos.mediosPago?.length ? filtrosActivos.mediosPago : null;
 
-    if (!useSearch && !letrasArr && !mediosArr && !filtrosActivos.todos) {
-      return [];
-    }
+    if (!useSearch && !letrasArr && !mediosArr && !filtrosActivos.todos) return [];
 
     const letrasSet = letrasArr ? new Set(letrasArr.map((l) => l.toUpperCase())) : null;
     const mediosSet = mediosArr ? new Set(mediosArr) : null;
@@ -793,51 +734,40 @@ const GestionarSocios = () => {
     const out = [];
     for (let i = 0; i < socios.length; i++) {
       const s = socios[i];
-
       if (useSearch) {
-        if (
-          s._nombreLower.indexOf(term) === -1 &&
-          s._apellidoLower.indexOf(term) === -1
-        ) {
-          continue;
-        }
+        if (s._nombreLower.indexOf(term) === -1 && s._apellidoLower.indexOf(term) === -1) continue;
       }
       if (letrasSet && !letrasSet.has(s._letraApe)) continue;
       if (mediosSet && !mediosSet.has(s._medioStr)) continue;
-
       out.push(s);
     }
     return out;
   }, [socios, deferredBusqueda, filtrosActivos]);
 
-  /* ---------- Handlers (exclusivos) ---------- */
-  const handleBusquedaInputChange = useCallback(
-    async (e) => {
-      const value = e.target.value;
-      setExclusiveFilter("search", value);
+  /* ---------- Handlers ---------- */
+  const handleBusquedaInputChange = useCallback(async (e) => {
+    const value = e.target.value;
+    setExclusiveFilter("search", value);
 
-      if (!dataLoaded) {
-        window.requestIdleCallback
-          ? window.requestIdleCallback(() => ensureDataLoaded())
-          : ensureDataLoaded();
-      } else {
-        window.requestIdleCallback
-          ? window.requestIdleCallback(() => revalidate())
-          : setTimeout(revalidate, 0);
-      }
-    },
-    [dataLoaded, ensureDataLoaded, revalidate, setExclusiveFilter]
-  );
+    if (!dataLoaded) {
+      window.requestIdleCallback
+        ? window.requestIdleCallback(() => ensureDataLoaded())
+        : ensureDataLoaded();
+    } else {
+      window.requestIdleCallback
+        ? window.requestIdleCallback(() => revalidate())
+        : setTimeout(revalidate, 0);
+    }
+  }, [dataLoaded, ensureDataLoaded, revalidate, setExclusiveFilter]);
 
-  /* === Trigger cascada controlado === */
+  /* === Cascada === */
   const isMobile = useMediaQuery("(max-width: 900px)");
   const reducedMotion = useReducedMotion();
 
   const CASCADE_COUNT = 10;
-  const CASCADE_STAGGER_MS = 50; // mantiene tu animación
+  const CASCADE_STAGGER_MS = 50;
   const CASCADE_DURATION_MS = 450;
-  const CASCADE_OFF_DELAY =
-    CASCADE_DURATION_MS + CASCADE_STAGGER_MS * (CASCADE_COUNT - 1) + 150;
+  const CASCADE_OFF_DELAY = CASCADE_DURATION_MS + CASCADE_STAGGER_MS * (CASCADE_COUNT - 1) + 150;
 
   const [cascadeEnabled, setCascadeEnabled] = useState(false);
   const cascadeTimerRef = useRef(null);
@@ -847,10 +777,7 @@ const GestionarSocios = () => {
     if (reducedMotion) return;
     setCascadeEnabled(true);
     if (cascadeTimerRef.current) clearTimeout(cascadeTimerRef.current);
-    cascadeTimerRef.current = setTimeout(
-      () => setCascadeEnabled(false),
-      CASCADE_OFF_DELAY
-    );
+    cascadeTimerRef.current = setTimeout(() => setCascadeEnabled(false), CASCADE_OFF_DELAY);
   }, [reducedMotion, CASCADE_OFF_DELAY]);
 
   useEffect(() => {
@@ -864,18 +791,10 @@ const GestionarSocios = () => {
   useEffect(() => {
     if (reducedMotion) return;
     const term = (deferredBusqueda || "").trim();
-    if (searchCascadeTimerRef.current) {
-      clearTimeout(searchCascadeTimerRef.current);
-    }
+    if (searchCascadeTimerRef.current) clearTimeout(searchCascadeTimerRef.current);
     if (term.length === 0) return;
-    searchCascadeTimerRef.current = setTimeout(() => {
-      triggerCascade();
-    }, 10);
-    return () => {
-      if (searchCascadeTimerRef.current) {
-        clearTimeout(searchCascadeTimerRef.current);
-      }
-    };
+    searchCascadeTimerRef.current = setTimeout(() => triggerCascade(), 10);
+    return () => { if (searchCascadeTimerRef.current) clearTimeout(searchCascadeTimerRef.current); };
   }, [deferredBusqueda, triggerCascade, reducedMotion]);
 
   const limpiarFiltros = useCallback(() => {
@@ -885,44 +804,24 @@ const GestionarSocios = () => {
     triggerCascade();
   }, [setExclusiveFilter, triggerCascade]);
 
-  const handleFiltrarPorLetra = useCallback(
-    async (letra) => {
-      const isSame = filtrosActivos.letras?.[0] === letra;
-      setExclusiveFilter(isSame ? "none" : "letra", isSame ? null : letra);
+  const handleFiltrarPorLetra = useCallback(async (letra) => {
+    const isSame = filtrosActivos.letras?.[0] === letra;
+    setExclusiveFilter(isSame ? "none" : "letra", isSame ? null : letra);
 
-      if (!dataLoaded) await ensureDataLoaded();
-      else revalidate();
-      triggerCascade();
-    },
-    [
-      dataLoaded,
-      ensureDataLoaded,
-      revalidate,
-      filtrosActivos.letras,
-      setExclusiveFilter,
-      triggerCascade,
-    ]
-  );
+    if (!dataLoaded) await ensureDataLoaded();
+    else revalidate();
+    triggerCascade();
+  }, [dataLoaded, ensureDataLoaded, revalidate, filtrosActivos.letras, setExclusiveFilter, triggerCascade]);
 
-  const handleFiltrarPorMedioPago = useCallback(
-    async (medio) => {
-      const actual = filtrosActivos.mediosPago?.[0] ?? null;
-      const isSame = actual === medio;
-      setExclusiveFilter(isSame ? "none" : "medio", isSame ? null : medio);
+  const handleFiltrarPorMedioPago = useCallback(async (medio) => {
+    const actual = filtrosActivos.mediosPago?.[0] ?? null;
+    const isSame = actual === medio;
+    setExclusiveFilter(isSame ? "none" : "medio", isSame ? null : medio);
 
-      if (!dataLoaded) await ensureDataLoaded();
-      else revalidate();
-      triggerCascade();
-    },
-    [
-      dataLoaded,
-      ensureDataLoaded,
-      revalidate,
-      filtrosActivos.mediosPago,
-      setExclusiveFilter,
-      triggerCascade,
-    ]
-  );
+    if (!dataLoaded) await ensureDataLoaded();
+    else revalidate();
+    triggerCascade();
+  }, [dataLoaded, ensureDataLoaded, revalidate, filtrosActivos.mediosPago, setExclusiveFilter, triggerCascade]);
 
   const handleMostrarTodos = useCallback(async () => {
     setExclusiveFilter("todos");
@@ -939,14 +838,11 @@ const GestionarSocios = () => {
     setSocioSeleccionado(socio);
   }, []);
 
-  const handleEditarSocio = useCallback(
-    (socio) => {
-      const id = getSocioId(socio);
-      if (!id) return;
-      navigate(`/editarSocio/${id}`);
-    },
-    [navigate]
-  );
+  const handleEditarSocio = useCallback((socio) => {
+    const id = getSocioId(socio);
+    if (!id) return;
+    navigate(`/editarSocio/${id}`);
+  }, [navigate]);
 
   const handleConfirmarEliminar = useCallback((socio) => {
     setSocioSeleccionado(socio);
@@ -972,81 +868,65 @@ const GestionarSocios = () => {
   }, []);
 
   /* ---------- Acciones server ---------- */
-  const handleEliminarSocio = useCallback(
-    async () => {
-      if (!socioSeleccionado) return;
-      try {
-        const idSel = getSocioId(socioSeleccionado);
-        const response = await fetch(
-          `${BASE_URL}/api.php?action=eliminar_socio`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ id_socio: idSel }),
-          }
-        );
-        const data = await response.json();
-        if (data?.exito || data?.success) {
-          setSociosRaw((prev) => {
-            const next = prev.filter((s) => getSocioId(s) !== idSel);
-            try {
-              sessionStorage.setItem(CACHE_KEY, JSON.stringify(next));
-            } catch {}
-            return next;
-          });
-          setMostrarModalEliminar(false);
-          showToast("Socio eliminado correctamente");
-          revalidate();
-        } else {
-          showToast(data?.mensaje || "Error al eliminar", "error");
-        }
-      } catch {
-        showToast("Problema al eliminar el socio", "error");
+  const handleEliminarSocio = useCallback(async () => {
+    if (!socioSeleccionado) return;
+    try {
+      const idSel = getSocioId(socioSeleccionado);
+      const response = await fetch(`${BASE_URL}/api.php?action=eliminar_socio`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id_socio: idSel }),
+      });
+      const data = await response.json();
+      if (data?.exito || data?.success) {
+        setSociosRaw((prev) => {
+          const next = prev.filter((s) => getSocioId(s) !== idSel);
+          try { sessionStorage.setItem(CACHE_KEY, JSON.stringify(next)); } catch {}
+          return next;
+        });
+        setMostrarModalEliminar(false);
+        showToast("Socio eliminado correctamente");
+        revalidate();
+      } else {
+        showToast(data?.mensaje || "Error al eliminar", "error");
       }
-    },
-    [socioSeleccionado, showToast, revalidate]
-  );
+    } catch {
+      showToast("Problema al eliminar el socio", "error");
+    }
+  }, [socioSeleccionado, showToast, revalidate]);
 
-  const handleConfirmarBajaSocio = useCallback(
-    async (socio, motivo) => {
-      const id = getSocioId(socio);
-      const m = (motivo || "").trim();
-      if (!id || !m) {
-        showToast("Motivo requerido para dar de baja.", "error");
-        return;
+  const handleConfirmarBajaSocio = useCallback(async (socio, motivo) => {
+    const id = getSocioId(socio);
+    const m = (motivo || "").trim();
+    if (!id || !m) {
+      showToast("Motivo requerido para dar de baja.", "error");
+      return;
+    }
+    try {
+      const response = await fetch(`${BASE_URL}/api.php?action=dar_baja&op=dar_baja`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idSocio: id, motivo: m }),
+      });
+      const result = await response.json();
+      if (response.ok && (result?.exito || result?.success)) {
+        setSociosRaw((prev) => {
+          const next = prev.filter((s) => getSocioId(s) !== id);
+          try { sessionStorage.setItem(CACHE_KEY, JSON.stringify(next)); } catch {}
+          return next;
+        });
+        setMostrarModalBaja(false);
+        showToast(result?.mensaje || "Socio dado de baja");
+        revalidate();
+      } else {
+        showToast(result?.mensaje || "No se pudo dar de baja", "error");
       }
-      try {
-        const response = await fetch(
-          `${BASE_URL}/api.php?action=dar_baja&op=dar_baja`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ idSocio: id, motivo: m }),
-          }
-        );
-        const result = await response.json();
-        if (response.ok && (result?.exito || result?.success)) {
-          setSociosRaw((prev) => {
-            const next = prev.filter((s) => getSocioId(s) !== id);
-            try {
-              sessionStorage.setItem(CACHE_KEY, JSON.stringify(next));
-            } catch {}
-            return next;
-          });
-          setMostrarModalBaja(false);
-          showToast(result?.mensaje || "Socio dado de baja");
-          revalidate();
-        } else {
-          showToast(result?.mensaje || "No se pudo dar de baja", "error");
-        }
-      } catch {
-        showToast("Problema al dar de baja", "error");
-      }
-    },
-    [showToast, revalidate]
-  );
+    } catch {
+      showToast("Problema al dar de baja", "error");
+    }
+  }, [showToast, revalidate]);
 
-  /* ---------- cierre menú filtros al click afuera ---------- */
+  /* ---------- cerrar menú filtros al click afuera ---------- */
   useClickOutside(filtrosRef, () => {
     if (mostrarMenuFiltros) {
       setMostrarMenuFiltros(false);
@@ -1056,24 +936,42 @@ const GestionarSocios = () => {
   });
 
   /* ---------- Layout/Altura lista ---------- */
-  const baseWindowHeight = useWindowHeight(isMobile ? 0 : 360);
+  const baseWindowHeight = useWindowHeight(0);
   const [availableHeight, setAvailableHeight] = useState(520);
+
+  // expone altura de header a CSS para empujar el contenido en mobile
+  useEffect(() => {
+    const applyHeaderHeight = () => {
+      const h = headerRef.current?.offsetHeight ?? 0;
+      document.documentElement.style.setProperty("--header-h", `${h}px`);
+    };
+    applyHeaderHeight();
+
+    const ro = new ResizeObserver(applyHeaderHeight);
+    if (headerRef.current) ro.observe(headerRef.current);
+    window.addEventListener("resize", applyHeaderHeight, { passive: true });
+    window.addEventListener("orientationchange", applyHeaderHeight, { passive: true });
+
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", applyHeaderHeight);
+      window.removeEventListener("orientationchange", applyHeaderHeight);
+    };
+  }, []);
 
   useEffect(() => {
     const calc = () => {
       const H = window.innerHeight;
       const hHeader = headerRef.current?.offsetHeight ?? 0;
       const hFooter = footerRef.current?.offsetHeight ?? 0;
-      const paddingExtras = isMobile ? 16 + 40 : 24;
+      const paddingExtras = 24;
       const h = Math.max(350, H - hHeader - hFooter - paddingExtras);
       setAvailableHeight(h);
     };
-
     calc();
 
     window.addEventListener("resize", calc, { passive: true });
     window.addEventListener("orientationchange", calc, { passive: true });
-
     const ro = new ResizeObserver(calc);
     if (headerRef.current) ro.observe(headerRef.current);
     if (footerRef.current) ro.observe(footerRef.current);
@@ -1083,7 +981,7 @@ const GestionarSocios = () => {
       window.removeEventListener("orientationchange", calc);
       ro.disconnect();
     };
-  }, [isMobile]);
+  }, []);
 
   const desktopRowHeight = 48;
   const cardGap = 12;
@@ -1096,56 +994,33 @@ const GestionarSocios = () => {
     [isMobile, availableHeight, baseWindowHeight]
   );
 
-  /* ---------- Contador visibles ---------- */
-  const cantidadVisibles = useMemo(
-    () => sociosFiltrados.length,
-    [sociosFiltrados]
-  );
-
-  /* ---------- Etiqueta del botón Mostrar todos ---------- */
+  const cantidadVisibles = useMemo(() => sociosFiltrados.length, [sociosFiltrados]);
   const showAllLabel = isMobile ? "Mostrar todos" : "Mostrar todos los socios";
 
   /* ---------- Exportar Excel ---------- */
-  const exportarAExcel = useCallback(
-    async () => {
-      if (!dataLoaded) await ensureDataLoaded();
-      if (sociosFiltrados.length === 0) {
-        showToast("No hay socios para exportar.", "error");
-        return;
-      }
-      const datos = sociosFiltrados.map(
-        ({
-          id,
-          nombre,
-          apellido,
-          categoria,
-          precio_categoria,
-          medio_pago,
-          domicilio_2,
-          observacion,
-          ...rest
-        }) => ({
-          id,
-          apellido,
-          nombre,
-          categoria,
-          precio_categoria,
-          medio_pago,
-          domicilio_2,
-          observacion,
-          ...rest,
-        })
-      );
-      const ws = XLSX.utils.json_to_sheet(datos);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Socios");
-      XLSX.writeFile(wb, "Socios.xlsx");
-      showToast("Exportación a Excel completada");
-    },
-    [sociosFiltrados, showToast, dataLoaded, ensureDataLoaded]
-  );
+  const exportarAExcel = useCallback(async () => {
+    if (!dataLoaded) await ensureDataLoaded();
+    if (sociosFiltrados.length === 0) {
+      showToast("No hay socios para exportar.", "error");
+      return;
+    }
+    const datos = sociosFiltrados.map(
+      ({
+        id, nombre, apellido, categoria, precio_categoria,
+        medio_pago, domicilio_2, observacion, ...rest
+      }) => ({
+        id, apellido, nombre, categoria, precio_categoria,
+        medio_pago, domicilio_2, observacion, ...rest,
+      })
+    );
+    const ws = XLSX.utils.json_to_sheet(datos);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Socios");
+    XLSX.writeFile(wb, "Socios.xlsx");
+    showToast("Exportación a Excel completada");
+  }, [sociosFiltrados, showToast, dataLoaded, ensureDataLoaded]);
 
-  /* ---------- itemData (incluye flag de cascada) ---------- */
+  /* ---------- itemData ---------- */
   const itemData = useMemo(
     () => ({
       items: sociosFiltrados,
@@ -1158,15 +1033,9 @@ const GestionarSocios = () => {
       cascadeEnabled: cascadeEnabled && !reducedMotion,
     }),
     [
-      sociosFiltrados,
-      filaSeleccionada,
-      onSelect,
-      handleEditarSocio,
-      handleConfirmarEliminar,
-      handleMostrarInfoSocio,
-      handleConfirmarBaja,
-      cascadeEnabled,
-      reducedMotion,
+      sociosFiltrados, filaSeleccionada, onSelect, handleEditarSocio,
+      handleConfirmarEliminar, handleMostrarInfoSocio, handleConfirmarBaja,
+      cascadeEnabled, reducedMotion,
     ]
   );
 
@@ -1185,9 +1054,9 @@ const GestionarSocios = () => {
       )}
 
       <div className="gessoc_empresa-box">
-        {/* HEADER */}
+        {/* HEADER (fijo en mobile) */}
         <div
-          className={`gessoc_front-row-emp ${isMobile ? "gessoc_front-row-emp--mobile" : ""}`}
+          className={`gessoc_front-row-emp ${isMobile ? "gessoc_front-row-emp--mobile-fixed" : ""}`}
           ref={headerRef}
         >
           <span className="gessoc_empresa-title">Gestionar Socios</span>
@@ -1320,7 +1189,7 @@ const GestionarSocios = () => {
           {error && <p className="gessoc_error">{error}</p>}
         </div>
 
-        {/* CONTADOR + CHIPS + LEYENDA + LISTADO */}
+        {/* CONTENIDO */}
         <div className="gessoc_empresas-list">
           <div className="gessoc_contenedor-list-items">
             <div className="gessoc_contador-container">
@@ -1334,70 +1203,71 @@ const GestionarSocios = () => {
               </span>
             </div>
 
-            {/* CHIPS de filtros activos */}
-            <div className="gessoc_filtros-activos-container">
-              {filtrosActivos.letras?.length > 0 && (
-                <div className="gessoc_filter-chip">
-                  <span className="gessoc_filter-chip-text">
-                    {filtrosActivos.letras[0]}
-                  </span>
-                  {filtrosActivos.letras.length > 1 && (
-                    <span className="gessoc_filter-chip-more">
-                      +{filtrosActivos.letras.length - 1}
-                    </span>
-                  )}
-                  <button
-                    className="gessoc_filter-chip-close"
-                    onClick={() => limpiarFiltros()}
-                    title="Quitar filtro por letra"
-                    aria-label="Quitar filtro por letra"
-                  >
-                    ×
-                  </button>
-                </div>
-              )}
-
-              {filtrosActivos.mediosPago?.length > 0 && (
-                <div className="gessoc_filter-chip gessoc_chip-medio">
-                  <span className="gessoc_filter-chip-text">Medio: </span>
-                  <span className="texto">{filtrosActivos.mediosPago[0]}</span>
-                  {filtrosActivos.mediosPago.length > 1 && (
-                    <span className="gessoc_filter-chip-more">
-                      +{filtrosActivos.mediosPago.length - 1}
-                    </span>
-                  )}
-                  <button
-                    className="gessoc_filter-chip-close"
-                    onClick={() => limpiarFiltros()}
-                    title="Quitar filtro de medio de pago"
-                    aria-label="Quitar filtro de medio de pago"
-                  >
-                    ×
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* Leyenda de estados */}
+            {/* Leyenda — en móvil usa etiquetas cortas */}
             <div className="gessoc_estado-pagos-container">
               <div className="gessoc_estado-indicador gessoc_al-dia">
                 <div className="gessoc_indicador-color"></div>
-                <span>{isMobile ? "Al dia" : "Al día"}</span>
+                <span>Al día</span>
               </div>
               <div className="gessoc_estado-indicador gessoc_debe-1-2">
                 <div className="gessoc_indicador-color"></div>
-                <span>{isMobile ? "1-2" : "Debe 1-2 meses"}</span>
+                <span className="gessoc_label-full">Debe 1-2 meses</span>
+                <span className="gessoc_label-short">Debe 1-2</span>
               </div>
               <div className="gessoc_estado-indicador gessoc_debe-3-mas">
                 <div className="gessoc_indicador-color"></div>
-                <span>{isMobile ? "3+" : "Debe 3+ meses"}</span>
+                <span className="gessoc_label-full">Debe 3+ meses</span>
+                <span className="gessoc_label-short">Debe 3+</span>
               </div>
             </div>
           </div>
 
-          {/* ======= SOLO UNA VISTA MONTA ======= */}
+          {/* CHIPS activos */}
+          <div className="gessoc_filtros-activos-container">
+            {filtrosActivos.letras?.length > 0 && (
+              <div className="gessoc_filter-chip">
+                <span className="gessoc_filter-chip-text">
+                  {filtrosActivos.letras[0]}
+                </span>
+                {filtrosActivos.letras.length > 1 && (
+                  <span className="gessoc_filter-chip-more">
+                    +{filtrosActivos.letras.length - 1}
+                  </span>
+                )}
+                <button
+                  className="gessoc_filter-chip-close"
+                  onClick={() => limpiarFiltros()}
+                  title="Quitar filtro por letra"
+                  aria-label="Quitar filtro por letra"
+                >
+                  ×
+                </button>
+              </div>
+            )}
+
+            {filtrosActivos.mediosPago?.length > 0 && (
+              <div className="gessoc_filter-chip gessoc_chip-medio">
+                <span className="gessoc_filter-chip-text">Medio: </span>
+                <span className="texto">{filtrosActivos.mediosPago[0]}</span>
+                {filtrosActivos.mediosPago.length > 1 && (
+                  <span className="gessoc_filter-chip-more">
+                    +{filtrosActivos.mediosPago.length - 1}
+                  </span>
+                )}
+                <button
+                  className="gessoc_filter-chip-close"
+                  onClick={() => limpiarFiltros()}
+                  title="Quitar filtro de medio de pago"
+                  aria-label="Quitar filtro de medio de pago"
+                >
+                  ×
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* LISTA */}
           {!isMobile ? (
-            /* TABLA (Desktop) */
             <div className="gessoc_box-table">
               <div className="gessoc_header" style={{ width: "100%" }}>
                 <div className="gessoc_column-header">Apellido y Nombre</div>
@@ -1440,7 +1310,6 @@ const GestionarSocios = () => {
               </div>
             </div>
           ) : (
-            /* TARJETAS (Mobile) */
             <div className="gessoc_cards_wrapper_virtual">
               {cargando ? (
                 <div className="gessoc_loading-spinner-container">

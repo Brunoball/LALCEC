@@ -1,7 +1,5 @@
-/* src/components/empresas/GestionarEmpresas.css */
-
 /* ================================
-   Variables y base
+   Variables, colores y base
 ==================================*/
 :root {
   /* ===== COLORES PRIMARIOS NARANJA ===== */
@@ -30,7 +28,7 @@
   --secondary-200: #bfdbfe;
   --secondary-300: #93c5fd;
   --secondary-400: #60a5fa;
-  --secondary-500: #3b82f6; /* azul */
+  --secondary-500: #3b82f6;
   --secondary-600: #2563eb;
   --secondary-700: #1d4ed8;
   --secondary-800: #1e40af;
@@ -45,7 +43,7 @@
   --success-200: #a7f3d0;
   --success-300: #6ee7b7;
   --success-400: #34d399;
-  --success-500: #10b981; /* verde excel */
+  --success-500: #10b981;
   --success-600: #059669;
   --success-700: #047857;
 
@@ -61,7 +59,7 @@
   --danger-200: #fecaca;
   --danger-300: #fca5a5;
   --danger-400: #f87171;
-  --danger-500: #ef4444;  /* rojo baja */
+  --danger-500: #ef4444;
   --danger-600: #dc2626;
 
   /* ===== NEUTROS / SUPERFICIES ===== */
@@ -116,40 +114,63 @@
   --transition-smooth: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 
   /* ===== CASCADA ===== */
-  --cascade-stagger: 50ms;                 /* 0.05s por ítem */
+  --cascade-stagger: 50ms;
   --cascade-duration: .45s;
   --cascade-ease: cubic-bezier(.2,.7,.2,1);
 
-  /* ===== SAFE AREAS (fallbacks) ===== */
+  /* ===== SAFE AREAS ===== */
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left: env(safe-area-inset-left, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
+
+  /* ===== ALTURA FIJA DE APP ===== */
+  --app-h: 100vh;
+
+  /* ===== ALTURAS DINÁMICAS (React las setea) ===== */
+  --header-h: 128px;
+  --pinbar-h: 54px; /* ← default más alto; luego lo mide JS */
+  --footer-h: 64px;
 }
 
 /* Reset y base */
 * { box-sizing: border-box; }
+html, body { height: var(--app-h); min-height: var(--app-h); }
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   line-height: 1.6;
   color: var(--text-primary);
   background-color: var(--background-color);
+  overscroll-behavior: none;
 }
+
+/* Bloqueo de scroll mobile */
+body.emp_lock {
+  height: var(--app-h) !important;
+  min-height: var(--app-h) !important;
+  overflow: hidden !important;
+  position: relative;
+  width: 100%;
+  touch-action: none;
+}
+
 input:-webkit-autofill { background-color: transparent !important; }
 
 /* ================================
-   Layout general (Desktop intacto)
+   Layout general (Desktop)
 ==================================*/
 .emp_empresa-container {
-  min-height: 100vh;
+  height: var(--app-h);
+  min-height: var(--app-h);
   background: var(--gradient-background);
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: stretch;
 }
 .emp_empresa-box {
   width: 100%;
-  min-height: 100vh;
+  height: var(--app-h);
+  min-height: var(--app-h);
   background: var(--surface-color);
   box-shadow: var(--shadow-lg);
   overflow: hidden;
@@ -173,7 +194,7 @@ input:-webkit-autofill { background-color: transparent !important; }
 .emp_contenedor-list-items{
   display: flex;
   width: 100%;
-  height: 10vh;
+  height: auto; /* ← antes 54px, ahora auto */
   justify-content: space-between;
 }
 .emp_empresa-title {
@@ -189,13 +210,7 @@ input:-webkit-autofill { background-color: transparent !important; }
 }
 
 /* Búsqueda */
-.emp_search-input-container {
-  position: relative;
-  flex: 1;
-  max-width: 500px;
-  display: flex;
-  align-items: center;
-}
+.emp_search-input-container { position: relative; flex: 1; max-width: 500px; display: flex; align-items: center; }
 .emp_search-input {
   width: 100%;
   padding: 0.75rem 2.5rem 0.75rem 1rem;
@@ -243,20 +258,15 @@ input:-webkit-autofill { background-color: transparent !important; }
 /* Filtros */
 .emp_filtros-container { position: relative; display: flex; justify-content: flex-end; flex: 1; }
 .emp_filtros-button {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  display: flex; align-items: center; gap: 0.5rem;
   padding: 0.75rem 1rem;
   background: rgba(255, 255, 255, 0.2);
   color: white;
   border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: var(--border-radius);
-  font-size: 0.9rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: var(--transition-normal);
-  white-space: nowrap;
-  backdrop-filter: blur(5px);
+  font-size: 0.9rem; font-weight: 500;
+  cursor: pointer; transition: var(--transition-normal);
+  white-space: nowrap; backdrop-filter: blur(5px);
 }
 .emp_filtros-button:hover { background: rgba(255, 255, 255, 0.3); transform: translateY(-1px); }
 .emp_chevron-icon { transition: transform var(--transition-normal); }
@@ -273,149 +283,62 @@ input:-webkit-autofill { background-color: transparent !important; }
   box-shadow: var(--shadow-xl);
   z-index: 1000;
   margin-top: var(--spacing-xs);
-  animation: emp_dropDown 0.3s ease-out;
   max-height: 70vh;
   overflow: auto;
 }
-@keyframes emp_dropDown {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
+@keyframes emp_dropDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 .emp_filtros-menu-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
-  cursor: pointer;
-  transition: background-color var(--transition-fast);
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px 16px; cursor: pointer; transition: background-color var(--transition-fast);
   border-bottom: 1px solid var(--gray-100);
 }
 .emp_filtros-menu-item:hover { background-color: var(--gray-50); }
 .emp_filtros-menu-item.emp_mostrar-todas {
-  background-color: white;
-  color: var(--primary-color);
-  font-weight: 500;
-  border-bottom: none;
-  border-bottom-left-radius: 7px;
-  border-bottom-right-radius: 7px;
+  background: white; color: var(--primary-color); font-weight: 500;
+  border-bottom: none; border-bottom-left-radius: 7px; border-bottom-right-radius: 7px;
 }
-.emp_filtros-menu-item.emp_mostrar-todas:hover {
-  background-color: var(--primary-color);
-  color: white;
-}
-.emp_filtros-submenu {
-  background: var(--gray-50);
-  padding: 1rem;
-  border-top: 1px solid var(--gray-200);
-}
-.emp_alfabeto-filtros {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 0.5rem;
-}
+.emp_filtros-menu-item.emp_mostrar-todas:hover { background: var(--primary-color); color: white; }
+.emp_filtros-submenu { background: var(--gray-50); padding: 1rem; border-top: 1px solid var(--gray-200); }
+.emp_alfabeto-filtros { display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.5rem; }
 .emp_letra-filtro {
-  padding: 0.5rem;
-  border: 1px solid var(--gray-300);
-  background: white;
-  border-radius: var(--border-radius-sm);
-  cursor: pointer;
-  transition: all var(--transition-normal);
-  text-align: center;
-  font-weight: 500;
-  font-size: 0.85rem;
+  padding: 0.5rem; border: 1px solid var(--gray-300); background: white;
+  border-radius: var(--border-radius-sm); cursor: pointer; transition: all var(--transition-normal);
+  text-align: center; font-weight: 500; font-size: 0.85rem;
 }
-.emp_letra-filtro:hover {
-  background: var(--primary-color);
-  color: white;
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-sm);
-}
-.emp_letra-filtro.emp_active {
-  background: var(--primary-color);
-  color: white;
-  border-color: var(--primary-color);
-}
+.emp_letra-filtro:hover { background: var(--primary-color); color: white; transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+.emp_letra-filtro.emp_active { background: var(--primary-color); color: white; border-color: var(--primary-color); }
 
 /* ===== FILTROS ACTIVOS ===== */
-.emp_filtros-activos-container {
-  width: 100%;
-  margin: 0;
-  padding: 0 2rem;
-  display: contents;
-  box-sizing: border-box;
-  animation: emp_fadeIn 0.3s ease-out;
-  transition: all 0.3s ease;
-  overflow: hidden;
-  max-height: 0;
-  opacity: 0;
-}
+.emp_filtros-activos-container { width: 100%; margin: 0; padding: 0 2rem; display: contents; box-sizing: border-box; animation: emp_fadeIn 0.3s ease-out; transition: all 0.3s ease; overflow: hidden; max-height: 0; opacity: 0; }
 .emp_filtros-activos-container.emp_show { max-height: 100px; opacity: 1; margin: 0.5rem 0; }
 
 .emp_empresas-list { padding: .5rem 1.5rem 0; }
 
 .emp_filtros-activos {
-  display: grid;
-  grid-template-columns: auto 1fr 1fr;
-  background-color: #f2f2f2;
-  border-radius: 8px;
-  padding: 10px 15px;
-  margin: 10px;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
-  border:none;
+  display: grid; grid-template-columns: auto 1fr 1fr;
+  background-color: #f2f2f2; border-radius: 8px; padding: 10px 15px; margin: 10px;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2); border:none;
 }
 .emp_filtros-activos-header { display: flex; align-items: center; font-size: 14px; color: #555; font-weight: 500; padding-right: 1rem; }
-.emp_limpiar-filtros-btn {
-  background: transparent;
-  border: none;
-  color: var(--danger-500);
-  font-size: 0.85rem;
-  cursor: pointer;
-  padding: 0.25rem 0.5rem;
-  border-radius: 10px;
-  transition: var(--transition-fast);
-  margin-left: auto;
-}
+.emp_limpiar-filtros-btn { background: transparent; border: none; color: var(--danger-500); font-size: 0.85rem; cursor: pointer; padding: 0.25rem 0.5rem; border-radius: 10px; transition: var(--transition-fast); margin-left: auto; }
 .emp_limpiar-filtros-btn:hover { background-color: #ef444430; }
 .emp_filtros-activos-chips { display: flex; flex-wrap: wrap; gap: 8px; grid-column: 2/3; grid-row: 1/2; }
-.emp_filtro-chip {
-  display: flex;
-  align-items: center;
-  background-color: #e9ecef;
-  padding: 5px 0.5rem;
-  border-radius: 60vh;
-  font-size: 13px;
-  color: #495057;
-  box-shadow: var(--shadow-sm);
-  transition: all var(--transition-fast);
-}
+.emp_filtro-chip { display: flex; align-items: center; background-color: #e9ecef; padding: 5px 0.5rem; border-radius: 60vh; font-size: 13px; color: #495057; box-shadow: var(--shadow-sm); transition: all var(--transition-fast); }
 .emp_filtro-chip:hover{ transform: translateY(-2px); }
 .emp_filtro-chip-close { margin-left: 6px; cursor: pointer; color: #6c757d; font-size: 12px; transition: color 0.2s; }
 .emp_filtro-chip-close:hover { color: #dc3545; }
 
 /* Mensajes de error */
-.emp_error {
-  color: #fecaca;
-  font-size: 0.875rem;
-  text-align: center;
-  margin-top: 0.5rem;
-}
+.emp_error { color: #fecaca; font-size: 0.875rem; text-align: center; margin-top: 0.5rem; }
 .emp_error-message-emp {
-  background: var(--danger-50);
-  border: 1px solid var(--danger-200);
-  color: #b91c1c;
-  padding: 1rem;
-  margin: 1rem 2rem;
-  border-radius: var(--border-radius);
-  font-size: 0.875rem;
+  background: var(--danger-50); border: 1px solid var(--danger-200); color: #b91c1c;
+  padding: 1rem; margin: 1rem 2rem; border-radius: var(--border-radius); font-size: 0.875rem;
   animation: emp_slideInDown 0.3s ease-out;
 }
-@keyframes emp_slideInDown {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
+@keyframes emp_slideInDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
 /* ================================
-   Tabla (Desktop por defecto)
+   Tabla (Desktop)
 ==================================*/
 .emp_box-table {
   border-radius: var(--border-radius);
@@ -424,70 +347,39 @@ input:-webkit-autofill { background-color: transparent !important; }
   background: var(--surface-color);
 }
 
-/* >>> CAMBIO A GRID EN HEADER */
+/* Header tabla en grid */
 .emp_header {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   background: linear-gradient(90deg, #fa7815, #ef6a14);
   border-bottom: 2px solid var(--border-color);
-  position: sticky;
-  top: 0;
-  z-index: 10;
+  position: sticky; top: 0; z-index: 10;
 }
-
 .emp_column-header {
-  padding: 0.5rem;
-  font-weight: 400;
-  color: var(--text-on-primary);
-  font-size: 0.875rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  border-right: 1px solid var(--primary-color);
-  display: flex;              /* centrado interno sin depender de flex del contenedor */
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 10px 5px;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  padding: 0.5rem; font-weight: 400; color: var(--text-on-primary); font-size: 0.875rem;
+  text-transform: uppercase; letter-spacing: 0.05em; border-right: 1px solid var(--primary-color);
+  display: flex; align-items: center; justify-content: center; text-align: center;
+  padding: 10px 5px; min-width: 0; overflow: hidden; text-overflow: ellipsis;
 }
 
-/* Cuerpo/scroll se mantiene igual */
+/* Cuerpo/scroll (desktop) */
 .emp_body {
-  display: flex;
-  flex-wrap: nowrap;
-  justify-content: center;
-  overflow-y: auto;
-  min-height: 55vh;
+  display: flex; flex-wrap: nowrap; justify-content: center; overflow-y: auto;
+  min-height: 52vh; /* ↓ antes 55vh */
   transition: min-height 0.3s ease, max-height 0.3s ease;
 }
 .emp_scrollableE {
-  min-width: 100%;
-  overflow-x: hidden;
-  display: flex;
-  flex-direction: column;
-  min-height: 50vh;
-  max-height: 55vh;
+  min-width: 100%; overflow-x: hidden; display: flex; flex-direction: column;
+  min-height: 48vh; max-height: 52vh; /* ↓ un toque para no tapar contador/leyenda */
   transition: min-height 0.3s ease, max-height 0.3s ease;
 }
 
-/* >>> CAMBIO A GRID EN FILAS */
+/* Filas en grid */
 .emp_row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  align-items: center;
-  padding: 0;
-  position: relative;
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  align-items: center; padding: 0; position: relative;
   transition: background-color var(--transition-fast), box-shadow var(--transition-fast);
-  border-bottom: 1px solid var(--border-color);
-  cursor: pointer;
-
-  /* Optimización de rendimiento (cascada / hover) */
-  backface-visibility: hidden;
-  transform: translateZ(0);
-  will-change: transform, opacity;
-  contain: content;
+  border-bottom: 1px solid var(--border-color); cursor: pointer;
+  backface-visibility: hidden; transform: translateZ(0); will-change: transform, opacity; contain: content;
 }
 .emp_row:hover { background-color: var(--primary-50); box-shadow: var(--shadow-sm); }
 .emp_row.emp_selected-row { background-color: #ffedd59e; border-color: var(--primary-color); box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1); }
@@ -497,86 +389,40 @@ input:-webkit-autofill { background-color: transparent !important; }
 .emp_row.emp_even-row { background-color: #fafafa; }
 .emp_row.emp_odd-row { background-color: var(--surface-color); }
 
-.emp_column {
-  text-align: center;
-  padding: 12px 8px;
-  font-size: 0.9rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  min-width: 0;
-}
+.emp_column { text-align: center; padding: 12px 8px; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .emp_column-razon { font-weight: 500; color: var(--text-primary); }
 .emp_column-cuit { font-family: 'JetBrains Mono', monospace;  }
 
 .emp_icons-column { justify-content: center; }
-.emp_icons-container {
-  display: flex;
-  gap: 1rem;
-  align-items: center;
-  justify-content: center;
-}
+.emp_icons-container { display: flex; gap: 1rem; align-items: center; justify-content: center; }
 
-/* === Íconos de acciones en filas === */
-.emp_icon {
-  font-size: 18px;
-  color: var(--primary-600);
-  cursor: pointer;
-  transition: transform 0.2s ease, color 0.2s ease;
-  background: none;
-  border: none;
-  padding: 0;
-}
+/* Íconos acciones fila */
+.emp_icon { font-size: 18px; color: var(--primary-600); cursor: pointer; transition: transform 0.2s ease, color 0.2s ease; background: none; border: none; padding: 0; }
 .emp_icon:hover { transform: scale(1.1); color: var(--primary-700); }
 
 /* ================================
-   Animaciones en cascada (ACTUALIZADO)
+   Animaciones (incluye CASCADA de Socios)
 ==================================*/
-@keyframes emp_cascadeIn {
-  0% { opacity: 0; transform: translate3d(0, 8px, 0); }
-  100% { opacity: 1; transform: translate3d(0, 0, 0); }
-}
-.emp_cascade {
-  opacity: 0;
-  animation: emp_cascadeIn var(--cascade-duration) var(--cascade-ease) both;
-  animation-delay: calc(var(--cascade-stagger) * var(--stagger, 0));
-  backface-visibility: hidden;
-  transform: translateZ(0);
-  will-change: transform, opacity;
-  contain: content;
-}
+@keyframes emp_cascadeIn { 0% { opacity: 0; transform: translate3d(0, 8px, 0); } 100% { opacity: 1; transform: translate3d(0, 0, 0); } }
+
+/* ⚡ Activa la cascada cuando el wrapper tiene la clase */
 .emp_cascade-animation .emp_row,
 .emp_cascade-animation .emp_card {
   opacity: 0;
   animation: emp_cascadeIn var(--cascade-duration) var(--cascade-ease) both;
-  animation-delay: calc(var(--cascade-stagger) * var(--stagger, 0));
+  /* el delay lo pone React inline por índice */
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .emp_cascade,
   .emp_cascade-animation .emp_row,
-  .emp_cascade-animation .emp_card {
-    animation: none !important;
-    opacity: 1 !important;
-    transform: none !important;
-  }
+  .emp_cascade-animation .emp_card { animation: none !important; opacity: 1 !important; transform: none !important; }
 }
 
 /* Loading */
-.emp_loading-spinner-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 200px;
-  width: 100%;
-}
+.emp_loading-spinner-container { display: flex; justify-content: center; align-items: center; height: 200px; width: 100%; }
 .emp_loading-spinner {
-  width: 50px;
-  height: 50px;
-  border: 5px solid var(--primary-200);
-  border-radius: 50%;
-  border-top-color: var(--primary-500);
-  animation: emp_spin 1s ease-in-out infinite;
+  width: 50px; height: 50px; border: 5px solid var(--primary-200); border-radius: 50%;
+  border-top-color: var(--primary-500); animation: emp_spin 1s ease-in-out infinite;
 }
 @keyframes emp_spin { to { transform: rotate(360deg); } }
 
@@ -585,18 +431,9 @@ input:-webkit-autofill { background-color: transparent !important; }
 .emp_message-content { max-width: 400px; }
 .emp_message-content p { font-size: 1.125rem; color: var(--text-secondary); margin-bottom: 1rem; }
 .emp_btn-show-all {
-  background: var(--primary-500);
-  color: var(--text-on-primary);
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: var(--border-radius);
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition:
-    transform var(--transition-fast),
-    background-color var(--transition-fast),
-    box-shadow var(--transition-fast);
+  background: var(--primary-500); color: var(--text-on-primary); border: none;
+  padding: 0.75rem 1.5rem; border-radius: var(--border-radius); font-size: 0.875rem; font-weight: 500;
+  cursor: pointer; transition: transform var(--transition-fast), background-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 .emp_btn-show-all:hover { background: var(--primary-600); transform: translateY(-1px); }
 
@@ -604,39 +441,20 @@ input:-webkit-autofill { background-color: transparent !important; }
    Botonera inferior (Desktop)
 ==================================*/
 .emp_down-container {
-  width: 100%;
-  height: 70px;
-  background: var(--surface-secondary);
-  padding: 0 2.5%;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  box-sizing: border-box;
+  width: 100%; height: 70px; background: var(--surface-secondary);
+  padding: 0 2.5%; display: flex; justify-content: space-between; align-items: center; box-sizing: border-box;
 }
 .emp_botones-container { display: flex; gap: 1rem; flex-wrap: wrap; }
 .emp_socio-button {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  background: var(--surface-color);
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius);
-  color: #eff6ff;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition:
-    transform var(--transition-fast),
-    background-color var(--transition-fast),
-    box-shadow var(--transition-fast);
-  text-decoration: none;
-  box-shadow: var(--shadow-sm);
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.75rem 1.5rem; background: var(--surface-color); border: 1px solid var(--border-color);
+  border-radius: var(--border-radius); color: #eff6ff; font-size: 0.875rem; font-weight: 500; cursor: pointer;
+  transition: transform var(--transition-fast), background-color var(--transition-fast), box-shadow var(--transition-fast);
+  text-decoration: none; box-shadow: var(--shadow-sm);
 }
 .emp_socio-button:hover { transform: translateY(-2px); }
 .emp_socio-button p { margin: 0; display: inline; }
 
-/* desktop colors */
 .emp_volver-atras { background: linear-gradient(135deg,#fa7815, #ee6914 ) !important; }
 .emp_socio-button:nth-child(1) { background: linear-gradient(135deg, #0288D1, #01579B); }
 .emp_socio-button:nth-child(2) { background: linear-gradient(135deg, #38a169, #2f855a); }
@@ -649,7 +467,7 @@ input:-webkit-autofill { background-color: transparent !important; }
 /* Contador + leyenda */
 .emp_contador-container {
   outline: 2px solid var(--primary-500);
-  background: white;
+  background: transparent;
   padding: 0.5rem 1rem;
   margin: auto 0;
   border-radius: var(--border-radius);
@@ -660,348 +478,153 @@ input:-webkit-autofill { background-color: transparent !important; }
   align-items: center;
 }
 
-/* Contador + mini tarjeta a la derecha */
-.emp_left-inline{
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: nowrap;
-  min-width: 0;
-}
-
-/* Mini tarjeta de filtro */
+/* Mini chip de filtro */
+.emp_left-inline{ display: flex; align-items: center; gap: 10px; flex-wrap: nowrap; min-width: 0; }
 .emp_chip-mini{
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 10px;
-  border: 1.5px solid var(--primary-400);
-  border-radius: 9999px;
-  background: #fff;
-  box-shadow: var(--shadow-sm);
-  white-space: nowrap;
-  max-width: 320px;
-  overflow: hidden;
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 6px 10px; border: 1.5px solid var(--primary-400); border-radius: 9999px;
+  background: #fff; box-shadow: var(--shadow-sm); white-space: nowrap; max-width: 320px; overflow: hidden;
 }
-.emp_chip-mini-text{
-  font-size: 0.85rem;
-  color: var(--text-primary);
-}
-.emp_chip-mini-more{
-  padding: 0 6px;
-  border-radius: 9999px;
-  border: 1px solid var(--primary-200);
-  background: var(--primary-50);
-  color: var(--primary-700);
-  font-weight: 600;
-  font-size: 0.75rem;
-}
+.emp_chip-mini-text{ font-size: 0.85rem; color: var(--text-primary); }
+.emp_chip-mini-more{ padding: 0 6px; border-radius: 9999px; border: 1px solid var(--primary-200); background: var(--primary-50); color: var(--primary-700); font-weight: 600; font-size: 0.75rem; }
 .emp_chip-mini-close{
-  width: 18px;
-  height: 18px;
-  display: grid;
-  place-items: center;
-  border: none;
-  background: transparent;
-  color: var(--danger-600);
-  border-radius: 50%;
-  cursor: pointer;
-  font-weight: 700;
-  line-height: 1;
-  transition: transform .15s ease, background-color .15s ease, color .15s ease;
+  width: 18px; height: 18px; display: grid; place-items: center; border: none; background: transparent; color: var(--danger-600);
+  border-radius: 50%; cursor: pointer; font-weight: 700; line-height: 1; transition: transform .15s ease, background-color .15s ease, color .15s ease;
 }
-.emp_chip-mini-close:hover{
-  transform: scale(1.1);
-  background: #fee2e2;
-}
-.emp_filtros-submenu-item{
-  background-color: white;
-  color: #000;
-  font-weight: 400;
-  margin: .5rem 0;
-  padding: .5rem;
-  cursor: pointer;
-  transition: all .3s;
-  border-radius: 8px;
+.emp_chip-mini-close:hover{ transform: scale(1.1); background: #fee2e2; }
 
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.emp_filtros-submenu-item{
+  background-color: white; color: #000; font-weight: 400; margin: .5rem 0; padding: .5rem;
+  cursor: pointer; transition: all .3s; border-radius: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.emp_filtros-submenu-item:hover{
-  background-color: var(--primary-500);
-  color: white;
-}
-/* Leyenda de estados a la derecha */
+.emp_filtros-submenu-item:hover{ background-color: var(--primary-500); color: white; }
+
+/* Leyenda de estados */
 .emp_socios-desktop { display: inline; }
 .emp_socios-mobile { display: none; }
-
-.emp_estado-pagos-container {
-  display: flex;
-  flex-wrap: wrap;
-  align-content: flex-end;
-  gap: 1rem;
-}
+.emp_estado-pagos-container { display: flex; flex-wrap: wrap; align-content: flex-end; gap: 1rem; }
 .emp_estado-indicador {
-  height: fit-content;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  background: white;
-  border-radius: var(--border-radius);
-  box-shadow: var(--shadow-sm);
-  font-size: 0.8rem;
+  height: fit-content; display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.5rem 0.75rem; background: white; border-radius: var(--border-radius);
+  box-shadow: var(--shadow-sm); font-size: 0.8rem;
 }
 .emp_indicador-color { width: 12px; height: 12px; border-radius: 50%; }
 .emp_al-dia .emp_indicador-color { background-color: var(--success-500); }
 .emp_debe-1-2 .emp_indicador-color { background-color: var(--warning-500); }
 .emp_debe-3-mas .emp_indicador-color { background-color: var(--danger-500); }
 
-/* >>> NUEVO: textos de leyenda responsivos */
 .emp_legend-desktop { display: inline; }
 .emp_legend-mobile  { display: none; }
 
-/* ================================
-   IMPORTANTES PARA NO ROMPER WEB
-==================================*/
-.emp_cards-wrapper { display: none; } /* oculto en desktop */
+/* IMPORTANTES PARA NO ROMPER WEB */
+.emp_cards-wrapper { display: none; }
 
-/* ================================
-   Responsive Desktop ancho fijo
-==================================*/
-@media (max-width: 1200px) {
-  .emp_header, .emp_row { width: 1000px; }
-}
+/* Responsive Desktop ancho fijo */
+@media (max-width: 1200px) { .emp_header, .emp_row { width: 1000px; } }
 
 /* ================================
    MOBILE — tarjetas + navbar fija
-   + FIX franja blanca superior
 ==================================*/
 @media (max-width: 768px) {
-.emp_empresa-box {
-  background: linear-gradient(90deg, #fa7815, #ee6914); /* #fff */
-}
-  /* FIX: que el status bar no muestre franja blanca. */
   html, body {
-    margin: 0;
-    padding: 0;
-    background: linear-gradient(90deg, #fa7815, #ee6914) !important;
-    background-color: #fa7815 !important;
-    background-attachment: fixed;
-    overscroll-behavior-y: contain;
+    margin: 0; padding: 0; background: #fff !important;
+    height: var(--app-h); min-height: var(--app-h); overscroll-behavior-y: none;
   }
 
-  body::before {
-    content: "";
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: max(env(safe-area-inset-top, 0px), 24px);
-    background: linear-gradient(90deg, #fa7815, #ee6914);
-    z-index: 1;
-    pointer-events: none;
-  }
+  .emp_empresa-container, .emp_empresa-box { height: var(--app-h); min-height: var(--app-h); background: #fff; display: flex; flex-direction: column; overflow: hidden; }
 
-  .emp_empresa-box {
-    min-height: unset;
-    height: 100dvh;
-    display: flex;
-    flex-direction: column;
-  }
-
-  /* Header como grid con 2 filas */
+  /* Header fijo (2 filas) */
   .emp_front-row-emp {
-    position: sticky;
-    top: 0;
-    z-index: 80;
+    position: fixed; top: 0; left: 0; right: 0; z-index: 110;
     padding: max(12px, env(safe-area-inset-top)) 16px 12px;
-    gap: 10px;
-
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-areas:
-      "title title"
-      "search filters";
-    align-items: center;
-
-    background: linear-gradient(90deg, #fa7815, #ee6914);
+    gap: 10px; display: grid; grid-template-columns: 1fr 1fr;
+    grid-template-areas: "title title" "search filters";
+    align-items: center; background: linear-gradient(90deg, #fa7815, #ee6914);
   }
-
   .emp_front-row-emp > .emp_empresa-title { grid-area: title; }
   .emp_front-row-emp > .emp_search-input-container { grid-area: search; }
   .emp_front-row-emp > .emp_filtros-container { grid-area: filters; }
 
-  .emp_empresa-title {
-    font-size: 1.3rem;
-    margin: 0;
-    justify-content: center;
-    flex: initial;
-  }
+  .emp_empresa-title { font-size: 1.3rem; margin: 0; justify-content: center; flex: initial; }
+  .emp_search-input-container { width: 100%; max-width: none; }
+  .emp_search-input { padding: 0.7rem 2.5rem 0.7rem 0.9rem; font-size: 0.95rem; }
 
-  .emp_search-input-container {
-    width: 100%;
-    max-width: none;
-    order: initial !important;
-  }
-  .emp_search-input {
-    padding: 0.7rem 2.5rem 0.7rem 0.9rem;
-    font-size: 0.95rem;
-  }
-
-  .emp_filtros-container {
-    width: 100%;
-    order: initial !important;
-    position: relative;
-    justify-self: stretch;
-    display: flex;
-  }
-  .emp_filtros-button {
-    width: 100%;
-    justify-content: center;
-    border: 1px dashed rgba(255,255,255,0.45);
-    background: rgba(255,255,255,0.18);
-  }
+  .emp_filtros-container { width: 100%; position: relative; justify-self: stretch; display: flex; }
+  .emp_filtros-button { width: 100%; justify-content: center; border: 1px dashed rgba(255,255,255,0.45); background: rgba(255,255,255,0.18); }
 
   .emp_filtros-menu {
-    position: absolute;
-    top: calc(100% + 8px);
-    right: 0;
-    left: auto;
-    margin: 0;
-    border-radius: 12px;
-    width: min(90vw, 420px);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-    z-index: 1000;
-    max-height: 60vh;
-    overflow: auto;
+    position: absolute; top: calc(100% + 8px); right: 0; left: auto; margin: 0;
+    border-radius: 12px; width: min(90vw, 420px); box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    z-index: 120; max-height: 60vh; overflow: auto;
   }
 
   .emp_filtros-submenu { padding: 0.75rem; }
   .emp_alfabeto-filtros { grid-template-columns: repeat(6, 1fr); }
   .emp_letra-filtro { padding: 0.4rem; font-size: 0.85rem; }
 
-  .emp_filtros-activos-container { display: block; padding: 0 16px; }
-  .emp_filtros-activos {
-    margin: 10px 0 0 0; padding: 8px 10px;
-    grid-template-columns: 1fr auto;
-    gap: 8px;
-    background: rgba(255,255,255,0.9);
-  }
-  .emp_filtros-activos-header { padding: 0; font-size: 12px; color: var(--text-secondary); }
-  .emp_filtros-activos-chips { grid-column: 1 / -1; gap: 6px; }
-  .emp_filtro-chip { padding: 4px 9px; font-size: 12px; }
-
+  /* === CONTENIDO SCROLLEABLE === */
   .emp_empresas-list {
     flex: 1 1 auto;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    padding: 0;
-    background: #fff; /* contenido principal blanco bajo el header */
-    padding-bottom: calc(64px + var(--safe-bottom)); /* para que no tape el footer */
+    padding: 0 1.5rem;
+    padding-top: calc(var(--header-h) + var(--pinbar-h) + 8px); /* usa la altura medida */
+    padding-bottom: calc(var(--footer-h) + var(--safe-bottom) + 16px);
+    background: #fff;
+    height: calc(var(--app-h) - var(--header-h) - var(--pinbar-h) - var(--footer-h));
+    min-height: calc(var(--app-h) - var(--header-h) - var(--pinbar-h) - var(--footer-h));
   }
 
+  /* Pinbar fija debajo del header (dejá que su altura sea natural;
+     la variable --pinbar-h es solo para el padding del contenido) */
   .emp_contenedor-list-items {
-    height: auto;
-    gap: 8px;
-    display: flex;
     position: fixed;
-    z-index: 2;
-    background-color: white;
+    top: var(--header-h);
+    left: 0;
+    right: 0;
+    z-index: 105;
+    background-color: transparent;
+    border-bottom: none;
+    display: flex;
     align-items: center;
     justify-content: flex-start;
+    gap: 8px;
     flex-wrap: nowrap;
-    overflow: visible;
-    margin-bottom: 6px;
-    padding: .5rem 1.5rem 0;
-    padding-bottom: 2px;
+    padding: .5rem 1.5rem 2px;
+    height: var(--pinbar-h);   /* ← acompaña la medida expuesta */
+    margin: 0;
     width: 100%;
   }
 
-  .emp_left-inline{
-    flex: 1 1 auto;
-    gap: 8px;
-  }
-
-  .emp_contador-container {
-    flex: 0 0 auto;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.95rem;
-    padding: 0.45rem 0.75rem;
-    max-width: none;
-    overflow: visible;
-  }
-  .emp_contador-container .emp_icono-empresa {
-    width: 16px; height: 16px;
-    color: var(--primary-500);
-    padding-left: 6px;
-  }
-
-  .emp_chip-mini{
-    padding: 4px 8px;
-    gap: 6px;
-    max-width: 70vw;
-  }
-  .emp_chip-mini-text{ font-size: 0.8rem; }
-  .emp_chip-mini-more{ font-size: 0.7rem; }
-  .emp_chip-mini-close{ width: 16px; height: 16px; align-self: baseline; }
-
-  .emp_estado-pagos-container {
-    flex: 0 0 auto;
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    white-space: nowrap;
-  }
-  .emp_estado-indicador {
-    padding: 6px 10px;
-    font-size: 12px;
-    gap: 6px;
-    flex: 0 0 auto;
-  }
+  .emp_left-inline{ flex: 1 1 auto; gap: 8px; }
+  .emp_contador-container { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 8px; font-size: 0.95rem; padding: 0.45rem 0.75rem; background: transparent; }
+  .emp_estado-pagos-container { flex: 0 0 auto; display: flex; gap: 8px; align-items: center; white-space: nowrap; }
+  .emp_estado-indicador { padding: 6px 10px; font-size: 12px; gap: 6px; flex: 0 0 auto; }
   .emp_indicador-color { width: 10px; height: 10px; }
 
   .emp_socios-desktop { display: none; }
   .emp_socios-mobile { display: inline; }
-
   .emp_legend-desktop { display: none; }
   .emp_legend-mobile  { display: inline; }
 
   /* Ocultar TABLA y mostrar TARJETAS */
   .emp_box-table { display: none !important; }
   .emp_cards-wrapper {
-    display: grid !important;
-    grid-template-columns: 1fr;
-    gap: 12px;
-    margin: 70px 0;
-    padding: 0 1.5rem;
+    display: grid !important; grid-template-columns: 1fr; gap: 12px; margin: 0;
   }
 
-  /* Colores/estado en tarjeta */
   .emp_card.emp_verde { border-left: 1px solid var(--success-500); }
   .emp_card.emp_amarillo { border-left: 1px solid var(--warning-500); }
   .emp_card.emp_rojo { border-left: 1px solid var(--danger-500); }
 
-  .emp_card-status-strip {
-    position: absolute; inset: 0 auto 0 0; width: 3px; opacity: 0; pointer-events: none;
-  }
+  .emp_card-status-strip { position: absolute; inset: 0 auto 0 0; width: 3px; opacity: 0; pointer-events: none; }
   .emp_card.emp_verde .emp_card-status-strip { background: var(--success-500); opacity: 1; }
   .emp_card.emp_amarillo .emp_card-status-strip { background: var(--warning-500); opacity: 1; }
   .emp_card.emp_rojo .emp_card-status-strip { background: var(--danger-500); opacity: 1; }
 
-  .emp_card-header {
-    display: flex; align-items: center; gap: 8px;
-    justify-content: space-between;
-    margin-bottom: 6px;
-  }
+  .emp_card-header { display: flex; align-items: center; gap: 8px; justify-content: space-between; margin-bottom: 6px; }
   .emp_card-title { margin: 0; font-size: 1rem; font-weight: 650; color: var(--text-primary); }
-  .emp_badge {
-    font-size: 11px; font-weight: 600; border-radius: 999px;
-    padding: 4px 8px; border: 1px solid transparent;
-  }
+  .emp_badge { font-size: 11px; font-weight: 600; border-radius: 999px; padding: 4px 8px; border: 1px solid transparent; }
   .emp_badge-success { background: #10b9811a; color: #065f46; border-color: #10b98140; }
   .emp_badge-warn { background: #f59e0b1a; color: #92400e; border-color: #f59e0b40; }
   .emp_badge-danger { background: #ef44441a; color: #991b1b; border-color: #ef444440; }
@@ -1022,104 +645,48 @@ input:-webkit-autofill { background-color: transparent !important; }
   .emp_action-btn:active { transform: translateY(1px); }
   .emp_action-danger { color: var(--danger-600); border-color: #fecaca; background: #fff5f5; }
 
-  /* ====== BOTONERA INFERIOR (MOBILE)  ====== */
+  /* BOTONERA INFERIOR (MOBILE) FIJA */
   .emp_down-container {
-    position: fixed; bottom: 0; left: 0; right: 0;
-    height: 64px;
-    padding: 8px calc(12px + env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) calc(12px + env(safe-area-inset-left));
-    background: rgba(255,255,255,0.96);
-    backdrop-filter: saturate(150%) blur(10px);
-    border-top: 1px solid var(--gray-200);
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    z-index: 70;
+    position: fixed; bottom: 0; left: 0; right: 0; height: var(--footer-h);
+    padding: 10px calc(12px + env(safe-area-inset-right))
+             calc(12px + env(safe-area-inset-bottom))
+             calc(12px + env(safe-area-inset-left));
+    background: rgba(255,255,255,0.96); backdrop-filter: saturate(150%) blur(10px);
+    border-top: 1px solid var(--gray-200); display: flex; align-items: center; gap: 10px; z-index: 120;
   }
 
   .emp_volver-atras {
-    flex: 0 0 auto;
-    width: 44px;
-    height: 44px;
-    padding: 0;
-    border-radius: 12px;
-    display: grid;
-    place-items: center;
-    background: #ffffff;
-    border: 1.5px solid rgba(0,0,0,0.08);
-    box-shadow:
-      0 1px 2px rgba(16, 24, 40, 0.06),
-      0 2px 6px rgba(16, 24, 40, 0.06);
+    flex: 0 0 auto; width: 44px; height: 44px; padding: 0; border-radius: 12px; display: grid; place-items: center;
+    background: #ffffff; border: 1.5px solid rgba(0,0,0,0.08);
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06), 0 2px 6px rgba(16, 24, 40, 0.06);
   }
   .emp_volver-atras p { display: none !important; }
-  .emp_volver-atras .emp_socio-icon-button {
-    width: 20px; height: 20px; color: var(--primary-500);
-  }
+  .emp_volver-atras .emp_socio-icon-button { width: 20px; height: 20px; color: var(--primary-500); }
   .emp_volver-atras:active { transform: scale(0.98); }
 
-  .emp_botones-container {
-    flex: 1 1 auto;
-    display: flex; justify-content: flex-end; align-items: center;
-    gap: 10px;
-  }
-
+  .emp_botones-container { flex: 1 1 auto; display: flex; justify-content: flex-end; align-items: center; gap: 10px; }
   .emp_botones-container .emp_socio-button {
-    height: 44px;
-    width: 44px;
-    min-width: 44px;
-    padding: 0;
-    border-radius: 12px;
-    display: grid; place-items: center;
-    border: 1.5px solid var(--gray-200);
-    background: #ffffff;
-    box-shadow:
-      0 1px 2px rgba(16, 24, 40, 0.06),
-      0 2px 6px rgba(16, 24, 40, 0.06);
-    transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease, border-color 0.12s ease;
-    color: #334155;
+    height: 44px; width: 44px; min-width: 44px; padding: 0; border-radius: 12px; display: grid; place-items: center;
+    border: 1.5px solid var(--gray-200); background: #ffffff;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06), 0 2px 6px rgba(16, 24, 40, 0.06);
+    transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease, border-color 0.12s ease; color: #334155;
   }
   .emp_botones-container .emp_socio-button p { display: none !important; }
   .emp_socio-icon-button { width: 20px; height: 20px; }
-
-  .emp_botones-container .emp_socio-button:nth-child(1) {
-    border-color: rgba(59, 130, 246, 0.35);
-    background: rgba(59, 130, 246, 0.08);
-    color: var(--secondary-600);
-  }
-  .emp_botones-container .emp_socio-button:nth-child(2) {
-    border-color: rgba(16, 185, 129, 0.35);
-    background: rgba(16, 185, 129, 0.09);
-    color: var(--success-600);
-  }
+  .emp_botones-container .emp_socio-button:nth-child(1) { border-color: rgba(59, 130, 246, 0.35); background: rgba(59, 130, 246, 0.08); color: var(--secondary-600); }
+  .emp_botones-container .emp_socio-button:nth-child(2) { border-color: rgba(16, 185, 129, 0.35); background: rgba(16, 185, 129, 0.09); color: var(--success-600); }
   .emp_botones-container .emp_socio-button.emp_btn-baja-nav,
-  .emp_botones-container .emp_socio-button:nth-child(3) {
-    border-color: rgba(239, 68, 68, 0.35);
-    background: rgba(239, 68, 68, 0.08);
-    color: var(--danger-600);
-  }
-
-  .emp_botones-container .emp_socio-button:active {
-    transform: scale(0.98);
-    box-shadow:
-      0 1px 1px rgba(16,24,40,0.08),
-      0 1px 4px rgba(16,24,40,0.08);
-    background: #fff;
-  }
-
-  .emp_botones-container .emp_socio-button,
-  .emp_volver-atras {
-    background-image: none !important;
-  }
+  .emp_botones-container .emp_socio-button:nth-child(3) { border-color: rgba(239, 68, 68, 0.35); background: rgba(239, 68, 68, 0.08); color: var(--danger-600); }
+  .emp_botones-container .emp_socio-button:active { transform: scale(0.98); box-shadow: 0 1px 1px rgba(16,24,40,0.08), 0 1px 4px rgba(16,24,40,0.08); background: #fff; }
+  .emp_botones-container .emp_socio-button, .emp_volver-atras { background-image: none !important; }
 
   .emp_icono-celular-empresa{ display: none; }
-
   .emp_body { min-height: unset; max-height: none; }
   .emp_scrollableE { min-height: unset; max-height: none; }
 
   .emp_no-data-message.emp_no-data-mobile {
     min-height: calc(80dvh - 180px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: flex; align-items: center; justify-content: center;
   }
 }
 
@@ -1130,55 +697,27 @@ input:-webkit-autofill { background-color: transparent !important; }
   .emp_card-value { font-size: 12.5px; }
 }
 
-/* Accesibilidad (fallback general) */
+/* Accesibilidad */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
 }
 
 /* Focus */
 .emp_search-input:focus,
 .emp_btn-show-all:focus,
-.emp_socio-button:focus {
-  outline: 2px solid white;
-  outline-offset: 2px;
-  transition: outline var(--transition-fast), box-shadow var(--transition-fast);
-}
+.emp_socio-button:focus { outline: 2px solid white; outline-offset: 2px; transition: outline var(--transition-fast), box-shadow var(--transition-fast); }
 
-.emp_socios-mobile{
-  max-width: 60px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
+.emp_socios-mobile{ max-width: 60px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 @media (max-width: 768px) {
-  .emp_socios-mobile{
-    max-width: 60px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
+  .emp_socios-mobile{ max-width: 60px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 }
 
 /* ================================
-   Tarjetas (mobile / también base estilos)
+   Tarjetas (estilos base)
 ==================================*/
 .emp_card {
-  position: relative;
-  background: #fff;
-  border: 1px solid var(--gray-200);
-  border-radius: 14px;
-  box-shadow: var(--shadow-sm);
-  padding: 12px 12px 8px 12px;
-  overflow: hidden;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-
-  backface-visibility: hidden;
-  transform: translateZ(0);
-  will-change: transform, opacity;
-  contain: content;
+  position: relative; background: #fff; border: 1px solid var(--gray-200);
+  border-radius: 14px; box-shadow: var(--shadow-sm); padding: 12px 12px 8px 12px;
+  overflow: hidden; transition: transform 0.15s ease, box-shadow 0.15s ease;
+  backface-visibility: hidden; transform: translateZ(0); will-change: transform, opacity; contain: content;
 }

@@ -8,7 +8,7 @@ import React, {
   useDeferredValue,
   useTransition,
   memo,
-  useLayoutEffect, // ⬅️ para meta/tema antes del paint
+  useLayoutEffect,
 } from "react";
 import { useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx";
@@ -35,20 +35,25 @@ import BASE_URL from "../../config/config";
 import Toast from "../global/Toast";
 
 /* ================================
-   Hooks para mobile safe areas y theme-color (IGUAL QUE EN SOCIOS)
+   Hooks utilitarios
 ================================ */
-const useFixMobileVh = () => {
-  useEffect(() => {
-    const setVh = () => {
-      const vh = window.innerHeight * 0.01;
-      document.documentElement.style.setProperty("--vh", `${vh}px`);
+const useStableViewportLock = () => {
+  useLayoutEffect(() => {
+    const setAppHeight = () => {
+      const vh = window.visualViewport?.height || window.innerHeight;
+      document.documentElement.style.setProperty("--app-h", `${vh}px`);
+      const isMobile = window.innerWidth <= 820 || window.innerHeight <= 900;
+      if (isMobile) document.body.classList.add("emp_lock");
+      else document.body.classList.remove("emp_lock");
     };
-    setVh();
-    window.addEventListener("resize", setVh);
-    window.addEventListener("orientationchange", setVh);
+    setAppHeight();
+    const onOrient = () => setTimeout(setAppHeight, 350);
+    window.addEventListener("orientationchange", onOrient, { passive: true });
+    window.addEventListener("resize", setAppHeight, { passive: true });
     return () => {
-      window.removeEventListener("resize", setVh);
-      window.removeEventListener("orientationchange", setVh);
+      window.removeEventListener("orientationchange", onOrient);
+      window.removeEventListener("resize", setAppHeight);
+      document.body.classList.remove("emp_lock");
     };
   }, []);
 };
@@ -68,12 +73,9 @@ const useMobileChromeStyling = (color = "#fa7815") => {
       el.setAttribute("content", content);
       return el;
     };
-
-    // theme-color con media (claro/oscuro)
     upsertMeta("theme-color", color, { media: "(prefers-color-scheme: light)" });
     upsertMeta("theme-color", color, { media: "(prefers-color-scheme: dark)" });
 
-    // viewport-fit=cover para usar notch
     const metaViewport = document.querySelector('meta[name="viewport"]');
     if (metaViewport && !/viewport-fit=cover/.test(metaViewport.content)) {
       metaViewport.setAttribute(
@@ -82,7 +84,6 @@ const useMobileChromeStyling = (color = "#fa7815") => {
       );
     }
 
-    // iOS PWA translucido
     let metaCapable = document.querySelector(
       'meta[name="apple-mobile-web-app-capable"]'
     );
@@ -102,19 +103,6 @@ const useMobileChromeStyling = (color = "#fa7815") => {
       document.head.appendChild(metaStatus);
     }
     metaStatus.setAttribute("content", "black-translucent");
-
-    // fondo de html/body al color de marca durante el 1er paint
-    const prevHtmlBg = document.documentElement.style.backgroundColor;
-    const prevBodyBg = document.body.style.backgroundColor;
-    document.documentElement.style.backgroundColor = color;
-    if (!document.body.style.backgroundColor) {
-      document.body.style.backgroundColor = color;
-    }
-
-    return () => {
-      document.documentElement.style.backgroundColor = prevHtmlBg;
-      document.body.style.backgroundColor = prevBodyBg;
-    };
   }, [color]);
 };
 
@@ -137,7 +125,6 @@ const safeJSON = {
   stringify: (v) => { try { return JSON.stringify(v); } catch { return ""; } },
 };
 
-// Hook: click fuera
 const useClickOutside = (ref, callback) => {
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -148,7 +135,6 @@ const useClickOutside = (ref, callback) => {
   }, [ref, callback]);
 };
 
-// Respeta prefers-reduced-motion
 const useReducedMotion = () => {
   const [reduced, setReduced] = useState(() =>
     window.matchMedia("(prefers-reduced-motion: reduce)").matches
@@ -165,24 +151,16 @@ const useReducedMotion = () => {
 const getEmpresaId = (e) =>
   e?.id ?? e?.idEmp ?? e?.id_empresa ?? e?.idEmpresa ?? null;
 
-/* === Formateador de MEDIO DE PAGO para mostrar (MAYÚSCULAS o “-”) === */
 const fmtMedio = (v) => {
   const s = (v ?? "").toString().trim();
   return s ? s.toUpperCase() : "-";
 };
 
 /* ================================
-   Subcomponentes memoizados
+   Subcomponentes
 ================================ */
 const Row = memo(function Row({
-  empresa,
-  index,
-  selected,
-  onSelect,
-  onInfo,
-  onEdit,
-  onDelete,
-  onBaja,
+  empresa, index, selected, onSelect, onInfo, onEdit, onDelete, onBaja,
 }) {
   const estadoPago = useMemo(() => {
     const mesesPagadosStr = empresa?.meses_pagados;
@@ -272,7 +250,6 @@ const Row = memo(function Row({
               onClick={(e) => { e.stopPropagation(); onBaja(empresa); }}
             >
               <FontAwesomeIcon icon={faUserMinus} />
-              <span className="emp_btn-baja-text"></span>
             </button>
           </div>
         )}
@@ -282,13 +259,7 @@ const Row = memo(function Row({
 });
 
 const Card = memo(function Card({
-  empresa,
-  index,
-  onSelect,
-  onInfo,
-  onEdit,
-  onDelete,
-  onBaja,
+  empresa, index, onSelect, onInfo, onEdit, onDelete, onBaja,
 }) {
   const estadoPago = useMemo(() => {
     const mesesPagadosStr = empresa?.meses_pagados;
@@ -416,21 +387,70 @@ const Card = memo(function Card({
 const GestionarEmpresas = () => {
   const navigate = useNavigate();
 
-  // ⬅️ FIX móviles: alto real + barra del navegador con color de marca (pre-paint)
-  useFixMobileVh();
+  // Bloqueo de viewport + theme-color
+  useStableViewportLock();
   useMobileChromeStyling("#fa7815");
 
-  // Data base
+  // Refs para medir header/footer y exponer CSS vars dinámicas
+  const headerRef = useRef(null);
+  const footerRef = useRef(null);
+  const pinbarRef = useRef(null); // <<---- NUEVO: para medir la pinbar
+
+  useEffect(() => {
+    const applyHeights = () => {
+      // Header
+      const hHeader = headerRef.current?.getBoundingClientRect()?.height ?? 0;
+
+      // Footer (fixed). Fallback 64 si aún no montó
+      let hFooter = 64;
+      if (footerRef.current) {
+        const r = footerRef.current.getBoundingClientRect();
+        if (r && r.height) hFooter = Math.max(44, Math.round(r.height));
+      }
+
+      // Pinbar (contador + leyenda). Fallback 50 en mobile, 54 en desktop
+      let hPin = 54;
+      if (pinbarRef.current) {
+        const r = pinbarRef.current.getBoundingClientRect();
+        if (r && r.height) hPin = Math.max(34, Math.round(r.height));
+      } else {
+        // Si todavía no está montada, asumimos un valor decente para mobile
+        if (window.innerWidth <= 768) hPin = 50;
+      }
+
+      document.documentElement.style.setProperty("--header-h", `${hHeader}px`);
+      document.documentElement.style.setProperty("--footer-h", `${hFooter}px`);
+      document.documentElement.style.setProperty("--pinbar-h", `${hPin}px`);
+    };
+
+    applyHeights();
+
+    // Observamos cambios de tamaño en los 3 elementos
+    const ro = new ResizeObserver(applyHeights);
+    headerRef.current && ro.observe(headerRef.current);
+    footerRef.current && ro.observe(footerRef.current);
+    pinbarRef.current && ro.observe(pinbarRef.current);
+
+    // También en cambios de viewport/orientación
+    window.addEventListener("orientationchange", applyHeights, { passive: true });
+    window.addEventListener("resize", applyHeights, { passive: true });
+
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("orientationchange", applyHeights);
+      window.removeEventListener("resize", applyHeights);
+    };
+  }, []);
+
+  // ======= Estado / datos (igual a tu versión) =======
   const [empresas, setEmpresas] = useState([]);
   const [mediosDePago, setMediosDePago] = useState([]);
 
-  // UI / estado
   const [filaSeleccionada, setFilaSeleccionada] = useState(null);
   const [empresaSeleccionada, setEmpresaSeleccionada] = useState(null);
   const [empresaABaja, setEmpresaABaja] = useState(null);
   const [infoEmpresa, setInfoEmpresa] = useState(null);
 
-  // Errores, carga y toasts
   const [error, setError] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
   const [cargando, setCargando] = useState(true);
@@ -438,7 +458,6 @@ const GestionarEmpresas = () => {
   const [toastMensaje, setToastMensaje] = useState("");
   const [toastTipo, setToastTipo] = useState("exito");
 
-  // Filtros
   const [busqueda, setBusqueda] = useState("");
   const deferredBusqueda = useDeferredValue(busqueda);
 
@@ -458,12 +477,10 @@ const GestionarEmpresas = () => {
     hasFilters: false,
   });
 
-  // modales
   const [mostrarModalEliminar, setMostrarModalEliminar] = useState(false);
   const [mostrarModalInfo, setMostrarModalInfo] = useState(false);
   const [mostrarModalBaja, setMostrarModalBaja] = useState(false);
 
-  // otros
   const [mesesPagados, setMesesPagados] = useState([]);
   const filtrosRef = useRef(null);
 
@@ -472,11 +489,11 @@ const GestionarEmpresas = () => {
   const abortRef = useRef(null);
   const [, startTransition] = useTransition();
 
-  // Render incremental
   const [visibleCount, setVisibleCount] = useState(CHUNK_SIZE);
-
   const bumpVisibleGradually = useCallback((target) => {
-    setVisibleCount((prev) => (prev >= target ? prev : Math.min(prev + CHUNK_SIZE, target)));
+    setVisibleCount((prev) =>
+      prev >= target ? prev : Math.min(prev + CHUNK_SIZE, target)
+    );
   }, []);
 
   useEffect(() => {
@@ -485,7 +502,9 @@ const GestionarEmpresas = () => {
     if (total === 0) return;
     let rafId = 0;
     const step = () => {
-      setVisibleCount((prev) => (prev >= total ? prev : Math.min(prev + CHUNK_SIZE, total)));
+      setVisibleCount((prev) =>
+        prev >= total ? prev : Math.min(prev + CHUNK_SIZE, total)
+      );
       rafId = requestAnimationFrame(step);
     };
     rafId = requestAnimationFrame(step);
@@ -500,15 +519,14 @@ const GestionarEmpresas = () => {
     }
   });
 
-  // Cargar filtros guardados
   useEffect(() => {
     const savedFilters = localStorage.getItem("empresasFilters");
     const savedSearch = localStorage.getItem("empresasSearchTerm");
     if (savedFilters) setFiltrosActivos(safeJSON.parse(savedFilters, filtrosActivos));
     if (savedSearch) setBusqueda(savedSearch);
-  }, []); // eslint-disable-line
+    // eslint-disable-next-line
+  }, []);
 
-  // Toast post-acción
   useEffect(() => {
     if (!primeraCarga && actualizar) {
       setToastMensaje("Operación realizada correctamente");
@@ -517,7 +535,7 @@ const GestionarEmpresas = () => {
     }
   }, [actualizar, primeraCarga]);
 
-  // Carga inicial con caché + AbortController
+  // === Carga inicial con caché + AbortController ===
   useEffect(() => {
     let cancelled = false;
 
@@ -626,7 +644,12 @@ const GestionarEmpresas = () => {
     const filtros = filtrosActivos;
     const texto = (deferredBusqueda || "").trim().toLowerCase();
 
-    if (!filtros.todos && filtros.letras.length === 0 && filtros.mediosPago.length === 0 && texto === "") {
+    if (
+      !filtros.todos &&
+      filtros.letras.length === 0 &&
+      filtros.mediosPago.length === 0 &&
+      texto === ""
+    ) {
       return [];
     }
 
@@ -689,19 +712,15 @@ const GestionarEmpresas = () => {
     }
   }, [datosCargados]);
 
-  /* =============================
-     Helpers para la chip junto al contador
-  ==============================*/
   const persistFilters = useCallback((next) => {
     localStorage.setItem("empresasFilters", safeJSON.stringify(next));
   }, []);
 
-  /* === Selección ÚNICA: o 1 letra o 1 medio, nunca ambos === */
   const handleFiltrarPorLetra = useCallback((letra) => {
+    const upper = (letra || "").toUpperCase();
     startTransition(() => {
-      setFiltrosActivos((prev) => {
-        const yaSeleccionada = prev.letras[0] === letra;
-        const newLetras = yaSeleccionada ? [] : [letra];
+      setFiltrosActivos(() => {
+        const newLetras = [upper];
         const next = {
           letras: newLetras,
           mediosPago: [],
@@ -716,9 +735,8 @@ const GestionarEmpresas = () => {
 
   const handleFiltrarPorMedioPago = useCallback((medio) => {
     startTransition(() => {
-      setFiltrosActivos((prev) => {
-        const yaSeleccionado = prev.mediosPago[0] === medio;
-        const newMedios = yaSeleccionado ? [] : [medio];
+      setFiltrosActivos(() => {
+        const newMedios = [medio];
         const next = {
           letras: [],
           mediosPago: newMedios,
@@ -731,35 +749,19 @@ const GestionarEmpresas = () => {
     });
   }, [persistFilters]);
 
-  const eliminarFiltroLetra = useCallback((letra) => {
+  const eliminarFiltroLetra = useCallback(() => {
     startTransition(() => {
-      setFiltrosActivos((prev) => {
-        const newLetras = prev.letras.filter((l) => l !== letra);
-        const next = {
-          letras: newLetras,
-          mediosPago: [],
-          todos: false,
-          hasFilters: newLetras.length > 0,
-        };
-        persistFilters(next);
-        return next;
-      });
+      const next = { letras: [], mediosPago: [], todos: false, hasFilters: false };
+      persistFilters(next);
+      setFiltrosActivos(next);
     });
   }, [persistFilters]);
 
-  const eliminarFiltroMedioPago = useCallback((medio) => {
+  const eliminarFiltroMedioPago = useCallback(() => {
     startTransition(() => {
-      setFiltrosActivos((prev) => {
-        const newMedios = prev.mediosPago.filter((m) => m !== medio);
-        const next = {
-          letras: [],
-          mediosPago: newMedios,
-          todos: false,
-          hasFilters: newMedios.length > 0,
-        };
-        persistFilters(next);
-        return next;
-      });
+      const next = { letras: [], mediosPago: [], todos: false, hasFilters: false };
+      persistFilters(next);
+      setFiltrosActivos(next);
     });
   }, [persistFilters]);
 
@@ -771,12 +773,10 @@ const GestionarEmpresas = () => {
 
   const handleMostrarTodos = useCallback(() => {
     const allFilters = { letras: [], mediosPago: [], todos: true, hasFilters: false };
-
     startTransition(() => {
       setFiltrosActivos(allFilters);
       setBusqueda("");
     });
-
     persistFilters(allFilters);
     localStorage.removeItem("empresasSearchTerm");
 
@@ -786,7 +786,6 @@ const GestionarEmpresas = () => {
     }
   }, [persistFilters, reducedMotion]);
 
-  // === Menú de filtros ===
   const toggleMenuFiltros = useCallback(() => {
     setMostrarMenuFiltros((v) => {
       const next = !v;
@@ -808,11 +807,9 @@ const GestionarEmpresas = () => {
     }
   }, []);
 
-  // Búsqueda
   const handleBusquedaInputChange = useCallback((e) => {
     const value = e.target.value;
     startTransition(() => setBusqueda(value));
-
     window.clearTimeout(handleBusquedaInputChange._t);
     handleBusquedaInputChange._t = window.setTimeout(() => {
       localStorage.setItem("empresasSearchTerm", value);
@@ -830,7 +827,6 @@ const GestionarEmpresas = () => {
     localStorage.removeItem("empresasSearchTerm");
   }, []);
 
-  // Navegación
   const handleVolverAtras = useCallback(() => {
     localStorage.removeItem("empresasFilters");
     localStorage.removeItem("empresasSearchTerm");
@@ -853,7 +849,6 @@ const GestionarEmpresas = () => {
     [navigate]
   );
 
-  // Tabla / tarjetas acciones
   const handleFilaSeleccionada = useCallback((index, empresa) => {
     setFilaSeleccionada((prev) => (prev === index ? null : index));
     setEmpresaSeleccionada(empresa);
@@ -895,7 +890,6 @@ const GestionarEmpresas = () => {
     }
   }, [empresaSeleccionada]);
 
-  // ====== BAJA EMPRESA ======
   const handleConfirmarBajaEmpresa = useCallback((empresa) => {
     setEmpresaABaja(empresa);
     setMostrarModalBaja(true);
@@ -957,7 +951,6 @@ const GestionarEmpresas = () => {
     }
   }, []);
 
-  // Exportar Excel (solo visibles)
   const exportarAExcel = useCallback(() => {
     const visibles = empresasFiltradas;
     if (!visibles || visibles.length === 0) {
@@ -1017,13 +1010,11 @@ const GestionarEmpresas = () => {
       ? empresasFiltradas.length
       : 0;
 
-  // Subconjunto incremental que realmente se pinta
   const subEmpresas = useMemo(() => {
     if (!empresasFiltradas) return [];
     return empresasFiltradas.slice(0, visibleCount);
   }, [empresasFiltradas, visibleCount]);
 
-  /* ========= Mini chip junto al contador ========= */
   const firstLetter = filtrosActivos.letras[0];
   const firstMedio = filtrosActivos.mediosPago[0];
 
@@ -1038,8 +1029,8 @@ const GestionarEmpresas = () => {
   return (
     <div className="emp_empresa-container">
       <div className="emp_empresa-box">
-        {/* HEADER */}
-        <div className="emp_front-row-emp">
+        {/* HEADER (FIJO EN MOBILE) */}
+        <div className="emp_front-row-emp" ref={headerRef}>
           <span className="emp_empresa-title emp_title-wrap">Gestionar Empresas</span>
 
           {/* Búsqueda */}
@@ -1156,10 +1147,10 @@ const GestionarEmpresas = () => {
 
         {errorMessage && <div className="emp_error-message-emp">{errorMessage}</div>}
 
-        {/* CONTADOR + CHIP + LISTADO */}
+        {/* CONTENIDO LISTA / TARJETAS */}
         <div className="emp_empresas-list">
-          <div className="emp_contenedor-list-items">
-            {/* Contador + chip */}
+          {/* Sub-barra fija contador + leyenda */}
+          <div className="emp_contenedor-list-items" ref={pinbarRef}>
             <div className="emp_left-inline">
               <div className="emp_contador-container">
                 <span className="emp_socios-desktop">Cant empresas: {cantidadVisibles}</span>
@@ -1172,9 +1163,7 @@ const GestionarEmpresas = () => {
                   <span className="emp_chip-mini-text emp_socios-desktop">
                     {chipKind}: {chipValue}
                   </span>
-                  <span className="emp_chip-mini-text emp_socios-mobile">
-                    {chipValue}
-                  </span>
+                  <span className="emp_chip-mini-text emp_socios-mobile">{chipValue}</span>
 
                   <button
                     className="emp_chip-mini-close"
@@ -1210,7 +1199,7 @@ const GestionarEmpresas = () => {
             </div>
           </div>
 
-          {/* ======= TABLA ======= */}
+          {/* TABLA DESKTOP */}
           <div className="emp_box-table">
             <div className="emp_header">
               <div className="emp_column-header emp_header-razon">Razón Social</div>
@@ -1266,7 +1255,7 @@ const GestionarEmpresas = () => {
             </div>
           </div>
 
-          {/* ======= TARJETAS ======= */}
+          {/* TARJETAS MOBILE */}
           <div className={`emp_cards-wrapper ${animacionCascada ? "emp_cascade-animation" : ""}`}>
             {cargando ? (
               <div className="emp_no-data-message emp_no-data-mobile">
@@ -1310,8 +1299,8 @@ const GestionarEmpresas = () => {
           </div>
         </div>
 
-        {/* BOTONERA INFERIOR */}
-        <div className="emp_down-container">
+        {/* BOTONERA INFERIOR — idéntica a Socios */}
+        <div className="emp_down-container" ref={footerRef}>
           <button
             className="emp_socio-button emp_hover-effect emp_volver-atras"
             onClick={handleVolverAtras}
@@ -1331,10 +1320,6 @@ const GestionarEmpresas = () => {
               title="Agregar empresa"
             >
               <FontAwesomeIcon icon={faPlus} className="emp_socio-icon-button" />
-              <FontAwesomeIcon
-                icon={faBuilding}
-                className="emp_icono-empresa emp_icono-celular-empresa"
-              />
               <p>Agregar Empresa</p>
             </button>
 
