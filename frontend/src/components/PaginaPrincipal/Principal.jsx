@@ -29,10 +29,7 @@ const PaginaPrincipal = () => {
   const confirmarCierreSesion = () => {
     setIsExiting(true);
     setTimeout(() => {
-      // 🔒 Cierre de sesión consistente (manual)
-      try {
-        sessionStorage.clear();
-      } catch {}
+      try { sessionStorage.clear(); } catch {}
       try {
         localStorage.removeItem("token");
         localStorage.removeItem("usuario");
@@ -58,6 +55,18 @@ const PaginaPrincipal = () => {
     }
   ];
 
+  const handleItemClick = (item) => {
+    if (item.externa) {
+      window.open(item.ruta, "_blank", "noopener,noreferrer");
+    } else {
+      navigate(item.ruta);
+    }
+    // Evita que el botón quede “en foco” y se vea seleccionado en mobile
+    if (document.activeElement && document.activeElement.blur) {
+      document.activeElement.blur();
+    }
+  };
+
   return (
     <div className={`pagina-principal-container ${isExiting ? "slide-fade-out" : ""}`}>
       <div className="pagina-principal-card">
@@ -73,13 +82,11 @@ const PaginaPrincipal = () => {
           <div className="menu-grid">
             {menuItems.map((item, index) => (
               <button
+                type="button"
                 key={index}
                 className={`menu-button ${item.className || ""}`}
-                onClick={() =>
-                  item.externa
-                    ? window.open(item.ruta, "_blank")
-                    : navigate(item.ruta)
-                }
+                onClick={() => handleItemClick(item)}
+                aria-label={item.text}
               >
                 <div className="button-icon">
                   <FontAwesomeIcon icon={item.icon} size="lg" />
@@ -90,7 +97,7 @@ const PaginaPrincipal = () => {
           </div>
         </div>
 
-        <button className="logout-button" onClick={handleCerrarSesion}>
+        <button type="button" className="logout-button" onClick={handleCerrarSesion}>
           <FontAwesomeIcon icon={faSignOutAlt} className="logout-icon" />
           <span>Cerrar Sesión</span>
         </button>
@@ -125,12 +132,14 @@ const PaginaPrincipal = () => {
 
             <div className="logout-modal-buttons">
               <button
+                type="button"
                 className="logout-btn logout-btn--ghost"
                 onClick={() => setShowModal(false)}
               >
                 Cancelar
               </button>
               <button
+                type="button"
                 className="logout-btn logout-btn--solid-danger"
                 onClick={confirmarCierreSesion}
               >

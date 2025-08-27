@@ -794,6 +794,7 @@ html, body {
     margin-right: calc(50% - 50vw);
     border-radius: 0;
     justify-content: center;
+    border-bottom: none !important; /* ← sin línea negra */
   }
 
   .gcuotas-title { font-size: 1.35rem; }
@@ -903,7 +904,16 @@ html, body {
   }
   .gcuotas-selected-card { border-left-color: #e06c12; }
 
-  .gcuotas-mobile-row { align-items: center; gap: 12px; }
+  .gcuotas-mobile-row { 
+    align-items: center; 
+    gap: 12px; 
+    border-bottom: none !important; /* ← sin línea negra entre filas */
+    padding-bottom: 6px;
+  }
+  .gcuotas-mobile-row:last-child {
+    border-bottom: none !important; /* ← sin línea en la última */
+    padding-bottom: 0;
+  }
 
   .gcuotas-mobile-label {
     flex: 0 0 40%;
