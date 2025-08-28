@@ -48,9 +48,8 @@
   --safe-bottom:env(safe-area-inset-bottom,0px);
   --safe-left:env(safe-area-inset-left,0px);
 
-  /* Altura dinámica del header en mobile (la setea React) */
+  /* Alturas dinámicas (mobile) */
   --header-h:64px;
-  /* Altura de la barra fija contador+leyenda en mobile */
   --pinbar-h:60px;
 }
 
@@ -65,7 +64,7 @@ body{
 input:-webkit-autofill{background-color:transparent!important}
 
 /* ================================
-   Layout general (Desktop intacto)
+   Layout general (Desktop)
 ==================================*/
 .gessoc_empresa-container{
   min-height:100vh;
@@ -75,12 +74,12 @@ input:-webkit-autofill{background-color:transparent!important}
 .gessoc_empresa-box{
   width:100%;
   min-height:100vh;
-  height:100vh;                 /* fija altura para evitar scroll de página */
+  height:100vh;
   background:var(--surface-color);
   box-shadow:var(--shadow-lg);
-  overflow:hidden;              /* sin scroll general */
+  overflow:hidden;
   display:flex;flex-direction:column;
-  justify-content: space-between;
+  justify-content:space-between;
 }
 
 @keyframes gessoc_slideInUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
@@ -101,14 +100,14 @@ input:-webkit-autofill{background-color:transparent!important}
 .gessoc_search-input-container{position:relative;flex:1;max-width:500px;display:flex;align-items:center}
 .gessoc_search-input{
   width:100%;padding:.75rem 2.5rem .75rem 1rem;
-  background:rgb(255 255 255 / .2);border:1px solid rgb(255 255 255 / .3);border-radius:var(--border-radius);
+  background:rgb(255 255 255 /.2);border:1px solid rgb(255 255 255 /.3);border-radius:var(--border-radius);
   color:#fff;font-size:.95rem;transition:var(--transition-normal);backdrop-filter:blur(5px);
 }
-.gessoc_search-input::placeholder{color:rgb(255 255 255 / .7)}
-.gessoc_search-input:focus{outline:none;background:rgb(255 255 255 / .3);border-color:#fff;box-shadow:0 0 0 3px rgb(255 255 255 / .2)}
+.gessoc_search-input::placeholder{color:rgb(255 255 255 /.7)}
+.gessoc_search-input:focus{outline:none;background:rgb(255 255 255 /.3);border-color:#fff;box-shadow:0 0 0 3px rgb(255 255 255 /.2)}
 .gessoc_search-button{
   position:absolute;right:.75rem;top:50%;transform:translateY(-50%);
-  background:transparent;border:none;cursor:pointer;padding:.25rem;color:rgb(255 255 255 / .7);transition:var(--transition-fast)
+  background:transparent;border:none;cursor:pointer;padding:.25rem;color:rgb(255 255 255 /.7);transition:var(--transition-fast)
 }
 .gessoc_search-button:hover{color:#fff;transform:translateY(-50%) scale(1.1)}
 .gessoc_search-icon{width:16px;height:16}
@@ -119,11 +118,11 @@ input:-webkit-autofill{background-color:transparent!important}
 .gessoc_filtros-container{position:relative;display:flex;justify-content:flex-end;flex:1}
 .gessoc_filtros-button{
   display:flex;align-items:center;gap:.5rem;padding:.75rem 1rem;
-  background:rgb(255 255 255 / .2);color:#fff;border:1px solid rgb(255 255 255 / .3);
+  background:rgb(255 255 255 /.2);color:#fff;border:1px solid rgb(255 255 255 /.3);
   border-radius:var(--border-radius);font-size:.9rem;font-weight:500;cursor:pointer;transition:var(--transition-normal);
   white-space:nowrap;backdrop-filter:blur(5px);
 }
-.gessoc_filtros-button:hover{background:rgb(255 255 255 / .3);transform:translateY(-1px)}
+.gessoc_filtros-button:hover{background:rgb(255 255 255 /.3);transform:translateY(-1px)}
 .gessoc_chevron-icon{transition:transform var(--transition-normal)}
 .gessoc_chevron-icon.gessoc_rotate{transform:rotate(180deg)}
 .gessoc_filtros-menu{
@@ -150,8 +149,8 @@ input:-webkit-autofill{background-color:transparent!important}
 .gessoc_letra-filtro:hover{background:var(--primary-color);color:#fff;transform:translateY(-1px);box-shadow:var(--shadow-sm)}
 .gessoc_letra-filtro.gessoc_active{background:var(--primary-color);color:#fff;border-color:var(--primary-color)}
 .gessoc_empresas-list{
-  padding:0.5rem 2rem 0;
-  overflow:hidden;             /* => el scroll queda en la tabla/lista */
+  padding:.5rem 2rem 0;
+  overflow:hidden; /* scroll en la tabla/lista */
 }
 
 /* Errores */
@@ -165,11 +164,19 @@ input:-webkit-autofill{background-color:transparent!important}
 /* ================================
    Tabla (Desktop)
 ==================================*/
-.gessoc_box-table{border-radius:var(--border-radius);overflow:hidden;border:1px solid var(--border-color);background:var(--surface-color)}
+.gessoc_box-table{
+  border-radius:var(--border-radius);
+  overflow:hidden;
+  border:1px solid var(--border-color);
+  background:var(--surface-color);
+}
 .gessoc_header{
-  display:grid;grid-template-columns:2fr .5fr 1fr 1fr 1fr 1fr;
-  background:linear-gradient(90deg,#fa7815,#ef6a14);border-bottom:2px solid var(--border-color);
-  position:sticky;top:0;z-index:10;padding-right:1.4rem
+  display:grid;
+  grid-template-columns:2fr .5fr 1fr 1fr 1fr 1fr;
+  background:linear-gradient(90deg,#fa7815,#ef6a14);
+  border-bottom:2px solid var(--border-color);
+  position:sticky; top:0; z-index:10;
+  padding-right:1.4rem;
 }
 .gessoc_column-header{
   padding:.5rem;font-weight:400;color:var(--text-on-primary);font-size:.875rem;text-transform:uppercase;letter-spacing:.05em;
@@ -179,7 +186,7 @@ input:-webkit-autofill{background-color:transparent!important}
 .gessoc_scrollableE{
   min-width:100%;
   display:flex;flex-direction:column;
-  overflow-y:auto;             /* scroll sólo aquí en desktop */
+  overflow-y:auto;
   transition:min-height .3s ease,max-height .3s ease
 }
 
@@ -248,12 +255,12 @@ input:-webkit-autofill{background-color:transparent!important}
 .gessoc_socio-icon-button{width:16px;height:16px}
 .gessoc_icono-empresa{padding-left:10px;color:var(--primary-500)}
 
-/* Contador + leyenda (barra superior de la lista) */
+/* Contador + leyenda (barra superior) */
 .gessoc_contenedor-list-items{
   display:flex;align-items:flex-end;justify-content:space-between;gap:.75rem;
   width:100%;
-  background:#fff; /* desktop mantiene blanco */
-  padding-bottom: 1rem;
+  background:#fff;
+  padding-bottom:1rem;
 }
 .gessoc_contador-container{
   outline:2px solid var(--primary-500);background:#fff;
@@ -314,8 +321,7 @@ input:-webkit-autofill{background-color:transparent!important}
   }
   .gessoc_empresa-title{font-size:1.3rem;margin:0;flex:1 0 auto;width:100%;justify-content:center}
 
-  /* Pinbar (contador + leyenda) fijo debajo del header
-     >>> SIN FONDO (TRANSPARENTE), sin borde ni sombra <<< */
+  /* Pinbar fijo debajo del header */
   .gessoc_contenedor-list-items{
     position:fixed;
     top:var(--header-h);
@@ -323,45 +329,41 @@ input:-webkit-autofill{background-color:transparent!important}
     z-index:85;
     height:var(--pinbar-h);
     padding:.5rem 1.5rem;
-    margin-top: .5rem;
+    margin-top:.5rem;
     border-bottom:none;
     box-shadow:none;
-    background:transparent; /* << requerido */
+    background:transparent;
   }
-  .gessoc_contador-container{
-    padding:.55rem .75rem .5rem .75rem;
-  }
+  .gessoc_contador-container{padding:.55rem .75rem .5rem .75rem;}
 
   /* ÚNICO scroll: la lista (virt.) */
   .gessoc_empresas-list{
     flex:1 1 auto;
     overflow:hidden;
     background:#fff;
-    padding:0 0 0;
+    padding:0;
     padding-top:calc(var(--header-h) + var(--pinbar-h));
-    padding-bottom:calc(68px + var(--safe-bottom));
+    /* ↓↓↓ menos espacio final entre la última card y la botonera ↓↓↓ */
+    padding-bottom:calc(20px + var(--safe-bottom));
   }
 
   .gessoc_search-input-container{width:100%;max-width:none;order:3}
   .gessoc_search-input{padding:.7rem 2.5rem .7rem .9rem;font-size:.95rem}
 
   .gessoc_filtros-container{width:100%;order:4;position:relative}
-  .gessoc_filtros-button{width:100%;justify-content:center;border:1px dashed rgb(255 255 255 / .45);background:rgb(255 255 255 / .18)}
+  .gessoc_filtros-button{width:100%;justify-content:center;border:1px dashed rgb(255 255 255 /.45);background:rgb(255 255 255 /.18)}
   .gessoc_filtros-menu{
     position:absolute;top:calc(100% + 8px);left:auto;right:0;margin:0;border-radius:12px;
-    width:min(90vw,420px);box-shadow:0 10px 30px rgb(0 0 0 / .15);z-index:1000;max-height:60vh;overflow:auto;animation:gessoc_dropDown .3s ease-out
+    width:min(90vw,420px);box-shadow:0 10px 30px rgb(0 0 0 /.15);z-index:1000;max-height:60vh;overflow:auto;animation:gessoc_dropDown .3s ease-out
   }
   .gessoc_filtros-submenu{padding:.75rem}
   .gessoc_alfabeto-filtros{grid-template-columns:repeat(6,1fr)}
   .gessoc_letra-filtro{padding:.4rem;font-size:.85rem}
 
-  /* Leyenda: en móvil se usa SOLO la etiqueta corta */
-  .gessoc_estado-pagos-container{
-    width:fit-content;flex:0 0 auto;display:flex;gap:8px;align-items:center;white-space:nowrap
-  }
-  .gessoc_estado-indicador{padding:6px 10px;font-size:12px;gap:6px;flex:0 0 auto;background:#fff} /* chip sigue blanco, pero contenedor es transparente */
+  /* Leyenda (mobile: etiquetas cortas) */
+  .gessoc_estado-pagos-container{width:fit-content;flex:0 0 auto;display:flex;gap:8px;align-items:center;white-space:nowrap}
+  .gessoc_estado-indicador{padding:6px 10px;font-size:12px;gap:6px;flex:0 0 auto;background:#fff}
 
-  /* Mostrar SOLO abreviadas en móvil */
   .gessoc_label-full{display:none}
   .gessoc_label-short{display:inline}
 
@@ -374,21 +376,34 @@ input:-webkit-autofill{background-color:transparent!important}
 
   /* Tarjetas */
   .gessoc_cards-wrapper{display:grid!important}
+
   .gessoc_cards_wrapper_virtual{
     display:block!important;
-    /* antes: padding: 0 1rem .5rem; */
-    padding: 0 8px .5rem;
+    padding:0 0 .25rem; /* ↓ menos padding inferior */
     max-height:100%;
     overflow:hidden;
     background:#fff;
   }
-  .gessoc_cards_list{max-height:100%;overflow:hidden}
+
+  .gessoc_cards_list{
+    max-height:100%;
+    overflow:hidden;
+    padding:0 !important;
+  }
+
+  /* Espaciador final (más chico) */
+  .gessoc_cards_list::after{
+    content:"";
+    display:block;
+    height:calc(24px + var(--safe-bottom)); /* ↓ antes 72px */
+    flex:0 0 auto;
+  }
 
   .gessoc_card{
-    position:relative;background:#fff;border:1px solid var(--gray-200);border-radius:12px;margin-bottom:16px;
-    box-shadow:0 4px 12px rgb(0 0 0 / .08);padding:12px;overflow:hidden;transition:all .2s ease;display:flex;flex-direction:column
+    position:relative;background:#fff;border:1px solid var(--gray-200);border-radius:12px;margin-bottom:12px;
+    box-shadow:0 4px 12px rgb(0 0 0 /.08);padding:12px;overflow:hidden;transition:all .2s ease;display:flex;flex-direction:column
   }
-  .gessoc_card:last-child{margin-bottom:0}
+  .gessoc_card:last-child{margin-bottom:8px} /* ↓ más ajustado */
   .gessoc_card:active{transform:scale(.997)}
 
   .gessoc_card-status-strip{position:absolute;top:0;left:0;bottom:0;width:4px;opacity:1;pointer-events:none}
@@ -421,7 +436,7 @@ input:-webkit-autofill{background-color:transparent!important}
   .gessoc_down-container{
     position:fixed;bottom:0;left:0;right:0;height:auto;
     padding:10px calc(12px + var(--safe-right)) calc(10px + var(--safe-bottom)) calc(12px + var(--safe-left));
-    background:rgb(255 255 255 / .96);backdrop-filter:saturate(150%) blur(10px);
+    background:rgb(255 255 255 /.96);backdrop-filter:saturate(150%) blur(10px);
     border-top:1px solid var(--gray-200);display:flex;align-items:center;gap:10px;flex-wrap:wrap;z-index:80
   }
   .gessoc_volver-atras{
@@ -444,7 +459,7 @@ input:-webkit-autofill{background-color:transparent!important}
 
   .gessoc_botones-container .gessoc_socio-button:first-child{background:var(--secondary-50)!important;border-color:var(--secondary-300)!important;color:var(--secondary-700)!important}
   .gessoc_botones-container .gessoc_socio-button:nth-child(2){background:var(--success-50)!important;border-color:var(--success-300)!important;color:var(--success-600)!important}
-  .gessoc_btn-baja-nav{background:rgb(239 68 68 / .08)!important;border-color:rgb(239 68 68 / .35)!important;color:var(--danger-600)!important}
+  .gessoc_btn-baja-nav{background:rgb(239 68 68 /.08)!important;border-color:rgb(239 68 68 /.35)!important;color:var(--danger-600)!important}
 
   .gessoc_body{min-height:unset;max-height:none}
   .gessoc_scrollableE{min-height:unset;max-height:none;overflow:hidden}
@@ -454,7 +469,7 @@ input:-webkit-autofill{background-color:transparent!important}
     display:flex;align-items:center;justify-content:center
   }
 
-  .List{padding:8px!important}
+  .List{padding:0 !important;}
 }
 
 /* XS */
@@ -512,7 +527,7 @@ input:-webkit-autofill{background-color:transparent!important}
 
 /* Ajustes tarjetas base */
 .gessoc_cards_wrapper_virtual{gap:120px!important}
-.gessoc_card{margin-bottom:12px;box-shadow:0 2px 8px rgb(0 0 0 / .1)}
+.gessoc_card{margin-bottom:12px;box-shadow:0 2px 8px rgb(0 0 0 /.1)}
 
 /* Truncado útil en móvil dentro del chip de medio */
 @media (max-width:768px){
@@ -523,7 +538,7 @@ input:-webkit-autofill{background-color:transparent!important}
 
 /* Corrección extra del menú filtros (mobile) */
 @media (max-width:768px){
-  .gessoc_filtros-menu{position:absolute;top:calc(100% + 8px);right:0;left:auto;margin:0;border-radius:12px;width:min(90vw,420px);box-shadow:0 10px 30px rgb(0 0 0 / .15);z-index:1000;max-height:60vh;overflow:auto;animation:gessoc_dropDown .3s ease-out}
+  .gessoc_filtros-menu{position:absolute;top:calc(100% + 8px);right:0;left:auto;margin:0;border-radius:12px;width:min(90vw,420px);box-shadow:0 10px 30px rgb(0 0 0 /.15);z-index:1000;max-height:60vh;overflow:auto;animation:gessoc_dropDown .3s ease-out}
   .gessoc_filtros-submenu{padding:.75rem}
   .gessoc_alfabeto-filtros{grid-template-columns:repeat(6,1fr);gap:.5rem}
   .gessoc_letra-filtro{padding:.4rem;font-size:.85rem}
@@ -531,21 +546,12 @@ input:-webkit-autofill{background-color:transparent!important}
 
 /* Limitar y centrar card en mobile (más anchas) */
 .gessoc_mobile .gessoc_card{
-  /* antes: max-width:360px; margin:0 auto; */
-  max-width: min(520px, 96vw);
-  width: 100%;
-  margin: 0 auto 12px;
-  box-sizing: border-box;
+  max-width:min(600px,100vw);
+  width:100%;
+  margin:0 auto 12px;
+  box-sizing:border-box;
 }
 
-.contenedor-chps-contador{
-  display: flex;
-}
-
-/* Desktop: se ve el label */
-.gessoc_filter-chip-label { display: inline; }
-
-/* Mobile: se oculta el label, queda solo la letra */
-@media (max-width: 768px) {
-  .gessoc_filter-chip-label { display: none; }
-}
+.contenedor-chps-contador{display:flex;}
+.gessoc_filter-chip-label{display:inline;}
+@media (max-width:768px){ .gessoc_filter-chip-label{display:none;} }
