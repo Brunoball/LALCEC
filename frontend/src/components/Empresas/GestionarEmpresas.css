@@ -196,6 +196,7 @@ input:-webkit-autofill { background-color: transparent !important; }
   width: 100%;
   height: auto; /* ← antes 54px, ahora auto */
   justify-content: space-between;
+  padding-bottom: 1rem;
 }
 .emp_empresa-title {
   color: var(--text-on-primary);

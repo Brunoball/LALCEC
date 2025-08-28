@@ -96,7 +96,6 @@ const medioLabel = (m) => {
 };
 
 /* ======= Hooks mobile ======= */
-// 1) Altura real del viewport móvil: define --vh (por si lo necesitás)
 const useFixMobileVh = () => {
   useEffect(() => {
     const setVh = () => {
@@ -113,7 +112,6 @@ const useFixMobileVh = () => {
   }, []);
 };
 
-// 2) Meta/viewport/safe-areas (sin pintar fondo naranja)
 const useMobileChromeStyling = (color = null) => {
   useLayoutEffect(() => {
     const upsertMeta = (name, content, attrs = {}) => {
@@ -166,8 +164,9 @@ const SocioRow = React.memo(
     const socio = data.items[index];
     const selected = data.filaSeleccionada === index;
 
-    const applyCascade = data.cascadeEnabled && index < 10;
-    const stagger = applyCascade ? clamp(index, 0, 14) : 0;
+    const cascadeCount = data.cascadeCount ?? 14;
+    const applyCascade = data.cascadeEnabled && index < cascadeCount;
+    const stagger = applyCascade ? clamp(index, 0, cascadeCount - 1) : 0;
 
     const rowClass = selected
       ? `gessoc_selected-row ${socio._estadoClase}`
@@ -256,8 +255,9 @@ const SocioCardRow = React.memo(
     const socio = data.items[index];
     const gap = data.gap ?? 12;
 
-    const applyCascade = data.cascadeEnabled && index < 10;
-    const stagger = applyCascade ? clamp(index, 0, 14) : 0;
+    const cascadeCount = data.cascadeCount ?? 14;
+    const applyCascade = data.cascadeEnabled && index < cascadeCount;
+    const stagger = applyCascade ? clamp(index, 0, cascadeCount - 1) : 0;
 
     const top =
       typeof style.top === "number" ? style.top : parseFloat(style.top) || 0;
@@ -764,10 +764,11 @@ const GestionarSocios = () => {
   const isMobile = useMediaQuery("(max-width: 900px)");
   const reducedMotion = useReducedMotion();
 
-  const CASCADE_COUNT = 10;
+  const CASCADE_COUNT = 14;
   const CASCADE_STAGGER_MS = 50;
   const CASCADE_DURATION_MS = 450;
-  const CASCADE_OFF_DELAY = CASCADE_DURATION_MS + CASCADE_STAGGER_MS * (CASCADE_COUNT - 1) + 150;
+  const CASCADE_OFF_DELAY =
+    CASCADE_DURATION_MS + CASCADE_STAGGER_MS * (CASCADE_COUNT - 1) + 150;
 
   const [cascadeEnabled, setCascadeEnabled] = useState(false);
   const cascadeTimerRef = useRef(null);
@@ -778,7 +779,7 @@ const GestionarSocios = () => {
     setCascadeEnabled(true);
     if (cascadeTimerRef.current) clearTimeout(cascadeTimerRef.current);
     cascadeTimerRef.current = setTimeout(() => setCascadeEnabled(false), CASCADE_OFF_DELAY);
-  }, [reducedMotion, CASCADE_OFF_DELAY]);
+  }, [reducedMotion]);
 
   useEffect(() => {
     triggerCascade();
@@ -1031,6 +1032,7 @@ const GestionarSocios = () => {
       onInfo: handleMostrarInfoSocio,
       onBaja: handleConfirmarBaja,
       cascadeEnabled: cascadeEnabled && !reducedMotion,
+      cascadeCount: CASCADE_COUNT,
     }),
     [
       sociosFiltrados, filaSeleccionada, onSelect, handleEditarSocio,
@@ -1192,15 +1194,63 @@ const GestionarSocios = () => {
         {/* CONTENIDO */}
         <div className="gessoc_empresas-list">
           <div className="gessoc_contenedor-list-items">
-            <div className="gessoc_contador-container">
-              <span className="gessoc_socios-totales gessoc_socios-desktop">
-                Cant socios: {cantidadVisibles}
-                <FontAwesomeIcon icon={faUsers} className="gessoc_icono-empresa" />
-              </span>
-              <span className="gessoc_socios-totales gessoc_socios-mobile">
-                <FontAwesomeIcon icon={faUsers} className="gessoc_icono-empresa" />
-                {cantidadVisibles}
-              </span>
+            <div className="contenedor-chps-contador">
+              <div className="gessoc_contador-container">
+                <span className="gessoc_socios-totales gessoc_socios-desktop">
+                  Cant socios: {cantidadVisibles}
+                  <FontAwesomeIcon icon={faUsers} className="gessoc_icono-empresa" />
+                </span>
+                <span className="gessoc_socios-totales gessoc_socios-mobile">
+                  <FontAwesomeIcon icon={faUsers} className="gessoc_icono-empresa" />
+                  {cantidadVisibles}
+                </span>
+              </div>
+
+              {/* CHIPS activos */}
+              <div className="gessoc_filtros-activos-container">
+                {filtrosActivos.letras?.length > 0 && (
+                  <div className="gessoc_filter-chip">
+                    {/* NUEVO: etiqueta que se ve en desktop y se oculta en mobile (vía CSS) */}
+                    <span className="gessoc_filter-chip-label">Letra:&nbsp;</span>
+                    <span className="gessoc_filter-chip-text">
+                      {filtrosActivos.letras[0]}
+                    </span>
+                    {filtrosActivos.letras.length > 1 && (
+                      <span className="gessoc_filter-chip-more">
+                        +{filtrosActivos.letras.length - 1}
+                      </span>
+                    )}
+                    <button
+                      className="gessoc_filter-chip-close"
+                      onClick={() => limpiarFiltros()}
+                      title="Quitar filtro por letra"
+                      aria-label="Quitar filtro por letra"
+                    >
+                      ×
+                    </button>
+                  </div>
+                )}
+
+                {filtrosActivos.mediosPago?.length > 0 && (
+                  <div className="gessoc_filter-chip gessoc_chip-medio">
+                    <span className="gessoc_filter-chip-text">Medio: </span>
+                    <span className="texto">{filtrosActivos.mediosPago[0]}</span>
+                    {filtrosActivos.mediosPago.length > 1 && (
+                      <span className="gessoc_filter-chip-more">
+                        +{filtrosActivos.mediosPago.length - 1}
+                      </span>
+                    )}
+                    <button
+                      className="gessoc_filter-chip-close"
+                      onClick={() => limpiarFiltros()}
+                      title="Quitar filtro de medio de pago"
+                      aria-label="Quitar filtro de medio de pago"
+                    >
+                      ×
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Leyenda — en móvil usa etiquetas cortas */}
@@ -1212,58 +1262,14 @@ const GestionarSocios = () => {
               <div className="gessoc_estado-indicador gessoc_debe-1-2">
                 <div className="gessoc_indicador-color"></div>
                 <span className="gessoc_label-full">Debe 1-2 meses</span>
-                <span className="gessoc_label-short">Debe 1-2</span>
+                <span className="gessoc_label-short"> 1-2</span>
               </div>
               <div className="gessoc_estado-indicador gessoc_debe-3-mas">
                 <div className="gessoc_indicador-color"></div>
                 <span className="gessoc_label-full">Debe 3+ meses</span>
-                <span className="gessoc_label-short">Debe 3+</span>
+                <span className="gessoc_label-short"> 3+</span>
               </div>
             </div>
-          </div>
-
-          {/* CHIPS activos */}
-          <div className="gessoc_filtros-activos-container">
-            {filtrosActivos.letras?.length > 0 && (
-              <div className="gessoc_filter-chip">
-                <span className="gessoc_filter-chip-text">
-                  {filtrosActivos.letras[0]}
-                </span>
-                {filtrosActivos.letras.length > 1 && (
-                  <span className="gessoc_filter-chip-more">
-                    +{filtrosActivos.letras.length - 1}
-                  </span>
-                )}
-                <button
-                  className="gessoc_filter-chip-close"
-                  onClick={() => limpiarFiltros()}
-                  title="Quitar filtro por letra"
-                  aria-label="Quitar filtro por letra"
-                >
-                  ×
-                </button>
-              </div>
-            )}
-
-            {filtrosActivos.mediosPago?.length > 0 && (
-              <div className="gessoc_filter-chip gessoc_chip-medio">
-                <span className="gessoc_filter-chip-text">Medio: </span>
-                <span className="texto">{filtrosActivos.mediosPago[0]}</span>
-                {filtrosActivos.mediosPago.length > 1 && (
-                  <span className="gessoc_filter-chip-more">
-                    +{filtrosActivos.mediosPago.length - 1}
-                  </span>
-                )}
-                <button
-                  className="gessoc_filter-chip-close"
-                  onClick={() => limpiarFiltros()}
-                  title="Quitar filtro de medio de pago"
-                  aria-label="Quitar filtro de medio de pago"
-                >
-                  ×
-                </button>
-              </div>
-            )}
           </div>
 
           {/* LISTA */}
