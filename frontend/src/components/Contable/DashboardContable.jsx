@@ -1,3 +1,4 @@
+// src/components/Contable/DashboardContable.jsx
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import "./dashboard.css";
@@ -23,6 +24,10 @@ import ContableChartsModal from "./modalcontable/ContableChartsModal";
 export default function DashboardContable() {
   const navigate = useNavigate();
 
+  // ===== NUEVO: Años =====
+  const [anios, setAnios] = useState([]);
+  const [anioSeleccionado, setAnioSeleccionado] = useState("");
+
   // Filtros
   const [mesSeleccionado, setMesSeleccionado] = useState("Selecciona un mes");
   const [tipoEntidad, setTipoEntidad] = useState("socio");
@@ -37,7 +42,7 @@ export default function DashboardContable() {
   // Medios de pago
   const [mediosPago, setMediosPago] = useState([]);
 
-  // Derivados
+  // Derivados (por mes)
   const [categoriasAgrupadas, setCategoriasAgrupadas] = useState([]);
   const [totalRecaudado, setTotalRecaudado] = useState(0);
   const [registrosMes, setRegistrosMes] = useState([]);
@@ -47,6 +52,9 @@ export default function DashboardContable() {
 
   // Modal Gráficos
   const [mostrarModalGraficos, setMostrarModalGraficos] = useState(false);
+
+  // Vista detalle/resumen
+  const [mostrarTablaDetalle, setMostrarTablaDetalle] = useState(false);
 
   // Helper fetch con cache buster
   const fetchData = async (url) => {
@@ -70,19 +78,67 @@ export default function DashboardContable() {
     return data;
   };
 
-  // Carga inicial
+  // ===== NUEVO: cargar años (como en Cuotas)
   useEffect(() => {
-    sessionStorage.removeItem("datos_contables");
-    sessionStorage.removeItem("precios_categorias");
+    (async () => {
+      try {
+        setError(null);
+        const resp = await fetchData(`${BASE_URL}/api.php?action=anios_pagos`);
+        const lista = Array.isArray(resp)
+          ? resp
+          : Array.isArray(resp?.anios)
+          ? resp.anios
+          : [];
+        const norm = lista
+          .map((a) =>
+            typeof a === "object"
+              ? (a.anio ?? a.year ?? a.y ?? a.value)
+              : a
+          )
+          .filter((v) => v != null)
+          .map((n) => parseInt(n, 10))
+          .sort((a, b) => b - a);
+
+        setAnios(norm);
+
+        // Selección por defecto del año
+        const current = new Date().getFullYear();
+        if (norm.length === 0) {
+          setAnioSeleccionado("");
+        } else if (norm.includes(current)) {
+          setAnioSeleccionado(String(current));
+        } else {
+          setAnioSeleccionado(String(norm[0]));
+        }
+      } catch (err) {
+        console.error("Error al cargar años:", err);
+        setError("Error al cargar los años de pagos.");
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ===== Carga de datos dependiente del AÑO (y una sola vez medios/precios)
+  useEffect(() => {
+    // Evita cargar si no hay año seleccionado
+    if (!anioSeleccionado) {
+      // limpiar datos visibles si se quedó sin años
+      setDatosMeses([]);
+      setDatosEmpresas([]);
+      setMeses(["Selecciona un mes"]);
+      setMesSeleccionado("Selecciona un mes");
+      return;
+    }
 
     (async () => {
       try {
         setError(null);
 
+        // Medios y precios pueden ser globales (no dependen del año)
         const [dataContable, dataEmpresas, dataPrecios, dataMediosPago] =
           await Promise.all([
-            fetchData(`${BASE_URL}/api.php?action=contable`),
-            fetchData(`${BASE_URL}/api.php?action=contable_emp`),
+            fetchData(`${BASE_URL}/api.php?action=contable&anio=${encodeURIComponent(anioSeleccionado)}`),
+            fetchData(`${BASE_URL}/api.php?action=contable_emp&anio=${encodeURIComponent(anioSeleccionado)}`),
             fetchData(`${BASE_URL}/api.php?action=precios_cat_mes`),
             fetchData(`${BASE_URL}/api.php?action=obtener_medios_pago`),
           ]);
@@ -121,15 +177,45 @@ export default function DashboardContable() {
           .filter(Boolean)
           .sort((a, b) => a.localeCompare(b, "es"));
         setMediosPago(listaMedios);
+
+        // Si el mes previamente seleccionado no existe en el nuevo año, lo reseteo
+        if (
+          mesSeleccionado !== "Selecciona un mes" &&
+          !mesesDisponibles.includes(mesSeleccionado)
+        ) {
+          setMesSeleccionado("Selecciona un mes");
+        }
       } catch (err) {
-        console.error("Error en carga inicial:", err);
-        setError("Error al cargar datos. Verifique la conexión o intente más tarde.");
+        console.error("Error en carga de datos contables:", err);
+        setError("Error al cargar datos del año seleccionado.");
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [anioSeleccionado]);
 
-  // Recalcular al cambiar filtros/mes
+  // === Resumen ANUAL (del año seleccionado) ===
+  const pagosAnuales = useMemo(() => {
+    const fuente = tipoEntidad === "socio" ? datosMeses : datosEmpresas;
+    const todosPagos = fuente.flatMap((m) => (Array.isArray(m?.pagos) ? m.pagos : []));
+    if (medioSeleccionado === "todos") return todosPagos;
+    return todosPagos.filter(
+      (p) => (p?.Medio_Pago || "").toString().trim() === medioSeleccionado
+    );
+  }, [datosMeses, datosEmpresas, tipoEntidad, medioSeleccionado]);
+
+  const totalAnual = useMemo(
+    () => pagosAnuales.reduce((acc, p) => acc + (parseFloat(p?.Precio) || 0), 0),
+    [pagosAnuales]
+  );
+
+  const totalRegistrosAnual = useMemo(() => pagosAnuales.length, [pagosAnuales]);
+
+  const totalCategoriasAnual = useMemo(() => {
+    const set = new Set(pagosAnuales.map((p) => p?.Nombre_Categoria).filter(Boolean));
+    return set.size;
+  }, [pagosAnuales]);
+
+  // Recalcular AL CAMBIAR filtros/mes (por-mes)
   useEffect(() => {
     if (mesSeleccionado !== "Selecciona un mes") {
       updateMonthData();
@@ -141,7 +227,7 @@ export default function DashboardContable() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mesSeleccionado, tipoEntidad, medioSeleccionado]);
 
-  // Agrupar por categoría
+  // Agrupar por categoría (por mes)
   const agruparPorCategoria = (pagos) => {
     const agrupado = {};
     pagos.forEach((pago) => {
@@ -222,13 +308,19 @@ export default function DashboardContable() {
   const abrirModalGraficos = () => setMostrarModalGraficos(true);
   const cerrarModalGraficos = () => setMostrarModalGraficos(false);
 
-  const calcularTotalRegistros = () => registrosMes.length;
+  const handleAnioChange = (e) => {
+    const nuevo = e.target.value;
+    setAnioSeleccionado(nuevo);
+    // Al cambiar de año, conviene resetear el mes si no existe en ese año
+    setMesSeleccionado("Selecciona un mes");
+  };
+
+  const calcularTotalRegistros = () =>
+    mesSeleccionado === "Selecciona un mes" ? totalRegistrosAnual : registrosMes.length;
+
   const labelEntidad = tipoEntidad === "socio" ? "Socio" : "Razón social";
 
-  // Vista detalle/resumen
-  const [mostrarTablaDetalle, setMostrarTablaDetalle] = useState(false);
-
-  // Meses presentes (para encabezados, por si lo usás luego)
+  // Meses presentes (por si lo usás luego)
   const MESES_ORDEN = [
     "Enero","Febrero","Marzo","Abril","Mayo","Junio",
     "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre",
@@ -242,6 +334,37 @@ export default function DashboardContable() {
     return MESES_ORDEN.filter((m) => set.has(norm(m)));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [datosMeses, datosEmpresas]);
+
+  // === Valores mostrados en TARJETAS según estado (mes o anual) ===
+  const tarjetas = useMemo(() => {
+    const usandoMes = mesSeleccionado !== "Selecciona un mes";
+    const total = usandoMes ? totalRecaudado : totalAnual;
+    const categorias = usandoMes ? categoriasAgrupadas.length : totalCategoriasAnual;
+    const registros = usandoMes ? registrosMes.length : totalRegistrosAnual;
+
+    const subtituloBase = usandoMes
+      ? `En ${mesSeleccionado}`
+      : `En ${anioSeleccionado || "el año seleccionado"}`;
+    const subtituloMedio =
+      medioSeleccionado !== "todos" ? ` · ${medioSeleccionado}` : "";
+
+    return {
+      total,
+      categorias,
+      registros,
+      subtitulo: `${subtituloBase}${subtituloMedio}`,
+    };
+  }, [
+    mesSeleccionado,
+    totalRecaudado,
+    categoriasAgrupadas.length,
+    registrosMes.length,
+    totalAnual,
+    totalCategoriasAnual,
+    totalRegistrosAnual,
+    medioSeleccionado,
+    anioSeleccionado,
+  ]);
 
   return (
     <div className="dashboard-contable-fullscreen">
@@ -275,11 +398,9 @@ export default function DashboardContable() {
               </div>
               <div className="contable-card-content">
                 <h3>Total recaudado</h3>
-                <p>${totalRecaudado.toLocaleString("es-AR")}</p>
+                <p>${(tarjetas.total || 0).toLocaleString("es-AR")}</p>
                 <small className="contable-card-subtext">
-                  {mesSeleccionado !== "Selecciona un mes"
-                    ? `En ${mesSeleccionado}${medioSeleccionado !== "todos" ? ` · ${medioSeleccionado}` : ""}`
-                    : "Seleccione un mes"}
+                  {tarjetas.subtitulo}
                 </small>
               </div>
             </div>
@@ -291,11 +412,11 @@ export default function DashboardContable() {
               </div>
               <div className="contable-card-content">
                 <h3>Categorías</h3>
-                <p>{categoriasAgrupadas.length}</p>
+                <p>{tarjetas.categorias}</p>
                 <small className="contable-card-subtext">
                   {mesSeleccionado !== "Selecciona un mes"
                     ? `En ${mesSeleccionado}`
-                    : "Seleccione un mes"}
+                    : `En ${anioSeleccionado || "el año seleccionado"}`}
                 </small>
               </div>
             </div>
@@ -307,11 +428,11 @@ export default function DashboardContable() {
               </div>
               <div className="contable-card-content">
                 <h3>Registros</h3>
-                <p>{calcularTotalRegistros()}</p>
+                <p>{tarjetas.registros}</p>
                 <small className="contable-card-subtext">
                   {mesSeleccionado !== "Selecciona un mes"
                     ? `En ${mesSeleccionado}`
-                    : "Seleccione un mes"}
+                    : `En ${anioSeleccionado || "el año seleccionado"}`}
                 </small>
               </div>
             </div>
@@ -338,6 +459,25 @@ export default function DashboardContable() {
             </h2>
 
             <div className="contable-selectors-container">
+              {/* ===== NUEVO: Año ===== */}
+              <div className="contable-year-selector">
+                <FontAwesomeIcon icon={faCalendarAlt} />
+                <select
+                  value={anioSeleccionado}
+                  onChange={handleAnioChange}
+                  className="contable-year-select"
+                  title="Filtrar por año"
+                >
+                  {anios.length === 0 ? (
+                    <option value="">Sin años</option>
+                  ) : (
+                    anios.map((y, idx) => (
+                      <option key={idx} value={y}>{y}</option>
+                    ))
+                  )}
+                </select>
+              </div>
+
               {/* Mes */}
               <div className="contable-month-selector">
                 <FontAwesomeIcon icon={faCalendarAlt} />
@@ -345,6 +485,7 @@ export default function DashboardContable() {
                   value={mesSeleccionado}
                   onChange={handleMesChange}
                   className="contable-month-select"
+                  disabled={!anioSeleccionado}
                 >
                   {meses.map((mes, index) => (
                     <option key={index} value={mes}>
@@ -361,6 +502,7 @@ export default function DashboardContable() {
                   value={tipoEntidad}
                   onChange={handleTipoEntidadChange}
                   className="contable-entity-select"
+                  disabled={!anioSeleccionado}
                 >
                   <option value="socio">Socios</option>
                   <option value="empresa">Empresas</option>
@@ -375,6 +517,7 @@ export default function DashboardContable() {
                   onChange={handleMedioPagoChange}
                   className="contable-payment-select"
                   title="Filtrar por medio de pago"
+                  disabled={!anioSeleccionado}
                 >
                   <option value="todos">Todos los medios</option>
                   {mediosPago.map((mp, idx) => (
@@ -390,6 +533,7 @@ export default function DashboardContable() {
                 className="contable-detail-view-button"
                 onClick={toggleVistaDetalle}
                 type="button"
+                disabled={!anioSeleccionado}
               >
                 <FontAwesomeIcon icon={mostrarTablaDetalle ? faTags : faTable} />
                 <span className="hide-on-mobile">Ver </span>
@@ -402,6 +546,7 @@ export default function DashboardContable() {
                 type="button"
                 onClick={abrirModalGraficos}
                 title="Ver gráficos Socios vs Empresas"
+                disabled={!anioSeleccionado}
               >
                 <FontAwesomeIcon icon={faChartPie} />
                 Ver Gráficos
@@ -411,7 +556,13 @@ export default function DashboardContable() {
 
           {/* ==== Contenido dinámico ==== */}
           <div className="contable-categories-scroll-container">
-            {mostrarTablaDetalle ? (
+            {!anioSeleccionado ? (
+              <p className="contable-no-data">Seleccione un año para ver información.</p>
+            ) : mesSeleccionado === "Selecciona un mes" ? (
+              <p className="contable-no-data">
+                Seleccione un mes para ver el detalle o el resumen por categoría.
+              </p>
+            ) : mostrarTablaDetalle ? (
               <div className="contable-detail-table-container">
                 <table className="contable-detail-table">
                   <thead>
@@ -445,9 +596,7 @@ export default function DashboardContable() {
                     ) : (
                       <tr>
                         <td colSpan="6" className="contable-no-data">
-                          {mesSeleccionado === "Selecciona un mes"
-                            ? "Seleccione un mes para ver los detalles"
-                            : "No hay registros para mostrar en este mes"}
+                          No hay registros para mostrar en este mes
                         </td>
                       </tr>
                     )}
@@ -485,9 +634,7 @@ export default function DashboardContable() {
                   ))
                 ) : (
                   <p className="contable-no-data">
-                    {mesSeleccionado === ""
-                      ? "Seleccione un mes para ver los detalles"
-                      : "No hay datos para mostrar para este mes"}
+                    No hay datos para mostrar para este mes
                   </p>
                 )}
               </div>

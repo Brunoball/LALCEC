@@ -43,12 +43,10 @@ const AgregarSocio = () => {
 
   const [activeField, setActiveField] = useState(null);
 
-  // Campo crudo "Nombre y Apellido"
-  const [nombreCompleto, setNombreCompleto] = useState('');
-
   const [socio, setSocio] = useState({
-    nombre: '',
+    // ⚠️ Ahora separados
     apellido: '',
+    nombre: '',
     dni: '',
     localidad: '',
     domicilio: '',
@@ -93,6 +91,7 @@ const AgregarSocio = () => {
   // ===== Handlers =====
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    // Todo en mayúsculas salvo email
     const v = (name === 'email') ? value : value.toUpperCase();
     setSocio((prev) => ({ ...prev, [name]: v }));
   };
@@ -103,31 +102,15 @@ const AgregarSocio = () => {
     setSocio((prev) => ({ ...prev, [name]: numericValue }));
   };
 
-  // Campo ÚNICO: Nombre y Apellido
-  const handleFullNameChange = (e) => {
-    const raw = e.target.value.toUpperCase();
-    setNombreCompleto(raw);
-    const firstSpace = raw.indexOf(' ');
-    let nombre = '', apellido = '';
-    if (firstSpace >= 0) {
-      nombre = raw.slice(0, firstSpace);
-      apellido = raw.slice(firstSpace + 1);
-    } else {
-      nombre = raw;
-      apellido = '';
-    }
-    setSocio((prev) => ({ ...prev, nombre, apellido }));
-  };
-
-  // Validación: ahora solo devuelve boolean y NO setea errores locales
-  const validar = () => {
+  // Validación simple: ambos obligatorios
+  const validarPaso1 = () => {
     const ok = socio.nombre.trim() && socio.apellido.trim();
     return !!ok;
   };
 
   const handleNextStep = () => {
-    if (!validar()) {
-      showToast('advertencia', 'Completá nombre y apellido para continuar', 3000);
+    if (currentStep === 1 && !validarPaso1()) {
+      showToast('advertencia', 'Completá NOMBRE y APELLIDO para continuar', 3000);
       return;
     }
     setCurrentStep((s) => Math.min(s + 1, 3));
@@ -146,8 +129,9 @@ const AgregarSocio = () => {
 
   const handleSubmit = async (e) => {
     e?.preventDefault();
-    if (!validar()) {
-      showToast('advertencia', 'Revisá los campos obligatorios', 3200);
+
+    if (!validarPaso1()) {
+      showToast('advertencia', 'Revisá los campos obligatorios (Nombre y Apellido)', 3200);
       return;
     }
 
@@ -165,15 +149,13 @@ const AgregarSocio = () => {
 
         // Reset form
         setSocio({
-          nombre: '', apellido: '', dni: '', localidad: '',
+          apellido: '', nombre: '', dni: '', localidad: '',
           domicilio: '', domicilio_2: '', numero: '',
           email: '', telefono: '', observacion: '',
           idCategoria: '', idMedios_Pago: '',
         });
-        setNombreCompleto('');
         setCurrentStep(1);
 
-        // Redirigir después de un pequeño delay para que se vea el Toast
         setTimeout(() => navigate('/gestionarsocios'), 2200);
       } else {
         showToast('error', data.error_message || 'Error inesperado', 4200);
@@ -247,24 +229,39 @@ const AgregarSocio = () => {
             <div className="add-socio-section">
               <h3 className="add-socio-section-title">Información Básica</h3>
               <div className="add-socio-section-content">
-                <div
-                  className={`add-socio-input-wrapper 
-                    ${nombreCompleto || activeField === 'nombreCompleto' ? 'has-value' : ''}`}
-                >
-                  <label className="add-socio-label">
-                    <FontAwesomeIcon icon={faUser} className="input-icon" />
-                    Nombre y Apellido
-                  </label>
-                  <input
-                    name="nombreCompleto"
-                    value={nombreCompleto}
-                    onChange={handleFullNameChange}
-                    onFocus={() => handleFocus('nombreCompleto')}
-                    onBlur={handleBlur}
-                    className="add-socio-input"
-                  />
-                  <span className="add-socio-input-highlight"></span>
-                  {/* Error inline eliminado: solo Toast */}
+
+                <div className="add-socio-group-row">
+                  <div className={`add-socio-input-wrapper ${socio.apellido || activeField === 'apellido' ? 'has-value' : ''}`}>
+                    <label className="add-socio-label">
+                      <FontAwesomeIcon icon={faUser} className="input-icon" />
+                      Apellido
+                    </label>
+                    <input
+                      name="apellido"
+                      value={socio.apellido}
+                      onChange={handleInputChange}
+                      onFocus={() => handleFocus('apellido')}
+                      onBlur={handleBlur}
+                      className="add-socio-input"
+                    />
+                    <span className="add-socio-input-highlight"></span>
+                  </div>
+
+                  <div className={`add-socio-input-wrapper ${socio.nombre || activeField === 'nombre' ? 'has-value' : ''}`}>
+                    <label className="add-socio-label">
+                      <FontAwesomeIcon icon={faUser} className="input-icon" />
+                      Nombre
+                    </label>
+                    <input
+                      name="nombre"
+                      value={socio.nombre}
+                      onChange={handleInputChange}
+                      onFocus={() => handleFocus('nombre')}
+                      onBlur={handleBlur}
+                      className="add-socio-input"
+                    />
+                    <span className="add-socio-input-highlight"></span>
+                  </div>
                 </div>
 
                 <div className="add-socio-group-row">

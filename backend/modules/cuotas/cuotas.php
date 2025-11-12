@@ -1,4 +1,5 @@
 <?php
+// cuotas.php
 header("Access-Control-Allow-Origin: http://localhost:3000");
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
@@ -6,32 +7,26 @@ header('Content-Type: application/json');
 
 include_once(__DIR__ . '/../../config/db.php');
 
-// Función para obtener el rango de fechas del mes seleccionado
-function obtenerRangoMes($conn, $mesNombre) {
-    // Año actual (ajustar si necesitás otros años)
-    $añoActual = date('Y');
+// ===== Helpers =====
+function obtenerNumeroMes($mesNombre) {
+    $meses = [
+        'ENERO' => '01','FEBRERO'=>'02','MARZO'=>'03','ABRIL'=>'04',
+        'MAYO'=>'05','JUNIO'=>'06','JULIO'=>'07','AGOSTO'=>'08',
+        'SEPTIEMBRE'=>'09','OCTUBRE'=>'10','NOVIEMBRE'=>'11','DICIEMBRE'=>'12'
+    ];
+    return $meses[strtoupper($mesNombre)] ?? '01';
+}
 
-    // Primer día del mes
-    $fechaInicio = DateTime::createFromFormat('Y-m-d', $añoActual.'-'.obtenerNumeroMes($mesNombre).'-01');
-
-    // Último día del mes
+function obtenerRangoMes($mesNombre, $anio) {
+    $anio = intval($anio);
+    $mes = obtenerNumeroMes($mesNombre);
+    $fechaInicio = DateTime::createFromFormat('Y-m-d', $anio.'-'.$mes.'-01');
     $fechaFin = clone $fechaInicio;
     $fechaFin->modify('last day of this month');
-
     return [
         'inicio' => $fechaInicio->format('Y-m-d'),
         'fin' => $fechaFin->format('Y-m-d')
     ];
-}
-
-// Función auxiliar para convertir nombre de mes a número
-function obtenerNumeroMes($mesNombre) {
-    $meses = [
-        'ENERO' => '01', 'FEBRERO' => '02', 'MARZO' => '03', 'ABRIL' => '04',
-        'MAYO' => '05', 'JUNIO' => '06', 'JULIO' => '07', 'AGOSTO' => '08',
-        'SEPTIEMBRE' => '09', 'OCTUBRE' => '10', 'NOVIEMBRE' => '11', 'DICIEMBRE' => '12'
-    ];
-    return $meses[strtoupper($mesNombre)] ?? '01';
 }
 
 function obtenerPrecioPorMes($conn, $idCategoria, $mesSeleccionado) {
@@ -51,7 +46,7 @@ function obtenerPrecioPorMes($conn, $idCategoria, $mesSeleccionado) {
     $resultMes = $stmtMes->get_result();
     if ($resultMes->num_rows === 0) return $precioActual;
 
-    $idMesSeleccionado = $resultMes->fetch_assoc()['idMes'];
+    $idMesSeleccionado = (int)$resultMes->fetch_assoc()['idMes'];
 
     $sqlHistorico = "SELECT precio_anterior 
                      FROM historico_precios_categorias 
@@ -66,22 +61,23 @@ function obtenerPrecioPorMes($conn, $idCategoria, $mesSeleccionado) {
     if ($resultHist->num_rows > 0) {
         return $resultHist->fetch_assoc()['precio_anterior'];
     }
-
     return $precioActual;
 }
 
+// ===== Params =====
 $tipo   = $_GET['tipo']   ?? '';
 $estado = $_GET['estado'] ?? '';
 $mes    = $_GET['mes']    ?? '';
+$anio   = $_GET['anio']   ?? '';
 
-if (!$tipo || !$estado || !$mes) {
-    echo json_encode(["error" => "Parámetros faltantes."]);
+if (!$tipo || !$estado || !$mes || !$anio) {
+    echo json_encode(["error" => "Parámetros faltantes (tipo, estado, mes, anio)."]);
     exit;
 }
 
-// Rango del mes seleccionado
-$rangoMes   = obtenerRangoMes($conn, $mes);
+$rangoMes    = obtenerRangoMes($mes, $anio);
 $fechaFinMes = $rangoMes['fin'];
+$anioInt     = (int)$anio;
 
 /* ===========================
    SOCIOS PAGADOS (activo=1)
@@ -98,60 +94,60 @@ if ($tipo === "socio" && $estado === "pagado") {
                c.Nombre_Categoria AS categoria, 
                COALESCE(m.Medio_Pago, '-') AS medio_pago
         FROM pagos p
-        JOIN socios s        ON p.idSocios = s.idSocios
+        JOIN socios s          ON p.idSocios = s.idSocios
         LEFT JOIN categorias c ON s.idCategoria = c.idCategorias
         LEFT JOIN mediospago m ON s.idMedios_Pago = m.IdMedios_pago
         WHERE p.idMes = (SELECT idMes FROM meses_pagos WHERE mes = ? LIMIT 1)
+          AND YEAR(p.fechaPago) = ?
           AND s.Fechaunion <= ?
           AND s.activo = 1
         GROUP BY s.idSocios
         ORDER BY s.apellido ASC
     ";
-
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("ss", $mes, $fechaFinMes);
+    $stmt->bind_param("sis", $mes, $anioInt, $fechaFinMes);
     $stmt->execute();
     $result = $stmt->get_result();
 
     $data = [];
     while ($row = $result->fetch_assoc()) {
-        $row['precio_categoria'] = obtenerPrecioPorMes($conn, $row['idCategoria'], $mes);
+        $row['precio_categoria'] = obtenerPrecioPorMes($conn, (int)$row['idCategoria'], $mes);
         $data[] = $row;
     }
     echo json_encode($data);
     exit;
 }
 
-/* =============================
+/* ===========================
    SOCIOS DEUDORES (activo=1)
-============================= */
+=========================== */
 if ($tipo === "socio" && $estado === "deudor") {
-    // IDs de socios que ya pagaron este mes
+    // IDs de socios que ya pagaron este mes y año
     $sqlPagados = "
         SELECT p.idSocios 
         FROM pagos p 
         JOIN meses_pagos mp ON p.idMes = mp.idMes 
-        WHERE mp.mes = ?
+        WHERE mp.mes = ? AND YEAR(p.fechaPago) = ?
     ";
     $stmtPag = $conn->prepare($sqlPagados);
-    $stmtPag->bind_param("s", $mes);
+    $stmtPag->bind_param("si", $mes, $anioInt);
     $stmtPag->execute();
     $resultPag = $stmtPag->get_result();
 
     $idsPagados = [];
     while ($row = $resultPag->fetch_assoc()) {
-        $idsPagados[] = $row['idSocios'];
+        $idsPagados[] = (int)$row['idSocios'];
     }
 
-    // Todos los socios activos que estaban registrados en ese mes (y no pagaron)
+    // Todos los socios activos a la fecha fin de ese MES/AÑO (que NO pagaron ese MES/AÑO)
     $sqlSocios = "
         SELECT 
             s.idSocios, 
-            COALESCE(s.nombre, '')     AS nombre, 
-            COALESCE(s.apellido, '')   AS apellido,
-            COALESCE(s.domicilio_2, '') AS domicilio, 
-            COALESCE(s.numero, '')     AS numero,
-            COALESCE(s.idCategoria, 0) AS idCategoria,
+            COALESCE(s.nombre, '')       AS nombre, 
+            COALESCE(s.apellido, '')     AS apellido,
+            COALESCE(s.domicilio_2, '')  AS domicilio, 
+            COALESCE(s.numero, '')       AS numero,
+            COALESCE(s.idCategoria, 0)   AS idCategoria,
             COALESCE(c.Nombre_Categoria, '') AS categoria,
             COALESCE(mp.Medio_Pago, '-') AS medio_pago
         FROM socios s
@@ -160,7 +156,6 @@ if ($tipo === "socio" && $estado === "deudor") {
         WHERE s.Fechaunion <= ?
           AND s.activo = 1
     ";
-
     $stmtSocios = $conn->prepare($sqlSocios);
     $stmtSocios->bind_param("s", $fechaFinMes);
     $stmtSocios->execute();
@@ -168,8 +163,8 @@ if ($tipo === "socio" && $estado === "deudor") {
 
     $data = [];
     while ($row = $result->fetch_assoc()) {
-        if (!in_array($row['idSocios'], $idsPagados)) {
-            $row['precio_categoria'] = obtenerPrecioPorMes($conn, $row['idCategoria'], $mes);
+        if (!in_array((int)$row['idSocios'], $idsPagados, true)) {
+            $row['precio_categoria'] = obtenerPrecioPorMes($conn, (int)$row['idCategoria'], $mes);
             $data[] = $row;
         }
     }
@@ -192,26 +187,25 @@ if ($tipo === "empresa" && $estado === "pagado") {
                e.idCategorias,
                COALESCE(mp.Medio_Pago, '-') AS medio_pago
         FROM pagos_empresas p
-        JOIN empresas e        ON p.idEmp = e.idEmp
-        LEFT JOIN categorias c ON e.idCategorias = c.idCategorias
+        JOIN empresas e         ON p.idEmp = e.idEmp
+        LEFT JOIN categorias c  ON e.idCategorias = c.idCategorias
         LEFT JOIN mediospago mp ON e.idMedios_Pago = mp.IdMedios_pago
         WHERE p.idMes = (SELECT idMes FROM meses_pagos WHERE mes = ? LIMIT 1)
+          AND YEAR(p.fechaPago) = ?
           AND e.fechaunion <= ?
         GROUP BY e.idEmp
         ORDER BY e.razon_social ASC
     ";
-
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("ss", $mes, $fechaFinMes);
+    $stmt->bind_param("sis", $mes, $anioInt, $fechaFinMes);
     $stmt->execute();
     $result = $stmt->get_result();
 
     $data = [];
     while ($row = $result->fetch_assoc()) {
-        $row['precio_categoria'] = obtenerPrecioPorMes($conn, $row['idCategorias'], $mes);
+        $row['precio_categoria'] = obtenerPrecioPorMes($conn, (int)$row['idCategorias'], $mes);
         $data[] = $row;
     }
-
     echo json_encode($data);
     exit;
 }
@@ -220,24 +214,24 @@ if ($tipo === "empresa" && $estado === "pagado") {
    EMPRESAS DEUDORAS
 ======================= */
 if ($tipo === "empresa" && $estado === "deudor") {
-    // IDs de empresas que ya pagaron este mes
+    // IDs de empresas que ya pagaron ese MES/AÑO
     $sqlPagados = "
         SELECT pe.idEmp 
         FROM pagos_empresas pe 
         JOIN meses_pagos mp ON pe.idMes = mp.idMes 
-        WHERE mp.mes = ?
+        WHERE mp.mes = ? AND YEAR(pe.fechaPago) = ?
     ";
     $stmtPag = $conn->prepare($sqlPagados);
-    $stmtPag->bind_param("s", $mes);
+    $stmtPag->bind_param("si", $mes, $anioInt);
     $stmtPag->execute();
     $resultPag = $stmtPag->get_result();
 
     $idsPagadas = [];
     while ($row = $resultPag->fetch_assoc()) {
-        $idsPagadas[] = $row['idEmp'];
+        $idsPagadas[] = (int)$row['idEmp'];
     }
 
-    // Todas las empresas registradas en ese mes (y que no pagaron)
+    // Todas las empresas dadas de alta a fin de MES/AÑO y que NO pagaron ese MES/AÑO
     $sqlEmpresas = "
         SELECT 
             e.idEmp, 
@@ -247,11 +241,10 @@ if ($tipo === "empresa" && $estado === "deudor") {
             COALESCE(mp.Medio_Pago, '-') AS medio_pago,
             e.idCategorias
         FROM empresas e
-        LEFT JOIN categorias c ON e.idCategorias = c.idCategorias
+        LEFT JOIN categorias c  ON e.idCategorias = c.idCategorias
         LEFT JOIN mediospago mp ON e.idMedios_Pago = mp.IdMedios_pago
         WHERE e.fechaunion <= ?
     ";
-
     $stmtEmpresas = $conn->prepare($sqlEmpresas);
     $stmtEmpresas->bind_param("s", $fechaFinMes);
     $stmtEmpresas->execute();
@@ -259,8 +252,8 @@ if ($tipo === "empresa" && $estado === "deudor") {
 
     $data = [];
     while ($row = $result->fetch_assoc()) {
-        if (!in_array($row['idEmp'], $idsPagadas)) {
-            $row['precio_categoria'] = obtenerPrecioPorMes($conn, $row['idCategorias'], $mes);
+        if (!in_array((int)$row['idEmp'], $idsPagadas, true)) {
+            $row['precio_categoria'] = obtenerPrecioPorMes($conn, (int)$row['idCategorias'], $mes);
             $data[] = $row;
         }
     }

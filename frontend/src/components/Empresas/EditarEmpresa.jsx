@@ -1,5 +1,5 @@
 // src/components/empresas/EditarEmpresa.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSave, faArrowLeft, faUser, faHome, faMoneyBillWave, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
@@ -31,7 +31,20 @@ const EditarEmpresa = () => {
   const [condIva, setCondIva] = useState('');
   const [condicionesIva, setCondicionesIva] = useState([]);
 
-  // Toast fijo arriba del viewport
+  // Fecha de unión (igual que Socios)
+  const [fechaUnion, setFechaUnion] = useState('');
+  const fechaInputRef = useRef(null);
+  const abrirCalendario = () => {
+    const el = fechaInputRef.current;
+    if (!el) return;
+    if (typeof el.showPicker === 'function') {
+      try { el.showPicker(); return; } catch {}
+    }
+    el.focus();
+    try { el.click(); } catch {}
+  };
+
+  // Toast
   const [toast, setToast] = useState({ show: false, message: '', type: 'exito' });
   const showToast = (message, type = 'exito') => {
     setToast({ show: true, message, type });
@@ -61,6 +74,7 @@ const EditarEmpresa = () => {
         setMedioPago(empresa.idMedios_Pago || '');
         setCuit(empresa.cuit || '');
         setCondIva(empresa.id_iva || '');
+        setFechaUnion(empresa.fechaunion || empresa.Fechaunion || '');
       }
 
       setCategorias(categorias || []);
@@ -99,11 +113,12 @@ const EditarEmpresa = () => {
           domicilio_2,
           telefono,
           email,
-          observacion,
+          observacion, // se mantiene pero solo se edita desde la pestaña "Otros"
           idCategoria: idCategorias,
           medioPago,
           cuit,
           id_iva: condIva,
+          fechaUnion: fechaUnion || null,
         }),
       });
 
@@ -120,7 +135,7 @@ const EditarEmpresa = () => {
     }
   };
 
-  // --- HEADER (con skeleton) ---
+  // Header
   const Header = (
     <div className="edit-empresa-header">
       {cargando ? (
@@ -139,7 +154,7 @@ const EditarEmpresa = () => {
     </div>
   );
 
-  // --- TABS (deshabilitadas si cargando) ---
+  // Tabs
   const Tabs = (
     <div className="edit-empresa-tabs" role="tablist" aria-label="Secciones de edición">
       {[
@@ -165,7 +180,7 @@ const EditarEmpresa = () => {
     </div>
   );
 
-  // --- CONTENT (skeletons con misma grilla que el formulario real) ---
+  // Content loader
   const ContentLoading = (
     <div className="edit-empresa-form">
       <div className="edit-empresa-tab-content">
@@ -273,20 +288,30 @@ const EditarEmpresa = () => {
                     </label>
                   </div>
 
-                  <div className="edit-empresa-floating-label-wrapper">
+                  {/* Fecha de unión */}
+                  <div
+                    className="edit-empresa-floating-label-wrapper date-clickable"
+                    onClick={abrirCalendario}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && abrirCalendario()}
+                    aria-label="Fecha de unión (abrir calendario)"
+                    title="Fecha de unión"
+                  >
                     <input
-                      type="text"
-                      value={observacion}
-                      onChange={(e) => setObservacion(e.target.value)}
-                      placeholder=" "
-                      className="edit-empresa-input"
-                      id="observacion"
+                      ref={fechaInputRef}
+                      type="date"
+                      value={fechaUnion || ''}
+                      onChange={(e) => setFechaUnion(e.target.value)}
+                      className="edit-empresa-input date-no-effect"
+                      id="fechaUnionEmp"
                     />
-                    <label htmlFor="observacion" className={`edit-empresa-floating-label ${observacion ? 'edit-empresa-floating-label-filled' : ''}`}>
-                      Observación
+                    <label htmlFor="fechaUnionEmp" className="edit-empresa-floating-label date-label-fixed">
+                      Fecha de unión
                     </label>
                   </div>
                 </div>
+                {/* Campo Observación eliminado de esta pestaña */}
               </div>
             )}
 

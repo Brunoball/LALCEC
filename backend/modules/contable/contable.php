@@ -1,4 +1,21 @@
 <?php
+// backend/modules/contable/contable.php  (acción = contable)
+// Devuelve contabilidad de SOCIOS agrupada por MES del AÑO indicado
+
+header("Access-Control-Allow-Origin: http://localhost:3000");
+header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization");
+header("Access-Control-Allow-Credentials: true");
+header('Content-Type: application/json');
+header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+header("Cache-Control: post-check=0, pre-check=0", false);
+header("Pragma: no-cache");
+
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
+
 require_once(__DIR__ . '/../../config/db.php');
 
 // Nombres de meses
@@ -8,14 +25,9 @@ $nombres_meses = [
     9 => 'SEPTIEMBRE', 10 => 'OCTUBRE', 11 => 'NOVIEMBRE', 12 => 'DICIEMBRE'
 ];
 
-// === CONFIGURÁ ACÁ el nombre real de la tabla de medios de pago ===
-// Opciones típicas que vi en tu mensaje:
-//   - 'medios_pago'        (con guión bajo)
-//   - 'mediospago'         (sin guión bajo)
-//   - 'agenda.mediospago'  (con esquema)
+// Tabla de medios de pago (ajusta según tu DB)
 $TABLA_MEDIOS_PAGO = 'medios_pago';
 
-// Helper: chequea si la tabla existe (si viene con esquema tipo agenda.mediospago también lo soporta)
 function tablaExiste(mysqli $conn, string $nombreTabla): bool {
     if (strpos($nombreTabla, '.') !== false) {
         [$schema, $tabla] = explode('.', $nombreTabla, 2);
@@ -36,35 +48,36 @@ try {
         throw new Exception("Conexión fallida: " . $conn->connect_error);
     }
 
-    // ==== Categorías (precios base y fecha agregado)
+    // ===== NUEVO: parámetro año
+    $anio = isset($_GET['anio']) ? (int)$_GET['anio'] : (int)date('Y');
+    if ($anio < 1900 || $anio > 3000) {
+        $anio = (int)date('Y');
+    }
+
+    // Categorías (base y fecha agregado)
     $sql_categorias = "SELECT idCategorias, Precio_Categoria, fecha_agregado FROM categorias";
     $result_categorias = $conn->query($sql_categorias);
     if (!$result_categorias) {
         throw new Exception("Error en consulta de categorías: " . $conn->error);
     }
-
     $precios_base = [];
     $fechas_agregado = [];
     while ($row = $result_categorias->fetch_assoc()) {
-        $precios_base[(int)$row['idCategorias']] = (float)$row['Precio_Categoria'];
-        $fechas_agregado[(int)$row['idCategorias']] = $row['fecha_agregado'];
+        $precios_base[(int)$row['idCategorias']]      = (float)$row['Precio_Categoria'];
+        $fechas_agregado[(int)$row['idCategorias']]   = $row['fecha_agregado'];
     }
 
-    // ==== Histórico precios
+    // Histórico precios (opcional)
     $sql_historicos = "SELECT idCategoria, idMes, precio_nuevo, precio_anterior, fecha_cambio
                        FROM historico_precios_categorias
                        ORDER BY idCategoria, idMes ASC";
     $result_historicos = $conn->query($sql_historicos);
-    if (!$result_historicos) {
-        // Si no existe la tabla de históricos, seguimos con base
-        $precios_historicos = [];
-        $precios_iniciales  = [];
-    } else {
-        $precios_historicos = [];
-        $precios_iniciales  = [];
+    $precios_historicos = [];
+    $precios_iniciales  = [];
+    if ($result_historicos) {
         while ($row = $result_historicos->fetch_assoc()) {
             $idCategoria = (int)$row['idCategoria'];
-            $idMes = (int)$row['idMes'];
+            $idMes       = (int)$row['idMes'];
             $precios_historicos[$idCategoria][$idMes] = (float)$row['precio_nuevo'];
             if (!isset($precios_iniciales[$idCategoria])) {
                 $precios_iniciales[$idCategoria] = (float)$row['precio_anterior'];
@@ -83,11 +96,10 @@ try {
         $precios_historicos, $precios_base, $precios_iniciales, $fechas_agregado, $encontrarIdMesParaFecha
     ) {
         $fecha_agregado = $fechas_agregado[$idCategoria] ?? null;
-        $idMesInicio = $encontrarIdMesParaFecha($fecha_agregado);
+        $idMesInicio    = $encontrarIdMesParaFecha($fecha_agregado);
         if ($mes_pago < $idMesInicio) return 0.0;
 
         $precio_actual = $precios_iniciales[$idCategoria] ?? $precios_base[$idCategoria] ?? 0.0;
-
         if (!isset($precios_historicos[$idCategoria])) return (float)$precio_actual;
 
         $meses_cambio = array_keys($precios_historicos[$idCategoria]);
@@ -102,26 +114,21 @@ try {
         return (float)$precio_actual;
     };
 
-    // ==== Armar SQL de pagos con (o sin) join a medios de pago
+    // LEFT JOIN medios de pago solo si existe la tabla
     $warnings = [];
-
     $joinMediosPagoOK = tablaExiste($conn, $TABLA_MEDIOS_PAGO);
     if (!$joinMediosPagoOK) {
-        // Intento alternativo: si configuraste medios_pago pero existe mediospago, probamos ese.
         $alternativas = [];
         if ($TABLA_MEDIOS_PAGO !== 'mediospago') $alternativas[] = 'mediospago';
         if ($TABLA_MEDIOS_PAGO !== 'agenda.mediospago') $alternativas[] = 'agenda.mediospago';
-
         foreach ($alternativas as $alt) {
             if (tablaExiste($conn, $alt)) { $TABLA_MEDIOS_PAGO = $alt; $joinMediosPagoOK = true; break; }
         }
     }
 
-    // Armado del LEFT JOIN sólo si existe la tabla
     $leftJoinMedios = '';
     $selectMedios   = 'NULL AS Medio_Pago, NULL AS idMedios_Pago_socio';
     if ($joinMediosPagoOK) {
-        // Si viene con esquema (agenda.mediospago), armamos alias con comillas invertidas separadas
         if (strpos($TABLA_MEDIOS_PAGO, '.') !== false) {
             [$schema, $tabla] = explode('.', $TABLA_MEDIOS_PAGO, 2);
             $leftJoinMedios = "LEFT JOIN `{$schema}`.`{$tabla}` mp ON s.idMedios_Pago = mp.idMedios_Pago";
@@ -133,6 +140,7 @@ try {
         $warnings[] = "La tabla de medios de pago '{$TABLA_MEDIOS_PAGO}' no existe. Se devuelve Medio_Pago = null.";
     }
 
+    // ====== CONSULTA con filtro de AÑO ======
     $sql_pagos = "
         SELECT
             s.idSocios,
@@ -150,10 +158,17 @@ try {
         INNER JOIN socios s     ON p.idSocios = s.idSocios
         INNER JOIN categorias c ON s.idCategoria = c.idCategorias
         {$leftJoinMedios}
+        WHERE YEAR(p.fechaPago) = ?
         ORDER BY mes_pago, s.Apellido, s.Nombre, p.idMes
     ";
 
-    $result_pagos = $conn->query($sql_pagos);
+    $stmt = $conn->prepare($sql_pagos);
+    if (!$stmt) {
+        throw new Exception("Error al preparar consulta de pagos: " . $conn->error);
+    }
+    $stmt->bind_param("i", $anio);
+    $stmt->execute();
+    $result_pagos = $stmt->get_result();
     if (!$result_pagos) {
         throw new Exception("Error en consulta de pagos: " . $conn->error);
     }
@@ -162,9 +177,9 @@ try {
     $total_general = 0.0;
 
     while ($row = $result_pagos->fetch_assoc()) {
-        $mes_pago       = (int)$row['mes_pago'];
-        $id_categoria   = (int)$row['idCategorias'];
-        $id_mes_pagado  = (int)$row['idMes'];
+        $mes_pago      = (int)$row['mes_pago'];
+        $id_categoria  = (int)$row['idCategorias'];
+        $id_mes_pagado = (int)$row['idMes'];
 
         $precio = $obtenerPrecioCorrecto($id_categoria, $mes_pago);
 

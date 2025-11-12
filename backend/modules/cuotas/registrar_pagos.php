@@ -21,57 +21,74 @@ if (!isset($data['nombre']) || !isset($data['apellido']) || !isset($data['meses'
     exit;
 }
 
-$nombre = $data['nombre'];
-$apellido = $data['apellido'];
-$mesesSeleccionados = $data['meses']; // Array de IDs de meses seleccionados
-$fechaPago = date('Y-m-d'); // Fecha actual
-$mesContable = date('n'); // Número del mes actual (1-12)
+$nombre = trim($data['nombre']);
+$apellido = trim($data['apellido']);
+$mesesSeleccionados = $data['meses']; // Array de IDs de meses a registrar (1..12)
+$anioSeleccionado = isset($data['anio']) ? intval($data['anio']) : intval(date('Y'));
 
-// Verificar que los datos no estén vacíos
-if (!empty($nombre) && !empty($apellido) && !empty($mesesSeleccionados)) {
-    // Consultar el idSocio basado en el nombre y apellido
-    $stmt = $conn->prepare("SELECT idSocios FROM socios WHERE nombre = ? AND apellido = ?");
-    $stmt->bind_param("ss", $nombre, $apellido);
-    $stmt->execute();
-    $stmt->bind_result($idSocio);
-    $stmt->fetch();
-    $stmt->close();
-
-    // Verificar si se encontró el socio
-    if (!$idSocio) {
-        echo json_encode(["success" => false, "message" => "Socio no encontrado"]);
-        exit;
-    }
-
-    // Iniciar una transacción para asegurar la integridad de los datos
-    $conn->begin_transaction();
-
-    try {
-        // Preparar la consulta para insertar los pagos incluyendo mes_contable
-        $stmt = $conn->prepare("INSERT INTO pagos (idSocios, idMes, fechaPago, mes_contable) VALUES (?, ?, ?, ?)");
-
-        // Insertar cada mes seleccionado en la base de datos
-        foreach ($mesesSeleccionados as $idMes) {
-            $stmt->bind_param("iisi", $idSocio, $idMes, $fechaPago, $mesContable);
-            $stmt->execute();
-        }
-
-        // Confirmar la transacción
-        $conn->commit();
-        echo json_encode(["success" => true, "message" => "Pagos registrados con éxito."]);
-    } catch (Exception $e) {
-        // Si ocurre un error, deshacer los cambios
-        $conn->rollback();
-        echo json_encode(["success" => false, "message" => "Error al registrar los pagos: " . $e->getMessage()]);
-    } finally {
-        // Cerrar la declaración preparada
-        $stmt->close();
-    }
-} else {
-    // Si faltan datos, enviar un mensaje de error
-    echo json_encode(["success" => false, "message" => "Faltan datos para procesar los pagos."]);
+if (!is_array($mesesSeleccionados) || empty($mesesSeleccionados)) {
+    echo json_encode(["success" => false, "message" => "No se recibieron meses a registrar."]);
+    exit;
 }
 
-// Cerrar la conexión con la base de datos
+// Buscar socio (ajusta a tu esquema si es necesario)
+$stmt = $conn->prepare("SELECT idSocios FROM socios WHERE nombre = ? AND apellido = ?");
+$stmt->bind_param("ss", $nombre, $apellido);
+$stmt->execute();
+$stmt->bind_result($idSocio);
+$stmt->fetch();
+$stmt->close();
+
+if (!$idSocio) {
+    echo json_encode(["success" => false, "message" => "Socio no encontrado"]);
+    exit;
+}
+
+// --- Construcción de fechaPago ---
+// Requisito: fechaPago = (año = seleccionado) + (mes = actual) + (día = actual, ajustado)
+// - idMes: se guarda el mes presionado (periodo pagado)
+// - mes_contable: seguimos guardando el mismo idMes
+$mesActual = intval(date('n'));  // 1..12 del sistema (mes actual)
+$diaHoy   = intval(date('j'));   // 1..31 del sistema (día actual)
+
+// Ajustar el día si no existe en el mes actual del año seleccionado (Feb 29, etc.)
+$ultimoDiaMesActualEnAnioSel = (int)date('t', strtotime(sprintf('%04d-%02d-01', $anioSeleccionado, $mesActual)));
+$diaAjustado = min($diaHoy, $ultimoDiaMesActualEnAnioSel);
+
+// La misma fechaPago se aplicará a todos los meses seleccionados
+$fechaPago = sprintf('%04d-%02d-%02d', $anioSeleccionado, $mesActual, $diaAjustado);
+
+$conn->begin_transaction();
+
+try {
+    // Insert preparado
+    $stmt = $conn->prepare("
+        INSERT INTO pagos (idSocios, idMes, fechaPago, mes_contable)
+        VALUES (?, ?, ?, ?)
+    ");
+
+    foreach ($mesesSeleccionados as $idMes) {
+        $idMes = intval($idMes);
+        if ($idMes < 1 || $idMes > 12) {
+            throw new Exception("Mes inválido: " . $idMes);
+        }
+
+        $mesContable = $idMes; // Guardamos el período pagado
+
+        // idMes = mes del período
+        // fechaPago = año seleccionado + mes actual + día actual (ajustado si corresponde)
+        $stmt->bind_param("iisi", $idSocio, $idMes, $fechaPago, $mesContable);
+        $stmt->execute();
+    }
+
+    $stmt->close();
+    $conn->commit();
+
+    echo json_encode(["success" => true, "message" => "Pagos registrados con éxito."]);
+} catch (Exception $e) {
+    $conn->rollback();
+    if (isset($stmt) && $stmt) { $stmt->close(); }
+    echo json_encode(["success" => false, "message" => "Error al registrar los pagos: " . $e->getMessage()]);
+}
+
 $conn->close();
-?>

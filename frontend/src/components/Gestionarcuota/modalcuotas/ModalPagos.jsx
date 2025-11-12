@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { FaCoins, FaTimes, FaCheck } from 'react-icons/fa';
 import BASE_URL from '../../../config/config';
 import './ModalPagos.css';
@@ -9,10 +9,50 @@ const ModalPagos = ({ nombre, apellido, cerrarModal, onPagoRealizado }) => {
   const [pagoExitoso, setPagoExitoso] = useState(false);
   const [precioMensual, setPrecioMensual] = useState(0);
   const [error, setError] = useState('');
-  const [mesesPagados, setMesesPagados] = useState([]);
+
+  // Pagos agrupados por año: { 2025:[1,2], 2026:[1,3] }
+  const [pagosPorAnio, setPagosPorAnio] = useState({});
+
   const [fechaUnion, setFechaUnion] = useState(null);
   const [socioData, setSocioData] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  // Año actual y seleccionado
+  const hoy = new Date();
+  const yearNow = hoy.getFullYear();
+  const [selectedYear, setSelectedYear] = useState(yearNow);
+
+  // Año de ingreso (derivado de fechaUnion)
+  const unionYear = useMemo(() => {
+    if (!fechaUnion) return null;
+    try {
+      return new Date(fechaUnion + 'T00:00:00').getFullYear();
+    } catch {
+      return null;
+    }
+  }, [fechaUnion]);
+
+  // storage de años a mostrar por socio
+  const storageKeyYears = useMemo(
+    () => `soc:${(nombre || '').trim()}_${(apellido || '').trim()}:years`,
+    [nombre, apellido]
+  );
+
+  const leerYearsPersistidos = () => {
+    try {
+      const raw = localStorage.getItem(storageKeyYears);
+      if (!raw) return new Set();
+      const arr = JSON.parse(raw);
+      return new Set(Array.isArray(arr) ? arr : []);
+    } catch {
+      return new Set();
+    }
+  };
+  const guardarYearsPersistidos = (setYears) => {
+    try {
+      localStorage.setItem(storageKeyYears, JSON.stringify(Array.from(setYears)));
+    } catch {}
+  };
 
   // ESC para cerrar
   useEffect(() => {
@@ -32,8 +72,10 @@ const ModalPagos = ({ nombre, apellido, cerrarModal, onPagoRealizado }) => {
     return date.toLocaleDateString('es-AR');
   };
 
+  // Carga datos del socio + pagos por AÑO
   useEffect(() => {
     const obtenerDatosSocio = async () => {
+      setLoading(true);
       try {
         const response = await fetch(`${BASE_URL}/api.php?action=monto_pago`, {
           method: 'POST',
@@ -44,7 +86,6 @@ const ModalPagos = ({ nombre, apellido, cerrarModal, onPagoRealizado }) => {
 
         if (result.success) {
           setPrecioMensual(result.precioMes || 0);
-          setMesesPagados(result.mesesPagados || []);
           setFechaUnion(result.fechaUnion || new Date().toISOString().split('T')[0]);
           setSocioData({
             domicilio: result.domicilio || '',
@@ -52,6 +93,19 @@ const ModalPagos = ({ nombre, apellido, cerrarModal, onPagoRealizado }) => {
             categoria: result.categoria || '',
             cobrador: result.cobrador || '',
           });
+
+          // Compat: si viniera "mesesPagados" (año actual), lo adaptamos
+          let pagos = result.pagosPorAnio || {};
+          if (!result.pagosPorAnio && Array.isArray(result.mesesPagados)) {
+            pagos = { [yearNow]: result.mesesPagados };
+          }
+          setPagosPorAnio(pagos);
+
+          // Persistir años visibles (los del backend + actual)
+          const setYears = leerYearsPersistidos();
+          Object.keys(pagos).forEach((y) => setYears.add(Number(y)));
+          setYears.add(yearNow);
+          guardarYearsPersistidos(setYears);
         } else {
           setError(result.message || 'Error al obtener datos del socio');
         }
@@ -64,22 +118,69 @@ const ModalPagos = ({ nombre, apellido, cerrarModal, onPagoRealizado }) => {
     };
 
     obtenerDatosSocio();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nombre, apellido]);
 
+  // Opciones de año: desde año de ingreso (inclusive) hasta max(actual, ingreso)+2.
+  // Si no hay fecha de ingreso, usamos antiguo comportamiento (actual +2, persistidos, backend).
+  const yearOptions = useMemo(() => {
+    // Si todavía no tenemos fecha de ingreso calculada:
+    if (!unionYear) {
+      const base = new Set([yearNow, yearNow + 1, yearNow + 2]);
+      const persist = leerYearsPersistidos();
+      persist.forEach((y) => base.add(Number(y)));
+      Object.keys(pagosPorAnio || {}).forEach((y) => base.add(Number(y)));
+      return Array.from(base).sort((a, b) => b - a);
+    }
+
+    // Con año de ingreso:
+    const start = unionYear;
+    const end = Math.max(yearNow, unionYear) + 2;
+
+    const inRange = (y) => y >= start && y <= end;
+
+    const years = new Set();
+    for (let y = start; y <= end; y++) years.add(y);
+
+    const persist = leerYearsPersistidos();
+    persist.forEach((y) => { if (inRange(Number(y))) years.add(Number(y)); });
+
+    Object.keys(pagosPorAnio || {}).forEach((y) => {
+      const n = Number(y);
+      if (inRange(n)) years.add(n);
+    });
+
+    return Array.from(years).sort((a, b) => b - a);
+  }, [unionYear, yearNow, pagosPorAnio, storageKeyYears]);
+
+  // Si cambia el año de ingreso, aseguramos que el selectedYear esté dentro del rango visible
+  useEffect(() => {
+    if (!unionYear) return;
+    const start = unionYear;
+    const end = Math.max(yearNow, unionYear) + 2;
+    if (selectedYear < start || selectedYear > end) {
+      // por defecto: el mayor entre actual y ingreso
+      setSelectedYear(Math.max(yearNow, unionYear));
+      setMesesSeleccionados([]);
+      setTodosSeleccionados(false);
+    }
+  }, [unionYear, yearNow, selectedYear]);
+
+  // Meses disponibles según selectedYear y fechaUnion
   const getMesesDisponibles = () => {
     if (!fechaUnion) return [];
     try {
-      const fechaUnionObj = new Date(fechaUnion + 'T00:00:00');
-      const mesUnion = fechaUnionObj.getMonth() + 1;
-      const añoActual = new Date().getFullYear();
-      const añoUnion = fechaUnionObj.getFullYear();
+      const fu = new Date(fechaUnion + 'T00:00:00');
+      const mesUnion = fu.getMonth() + 1;
+      const anioUnion = fu.getFullYear();
 
       const makeMes = (id) => ({
         id,
-        nombre: new Date(0, id - 1).toLocaleString('es', { month: 'long' }).toUpperCase(),
+        nombre: new Date(0, id - 1).toLocaleString('es', { month: 'long' }).toUpperCase() + ` ${selectedYear}`,
       });
 
-      if (añoUnion === añoActual) {
+      if (selectedYear === anioUnion) {
+        // desde el mes de alta en adelante
         return [...Array(12 - mesUnion + 1)].map((_, i) => makeMes(mesUnion + i));
       }
       return [...Array(12)].map((_, i) => makeMes(i + 1));
@@ -90,6 +191,22 @@ const ModalPagos = ({ nombre, apellido, cerrarModal, onPagoRealizado }) => {
   };
 
   const meses = getMesesDisponibles();
+
+  // ¿Está pagado este mes en el AÑO actualmente seleccionado?
+  const isMesPagado = useCallback(
+    (mesId) => {
+      const arr = pagosPorAnio?.[selectedYear] || [];
+      return Array.isArray(arr) && arr.includes(mesId);
+    },
+    [pagosPorAnio, selectedYear]
+  );
+
+  // IDs disponibles (no pagados) para el año visible
+  const disponiblesIds = useMemo(
+    () => meses.filter((m) => !isMesPagado(m.id)).map((m) => m.id),
+    [meses, isMesPagado]
+  );
+
   const totalPagar = mesesSeleccionados.length * precioMensual;
 
   const handleSeleccionarMes = (mesId, yaPagado) => {
@@ -100,16 +217,36 @@ const ModalPagos = ({ nombre, apellido, cerrarModal, onPagoRealizado }) => {
   };
 
   const handleSeleccionarTodos = () => {
-    const disponibles = meses.filter((m) => !mesesPagados.includes(m.id)).map((m) => m.id);
-    setMesesSeleccionados(todosSeleccionados ? [] : disponibles);
-    setTodosSeleccionados(!todosSeleccionados);
+    if (disponiblesIds.length === 0) {
+      setMesesSeleccionados([]);
+      setTodosSeleccionados(false);
+      return;
+    }
+    if (todosSeleccionados) {
+      setMesesSeleccionados([]);
+      setTodosSeleccionados(false);
+    } else {
+      setMesesSeleccionados(disponiblesIds);
+      setTodosSeleccionados(true);
+    }
   };
 
+  // Recalcular "todos" cuando cambien selección/meses disponibles
   useEffect(() => {
-    const disponibles = meses.filter((m) => !mesesPagados.includes(m.id)).map((m) => m.id);
-    const todos = disponibles.length > 0 && disponibles.every((id) => mesesSeleccionados.includes(id));
+    const todos =
+      disponiblesIds.length > 0 &&
+      disponiblesIds.every((id) => mesesSeleccionados.includes(id)) &&
+      mesesSeleccionados.length === disponiblesIds.length;
     setTodosSeleccionados(todos);
-  }, [mesesSeleccionados, mesesPagados, fechaUnion, meses]);
+  }, [mesesSeleccionados, disponiblesIds]);
+
+  // Cambiar año => limpiar selección
+  const onChangeYear = (e) => {
+    const val = Number(e.target.value);
+    setSelectedYear(val);
+    setMesesSeleccionados([]);
+    setTodosSeleccionados(false);
+  };
 
   const handleRealizarPago = async () => {
     if (mesesSeleccionados.length === 0) return;
@@ -117,11 +254,28 @@ const ModalPagos = ({ nombre, apellido, cerrarModal, onPagoRealizado }) => {
       const response = await fetch(`${BASE_URL}/api.php?action=registrar_pago`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nombre, apellido, meses: mesesSeleccionados }),
+        body: JSON.stringify({ nombre, apellido, meses: mesesSeleccionados, anio: selectedYear }),
       });
       const result = await response.json();
-      if (result.success) setPagoExitoso(true);
-      else setError(result.message || 'Error al registrar el pago');
+      if (result.success) {
+        // Persistir el año como visible
+        const setYears = leerYearsPersistidos();
+        setYears.add(selectedYear);
+        guardarYearsPersistidos(setYears);
+
+        // Actualizar inmediatamente el estado local para bloquear las cajas
+        setPagosPorAnio((prev) => {
+            const copia = { ...(prev || {}) };
+            const arr = new Set(copia[selectedYear] || []);
+            mesesSeleccionados.forEach((m) => arr.add(m));
+            copia[selectedYear] = Array.from(arr).sort((a, b) => a - b);
+            return copia;
+        });
+
+        setPagoExitoso(true);
+      } else {
+        setError(result.message || 'Error al registrar el pago');
+      }
     } catch (e) {
       setError('Ocurrió un error al realizar el pago.');
       console.error(e);
@@ -137,6 +291,8 @@ const ModalPagos = ({ nombre, apellido, cerrarModal, onPagoRealizado }) => {
       .filter((m) => mesesSeleccionados.includes(m.id))
       .map((m) => m.nombre)
       .join(', ');
+
+    const totalPagarLocal = totalPagar;
 
     const comprobanteHTML = `
       <html>
@@ -158,7 +314,7 @@ const ModalPagos = ({ nombre, apellido, cerrarModal, onPagoRealizado }) => {
             <div class="talon-socio">
               <p><strong>Afiliado:</strong> ${nombre} ${apellido}</p>
               <p><strong>Domicilio:</strong> ${domicilioMostrar}</p>
-              <p><strong>Categoría / Monto:</strong> ${socioData.categoria} / $${totalPagar}</p>
+              <p><strong>Categoría / Monto:</strong> ${socioData.categoria} / $${totalPagarLocal}</p>
               <p><strong>Período:</strong> ${mesesPagadosStr}</p>
               <p><strong>Cobrador:</strong> ${socioData.cobrador}</p>
               <p><strong>Estado:</strong> PAGADO</p>
@@ -166,7 +322,7 @@ const ModalPagos = ({ nombre, apellido, cerrarModal, onPagoRealizado }) => {
             </div>
             <div class="talon-cobrador">
               <p><strong>Nombre y Apellido:</strong> ${nombre} ${apellido}</p>
-              <p><strong>Categoría / Monto:</strong> ${socioData.categoria} / $${totalPagar}</p>
+              <p><strong>Categoría / Monto:</strong> ${socioData.categoria} / $${totalPagarLocal}</p>
               <p><strong>Período:</strong> ${mesesPagadosStr}</p>
               <p><strong>Cobrador:</strong> ${socioData.cobrador}</p>
               <p><strong>Estado:</strong> PAGADO</p>
@@ -183,6 +339,7 @@ const ModalPagos = ({ nombre, apellido, cerrarModal, onPagoRealizado }) => {
     ventana.print();
   };
 
+  /* ===== Renders de estado ===== */
   if (loading) {
     return (
       <div className="modpag_overlay">
@@ -367,11 +524,24 @@ const ModalPagos = ({ nombre, apellido, cerrarModal, onPagoRealizado }) => {
           <div className="modpag_periodos-section">
             <div className="modpag_section-header">
               <h4 className="modpag_section-title">Meses disponibles</h4>
-              <div className="modpag_section-header-actions">
+
+              <div className="modpag_section-header-actions" style={{ display: 'flex', gap: 8 }}>
+                {/* Selector de Año */}
+                <select
+                  className="modpag_select-year"
+                  value={selectedYear}
+                  onChange={onChangeYear}
+                  title="Año"
+                >
+                  {yearOptions.map((y) => (
+                    <option key={y} value={y}>{y}</option>
+                  ))}
+                </select>
+
                 <button
                   className="modpag_btn modpag_btn-small modpag_btn-terciario"
                   onClick={handleSeleccionarTodos}
-                  disabled={meses.filter((m) => !mesesPagados.includes(m.id)).length === 0}
+                  disabled={disponiblesIds.length === 0}
                 >
                   {todosSeleccionados ? 'Deseleccionar todos' : 'Seleccionar todos'}
                   {mesesSeleccionados.length > 0 && (
@@ -384,25 +554,25 @@ const ModalPagos = ({ nombre, apellido, cerrarModal, onPagoRealizado }) => {
             <div className="modpag_periodos-grid-container">
               <div className="modpag_periodos-grid">
                 {meses.map((mes) => {
-                  const yaPagado = mesesPagados.includes(mes.id);
+                  const yaPagado = isMesPagado(mes.id);
                   const checked = mesesSeleccionados.includes(mes.id);
                   return (
                     <div
-                      key={mes.id}
+                      key={`${selectedYear}-${mes.id}`}
                       className={`modpag_periodo-card ${yaPagado ? 'modpag_pagado' : ''} ${checked ? 'modpag_seleccionado' : ''}`}
                       onClick={() => handleSeleccionarMes(mes.id, yaPagado)}
                     >
                       <div className="modpag_periodo-checkbox">
                         <input
                           type="checkbox"
-                          id={`periodo-${mes.id}`}
+                          id={`periodo-${selectedYear}-${mes.id}`}
                           checked={checked}
                           onChange={() => handleSeleccionarMes(mes.id, yaPagado)}
                           disabled={yaPagado}
                         />
                         <span className="modpag_checkmark"></span>
                       </div>
-                      <label htmlFor={`periodo-${mes.id}`} className="modpag_periodo-label">
+                      <label htmlFor={`periodo-${selectedYear}-${mes.id}`} className="modpag_periodo-label">
                         {mes.nombre}
                         {yaPagado && (
                           <span className="modpag_periodo-status">
@@ -437,6 +607,7 @@ const ModalPagos = ({ nombre, apellido, cerrarModal, onPagoRealizado }) => {
               className="modpag_btn modpag_btn-primary"
               onClick={handleRealizarPago}
               disabled={mesesSeleccionados.length === 0}
+              title={`Registrar pago en ${selectedYear}`}
             >
               <span className="only-desktop">Realizar Pago</span>
               <FaCheck className="only-mobile-inline" />
