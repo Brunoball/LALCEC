@@ -3,6 +3,64 @@ import { FaCoins, FaTimes, FaCheck } from 'react-icons/fa';
 import BASE_URL from '../../../config/config';
 import './ModalPagos.css';
 
+/* =========================
+   Dropdown Año estilo "pill"
+   ========================= */
+function YearDropdown({ value, options = [], onChange }) {
+  const [open, setOpen] = useState(false);
+  const ref = React.useRef(null);
+
+  useEffect(() => {
+    const onDocClick = (e) => {
+      if (!ref.current) return;
+      if (!ref.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener('mousedown', onDocClick);
+    return () => document.removeEventListener('mousedown', onDocClick);
+  }, []);
+
+  const handleSelect = (y) => {
+    onChange({ target: { value: y } });
+    setOpen(false);
+  };
+
+  return (
+    <div className="modpag_year-dd" ref={ref}>
+      <button
+        type="button"
+        className={`modpag_year-trigger ${open ? 'is-open' : ''}`}
+        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+      >
+        <span className="modpag_year-ico" aria-hidden="true" />
+        {value}
+        <span className="modpag_year-caret" aria-hidden="true" />
+      </button>
+
+      {open && (
+        <div className="modpag_year-menu" role="listbox" tabIndex={-1}>
+          {options.map((y) => {
+            const selected = Number(y) === Number(value);
+            return (
+              <button
+                key={y}
+                type="button"
+                role="option"
+                aria-selected={selected}
+                className={`modpag_year-item ${selected ? 'is-selected' : ''}`}
+                onClick={() => handleSelect(y)}
+              >
+                {y}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 const ModalPagos = ({ nombre, apellido, cerrarModal, onPagoRealizado }) => {
   const [mesesSeleccionados, setMesesSeleccionados] = useState([]);
   const [todosSeleccionados, setTodosSeleccionados] = useState(false);
@@ -121,10 +179,8 @@ const ModalPagos = ({ nombre, apellido, cerrarModal, onPagoRealizado }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nombre, apellido]);
 
-  // Opciones de año: desde año de ingreso (inclusive) hasta max(actual, ingreso)+2.
-  // Si no hay fecha de ingreso, usamos antiguo comportamiento (actual +2, persistidos, backend).
+  // Opciones de año (rango en función de fecha de alta + persistidos)
   const yearOptions = useMemo(() => {
-    // Si todavía no tenemos fecha de ingreso calculada:
     if (!unionYear) {
       const base = new Set([yearNow, yearNow + 1, yearNow + 2]);
       const persist = leerYearsPersistidos();
@@ -133,10 +189,8 @@ const ModalPagos = ({ nombre, apellido, cerrarModal, onPagoRealizado }) => {
       return Array.from(base).sort((a, b) => b - a);
     }
 
-    // Con año de ingreso:
     const start = unionYear;
     const end = Math.max(yearNow, unionYear) + 2;
-
     const inRange = (y) => y >= start && y <= end;
 
     const years = new Set();
@@ -144,22 +198,17 @@ const ModalPagos = ({ nombre, apellido, cerrarModal, onPagoRealizado }) => {
 
     const persist = leerYearsPersistidos();
     persist.forEach((y) => { if (inRange(Number(y))) years.add(Number(y)); });
-
-    Object.keys(pagosPorAnio || {}).forEach((y) => {
-      const n = Number(y);
-      if (inRange(n)) years.add(n);
-    });
+    Object.keys(pagosPorAnio || {}).forEach((y) => { const n = Number(y); if (inRange(n)) years.add(n); });
 
     return Array.from(years).sort((a, b) => b - a);
   }, [unionYear, yearNow, pagosPorAnio, storageKeyYears]);
 
-  // Si cambia el año de ingreso, aseguramos que el selectedYear esté dentro del rango visible
+  // Mantener selectedYear dentro de rango al cambiar unionYear
   useEffect(() => {
     if (!unionYear) return;
     const start = unionYear;
     const end = Math.max(yearNow, unionYear) + 2;
     if (selectedYear < start || selectedYear > end) {
-      // por defecto: el mayor entre actual y ingreso
       setSelectedYear(Math.max(yearNow, unionYear));
       setMesesSeleccionados([]);
       setTodosSeleccionados(false);
@@ -180,7 +229,6 @@ const ModalPagos = ({ nombre, apellido, cerrarModal, onPagoRealizado }) => {
       });
 
       if (selectedYear === anioUnion) {
-        // desde el mes de alta en adelante
         return [...Array(12 - mesUnion + 1)].map((_, i) => makeMes(mesUnion + i));
       }
       return [...Array(12)].map((_, i) => makeMes(i + 1));
@@ -192,7 +240,7 @@ const ModalPagos = ({ nombre, apellido, cerrarModal, onPagoRealizado }) => {
 
   const meses = getMesesDisponibles();
 
-  // ¿Está pagado este mes en el AÑO actualmente seleccionado?
+  // ¿Está pagado este mes en el AÑO seleccionado?
   const isMesPagado = useCallback(
     (mesId) => {
       const arr = pagosPorAnio?.[selectedYear] || [];
@@ -201,7 +249,6 @@ const ModalPagos = ({ nombre, apellido, cerrarModal, onPagoRealizado }) => {
     [pagosPorAnio, selectedYear]
   );
 
-  // IDs disponibles (no pagados) para el año visible
   const disponiblesIds = useMemo(
     () => meses.filter((m) => !isMesPagado(m.id)).map((m) => m.id),
     [meses, isMesPagado]
@@ -231,7 +278,6 @@ const ModalPagos = ({ nombre, apellido, cerrarModal, onPagoRealizado }) => {
     }
   };
 
-  // Recalcular "todos" cuando cambien selección/meses disponibles
   useEffect(() => {
     const todos =
       disponiblesIds.length > 0 &&
@@ -258,18 +304,16 @@ const ModalPagos = ({ nombre, apellido, cerrarModal, onPagoRealizado }) => {
       });
       const result = await response.json();
       if (result.success) {
-        // Persistir el año como visible
         const setYears = leerYearsPersistidos();
         setYears.add(selectedYear);
         guardarYearsPersistidos(setYears);
 
-        // Actualizar inmediatamente el estado local para bloquear las cajas
         setPagosPorAnio((prev) => {
-            const copia = { ...(prev || {}) };
-            const arr = new Set(copia[selectedYear] || []);
-            mesesSeleccionados.forEach((m) => arr.add(m));
-            copia[selectedYear] = Array.from(arr).sort((a, b) => a - b);
-            return copia;
+          const copia = { ...(prev || {}) };
+          const arr = new Set(copia[selectedYear] || []);
+          mesesSeleccionados.forEach((m) => arr.add(m));
+          copia[selectedYear] = Array.from(arr).sort((a, b) => a - b);
+          return copia;
         });
 
         setPagoExitoso(true);
@@ -526,17 +570,12 @@ const ModalPagos = ({ nombre, apellido, cerrarModal, onPagoRealizado }) => {
               <h4 className="modpag_section-title">Meses disponibles</h4>
 
               <div className="modpag_section-header-actions" style={{ display: 'flex', gap: 8 }}>
-                {/* Selector de Año */}
-                <select
-                  className="modpag_select-year"
+                {/* Dropdown de Año */}
+                <YearDropdown
                   value={selectedYear}
+                  options={yearOptions}
                   onChange={onChangeYear}
-                  title="Año"
-                >
-                  {yearOptions.map((y) => (
-                    <option key={y} value={y}>{y}</option>
-                  ))}
-                </select>
+                />
 
                 <button
                   className="modpag_btn modpag_btn-small modpag_btn-terciario"

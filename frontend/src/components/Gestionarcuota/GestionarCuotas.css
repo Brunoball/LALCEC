@@ -330,7 +330,7 @@ html, body {
 
 .gcuotas-table-container {
   flex: 1;
-  padding: 0 24px;
+  padding: 0;
 }
 
 /* ===========================
@@ -1034,4 +1034,21 @@ html, body {
   scrollbar-gutter: stable;    /* 👈 ahora sí lo aplica */
   /* opcional para probar mejor efecto */
   scrollbar-gutter: stable ;
+}
+/* === Poner Año y Mes en la misma fila (desktop) === */
+.gcuotas-filter-card .gcuotas-select-container {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr;  /* 2 columnas: Año | Mes */
+  gap: 14px;
+  align-items: end;
+}
+
+/* Evitar que el min-width de 280px rompa la grilla */
+.gcuotas-filter-card .gcuotas-select-container .gcuotas-input-group {
+  min-width: 0;
+}
+
+/* "Medio de Pago" ya tiene .gcuotas-input-full: que ocupe las 2 columnas */
+.gcuotas-filter-card .gcuotas-select-container .gcuotas-input-full {
+  grid-column: 1 / -1;
 }

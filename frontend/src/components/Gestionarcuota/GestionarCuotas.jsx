@@ -1057,7 +1057,7 @@ const GestionarCuotas = () => {
                     className="gcuotas-dropdown"
                     disabled={!selectedYear || loading.meses || loading.socios || loading.empresas}
                   >
-                    <option value="" disabled>Seleccioná un mes</option>
+                    <option value="" disabled>Mes</option>
                     {meses.map((m, index) => (
                       <option key={index} value={m.mes}>{m.mes}</option>
                     ))}
@@ -1065,7 +1065,7 @@ const GestionarCuotas = () => {
                 </div>
 
                 {/* Tipo de vista */}
-                <div className="gcuotas-input-group">
+                <div className="gcuotas-input-group gcuotas-input-full">
                   <label htmlFor="entidad" className="gcuotas-input-label">
                     <FontAwesomeIcon icon={faUsers} /> Tipo de vista
                   </label>

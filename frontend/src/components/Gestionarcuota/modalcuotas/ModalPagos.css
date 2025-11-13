@@ -278,3 +278,257 @@
   .modpag_total-pill { padding: .4rem .6rem; }
 }
 
+/* =========================
+   Select de Año (modpag_select-year)
+   ========================= */
+.modpag_select-year {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  height: 36px;
+  min-width: 112px;
+  padding: 0.5rem 2.25rem 0.5rem 0.75rem;
+
+  background-color: var(--modpag_white);
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg width='14' height='14' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3e%3cpath fill='%239CA3AF' d='M5.5 7.5l4.5 4.5 4.5-4.5z'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.6rem center;
+  background-size: 14px 14px;
+
+  border: 1px solid var(--modpag_gray-300);
+  border-radius: var(--modpag_border-radius);
+  box-shadow: var(--modpag_shadow-sm);
+
+  color: var(--modpag_gray-800);
+  font-size: 0.9rem;
+  font-weight: 700;
+
+  cursor: pointer;
+  transition: border-color .2s ease, box-shadow .2s ease, background-color .2s ease;
+}
+
+.modpag_select-year:hover {
+  border-color: var(--modpag_primary);
+}
+
+.modpag_select-year:focus {
+  outline: none;
+  border-color: var(--modpag_primary);
+  /* anillo de enfoque con el naranja */
+  box-shadow: 0 0 0 3px rgba(251, 146, 60, 0.25);
+}
+
+.modpag_select-year:disabled {
+  background-color: var(--modpag_gray-100);
+  border-color: var(--modpag_gray-300);
+  color: var(--modpag_gray-500);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* Opciones internas del select */
+.modpag_select-year option {
+  font-weight: 600;
+  color: var(--modpag_gray-800);
+}
+
+/* Compacto en mobile */
+@media (max-width: 600px) {
+  .modpag_select-year {
+    height: 34px;
+    min-width: 92px;
+    font-size: 0.85rem;
+    padding: 0.45rem 2rem 0.45rem 0.6rem;
+    background-position: right 0.5rem center;
+    background-size: 12px 12px;
+  }
+}
+/* =========================
+   Dropdown Año estilo "pill"
+   ========================= */
+.modpag_year-dd {
+  position: relative;
+  display: inline-block;
+}
+
+/* Botón disparador */
+.modpag_year-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  height: 36px;
+  padding: 0 .9rem 0 .65rem;
+  border-radius: 999px;
+  border: 1px solid rgba(67, 97, 238, 0.25);
+  background: var(--modpag_white);
+  color: var(--modpag_gray-800);
+  font-size: 0.9rem;
+  box-shadow: var(--modpag_shadow-sm);
+  cursor: pointer;
+  transition: box-shadow .2s, border-color .2s, background-color .2s;
+}
+.modpag_year-trigger:hover {
+  border-color: var(--modpag_primary);
+  box-shadow: 0 2px 10px rgba(0,0,0,.06);
+}
+.modpag_year-trigger.is-open {
+  box-shadow: 0 4px 16px rgba(0,0,0,.08);
+}
+
+/* icono calendario a la izquierda */
+.modpag_year-ico {
+  width: 18px; height: 18px; flex-shrink: 0;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 18px 18px;
+  /* Calendar SVG teñido en el gris de tu sistema */
+  background-image: url("data:image/svg+xml,%3Csvg width='18' height='18' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Crect x='3' y='4' width='18' height='17' rx='3' stroke='%239CA3AF' stroke-width='2'/%3E%3Cpath d='M8 2v4M16 2v4M3 10h18' stroke='%239CA3AF' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+
+/* caret a la derecha */
+.modpag_year-caret {
+  width: 14px; height: 14px; margin-left: .25rem;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 14px;
+  background-image: url("data:image/svg+xml,%3Csvg width='14' height='14' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill='%239CA3AF' d='M5.5 7.5l4.5 4.5 4.5-4.5z'/%3E%3C/svg%3E");
+}
+
+/* menú flotante */
+.modpag_year-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 15px;
+  min-width: 80px;
+  background: var(--modpag_white);
+  border-radius: 16px;
+  box-shadow: 0 14px 28px rgba(0,0,0,.12), 0 8px 12px rgba(0,0,0,.06);
+  padding: 8px;
+  z-index: 1001;
+  border: 1px solid rgba(0,0,0,.06);
+}
+
+/* item "pill" */
+.modpag_year-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 30px;
+  margin: 6px 0;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  background: var(--modpag_gray-100);
+  color: var(--modpag_gray-800);
+  letter-spacing: .2px;
+  transition: background-color .15s, color .15s, transform .05s;
+  cursor: pointer;
+}
+.modpag_year-item:hover {
+  background: var(--modpag_primary-light);
+  color: var(--modpag_primary-dark);
+}
+.modpag_year-item:active { transform: scale(.99); }
+
+/* seleccionado (el primero de la foto) */
+.modpag_year-item.is-selected {
+  background: #3f37c9;               /* base morada del mockup */
+  color: #fff;
+}
+/* ajustar a tu paleta (naranja/azul): */
+.modpag_year-item.is-selected {
+  background: var(--modpag_primary);  /* usa tu naranja */
+  color: #fff;
+}
+
+/* compactar en mobile */
+@media (max-width: 600px) {
+  .modpag_year-trigger { height: 34px; font-size: .85rem; }
+  .modpag_year-menu { min-width: 130px; padding: 6px; }
+  .modpag_year-item { height: 36px; margin: 5px 0; }
+}
+/* === Dropdown Año (pill) con animación) === */
+.modpag_year-dd {
+  position: relative;
+}
+
+.modpag_year-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 9999px;
+  background: #fff;
+  color: var(--modpag_gray-800);
+  border: 1px solid var(--modpag_primary);
+  box-shadow: var(--modpag_shadow-sm);
+  font-size: 0.85rem;
+  line-height: 1;
+  transition: box-shadow .2s, transform .06s, background-color .2s;
+}
+.modpag_year-trigger:hover { box-shadow: var(--modpag_shadow); background-color: var(--modpag_primary-light); }
+.modpag_year-trigger:active { transform: translateY(1px); }
+.modpag_year-trigger.is-open { box-shadow: var(--modpag_shadow-md); }
+
+
+
+.modpag_year-caret {
+  width: 10px; height: 10px; margin-left: 2px; position: relative;
+}
+.modpag_year-caret::before {
+  content: ""; position: absolute; top: 2px; left: 0; right: 0; margin: auto;
+  width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 6px solid var(--modpag_primary);
+}
+
+/* Menú flotante */
+.modpag_year-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 15px;
+  width: 80px;
+  background: #fff;
+  border-radius: 14px;
+  padding: 10px;
+  box-shadow: 0 18px 30px rgba(0,0,0,.12);
+  border: 1px solid var(--modpag_gray-200);
+  z-index: 20;
+
+  /* Animación de entrada */
+  transform-origin: top right;
+  animation: modpag_dd_in .16s cubic-bezier(.2,.7,.3,1) both;
+}
+@keyframes modpag_dd_in {
+  from { opacity: 0; transform: translateY(-6px) scale(.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.modpag_year-item {
+  width: 100%;
+  text-align: left;
+  padding: 10px 12px;
+  margin: 6px 0;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  color: var(--modpag_gray-800);
+  background: var(--modpag_gray-50);
+  border: 1px solid transparent;
+  transition: background-color .15s, color .15s, transform .06s, box-shadow .15s;
+}
+.modpag_year-item:hover {
+  background: var(--modpag_primary-light);
+  color: var(--modpag_primary-dark);
+  box-shadow: var(--modpag_shadow-sm);
+}
+.modpag_year-item:active { transform: translateY(1px); }
+
+.modpag_year-item.is-selected {
+  background: var(--modpag_primary-hover);
+  color: #fff;
+  box-shadow: var(--modpag_shadow);
+}
+
+/* Responsive ajuste del menú */
+@media (max-width: 400px) {
+  .modpag_year-menu { width: 140px; }
+}
