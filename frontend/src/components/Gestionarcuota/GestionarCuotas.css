@@ -330,7 +330,7 @@ html, body {
 
 .gcuotas-table-container {
   flex: 1;
-  padding: 0;
+  padding: 0 20px;
 }
 
 /* ===========================
@@ -1031,9 +1031,11 @@ html, body {
 
 .gcuotas-viewport {
   overflow: auto;              /* lo mismo que react-window */
-  scrollbar-gutter: stable;    /* 👈 ahora sí lo aplica */
-  /* opcional para probar mejor efecto */
-  scrollbar-gutter: stable ;
+}
+
+/* Solo cuando realmente tenga scroll vertical se reserva el gutter */
+.gcuotas-viewport.gcuotas-viewport-hasscroll {
+  scrollbar-gutter: stable;
 }
 /* === Poner Año y Mes en la misma fila (desktop) === */
 .gcuotas-filter-card .gcuotas-select-container {
