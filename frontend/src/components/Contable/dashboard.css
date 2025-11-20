@@ -35,7 +35,8 @@ body {
 .contable-header {
   display: flex;
   background-color: #ffffff;
-  padding: 20px;
+  /* padding horizontal IGUAL al layout para que alinee con filtros/contenido */
+  padding: 20px 25px;
   justify-content: space-between;
   align-items: center;
   flex-shrink: 0;
@@ -217,8 +218,8 @@ body {
 .contable-filters-footer {
   margin-top: auto;
   display: flex;
-  flex-direction: row;  
-  justify-content: center;     /* 👉 ahora en fila */
+  flex-direction: row;
+  justify-content: center;
   gap: 8px;
 }
 
@@ -487,8 +488,8 @@ body {
 .contable-back-button {
   background-color: #ff7b00;
   color: #ffffff;
-  padding: 9px 16px;
-  border-radius: 10px;
+  padding: 9px 18px;
+  border-radius: 999px; /* pill */
   font-weight: 500;
   cursor: pointer;
   display: flex;
@@ -512,8 +513,8 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 14px;
-  border-radius: 10px;
+  padding: 8px 16px;
+  border-radius: 999px;
   border: 1px solid transparent;
   background-color: #1f2937;
   color: #fff;
@@ -542,8 +543,8 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 14px;
-  border-radius: 10px;
+  padding: 8px 16px;
+  border-radius: 999px;
   border: 1px solid transparent;
   background-color: #059669; /* verde */
   color: #fff;
@@ -700,9 +701,9 @@ body {
   }
 
   .contable-back-button {
-    padding: 8px 12px;
+    padding: 8px 14px;
     font-size: 0.9rem;
-    border-radius: 10px;
+    border-radius: 999px;
   }
 
   .contable-main-layout {
@@ -929,8 +930,9 @@ body {
   }
 
   .contable-back-button {
-    padding: 7px 10px;
+    padding: 7px 12px;
     font-size: 0.85rem;
+    border-radius: 999px;
   }
 
   .contable-detail-table td {
@@ -947,8 +949,6 @@ body {
   text-overflow: ellipsis;
   overflow: hidden;
 }
-
-
 
 .contable-filters-row .contable-filter-group {
   flex: 1;
