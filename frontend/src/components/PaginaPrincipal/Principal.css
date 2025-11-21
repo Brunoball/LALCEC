@@ -33,7 +33,7 @@
   align-items: center;
   min-height: 100vh;
   font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
-  background: #edf2ff; /* fondo tipo maqueta */
+  background: linear-gradient(135deg, #cccccc 30%, #ff6e00 70%);
   box-sizing: border-box;
   transition: opacity 0.3s ease;
 }
