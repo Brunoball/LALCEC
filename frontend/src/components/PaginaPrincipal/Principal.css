@@ -64,7 +64,7 @@
 }
 
 .title {
-  font-size: 30px;
+  font-size: clamp(22px, 2.1vw, 26px);
   font-weight: 700;
   color: #1f2937;
   margin: 0;
@@ -395,12 +395,12 @@
   width: 58px;
   height: 58px;
   border-radius: 999px;
-  background-color: #ff6e00; /* naranja institucional */
+  background-color: #ffffff; /* naranja institucional */
   box-shadow: 0 10px 18px rgba(0, 0, 0, 0.25);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #ffffff;
+  color:  #ff6e00;
   text-decoration: none;
   z-index: 1100;
   cursor: pointer;
@@ -412,6 +412,8 @@
   .bot-floating-btn:hover {
     transform: translateY(-2px) scale(1.03);
     background-color: #e65f00; /* un poco más oscuro al hover */
+    border: 1px solid #fff;
+    color: #ffffff;
     box-shadow: 0 14px 24px rgba(0, 0, 0, 0.3);
   }
 }
