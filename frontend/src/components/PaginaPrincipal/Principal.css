@@ -54,7 +54,7 @@
 .pagina-principal-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   gap: 32px;
   margin-bottom: 10px;
 }
@@ -85,7 +85,7 @@
   height: 3px;
   background: #ff6e00;
   border-radius: 50px;
-  margin: 16px 0 20px;
+  margin: 8px 0;
 }
 
 .welcome-row {
