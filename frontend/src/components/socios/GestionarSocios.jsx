@@ -25,8 +25,6 @@ import {
   faChevronDown,
   faMagnifyingGlass,
   faUsers,
-  faBell,
-  faPaperPlane,
 } from "@fortawesome/free-solid-svg-icons";
 
 import ModalEliminar from "./modales_soc/ModalEliminar";
@@ -132,8 +130,12 @@ const useMobileChromeStyling = (color = null) => {
     };
 
     if (color) {
-      upsertMeta("theme-color", color, { media: "(prefers-color-scheme: light)" });
-      upsertMeta("theme-color", color, { media: "(prefers-color-scheme: dark)" });
+      upsertMeta("theme-color", color, {
+        media: "(prefers-color-scheme: light)",
+      });
+      upsertMeta("theme-color", color, {
+        media: "(prefers-color-scheme: dark)",
+      });
     }
 
     const metaViewport = document.querySelector('meta[name="viewport"]');
@@ -187,7 +189,9 @@ const SocioRow = React.memo(
     return (
       <div
         style={{ ...style, ...(applyCascade ? { "--stagger": stagger } : {}) }}
-        className={`gessoc_row ${applyCascade ? "gessoc_cascade" : ""} ${rowClass}`}
+        className={`gessoc_row ${
+          applyCascade ? "gessoc_cascade" : ""
+        } ${rowClass}`}
         onClick={() => data.onSelect(index, socio)}
       >
         <div className="gessoc_column gessoc_column-razon">
@@ -196,8 +200,12 @@ const SocioRow = React.memo(
         <div className="gessoc_column gessoc_column-iva">
           {socio.categoria} ${socio.precio_categoria || "0"}
         </div>
-        <div className="gessoc_column gessoc_column-medio">{socio.medio_pago}</div>
-        <div className="gessoc_column gessoc_column-dom">{socio.domicilio_2}</div>
+        <div className="gessoc_column gessoc_column-medio">
+          {socio.medio_pago}
+        </div>
+        <div className="gessoc_column gessoc_column-dom">
+          {socio.domicilio_2}
+        </div>
         <div className="gessoc_column gessoc_column-obs">
           {socio.observacion && String(socio.observacion).trim() !== ""
             ? socio.observacion
@@ -267,9 +275,12 @@ const SocioCardRow = React.memo(
     const applyCascade = data.cascadeEnabled && index < cascadeCount;
     const stagger = applyCascade ? clamp(index, 0, cascadeCount - 1) : 0;
 
-    const top = typeof style.top === "number" ? style.top : parseFloat(style.top) || 0;
+    const top =
+      typeof style.top === "number" ? style.top : parseFloat(style.top) || 0;
     const height =
-      typeof style.height === "number" ? style.height : parseFloat(style.height) || 0;
+      typeof style.height === "number"
+        ? style.height
+        : parseFloat(style.height) || 0;
 
     const rowStyle = {
       ...style,
@@ -279,8 +290,16 @@ const SocioCardRow = React.memo(
     };
 
     return (
-      <div style={rowStyle} className="gessoc_card-row" onClick={() => data.onSelect(index, socio)}>
-        <div className={`gessoc_card ${applyCascade ? "gessoc_cascade" : ""} ${socio._estadoClase}`}>
+      <div
+        style={rowStyle}
+        className="gessoc_card-row"
+        onClick={() => data.onSelect(index, socio)}
+      >
+        <div
+          className={`gessoc_card ${
+            applyCascade ? "gessoc_cascade" : ""
+          } ${socio._estadoClase}`}
+        >
           <div className="gessoc_card-status-strip" />
           <div className="gessoc_card-header">
             <h3 className="gessoc_card-title">
@@ -414,109 +433,79 @@ const GestionarSocios = () => {
   const [mesesPagados, setMesesPagados] = useState([]);
 
   /* ---------- Búsqueda + Filtros ---------- */
-  const [busqueda, setBusqueda] = useState(localStorage.getItem("sociosSearchTerm") || "");
+  const [busqueda, setBusqueda] = useState(
+    localStorage.getItem("sociosSearchTerm") || ""
+  );
   const deferredBusqueda = useDeferredValue(busqueda);
 
+  // ✅ notificadosBot es un filtro adicional, PERO al "Mostrar todos" se desactiva
   const [filtrosActivos, setFiltrosActivos] = useState(() => {
-    const saved = localStorage.getItem("sociosFilters");
-    return saved ? JSON.parse(saved) : { letras: [], mediosPago: [], todos: false };
+    try {
+      const saved = localStorage.getItem("sociosFilters");
+      const parsed = saved ? JSON.parse(saved) : null;
+      const base = parsed && typeof parsed === "object" ? parsed : null;
+      return {
+        letras: Array.isArray(base?.letras) ? base.letras : [],
+        mediosPago: Array.isArray(base?.mediosPago) ? base.mediosPago : [],
+        todos: !!base?.todos,
+        notificadosBot: !!base?.notificadosBot,
+      };
+    } catch {
+      return { letras: [], mediosPago: [], todos: false, notificadosBot: false };
+    }
   });
 
   const [mostrarMenuFiltros, setMostrarMenuFiltros] = useState(false);
-  const [mostrarSubmenuAlfabetico, setMostrarSubmenuAlfabetico] = useState(false);
-  const [mostrarSubmenuTransferencia, setMostrarSubmenuTransferencia] = useState(false);
+  const [mostrarSubmenuAlfabetico, setMostrarSubmenuAlfabetico] =
+    useState(false);
+  const [mostrarSubmenuTransferencia, setMostrarSubmenuTransferencia] =
+    useState(false);
 
   /* ---------- Toast ---------- */
   const [toast, setToast] = useState({ show: false, tipo: "exito", msg: "" });
   const showToast = useCallback((msg, tipo = "exito", ms = 2500) => {
     setToast({ show: true, tipo, msg });
-    window.setTimeout(() => setToast({ show: false, tipo: "exito", msg: "" }), ms);
+    window.setTimeout(
+      () => setToast({ show: false, tipo: "exito", msg: "" }),
+      ms
+    );
   }, []);
 
   /* ==========================
-     ✅ NUEVO: MODO VISTA TABLA
-     normal: usa sociosRaw + filtros/busqueda
-     recordatorios: la tabla muestra SOLO sociosRecordatorios
+     ✅ Notificados Bot (IDs)
   ========================== */
-  const [viewMode, setViewMode] = useState("normal"); // "normal" | "recordatorios"
-  const prevViewStateRef = useRef(null); // guarda búsqueda + filtros para volver
+  const [loadingNotificados, setLoadingNotificados] = useState(false);
+  const [notificadosIds, setNotificadosIds] = useState([]); // array de ids
+  const notificadosSet = useMemo(
+    () => new Set((notificadosIds || []).map((x) => String(x))),
+    [notificadosIds]
+  );
 
-  /* ---------- NUEVO: Recordatorios ---------- */
-  const [loadingRecordatorios, setLoadingRecordatorios] = useState(false);
-  const [sociosRecordatorios, setSociosRecordatorios] = useState([]);
-
-  const fetchSociosRecordatorios = useCallback(async () => {
-    setLoadingRecordatorios(true);
+  const fetchNotificadosBot = useCallback(async () => {
+    setLoadingNotificados(true);
     try {
       const url = `${BASE_URL}/api.php?action=obtener_soc_recordatorios&_=${Date.now()}`;
       const r = await fetch(url, { method: "GET", cache: "no-store" });
-      if (!r.ok) throw new Error("No se pudo obtener socios para recordatorio");
+      if (!r.ok) throw new Error("No se pudo obtener socios notificados (bot)");
       const j = await r.json();
       const arr = Array.isArray(j?.socios) ? j.socios : [];
-      setSociosRecordatorios(arr);
 
-      if (arr.length === 0) showToast("No hay socios marcados para recordatorio.", "error");
-      else showToast(`Listo: ${arr.length} socio(s) para notificar.`);
-      return arr;
+      const ids = [];
+      for (const s of arr) {
+        const id = getSocioId(s);
+        if (id != null) ids.push(String(id));
+      }
+      setNotificadosIds(ids);
+      return ids;
     } catch (e) {
       console.error(e);
-      showToast("Error al cargar socios para notificar", "error");
-      setSociosRecordatorios([]);
+      setNotificadosIds([]);
+      showToast("Error al cargar filtro 'Notificados bot'", "error");
       return [];
     } finally {
-      setLoadingRecordatorios(false);
+      setLoadingNotificados(false);
     }
   }, [showToast]);
-
-  const entrarModoRecordatorios = useCallback(async () => {
-    // guardar el estado anterior para volver luego
-    prevViewStateRef.current = {
-      busqueda,
-      filtrosActivos,
-    };
-
-    // cerramos menú
-    setMostrarMenuFiltros(false);
-    setMostrarSubmenuAlfabetico(false);
-    setMostrarSubmenuTransferencia(false);
-
-    // limpiamos UI de filtros para que NO interfiera con el modo recordatorios
-    setBusqueda("");
-    setFiltrosActivos({ letras: [], mediosPago: [], todos: false });
-
-    // traer recordatorios + activar modo
-    const arr = await fetchSociosRecordatorios();
-    setViewMode("recordatorios");
-    setFilaSeleccionada(null);
-    setSocioSeleccionado(null);
-
-    // si viene vacío, volvemos a normal para no dejar tabla vacía “rara”
-    if (!arr || arr.length === 0) {
-      setViewMode("normal");
-      // restaurar
-      const prev = prevViewStateRef.current;
-      if (prev) {
-        setBusqueda(prev.busqueda || "");
-        setFiltrosActivos(prev.filtrosActivos || { letras: [], mediosPago: [], todos: false });
-      }
-      prevViewStateRef.current = null;
-    }
-  }, [busqueda, filtrosActivos, fetchSociosRecordatorios]);
-
-  const salirModoRecordatorios = useCallback(() => {
-    setViewMode("normal");
-    setSociosRecordatorios([]);
-    setFilaSeleccionada(null);
-    setSocioSeleccionado(null);
-
-    // restaurar búsqueda + filtros anteriores
-    const prev = prevViewStateRef.current;
-    if (prev) {
-      setBusqueda(prev.busqueda || "");
-      setFiltrosActivos(prev.filtrosActivos || { letras: [], mediosPago: [], todos: false });
-    }
-    prevViewStateRef.current = null;
-  }, []);
 
   /* ---------- Persistencia filtros ---------- */
   useEffect(() => {
@@ -533,47 +522,61 @@ const GestionarSocios = () => {
     return () => window.clearTimeout(t);
   }, [filtrosActivos]);
 
-  /* ---------- Exclusividad de filtros ---------- */
+  /* ---------- Exclusividad de filtros ----------
+     ✅ Ahora: "todos" también APAGA notificadosBot
+     (porque al apretar Mostrar todos querés ver todo sin ese filtro)
+  -------------------------------------------- */
   const setExclusiveFilter = useCallback((mode, value = null) => {
-    // si el usuario usa filtros/busqueda, salimos del modo recordatorios
-    if (viewMode === "recordatorios") {
-      setViewMode("normal");
-      setSociosRecordatorios([]);
-      prevViewStateRef.current = null;
-    }
-
     switch (mode) {
       case "search":
         setBusqueda(value ?? "");
-        setFiltrosActivos({ letras: [], mediosPago: [], todos: false });
+        setFiltrosActivos((prev) => ({
+          ...prev,
+          letras: [],
+          mediosPago: [],
+          todos: false,
+        }));
         break;
       case "letra":
         setBusqueda("");
-        setFiltrosActivos({
+        setFiltrosActivos((prev) => ({
+          ...prev,
           letras: value ? [value] : [],
           mediosPago: [],
           todos: false,
-        });
+        }));
         break;
       case "medio":
         setBusqueda("");
-        setFiltrosActivos({
+        setFiltrosActivos((prev) => ({
+          ...prev,
           letras: [],
           mediosPago: value ? [value] : [],
           todos: false,
-        });
+        }));
         break;
       case "todos":
         setBusqueda("");
-        setFiltrosActivos({ letras: [], mediosPago: [], todos: true });
+        setFiltrosActivos((prev) => ({
+          ...prev,
+          letras: [],
+          mediosPago: [],
+          todos: true,
+          notificadosBot: false, // ✅ clave: al "Mostrar todos" se apaga
+        }));
         break;
       case "none":
       default:
         setBusqueda("");
-        setFiltrosActivos({ letras: [], mediosPago: [], todos: false });
+        setFiltrosActivos((prev) => ({
+          ...prev,
+          letras: [],
+          mediosPago: [],
+          todos: false,
+        }));
         break;
     }
-  }, [viewMode]);
+  }, []);
 
   /* ---------- Cargar desde cache ---------- */
   useEffect(() => {
@@ -702,8 +705,14 @@ const GestionarSocios = () => {
   /* ---------- Estado pago ---------- */
   const getEstadoPago = useCallback((mesesPagadosStr, fechaUnion) => {
     let pagosSet = null;
-    if (mesesPagadosStr && mesesPagadosStr !== "-" && mesesPagadosStr !== "NULL") {
-      pagosSet = new Set(mesesPagadosStr.split(",").map((m) => m.trim().toUpperCase()));
+    if (
+      mesesPagadosStr &&
+      mesesPagadosStr !== "-" &&
+      mesesPagadosStr !== "NULL"
+    ) {
+      pagosSet = new Set(
+        mesesPagadosStr.split(",").map((m) => m.trim().toUpperCase())
+      );
     } else {
       pagosSet = new Set();
     }
@@ -729,7 +738,8 @@ const GestionarSocios = () => {
     if (isNaN(alta.getTime())) {
       const mesActual = hoy.getMonth();
       let pagadosEsteAño = 0;
-      for (let i = 0; i <= mesActual; i++) if (pagosSet.has(mesesAnio[i])) pagadosEsteAño++;
+      for (let i = 0; i <= mesActual; i++)
+        if (pagosSet.has(mesesAnio[i])) pagadosEsteAño++;
       const faltan = mesActual + 1 - pagadosEsteAño;
       if (faltan <= 0) return "al-dia";
       if (faltan <= 2) return "debe-1-2";
@@ -740,7 +750,8 @@ const GestionarSocios = () => {
     for (let y = alta.getFullYear(); y <= hoy.getFullYear(); y++) {
       const desde = y === alta.getFullYear() ? alta.getMonth() : 0;
       const hasta = y === hoy.getFullYear() ? hoy.getMonth() : 11;
-      for (let m = desde; m <= hasta; m++) if (!pagosSet.has(mesesAnio[m])) faltan++;
+      for (let m = desde; m <= hasta; m++)
+        if (!pagosSet.has(mesesAnio[m])) faltan++;
     }
 
     if (faltan === 0) return "al-dia";
@@ -748,47 +759,50 @@ const GestionarSocios = () => {
     return "debe-3-mas";
   }, []);
 
-  const normalizeSocios = useCallback((arr) => {
-    return (arr || []).map((s) => {
-      const id = getSocioId(s);
-      const nombre = s?.nombre ?? "";
-      const apellido = s?.apellido ?? "";
-      const medio = s?.medio_pago ?? s?.medio ?? "";
-      const dom2 = s?.domicilio_2 ?? "";
-      const categoria = s?.categoria ?? "";
-      const precioCat = s?.precio_categoria ?? s?.precio ?? s?.precioCat ?? null;
+  const normalizeSocios = useCallback(
+    (arr) => {
+      return (arr || []).map((s) => {
+        const id = getSocioId(s);
+        const nombre = s?.nombre ?? "";
+        const apellido = s?.apellido ?? "";
+        const medio = s?.medio_pago ?? s?.medio ?? "";
+        const dom2 = s?.domicilio_2 ?? "";
+        const categoria = s?.categoria ?? "";
+        const precioCat =
+          s?.precio_categoria ?? s?.precio ?? s?.precioCat ?? null;
 
-      const estado = getEstadoPago(s?.meses_pagados, s?.fecha_union);
-      const estadoClase =
-        estado === "al-dia"
-          ? "gessoc_verde"
-          : estado === "debe-1-2"
-          ? "gessoc_amarillo"
-          : "gessoc_rojo";
+        const estado = getEstadoPago(s?.meses_pagados, s?.fecha_union);
+        const estadoClase =
+          estado === "al-dia"
+            ? "gessoc_verde"
+            : estado === "debe-1-2"
+            ? "gessoc_amarillo"
+            : "gessoc_rojo";
 
-      return {
-        ...s,
-        id,
-        nombre,
-        apellido,
-        medio_pago: medio,
-        domicilio_2: dom2,
-        categoria,
-        precio_categoria: precioCat,
-        estadoPago: estado,
-        _estadoClase: estadoClase,
-        _nombreLower: String(nombre).toLowerCase(),
-        _apellidoLower: String(apellido).toLowerCase(),
-        _letraApe: (String(apellido)[0] || "").toUpperCase(),
-        _medioStr: String(medio),
-      };
-    });
-  }, [getEstadoPago]);
+        return {
+          ...s,
+          id,
+          nombre,
+          apellido,
+          medio_pago: medio,
+          domicilio_2: dom2,
+          categoria,
+          precio_categoria: precioCat,
+          estadoPago: estado,
+          _estadoClase: estadoClase,
+          _nombreLower: String(nombre).toLowerCase(),
+          _apellidoLower: String(apellido).toLowerCase(),
+          _letraApe: (String(apellido)[0] || "").toUpperCase(),
+          _medioStr: String(medio),
+        };
+      });
+    },
+    [getEstadoPago]
+  );
 
-  const socios = useMemo(() => normalizeSocios(sociosRaw), [sociosRaw, normalizeSocios]);
-  const sociosRecordatoriosNorm = useMemo(
-    () => normalizeSocios(sociosRecordatorios),
-    [sociosRecordatorios, normalizeSocios]
+  const socios = useMemo(
+    () => normalizeSocios(sociosRaw),
+    [sociosRaw, normalizeSocios]
   );
 
   /* ---------- Medios de pago ---------- */
@@ -799,9 +813,12 @@ const GestionarSocios = () => {
     const cargarMedios = async () => {
       const trySocios = async () => {
         try {
-          const r = await fetch(`${BASE_URL}/api.php?action=obtener_datos_socios`, {
-            cache: "no-store",
-          });
+          const r = await fetch(
+            `${BASE_URL}/api.php?action=obtener_datos_socios`,
+            {
+              cache: "no-store",
+            }
+          );
           if (!r.ok) throw new Error("obtener_datos_socios no OK");
           const j = await r.json();
           const arr = Array.isArray(j?.mediosPago) ? j.mediosPago : [];
@@ -815,9 +832,12 @@ const GestionarSocios = () => {
 
       const tryEmpresas = async () => {
         try {
-          const r = await fetch(`${BASE_URL}/api.php?action=obtener_datos_empresas`, {
-            cache: "no-store",
-          });
+          const r = await fetch(
+            `${BASE_URL}/api.php?action=obtener_datos_empresas`,
+            {
+              cache: "no-store",
+            }
+          );
           if (!r.ok) throw new Error("obtener_datos_empresas no OK");
           const j = await r.json();
           const arr = Array.isArray(j?.mediosPago) ? j.mediosPago : [];
@@ -855,35 +875,55 @@ const GestionarSocios = () => {
 
   /* ---------- Filtrado ---------- */
   const sociosFiltrados = useMemo(() => {
-    // ✅ SI ESTAMOS EN MODO RECORDATORIOS => la tabla usa SOLO esos socios
-    if (viewMode === "recordatorios") {
-      return sociosRecordatoriosNorm;
-    }
-
     const term = (deferredBusqueda || "").trim().toLowerCase();
     const useSearch = term.length > 0;
 
-    const letrasArr = filtrosActivos.letras?.length ? filtrosActivos.letras : null;
-    const mediosArr = filtrosActivos.mediosPago?.length ? filtrosActivos.mediosPago : null;
+    const letrasArr = filtrosActivos.letras?.length
+      ? filtrosActivos.letras
+      : null;
+    const mediosArr = filtrosActivos.mediosPago?.length
+      ? filtrosActivos.mediosPago
+      : null;
 
-    if (!useSearch && !letrasArr && !mediosArr && !filtrosActivos.todos) return [];
+    const useNotificados = !!filtrosActivos.notificadosBot;
 
-    const letrasSet = letrasArr ? new Set(letrasArr.map((l) => l.toUpperCase())) : null;
+    if (
+      !useSearch &&
+      !letrasArr &&
+      !mediosArr &&
+      !filtrosActivos.todos &&
+      !useNotificados
+    ) {
+      return [];
+    }
+
+    const letrasSet = letrasArr
+      ? new Set(letrasArr.map((l) => l.toUpperCase()))
+      : null;
     const mediosSet = mediosArr ? new Set(mediosArr) : null;
 
     const out = [];
     for (let i = 0; i < socios.length; i++) {
       const s = socios[i];
+
       if (useSearch) {
-        if (s._nombreLower.indexOf(term) === -1 && s._apellidoLower.indexOf(term) === -1)
+        if (
+          s._nombreLower.indexOf(term) === -1 &&
+          s._apellidoLower.indexOf(term) === -1
+        )
           continue;
       }
       if (letrasSet && !letrasSet.has(s._letraApe)) continue;
       if (mediosSet && !mediosSet.has(s._medioStr)) continue;
+
+      if (useNotificados) {
+        if (!notificadosSet.has(String(s.id))) continue;
+      }
+
       out.push(s);
     }
     return out;
-  }, [socios, sociosRecordatoriosNorm, deferredBusqueda, filtrosActivos, viewMode]);
+  }, [socios, deferredBusqueda, filtrosActivos, notificadosSet]);
 
   /* ---------- Handlers ---------- */
   const handleBusquedaInputChange = useCallback(
@@ -922,25 +962,31 @@ const GestionarSocios = () => {
     if (reducedMotion) return;
     setCascadeEnabled(true);
     if (cascadeTimerRef.current) clearTimeout(cascadeTimerRef.current);
-    cascadeTimerRef.current = setTimeout(() => setCascadeEnabled(false), CASCADE_OFF_DELAY);
+    cascadeTimerRef.current = setTimeout(
+      () => setCascadeEnabled(false),
+      CASCADE_OFF_DELAY
+    );
   }, [reducedMotion]);
 
   useEffect(() => {
     triggerCascade();
     return () => {
       if (cascadeTimerRef.current) clearTimeout(cascadeTimerRef.current);
-      if (searchCascadeTimerRef.current) clearTimeout(searchCascadeTimerRef.current);
+      if (searchCascadeTimerRef.current)
+        clearTimeout(searchCascadeTimerRef.current);
     };
   }, [triggerCascade]);
 
   useEffect(() => {
     if (reducedMotion) return;
     const term = (deferredBusqueda || "").trim();
-    if (searchCascadeTimerRef.current) clearTimeout(searchCascadeTimerRef.current);
+    if (searchCascadeTimerRef.current)
+      clearTimeout(searchCascadeTimerRef.current);
     if (term.length === 0) return;
     searchCascadeTimerRef.current = setTimeout(() => triggerCascade(), 10);
     return () => {
-      if (searchCascadeTimerRef.current) clearTimeout(searchCascadeTimerRef.current);
+      if (searchCascadeTimerRef.current)
+        clearTimeout(searchCascadeTimerRef.current);
     };
   }, [deferredBusqueda, triggerCascade, reducedMotion]);
 
@@ -990,15 +1036,42 @@ const GestionarSocios = () => {
     ]
   );
 
+  // ✅ Mostrar todos = apaga notificadosBot + limpia todo como pediste
   const handleMostrarTodos = useCallback(async () => {
     setExclusiveFilter("todos");
     setMostrarMenuFiltros(false);
+    setMostrarSubmenuAlfabetico(false);
+    setMostrarSubmenuTransferencia(false);
     setFilaSeleccionada(null);
     setSocioSeleccionado(null);
+
     await ensureDataLoaded();
     revalidate();
     triggerCascade();
   }, [ensureDataLoaded, revalidate, setExclusiveFilter, triggerCascade]);
+
+  // ✅ Toggle notificados bot SIN campanita (solo texto)
+  const toggleNotificadosBot = useCallback(async () => {
+    const next = !filtrosActivos.notificadosBot;
+    setFiltrosActivos((prev) => ({ ...prev, notificadosBot: next, todos: false }));
+
+    if (next) {
+      if (!dataLoaded) {
+        window.requestIdleCallback
+          ? window.requestIdleCallback(() => ensureDataLoaded())
+          : ensureDataLoaded();
+      }
+      await fetchNotificadosBot();
+    }
+
+    triggerCascade();
+  }, [
+    filtrosActivos.notificadosBot,
+    dataLoaded,
+    fetchNotificadosBot,
+    ensureDataLoaded,
+    triggerCascade,
+  ]);
 
   const onSelect = useCallback((index, socio) => {
     setFilaSeleccionada((prev) => (prev === index ? null : index));
@@ -1076,11 +1149,14 @@ const GestionarSocios = () => {
         return;
       }
       try {
-        const response = await fetch(`${BASE_URL}/api.php?action=dar_baja&op=dar_baja`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ idSocio: id, motivo: m }),
-        });
+        const response = await fetch(
+          `${BASE_URL}/api.php?action=dar_baja&op=dar_baja`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ idSocio: id, motivo: m }),
+          }
+        );
         const result = await response.json();
         if (response.ok && (result?.exito || result?.success)) {
           setSociosRaw((prev) => {
@@ -1126,7 +1202,9 @@ const GestionarSocios = () => {
     const ro = new ResizeObserver(applyHeaderHeight);
     if (headerRef.current) ro.observe(headerRef.current);
     window.addEventListener("resize", applyHeaderHeight, { passive: true });
-    window.addEventListener("orientationchange", applyHeaderHeight, { passive: true });
+    window.addEventListener("orientationchange", applyHeaderHeight, {
+      passive: true,
+    });
 
     return () => {
       ro.disconnect();
@@ -1170,7 +1248,10 @@ const GestionarSocios = () => {
     [isMobile, availableHeight, baseWindowHeight]
   );
 
-  const cantidadVisibles = useMemo(() => sociosFiltrados.length, [sociosFiltrados]);
+  const cantidadVisibles = useMemo(
+    () => sociosFiltrados.length,
+    [sociosFiltrados]
+  );
   const showAllLabel = isMobile ? "Mostrar todos" : "Mostrar todos los socios";
 
   /* ---------- Exportar Excel ---------- */
@@ -1240,7 +1321,9 @@ const GestionarSocios = () => {
          RENDER
   ===================== */
   return (
-    <div className={`gessoc_empresa-container ${isMobile ? "gessoc_mobile" : ""}`}>
+    <div
+      className={`gessoc_empresa-container ${isMobile ? "gessoc_mobile" : ""}`}
+    >
       {toast.show && (
         <Toast
           tipo={toast.tipo}
@@ -1276,7 +1359,6 @@ const GestionarSocios = () => {
                 }
               }}
               inputMode="search"
-              disabled={viewMode === "recordatorios"} // ✅ en recordatorios no tiene sentido buscar
             />
             {busqueda && (
               <FontAwesomeIcon
@@ -1289,15 +1371,16 @@ const GestionarSocios = () => {
             <button
               className="gessoc_search-button"
               title="Buscar"
-              disabled={viewMode === "recordatorios"}
               onClick={async () => {
-                if (viewMode === "recordatorios") return;
                 if (!dataLoaded) await ensureDataLoaded();
                 revalidate();
                 triggerCascade();
               }}
             >
-              <FontAwesomeIcon icon={faMagnifyingGlass} className="gessoc_search-icon" />
+              <FontAwesomeIcon
+                icon={faMagnifyingGlass}
+                className="gessoc_search-icon"
+              />
             </button>
           </div>
 
@@ -1311,7 +1394,9 @@ const GestionarSocios = () => {
               <span>Aplicar Filtros</span>
               <FontAwesomeIcon
                 icon={faChevronDown}
-                className={`gessoc_chevron-icon ${mostrarMenuFiltros ? "gessoc_rotate" : ""}`}
+                className={`gessoc_chevron-icon ${
+                  mostrarMenuFiltros ? "gessoc_rotate" : ""
+                }`}
               />
             </button>
 
@@ -1320,23 +1405,26 @@ const GestionarSocios = () => {
                 <div
                   className="gessoc_filtros-menu-item"
                   onClick={() => setMostrarSubmenuAlfabetico((v) => !v)}
-                  style={{ opacity: viewMode === "recordatorios" ? 0.5 : 1, pointerEvents: viewMode === "recordatorios" ? "none" : "auto" }}
                 >
                   <span>Filtrar de la A a la Z</span>
                   <FontAwesomeIcon
                     icon={faChevronDown}
-                    className={`gessoc_chevron-icon ${mostrarSubmenuAlfabetico ? "gessoc_rotate" : ""}`}
+                    className={`gessoc_chevron-icon ${
+                      mostrarSubmenuAlfabetico ? "gessoc_rotate" : ""
+                    }`}
                   />
                 </div>
 
-                {mostrarSubmenuAlfabetico && viewMode !== "recordatorios" && (
+                {mostrarSubmenuAlfabetico && (
                   <div className="gessoc_filtros-submenu">
                     <div className="gessoc_alfabeto-filtros">
                       {"ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").map((letra) => (
                         <button
                           key={letra}
                           className={`gessoc_letra-filtro ${
-                            filtrosActivos.letras.includes(letra) ? "gessoc_active" : ""
+                            filtrosActivos.letras.includes(letra)
+                              ? "gessoc_active"
+                              : ""
                           }`}
                           onClick={() => handleFiltrarPorLetra(letra)}
                           title={`Filtrar por ${letra}`}
@@ -1351,16 +1439,17 @@ const GestionarSocios = () => {
                 <div
                   className="gessoc_filtros-menu-item"
                   onClick={() => setMostrarSubmenuTransferencia((v) => !v)}
-                  style={{ opacity: viewMode === "recordatorios" ? 0.5 : 1, pointerEvents: viewMode === "recordatorios" ? "none" : "auto" }}
                 >
                   <span>Medios de Pago</span>
                   <FontAwesomeIcon
                     icon={faChevronDown}
-                    className={`gessoc_chevron-icon ${mostrarSubmenuTransferencia ? "gessoc_rotate" : ""}`}
+                    className={`gessoc_chevron-icon ${
+                      mostrarSubmenuTransferencia ? "gessoc_rotate" : ""
+                    }`}
                   />
                 </div>
 
-                {mostrarSubmenuTransferencia && viewMode !== "recordatorios" && (
+                {mostrarSubmenuTransferencia && (
                   <div className="gessoc_filtros-submenu">
                     {mediosDePago.map((medio) => {
                       const label = medioLabel(medio);
@@ -1369,7 +1458,9 @@ const GestionarSocios = () => {
                       return (
                         <div
                           key={label}
-                          className={`gessoc_filtros-submenu-item ${isActive ? "gessoc_active" : ""}`}
+                          className={`gessoc_filtros-submenu-item ${
+                            isActive ? "gessoc_active" : ""
+                          }`}
                           onClick={() => handleFiltrarPorMedioPago(label)}
                           title={`Filtrar por ${label}`}
                         >
@@ -1383,29 +1474,28 @@ const GestionarSocios = () => {
                 <div
                   className="gessoc_filtros-menu-item gessoc_mostrar-todas"
                   onClick={handleMostrarTodos}
-                  style={{ opacity: viewMode === "recordatorios" ? 0.5 : 1, pointerEvents: viewMode === "recordatorios" ? "none" : "auto" }}
                 >
                   <span>Mostrar Todos</span>
                 </div>
 
-                {/* ✅ BOTÓN: ENVIAR NOTIFICACIONES => TABLA MODO RECORDATORIOS */}
+                {/* ✅ FILTRO: Notificados Bot (sin campanita) */}
                 <div
                   className={`gessoc_filtros-menu-item gessoc_mostrar-todas ${
-                    loadingRecordatorios ? "is-disabled" : ""
-                  }`}
+                    filtrosActivos.notificadosBot ? "gessoc_active" : ""
+                  } ${loadingNotificados ? "is-disabled" : ""}`}
                   onClick={() => {
-                    if (!loadingRecordatorios) entrarModoRecordatorios();
+                    if (!loadingNotificados) toggleNotificadosBot();
                   }}
-                  title="Muestra en la tabla SOLO socios con enviar_recordatorio=1"
+                  title="Filtra SOLO socios marcados para recordatorio (notificados bot)"
                   style={{ display: "flex", alignItems: "center", gap: 10 }}
                 >
-                  <FontAwesomeIcon icon={faBell} />
                   <span>
-                    {loadingRecordatorios ? "Cargando notificaciones..." : "Enviar notificaciones"}
+                    {loadingNotificados
+                      ? "Cargando Notificados bot..."
+                      : filtrosActivos.notificadosBot
+                      ? "Notificados bot (activo)"
+                      : "Notificados bot"}
                   </span>
-                  {!loadingRecordatorios && (
-                    <FontAwesomeIcon icon={faPaperPlane} style={{ marginLeft: "auto" }} />
-                  )}
                 </div>
               </div>
             )}
@@ -1421,20 +1511,30 @@ const GestionarSocios = () => {
               <div className="gessoc_contador-container">
                 <span className="gessoc_socios-totales gessoc_socios-desktop">
                   Cant socios: {cantidadVisibles}
-                  <FontAwesomeIcon icon={faUsers} className="gessoc_icono-empresa" />
+                  <FontAwesomeIcon
+                    icon={faUsers}
+                    className="gessoc_icono-empresa"
+                  />
                 </span>
                 <span className="gessoc_socios-totales gessoc_socios-mobile">
-                  <FontAwesomeIcon icon={faUsers} className="gessoc_icono-empresa" />
+                  <FontAwesomeIcon
+                    icon={faUsers}
+                    className="gessoc_icono-empresa"
+                  />
                   {cantidadVisibles}
                 </span>
               </div>
 
               {/* CHIPS activos */}
               <div className="gessoc_filtros-activos-container">
-                {viewMode !== "recordatorios" && filtrosActivos.letras?.length > 0 && (
+                {filtrosActivos.letras?.length > 0 && (
                   <div className="gessoc_filter-chip">
-                    <span className="gessoc_filter-chip-label">Letra:&nbsp;</span>
-                    <span className="gessoc_filter-chip-text">{filtrosActivos.letras[0]}</span>
+                    <span className="gessoc_filter-chip-label">
+                      Letra:&nbsp;
+                    </span>
+                    <span className="gessoc_filter-chip-text">
+                      {filtrosActivos.letras[0]}
+                    </span>
                     <button
                       className="gessoc_filter-chip-close"
                       onClick={() => limpiarFiltros()}
@@ -1446,10 +1546,12 @@ const GestionarSocios = () => {
                   </div>
                 )}
 
-                {viewMode !== "recordatorios" && filtrosActivos.mediosPago?.length > 0 && (
+                {filtrosActivos.mediosPago?.length > 0 && (
                   <div className="gessoc_filter-chip gessoc_chip-medio">
                     <span className="gessoc_filter-chip-text">Medio: </span>
-                    <span className="texto">{filtrosActivos.mediosPago[0]}</span>
+                    <span className="texto">
+                      {filtrosActivos.mediosPago[0]}
+                    </span>
                     <button
                       className="gessoc_filter-chip-close"
                       onClick={() => limpiarFiltros()}
@@ -1461,20 +1563,30 @@ const GestionarSocios = () => {
                   </div>
                 )}
 
-                {/* ✅ CHIP MODO RECORDATORIOS (cierra y vuelve a la tabla normal) */}
-                {viewMode === "recordatorios" && (
+                {/* ✅ CHIP Notificados bot (se puede apagar sin tocar los otros filtros) */}
+                {filtrosActivos.notificadosBot && (
                   <div
                     className="gessoc_filter-chip gessoc_chip-medio"
-                    title="Mostrando SOLO socios marcados para recordatorio"
+                    title="Filtro 'Notificados bot' activo"
                   >
                     <span className="gessoc_filter-chip-text">
-                      Notificar:&nbsp;<b>{sociosRecordatorios.length}</b>
+                      Notificados bot
+                      {notificadosIds?.length ? (
+                        <>
+                          :&nbsp;<b>{notificadosIds.length}</b>
+                        </>
+                      ) : null}
                     </span>
                     <button
                       className="gessoc_filter-chip-close"
-                      onClick={salirModoRecordatorios}
-                      title="Volver a la lista normal"
-                      aria-label="Volver a la lista normal"
+                      onClick={() =>
+                        setFiltrosActivos((prev) => ({
+                          ...prev,
+                          notificadosBot: false,
+                        }))
+                      }
+                      title="Quitar filtro Notificados bot"
+                      aria-label="Quitar filtro Notificados bot"
                     >
                       ×
                     </button>
@@ -1511,7 +1623,9 @@ const GestionarSocios = () => {
                 <div className="gessoc_column-header">Medio de Pago</div>
                 <div className="gessoc_column-header">Domicilio Cobro</div>
                 <div className="gessoc_column-header">Observación</div>
-                <div className="gessoc_column-header gessoc_icons-column">Acciones</div>
+                <div className="gessoc_column-header gessoc_icons-column">
+                  Acciones
+                </div>
               </div>
 
               <div className="gessoc_body">
@@ -1534,23 +1648,18 @@ const GestionarSocios = () => {
                     </List>
                   </div>
                 ) : (
-                  <div className="gessoc_no-data-message" style={{ width: "100%" }}>
+                  <div
+                    className="gessoc_no-data-message"
+                    style={{ width: "100%" }}
+                  >
                     <div className="gessoc_message-content">
-                      {viewMode === "recordatorios" ? (
-                        <>
-                          <p>No hay socios marcados para recordatorio.</p>
-                          <button className="gessoc_btn-show-all" onClick={salirModoRecordatorios}>
-                            Volver
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          <p>Usá la búsqueda o aplicá filtros para ver los socios</p>
-                          <button className="gessoc_btn-show-all" onClick={handleMostrarTodos}>
-                            {showAllLabel}
-                          </button>
-                        </>
-                      )}
+                      <p>Usá la búsqueda o aplicá filtros para ver los socios</p>
+                      <button
+                        className="gessoc_btn-show-all"
+                        onClick={handleMostrarTodos}
+                      >
+                        {showAllLabel}
+                      </button>
                     </div>
                   </div>
                 )}
@@ -1578,21 +1687,13 @@ const GestionarSocios = () => {
               ) : (
                 <div className="gessoc_no-data-message gessoc_no-data-mobile">
                   <div className="gessoc_message-content">
-                    {viewMode === "recordatorios" ? (
-                      <>
-                        <p>No hay socios marcados para recordatorio.</p>
-                        <button className="gessoc_btn-show-all" onClick={salirModoRecordatorios}>
-                          Volver
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <p>Usá la búsqueda o aplicá filtros para ver resultados</p>
-                        <button className="gessoc_btn-show-all" onClick={handleMostrarTodos}>
-                          {showAllLabel}
-                        </button>
-                      </>
-                    )}
+                    <p>Usá la búsqueda o aplicá filtros para ver resultados</p>
+                    <button
+                      className="gessoc_btn-show-all"
+                      onClick={handleMostrarTodos}
+                    >
+                      {showAllLabel}
+                    </button>
                   </div>
                 </div>
               )}
@@ -1612,7 +1713,10 @@ const GestionarSocios = () => {
             aria-label="Volver"
             title="Volver"
           >
-            <FontAwesomeIcon icon={faArrowLeft} className="gessoc_socio-icon-button" />
+            <FontAwesomeIcon
+              icon={faArrowLeft}
+              className="gessoc_socio-icon-button"
+            />
             <p>Volver Atrás</p>
           </button>
 
@@ -1623,7 +1727,10 @@ const GestionarSocios = () => {
               aria-label="Agregar"
               title="Agregar socio"
             >
-              <FontAwesomeIcon icon={faPlus} className="gessoc_socio-icon-button" />
+              <FontAwesomeIcon
+                icon={faPlus}
+                className="gessoc_socio-icon-button"
+              />
               <p>Agregar Socio</p>
             </button>
 
@@ -1633,7 +1740,10 @@ const GestionarSocios = () => {
               aria-label="Exportar"
               title="Exportar a Excel"
             >
-              <FontAwesomeIcon icon={faFileExcel} className="gessoc_socio-icon-button" />
+              <FontAwesomeIcon
+                icon={faFileExcel}
+                className="gessoc_socio-icon-button"
+              />
               <p>Exportar a Excel</p>
             </button>
 
@@ -1643,7 +1753,10 @@ const GestionarSocios = () => {
               title="Dados de Baja"
               aria-label="Dados de Baja"
             >
-              <FontAwesomeIcon icon={faUserMinus} className="gessoc_socio-icon-button" />
+              <FontAwesomeIcon
+                icon={faUserMinus}
+                className="gessoc_socio-icon-button"
+              />
               <p>Dados de Baja</p>
             </button>
           </div>
