@@ -132,7 +132,6 @@ const PaginaPrincipal = () => {
           >
             <FontAwesomeIcon icon={faSignOutAlt} className="logout-icon" />
             <span className="logout-text-full">Cerrar Sesión</span>
-            <span className="logout-text-short">Salir</span>
           </button>
         </div>
 

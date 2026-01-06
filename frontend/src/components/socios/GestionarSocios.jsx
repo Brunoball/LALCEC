@@ -25,7 +25,10 @@ import {
   faChevronDown,
   faMagnifyingGlass,
   faUsers,
+  faBell,
+  faPaperPlane,
 } from "@fortawesome/free-solid-svg-icons";
+
 import ModalEliminar from "./modales_soc/ModalEliminar";
 import ModalInfo from "./modales_soc/ModalInfoSocio";
 import ModalBaja from "./modales_soc/ModalBaja";
@@ -135,10 +138,15 @@ const useMobileChromeStyling = (color = null) => {
 
     const metaViewport = document.querySelector('meta[name="viewport"]');
     if (metaViewport && !/viewport-fit=cover/.test(metaViewport.content)) {
-      metaViewport.setAttribute("content", `${metaViewport.content}, viewport-fit=cover`);
+      metaViewport.setAttribute(
+        "content",
+        `${metaViewport.content}, viewport-fit=cover`
+      );
     }
 
-    let metaCapable = document.querySelector('meta[name="apple-mobile-web-app-capable"]');
+    let metaCapable = document.querySelector(
+      'meta[name="apple-mobile-web-app-capable"]'
+    );
     if (!metaCapable) {
       metaCapable = document.createElement("meta");
       metaCapable.setAttribute("name", "apple-mobile-web-app-capable");
@@ -146,7 +154,9 @@ const useMobileChromeStyling = (color = null) => {
     }
     metaCapable.setAttribute("content", "yes");
 
-    let metaStatus = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
+    let metaStatus = document.querySelector(
+      'meta[name="apple-mobile-web-app-status-bar-style"]'
+    );
     if (!metaStatus) {
       metaStatus = document.createElement("meta");
       metaStatus.setAttribute("name", "apple-mobile-web-app-status-bar-style");
@@ -186,9 +196,7 @@ const SocioRow = React.memo(
         <div className="gessoc_column gessoc_column-iva">
           {socio.categoria} ${socio.precio_categoria || "0"}
         </div>
-        <div className="gessoc_column gessoc_column-medio">
-          {socio.medio_pago}
-        </div>
+        <div className="gessoc_column gessoc_column-medio">{socio.medio_pago}</div>
         <div className="gessoc_column gessoc_column-dom">{socio.domicilio_2}</div>
         <div className="gessoc_column gessoc_column-obs">
           {socio.observacion && String(socio.observacion).trim() !== ""
@@ -259,12 +267,9 @@ const SocioCardRow = React.memo(
     const applyCascade = data.cascadeEnabled && index < cascadeCount;
     const stagger = applyCascade ? clamp(index, 0, cascadeCount - 1) : 0;
 
-    const top =
-      typeof style.top === "number" ? style.top : parseFloat(style.top) || 0;
+    const top = typeof style.top === "number" ? style.top : parseFloat(style.top) || 0;
     const height =
-      typeof style.height === "number"
-        ? style.height
-        : parseFloat(style.height) || 0;
+      typeof style.height === "number" ? style.height : parseFloat(style.height) || 0;
 
     const rowStyle = {
       ...style,
@@ -274,11 +279,7 @@ const SocioCardRow = React.memo(
     };
 
     return (
-      <div
-        style={rowStyle}
-        className="gessoc_card-row"
-        onClick={() => data.onSelect(index, socio)}
-      >
+      <div style={rowStyle} className="gessoc_card-row" onClick={() => data.onSelect(index, socio)}>
         <div className={`gessoc_card ${applyCascade ? "gessoc_cascade" : ""} ${socio._estadoClase}`}>
           <div className="gessoc_card-status-strip" />
           <div className="gessoc_card-header">
@@ -413,9 +414,7 @@ const GestionarSocios = () => {
   const [mesesPagados, setMesesPagados] = useState([]);
 
   /* ---------- Búsqueda + Filtros ---------- */
-  const [busqueda, setBusqueda] = useState(
-    localStorage.getItem("sociosSearchTerm") || ""
-  );
+  const [busqueda, setBusqueda] = useState(localStorage.getItem("sociosSearchTerm") || "");
   const deferredBusqueda = useDeferredValue(busqueda);
 
   const [filtrosActivos, setFiltrosActivos] = useState(() => {
@@ -432,6 +431,91 @@ const GestionarSocios = () => {
   const showToast = useCallback((msg, tipo = "exito", ms = 2500) => {
     setToast({ show: true, tipo, msg });
     window.setTimeout(() => setToast({ show: false, tipo: "exito", msg: "" }), ms);
+  }, []);
+
+  /* ==========================
+     ✅ NUEVO: MODO VISTA TABLA
+     normal: usa sociosRaw + filtros/busqueda
+     recordatorios: la tabla muestra SOLO sociosRecordatorios
+  ========================== */
+  const [viewMode, setViewMode] = useState("normal"); // "normal" | "recordatorios"
+  const prevViewStateRef = useRef(null); // guarda búsqueda + filtros para volver
+
+  /* ---------- NUEVO: Recordatorios ---------- */
+  const [loadingRecordatorios, setLoadingRecordatorios] = useState(false);
+  const [sociosRecordatorios, setSociosRecordatorios] = useState([]);
+
+  const fetchSociosRecordatorios = useCallback(async () => {
+    setLoadingRecordatorios(true);
+    try {
+      const url = `${BASE_URL}/api.php?action=obtener_soc_recordatorios&_=${Date.now()}`;
+      const r = await fetch(url, { method: "GET", cache: "no-store" });
+      if (!r.ok) throw new Error("No se pudo obtener socios para recordatorio");
+      const j = await r.json();
+      const arr = Array.isArray(j?.socios) ? j.socios : [];
+      setSociosRecordatorios(arr);
+
+      if (arr.length === 0) showToast("No hay socios marcados para recordatorio.", "error");
+      else showToast(`Listo: ${arr.length} socio(s) para notificar.`);
+      return arr;
+    } catch (e) {
+      console.error(e);
+      showToast("Error al cargar socios para notificar", "error");
+      setSociosRecordatorios([]);
+      return [];
+    } finally {
+      setLoadingRecordatorios(false);
+    }
+  }, [showToast]);
+
+  const entrarModoRecordatorios = useCallback(async () => {
+    // guardar el estado anterior para volver luego
+    prevViewStateRef.current = {
+      busqueda,
+      filtrosActivos,
+    };
+
+    // cerramos menú
+    setMostrarMenuFiltros(false);
+    setMostrarSubmenuAlfabetico(false);
+    setMostrarSubmenuTransferencia(false);
+
+    // limpiamos UI de filtros para que NO interfiera con el modo recordatorios
+    setBusqueda("");
+    setFiltrosActivos({ letras: [], mediosPago: [], todos: false });
+
+    // traer recordatorios + activar modo
+    const arr = await fetchSociosRecordatorios();
+    setViewMode("recordatorios");
+    setFilaSeleccionada(null);
+    setSocioSeleccionado(null);
+
+    // si viene vacío, volvemos a normal para no dejar tabla vacía “rara”
+    if (!arr || arr.length === 0) {
+      setViewMode("normal");
+      // restaurar
+      const prev = prevViewStateRef.current;
+      if (prev) {
+        setBusqueda(prev.busqueda || "");
+        setFiltrosActivos(prev.filtrosActivos || { letras: [], mediosPago: [], todos: false });
+      }
+      prevViewStateRef.current = null;
+    }
+  }, [busqueda, filtrosActivos, fetchSociosRecordatorios]);
+
+  const salirModoRecordatorios = useCallback(() => {
+    setViewMode("normal");
+    setSociosRecordatorios([]);
+    setFilaSeleccionada(null);
+    setSocioSeleccionado(null);
+
+    // restaurar búsqueda + filtros anteriores
+    const prev = prevViewStateRef.current;
+    if (prev) {
+      setBusqueda(prev.busqueda || "");
+      setFiltrosActivos(prev.filtrosActivos || { letras: [], mediosPago: [], todos: false });
+    }
+    prevViewStateRef.current = null;
   }, []);
 
   /* ---------- Persistencia filtros ---------- */
@@ -451,6 +535,13 @@ const GestionarSocios = () => {
 
   /* ---------- Exclusividad de filtros ---------- */
   const setExclusiveFilter = useCallback((mode, value = null) => {
+    // si el usuario usa filtros/busqueda, salimos del modo recordatorios
+    if (viewMode === "recordatorios") {
+      setViewMode("normal");
+      setSociosRecordatorios([]);
+      prevViewStateRef.current = null;
+    }
+
     switch (mode) {
       case "search":
         setBusqueda(value ?? "");
@@ -482,7 +573,7 @@ const GestionarSocios = () => {
         setFiltrosActivos({ letras: [], mediosPago: [], todos: false });
         break;
     }
-  }, []);
+  }, [viewMode]);
 
   /* ---------- Cargar desde cache ---------- */
   useEffect(() => {
@@ -495,7 +586,9 @@ const GestionarSocios = () => {
           setDataLoaded(true);
         }
       }
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }, []);
 
   /* ---------- Revalidación ---------- */
@@ -517,7 +610,10 @@ const GestionarSocios = () => {
         for (let i = 0; i < arr.length; i++) {
           const a = arr[i];
           const b = old[i];
-          if (byId(a) !== byId(b)) { shouldUpdate = true; break; }
+          if (byId(a) !== byId(b)) {
+            shouldUpdate = true;
+            break;
+          }
           if (
             a.nombre !== b?.nombre ||
             a.apellido !== b?.apellido ||
@@ -528,13 +624,18 @@ const GestionarSocios = () => {
             a.observacion !== b?.observacion ||
             a.meses_pagados !== b?.meses_pagados ||
             a.fecha_union !== b?.fecha_union
-          ) { shouldUpdate = true; break; }
+          ) {
+            shouldUpdate = true;
+            break;
+          }
         }
       }
 
       if (shouldUpdate) {
         setSociosRaw(arr);
-        try { sessionStorage.setItem(CACHE_KEY, JSON.stringify(arr)); } catch {}
+        try {
+          sessionStorage.setItem(CACHE_KEY, JSON.stringify(arr));
+        } catch {}
         setLastSync(Date.now());
       }
       setError(null);
@@ -561,7 +662,9 @@ const GestionarSocios = () => {
       setSociosRaw(arr);
       setError(null);
       setDataLoaded(true);
-      try { sessionStorage.setItem(CACHE_KEY, JSON.stringify(arr)); } catch {}
+      try {
+        sessionStorage.setItem(CACHE_KEY, JSON.stringify(arr));
+      } catch {}
     } catch (e) {
       console.error(e);
       setError("Error al cargar los datos");
@@ -582,7 +685,9 @@ const GestionarSocios = () => {
 
   useEffect(() => {
     const onFocus = () => revalidate();
-    const onVis = () => { if (document.visibilityState === "visible") revalidate(); };
+    const onVis = () => {
+      if (document.visibilityState === "visible") revalidate();
+    };
     const onPageShow = () => revalidate();
     window.addEventListener("focus", onFocus, { passive: true });
     document.addEventListener("visibilitychange", onVis, { passive: true });
@@ -598,24 +703,34 @@ const GestionarSocios = () => {
   const getEstadoPago = useCallback((mesesPagadosStr, fechaUnion) => {
     let pagosSet = null;
     if (mesesPagadosStr && mesesPagadosStr !== "-" && mesesPagadosStr !== "NULL") {
-      pagosSet = new Set(
-        mesesPagadosStr.split(",").map((m) => m.trim().toUpperCase())
-      );
+      pagosSet = new Set(mesesPagadosStr.split(",").map((m) => m.trim().toUpperCase()));
     } else {
       pagosSet = new Set();
     }
+
     const mesesAnio = [
-      "ENERO","FEBRERO","MARZO","ABRIL","MAYO","JUNIO",
-      "JULIO","AGOSTO","SEPTIEMBRE","OCTUBRE","NOVIEMBRE","DICIEMBRE",
+      "ENERO",
+      "FEBRERO",
+      "MARZO",
+      "ABRIL",
+      "MAYO",
+      "JUNIO",
+      "JULIO",
+      "AGOSTO",
+      "SEPTIEMBRE",
+      "OCTUBRE",
+      "NOVIEMBRE",
+      "DICIEMBRE",
     ];
 
     const hoy = new Date();
     const alta = new Date(fechaUnion || "");
+
     if (isNaN(alta.getTime())) {
       const mesActual = hoy.getMonth();
       let pagadosEsteAño = 0;
       for (let i = 0; i <= mesActual; i++) if (pagosSet.has(mesesAnio[i])) pagadosEsteAño++;
-      const faltan = (mesActual + 1) - pagadosEsteAño;
+      const faltan = mesActual + 1 - pagadosEsteAño;
       if (faltan <= 0) return "al-dia";
       if (faltan <= 2) return "debe-1-2";
       return "debe-3-mas";
@@ -627,25 +742,29 @@ const GestionarSocios = () => {
       const hasta = y === hoy.getFullYear() ? hoy.getMonth() : 11;
       for (let m = desde; m <= hasta; m++) if (!pagosSet.has(mesesAnio[m])) faltan++;
     }
+
     if (faltan === 0) return "al-dia";
     if (faltan <= 2) return "debe-1-2";
     return "debe-3-mas";
   }, []);
 
-  const socios = useMemo(() => {
-    return sociosRaw.map((s) => {
+  const normalizeSocios = useCallback((arr) => {
+    return (arr || []).map((s) => {
       const id = getSocioId(s);
       const nombre = s?.nombre ?? "";
       const apellido = s?.apellido ?? "";
-      const medio = s?.medio_pago ?? "";
+      const medio = s?.medio_pago ?? s?.medio ?? "";
       const dom2 = s?.domicilio_2 ?? "";
       const categoria = s?.categoria ?? "";
       const precioCat = s?.precio_categoria ?? s?.precio ?? s?.precioCat ?? null;
 
       const estado = getEstadoPago(s?.meses_pagados, s?.fecha_union);
       const estadoClase =
-        estado === "al-dia" ? "gessoc_verde" :
-        estado === "debe-1-2" ? "gessoc_amarillo" : "gessoc_rojo";
+        estado === "al-dia"
+          ? "gessoc_verde"
+          : estado === "debe-1-2"
+          ? "gessoc_amarillo"
+          : "gessoc_rojo";
 
       return {
         ...s,
@@ -658,13 +777,19 @@ const GestionarSocios = () => {
         precio_categoria: precioCat,
         estadoPago: estado,
         _estadoClase: estadoClase,
-        _nombreLower: nombre.toLowerCase(),
-        _apellidoLower: apellido.toLowerCase(),
-        _letraApe: (apellido[0] || "").toUpperCase(),
+        _nombreLower: String(nombre).toLowerCase(),
+        _apellidoLower: String(apellido).toLowerCase(),
+        _letraApe: (String(apellido)[0] || "").toUpperCase(),
         _medioStr: String(medio),
       };
     });
-  }, [sociosRaw, getEstadoPago]);
+  }, [getEstadoPago]);
+
+  const socios = useMemo(() => normalizeSocios(sociosRaw), [sociosRaw, normalizeSocios]);
+  const sociosRecordatoriosNorm = useMemo(
+    () => normalizeSocios(sociosRecordatorios),
+    [sociosRecordatorios, normalizeSocios]
+  );
 
   /* ---------- Medios de pago ---------- */
   const [mediosDePago, setMediosDePago] = useState([]);
@@ -674,26 +799,34 @@ const GestionarSocios = () => {
     const cargarMedios = async () => {
       const trySocios = async () => {
         try {
-          const r = await fetch(`${BASE_URL}/api.php?action=obtener_datos_socios`, { cache: "no-store" });
+          const r = await fetch(`${BASE_URL}/api.php?action=obtener_datos_socios`, {
+            cache: "no-store",
+          });
           if (!r.ok) throw new Error("obtener_datos_socios no OK");
           const j = await r.json();
           const arr = Array.isArray(j?.mediosPago) ? j.mediosPago : [];
           const labels = arr.map(medioLabel).filter(Boolean);
           if (labels.length) return labels;
           throw new Error("Sin labels en obtener_datos_socios");
-        } catch { return null; }
+        } catch {
+          return null;
+        }
       };
 
       const tryEmpresas = async () => {
         try {
-          const r = await fetch(`${BASE_URL}/api.php?action=obtener_datos_empresas`, { cache: "no-store" });
+          const r = await fetch(`${BASE_URL}/api.php?action=obtener_datos_empresas`, {
+            cache: "no-store",
+          });
           if (!r.ok) throw new Error("obtener_datos_empresas no OK");
           const j = await r.json();
           const arr = Array.isArray(j?.mediosPago) ? j.mediosPago : [];
           const labels = arr.map(medioLabel).filter(Boolean);
           if (labels.length) return labels;
           throw new Error("Sin labels en obtener_datos_empresas");
-        } catch { return null; }
+        } catch {
+          return null;
+        }
       };
 
       const deriveFromSocios = () => {
@@ -715,11 +848,18 @@ const GestionarSocios = () => {
     };
 
     cargarMedios();
-    return () => { cancelled = true; };
-  }, [BASE_URL, socios]);
+    return () => {
+      cancelled = true;
+    };
+  }, [socios]);
 
   /* ---------- Filtrado ---------- */
   const sociosFiltrados = useMemo(() => {
+    // ✅ SI ESTAMOS EN MODO RECORDATORIOS => la tabla usa SOLO esos socios
+    if (viewMode === "recordatorios") {
+      return sociosRecordatoriosNorm;
+    }
+
     const term = (deferredBusqueda || "").trim().toLowerCase();
     const useSearch = term.length > 0;
 
@@ -735,30 +875,34 @@ const GestionarSocios = () => {
     for (let i = 0; i < socios.length; i++) {
       const s = socios[i];
       if (useSearch) {
-        if (s._nombreLower.indexOf(term) === -1 && s._apellidoLower.indexOf(term) === -1) continue;
+        if (s._nombreLower.indexOf(term) === -1 && s._apellidoLower.indexOf(term) === -1)
+          continue;
       }
       if (letrasSet && !letrasSet.has(s._letraApe)) continue;
       if (mediosSet && !mediosSet.has(s._medioStr)) continue;
       out.push(s);
     }
     return out;
-  }, [socios, deferredBusqueda, filtrosActivos]);
+  }, [socios, sociosRecordatoriosNorm, deferredBusqueda, filtrosActivos, viewMode]);
 
   /* ---------- Handlers ---------- */
-  const handleBusquedaInputChange = useCallback(async (e) => {
-    const value = e.target.value;
-    setExclusiveFilter("search", value);
+  const handleBusquedaInputChange = useCallback(
+    async (e) => {
+      const value = e.target.value;
+      setExclusiveFilter("search", value);
 
-    if (!dataLoaded) {
-      window.requestIdleCallback
-        ? window.requestIdleCallback(() => ensureDataLoaded())
-        : ensureDataLoaded();
-    } else {
-      window.requestIdleCallback
-        ? window.requestIdleCallback(() => revalidate())
-        : setTimeout(revalidate, 0);
-    }
-  }, [dataLoaded, ensureDataLoaded, revalidate, setExclusiveFilter]);
+      if (!dataLoaded) {
+        window.requestIdleCallback
+          ? window.requestIdleCallback(() => ensureDataLoaded())
+          : ensureDataLoaded();
+      } else {
+        window.requestIdleCallback
+          ? window.requestIdleCallback(() => revalidate())
+          : setTimeout(revalidate, 0);
+      }
+    },
+    [dataLoaded, ensureDataLoaded, revalidate, setExclusiveFilter]
+  );
 
   /* === Cascada === */
   const isMobile = useMediaQuery("(max-width: 900px)");
@@ -795,7 +939,9 @@ const GestionarSocios = () => {
     if (searchCascadeTimerRef.current) clearTimeout(searchCascadeTimerRef.current);
     if (term.length === 0) return;
     searchCascadeTimerRef.current = setTimeout(() => triggerCascade(), 10);
-    return () => { if (searchCascadeTimerRef.current) clearTimeout(searchCascadeTimerRef.current); };
+    return () => {
+      if (searchCascadeTimerRef.current) clearTimeout(searchCascadeTimerRef.current);
+    };
   }, [deferredBusqueda, triggerCascade, reducedMotion]);
 
   const limpiarFiltros = useCallback(() => {
@@ -805,24 +951,44 @@ const GestionarSocios = () => {
     triggerCascade();
   }, [setExclusiveFilter, triggerCascade]);
 
-  const handleFiltrarPorLetra = useCallback(async (letra) => {
-    const isSame = filtrosActivos.letras?.[0] === letra;
-    setExclusiveFilter(isSame ? "none" : "letra", isSame ? null : letra);
+  const handleFiltrarPorLetra = useCallback(
+    async (letra) => {
+      const isSame = filtrosActivos.letras?.[0] === letra;
+      setExclusiveFilter(isSame ? "none" : "letra", isSame ? null : letra);
 
-    if (!dataLoaded) await ensureDataLoaded();
-    else revalidate();
-    triggerCascade();
-  }, [dataLoaded, ensureDataLoaded, revalidate, filtrosActivos.letras, setExclusiveFilter, triggerCascade]);
+      if (!dataLoaded) await ensureDataLoaded();
+      else revalidate();
+      triggerCascade();
+    },
+    [
+      dataLoaded,
+      ensureDataLoaded,
+      revalidate,
+      filtrosActivos.letras,
+      setExclusiveFilter,
+      triggerCascade,
+    ]
+  );
 
-  const handleFiltrarPorMedioPago = useCallback(async (medio) => {
-    const actual = filtrosActivos.mediosPago?.[0] ?? null;
-    const isSame = actual === medio;
-    setExclusiveFilter(isSame ? "none" : "medio", isSame ? null : medio);
+  const handleFiltrarPorMedioPago = useCallback(
+    async (medio) => {
+      const actual = filtrosActivos.mediosPago?.[0] ?? null;
+      const isSame = actual === medio;
+      setExclusiveFilter(isSame ? "none" : "medio", isSame ? null : medio);
 
-    if (!dataLoaded) await ensureDataLoaded();
-    else revalidate();
-    triggerCascade();
-  }, [dataLoaded, ensureDataLoaded, revalidate, filtrosActivos.mediosPago, setExclusiveFilter, triggerCascade]);
+      if (!dataLoaded) await ensureDataLoaded();
+      else revalidate();
+      triggerCascade();
+    },
+    [
+      dataLoaded,
+      ensureDataLoaded,
+      revalidate,
+      filtrosActivos.mediosPago,
+      setExclusiveFilter,
+      triggerCascade,
+    ]
+  );
 
   const handleMostrarTodos = useCallback(async () => {
     setExclusiveFilter("todos");
@@ -839,11 +1005,14 @@ const GestionarSocios = () => {
     setSocioSeleccionado(socio);
   }, []);
 
-  const handleEditarSocio = useCallback((socio) => {
-    const id = getSocioId(socio);
-    if (!id) return;
-    navigate(`/editarSocio/${id}`);
-  }, [navigate]);
+  const handleEditarSocio = useCallback(
+    (socio) => {
+      const id = getSocioId(socio);
+      if (!id) return;
+      navigate(`/editarSocio/${id}`);
+    },
+    [navigate]
+  );
 
   const handleConfirmarEliminar = useCallback((socio) => {
     setSocioSeleccionado(socio);
@@ -882,7 +1051,9 @@ const GestionarSocios = () => {
       if (data?.exito || data?.success) {
         setSociosRaw((prev) => {
           const next = prev.filter((s) => getSocioId(s) !== idSel);
-          try { sessionStorage.setItem(CACHE_KEY, JSON.stringify(next)); } catch {}
+          try {
+            sessionStorage.setItem(CACHE_KEY, JSON.stringify(next));
+          } catch {}
           return next;
         });
         setMostrarModalEliminar(false);
@@ -896,36 +1067,41 @@ const GestionarSocios = () => {
     }
   }, [socioSeleccionado, showToast, revalidate]);
 
-  const handleConfirmarBajaSocio = useCallback(async (socio, motivo) => {
-    const id = getSocioId(socio);
-    const m = (motivo || "").trim();
-    if (!id || !m) {
-      showToast("Motivo requerido para dar de baja.", "error");
-      return;
-    }
-    try {
-      const response = await fetch(`${BASE_URL}/api.php?action=dar_baja&op=dar_baja`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idSocio: id, motivo: m }),
-      });
-      const result = await response.json();
-      if (response.ok && (result?.exito || result?.success)) {
-        setSociosRaw((prev) => {
-          const next = prev.filter((s) => getSocioId(s) !== id);
-          try { sessionStorage.setItem(CACHE_KEY, JSON.stringify(next)); } catch {}
-          return next;
-        });
-        setMostrarModalBaja(false);
-        showToast(result?.mensaje || "Socio dado de baja");
-        revalidate();
-      } else {
-        showToast(result?.mensaje || "No se pudo dar de baja", "error");
+  const handleConfirmarBajaSocio = useCallback(
+    async (socio, motivo) => {
+      const id = getSocioId(socio);
+      const m = (motivo || "").trim();
+      if (!id || !m) {
+        showToast("Motivo requerido para dar de baja.", "error");
+        return;
       }
-    } catch {
-      showToast("Problema al dar de baja", "error");
-    }
-  }, [showToast, revalidate]);
+      try {
+        const response = await fetch(`${BASE_URL}/api.php?action=dar_baja&op=dar_baja`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ idSocio: id, motivo: m }),
+        });
+        const result = await response.json();
+        if (response.ok && (result?.exito || result?.success)) {
+          setSociosRaw((prev) => {
+            const next = prev.filter((s) => getSocioId(s) !== id);
+            try {
+              sessionStorage.setItem(CACHE_KEY, JSON.stringify(next));
+            } catch {}
+            return next;
+          });
+          setMostrarModalBaja(false);
+          showToast(result?.mensaje || "Socio dado de baja");
+          revalidate();
+        } else {
+          showToast(result?.mensaje || "No se pudo dar de baja", "error");
+        }
+      } catch {
+        showToast("Problema al dar de baja", "error");
+      }
+    },
+    [showToast, revalidate]
+  );
 
   /* ---------- cerrar menú filtros al click afuera ---------- */
   useClickOutside(filtrosRef, () => {
@@ -940,7 +1116,6 @@ const GestionarSocios = () => {
   const baseWindowHeight = useWindowHeight(0);
   const [availableHeight, setAvailableHeight] = useState(520);
 
-  // expone altura de header a CSS para empujar el contenido en mobile
   useEffect(() => {
     const applyHeaderHeight = () => {
       const h = headerRef.current?.offsetHeight ?? 0;
@@ -1007,11 +1182,25 @@ const GestionarSocios = () => {
     }
     const datos = sociosFiltrados.map(
       ({
-        id, nombre, apellido, categoria, precio_categoria,
-        medio_pago, domicilio_2, observacion, ...rest
+        id,
+        nombre,
+        apellido,
+        categoria,
+        precio_categoria,
+        medio_pago,
+        domicilio_2,
+        observacion,
+        ...rest
       }) => ({
-        id, apellido, nombre, categoria, precio_categoria,
-        medio_pago, domicilio_2, observacion, ...rest,
+        id,
+        apellido,
+        nombre,
+        categoria,
+        precio_categoria,
+        medio_pago,
+        domicilio_2,
+        observacion,
+        ...rest,
       })
     );
     const ws = XLSX.utils.json_to_sheet(datos);
@@ -1035,9 +1224,15 @@ const GestionarSocios = () => {
       cascadeCount: CASCADE_COUNT,
     }),
     [
-      sociosFiltrados, filaSeleccionada, onSelect, handleEditarSocio,
-      handleConfirmarEliminar, handleMostrarInfoSocio, handleConfirmarBaja,
-      cascadeEnabled, reducedMotion,
+      sociosFiltrados,
+      filaSeleccionada,
+      onSelect,
+      handleEditarSocio,
+      handleConfirmarEliminar,
+      handleMostrarInfoSocio,
+      handleConfirmarBaja,
+      cascadeEnabled,
+      reducedMotion,
     ]
   );
 
@@ -1058,7 +1253,9 @@ const GestionarSocios = () => {
       <div className="gessoc_empresa-box">
         {/* HEADER (fijo en mobile) */}
         <div
-          className={`gessoc_front-row-emp ${isMobile ? "gessoc_front-row-emp--mobile-fixed" : ""}`}
+          className={`gessoc_front-row-emp ${
+            isMobile ? "gessoc_front-row-emp--mobile-fixed" : ""
+          }`}
           ref={headerRef}
         >
           <span className="gessoc_empresa-title">Gestionar Socios</span>
@@ -1079,6 +1276,7 @@ const GestionarSocios = () => {
                 }
               }}
               inputMode="search"
+              disabled={viewMode === "recordatorios"} // ✅ en recordatorios no tiene sentido buscar
             />
             {busqueda && (
               <FontAwesomeIcon
@@ -1091,7 +1289,9 @@ const GestionarSocios = () => {
             <button
               className="gessoc_search-button"
               title="Buscar"
+              disabled={viewMode === "recordatorios"}
               onClick={async () => {
+                if (viewMode === "recordatorios") return;
                 if (!dataLoaded) await ensureDataLoaded();
                 revalidate();
                 triggerCascade();
@@ -1120,6 +1320,7 @@ const GestionarSocios = () => {
                 <div
                   className="gessoc_filtros-menu-item"
                   onClick={() => setMostrarSubmenuAlfabetico((v) => !v)}
+                  style={{ opacity: viewMode === "recordatorios" ? 0.5 : 1, pointerEvents: viewMode === "recordatorios" ? "none" : "auto" }}
                 >
                   <span>Filtrar de la A a la Z</span>
                   <FontAwesomeIcon
@@ -1128,7 +1329,7 @@ const GestionarSocios = () => {
                   />
                 </div>
 
-                {mostrarSubmenuAlfabetico && (
+                {mostrarSubmenuAlfabetico && viewMode !== "recordatorios" && (
                   <div className="gessoc_filtros-submenu">
                     <div className="gessoc_alfabeto-filtros">
                       {"ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").map((letra) => (
@@ -1150,6 +1351,7 @@ const GestionarSocios = () => {
                 <div
                   className="gessoc_filtros-menu-item"
                   onClick={() => setMostrarSubmenuTransferencia((v) => !v)}
+                  style={{ opacity: viewMode === "recordatorios" ? 0.5 : 1, pointerEvents: viewMode === "recordatorios" ? "none" : "auto" }}
                 >
                   <span>Medios de Pago</span>
                   <FontAwesomeIcon
@@ -1158,7 +1360,7 @@ const GestionarSocios = () => {
                   />
                 </div>
 
-                {mostrarSubmenuTransferencia && (
+                {mostrarSubmenuTransferencia && viewMode !== "recordatorios" && (
                   <div className="gessoc_filtros-submenu">
                     {mediosDePago.map((medio) => {
                       const label = medioLabel(medio);
@@ -1181,8 +1383,29 @@ const GestionarSocios = () => {
                 <div
                   className="gessoc_filtros-menu-item gessoc_mostrar-todas"
                   onClick={handleMostrarTodos}
+                  style={{ opacity: viewMode === "recordatorios" ? 0.5 : 1, pointerEvents: viewMode === "recordatorios" ? "none" : "auto" }}
                 >
                   <span>Mostrar Todos</span>
+                </div>
+
+                {/* ✅ BOTÓN: ENVIAR NOTIFICACIONES => TABLA MODO RECORDATORIOS */}
+                <div
+                  className={`gessoc_filtros-menu-item gessoc_mostrar-todas ${
+                    loadingRecordatorios ? "is-disabled" : ""
+                  }`}
+                  onClick={() => {
+                    if (!loadingRecordatorios) entrarModoRecordatorios();
+                  }}
+                  title="Muestra en la tabla SOLO socios con enviar_recordatorio=1"
+                  style={{ display: "flex", alignItems: "center", gap: 10 }}
+                >
+                  <FontAwesomeIcon icon={faBell} />
+                  <span>
+                    {loadingRecordatorios ? "Cargando notificaciones..." : "Enviar notificaciones"}
+                  </span>
+                  {!loadingRecordatorios && (
+                    <FontAwesomeIcon icon={faPaperPlane} style={{ marginLeft: "auto" }} />
+                  )}
                 </div>
               </div>
             )}
@@ -1208,18 +1431,10 @@ const GestionarSocios = () => {
 
               {/* CHIPS activos */}
               <div className="gessoc_filtros-activos-container">
-                {filtrosActivos.letras?.length > 0 && (
+                {viewMode !== "recordatorios" && filtrosActivos.letras?.length > 0 && (
                   <div className="gessoc_filter-chip">
-                    {/* NUEVO: etiqueta que se ve en desktop y se oculta en mobile (vía CSS) */}
                     <span className="gessoc_filter-chip-label">Letra:&nbsp;</span>
-                    <span className="gessoc_filter-chip-text">
-                      {filtrosActivos.letras[0]}
-                    </span>
-                    {filtrosActivos.letras.length > 1 && (
-                      <span className="gessoc_filter-chip-more">
-                        +{filtrosActivos.letras.length - 1}
-                      </span>
-                    )}
+                    <span className="gessoc_filter-chip-text">{filtrosActivos.letras[0]}</span>
                     <button
                       className="gessoc_filter-chip-close"
                       onClick={() => limpiarFiltros()}
@@ -1231,15 +1446,10 @@ const GestionarSocios = () => {
                   </div>
                 )}
 
-                {filtrosActivos.mediosPago?.length > 0 && (
+                {viewMode !== "recordatorios" && filtrosActivos.mediosPago?.length > 0 && (
                   <div className="gessoc_filter-chip gessoc_chip-medio">
                     <span className="gessoc_filter-chip-text">Medio: </span>
                     <span className="texto">{filtrosActivos.mediosPago[0]}</span>
-                    {filtrosActivos.mediosPago.length > 1 && (
-                      <span className="gessoc_filter-chip-more">
-                        +{filtrosActivos.mediosPago.length - 1}
-                      </span>
-                    )}
                     <button
                       className="gessoc_filter-chip-close"
                       onClick={() => limpiarFiltros()}
@@ -1250,10 +1460,30 @@ const GestionarSocios = () => {
                     </button>
                   </div>
                 )}
+
+                {/* ✅ CHIP MODO RECORDATORIOS (cierra y vuelve a la tabla normal) */}
+                {viewMode === "recordatorios" && (
+                  <div
+                    className="gessoc_filter-chip gessoc_chip-medio"
+                    title="Mostrando SOLO socios marcados para recordatorio"
+                  >
+                    <span className="gessoc_filter-chip-text">
+                      Notificar:&nbsp;<b>{sociosRecordatorios.length}</b>
+                    </span>
+                    <button
+                      className="gessoc_filter-chip-close"
+                      onClick={salirModoRecordatorios}
+                      title="Volver a la lista normal"
+                      aria-label="Volver a la lista normal"
+                    >
+                      ×
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* Leyenda — en móvil usa etiquetas cortas */}
+            {/* Leyenda */}
             <div className="gessoc_estado-pagos-container">
               <div className="gessoc_estado-indicador gessoc_al-dia">
                 <div className="gessoc_indicador-color"></div>
@@ -1306,10 +1536,21 @@ const GestionarSocios = () => {
                 ) : (
                   <div className="gessoc_no-data-message" style={{ width: "100%" }}>
                     <div className="gessoc_message-content">
-                      <p>Usá la búsqueda o aplicá filtros para ver los socios</p>
-                      <button className="gessoc_btn-show-all" onClick={handleMostrarTodos}>
-                        {showAllLabel}
-                      </button>
+                      {viewMode === "recordatorios" ? (
+                        <>
+                          <p>No hay socios marcados para recordatorio.</p>
+                          <button className="gessoc_btn-show-all" onClick={salirModoRecordatorios}>
+                            Volver
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <p>Usá la búsqueda o aplicá filtros para ver los socios</p>
+                          <button className="gessoc_btn-show-all" onClick={handleMostrarTodos}>
+                            {showAllLabel}
+                          </button>
+                        </>
+                      )}
                     </div>
                   </div>
                 )}
@@ -1337,10 +1578,21 @@ const GestionarSocios = () => {
               ) : (
                 <div className="gessoc_no-data-message gessoc_no-data-mobile">
                   <div className="gessoc_message-content">
-                    <p>Usá la búsqueda o aplicá filtros para ver resultados</p>
-                    <button className="gessoc_btn-show-all" onClick={handleMostrarTodos}>
-                      {showAllLabel}
-                    </button>
+                    {viewMode === "recordatorios" ? (
+                      <>
+                        <p>No hay socios marcados para recordatorio.</p>
+                        <button className="gessoc_btn-show-all" onClick={salirModoRecordatorios}>
+                          Volver
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <p>Usá la búsqueda o aplicá filtros para ver resultados</p>
+                        <button className="gessoc_btn-show-all" onClick={handleMostrarTodos}>
+                          {showAllLabel}
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
               )}

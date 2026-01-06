@@ -1,7 +1,15 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSave, faArrowLeft, faUser, faHome, faMoneyBillWave, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
+import {
+  faSave,
+  faArrowLeft,
+  faUser,
+  faHome,
+  faMoneyBillWave,
+  faInfoCircle,
+  faRobot,
+} from '@fortawesome/free-solid-svg-icons';
 import BASE_URL from '../../config/config';
 import Toast from '../global/Toast';
 import './EditarSocio.css';
@@ -9,6 +17,7 @@ import './EditarSocio.css';
 const EditarSocio = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+
   const [activeTab, setActiveTab] = useState('informacion');
 
   // Campos
@@ -30,6 +39,9 @@ const EditarSocio = () => {
   const [apellidoInput, setApellidoInput] = useState('');
   const [fechaUnion, setFechaUnion] = useState('');
 
+  // ✅ NUEVO: enviar recordatorios (0/1)
+  const [enviarRecordatorio, setEnviarRecordatorio] = useState('0');
+
   const fechaInputRef = useRef(null);
 
   // Toast
@@ -49,6 +61,21 @@ const EditarSocio = () => {
     try { el.click(); } catch {}
   };
 
+  // ✅ Detecta si el medio de pago actual es TRANSFERENCIA
+  const isTransferencia = useMemo(() => {
+    if (!medioPago) return false;
+    const mp = mediosPago.find(x => String(x.IdMedios_pago) === String(medioPago));
+    const label = (mp?.Medio_Pago || '').trim().toUpperCase();
+    return label === 'TRANSFERENCIA';
+  }, [medioPago, mediosPago]);
+
+  // ✅ Si deja de ser transferencia, por UX volvemos a una pestaña válida
+  useEffect(() => {
+    if (!isTransferencia && activeTab === 'bot') {
+      setActiveTab('pagos');
+    }
+  }, [isTransferencia, activeTab]);
+
   const obtenerSocio = async (signal) => {
     try {
       setCargando(true);
@@ -56,23 +83,33 @@ const EditarSocio = () => {
       if (!response.ok) throw new Error('La respuesta de la API no es válida');
 
       const data = await response.json();
+
+      // tu API devuelve: { categorias, mediosPago, ...socio }
       const { categorias, mediosPago, ...socio } = data;
 
       if (socio) {
         setIdSocios(socio.idSocios || id);
-        setNombreInput(socio.nombre || '');
-        setApellidoInput(socio.apellido || '');
-        setDni(socio.DNI || '');
-        setDomicilio(socio.domicilio || '');
-        setDomicilio2(socio.domicilio_2 || '');
-        setNumero(socio.numero || '');
-        setLocalidad(socio.localidad || '');
-        setTelefono(socio.telefono || '');
-        setEmail(socio.email || '');
-        setCategoria(socio.idCategoria || '');
-        setMedioPago(socio.idMedios_Pago || '');
-        setObservacion(socio.observacion || '');
-        setFechaUnion(socio.Fechaunion || '');
+
+        // según cómo lo devuelvas, puede venir como Nombre/Apellido o nombre/apellido.
+        setNombreInput(socio.nombre ?? socio.Nombre ?? '');
+        setApellidoInput(socio.apellido ?? socio.Apellido ?? '');
+
+        setDni(socio.DNI ?? socio.dni ?? '');
+        setDomicilio(socio.domicilio ?? socio.Domicilio ?? '');
+        setDomicilio2(socio.domicilio_2 ?? socio.Domicilio_2 ?? socio.Domicilio_2 ?? '');
+        setNumero(socio.numero ?? socio.Numero ?? '');
+        setLocalidad(socio.localidad ?? socio.Localidad ?? '');
+        setTelefono(socio.telefono ?? socio.Telefono ?? '');
+        setEmail(socio.email ?? socio.Email ?? '');
+        setCategoria(socio.idCategoria ?? '');
+        setMedioPago(socio.idMedios_Pago ?? '');
+        setObservacion(socio.observacion ?? socio.Observacion ?? '');
+        setFechaUnion(socio.Fechaunion ?? socio.fechaUnion ?? '');
+
+        // ✅ NUEVO: mapear enviar_recordatorio
+        // si viene NULL, lo tratamos como 0 para el select.
+        const er = (socio.enviar_recordatorio ?? socio.enviarRecordatorio ?? 0);
+        setEnviarRecordatorio(String(er === null ? 0 : Number(er) ? 1 : 0));
       }
 
       setCategorias(categorias || []);
@@ -100,25 +137,32 @@ const EditarSocio = () => {
     }
 
     try {
+      const payload = {
+        idSocios: id,
+        nombre: nombreInput,
+        apellido: apellidoInput,
+        dni: dni || '',
+        domicilio: domicilio || '',
+        domicilio_2: domicilio2 || '',
+        observacion: observacion || '',
+        numero: numero || '',
+        localidad: localidad || '',
+        telefono: telefono || '',
+        email: email || '',
+        categoria: categoria || null,
+        medioPago: medioPago || null,
+        fechaUnion: fechaUnion || null,
+      };
+
+      // ✅ SOLO enviar si es transferencia
+      if (isTransferencia) {
+        payload.enviar_recordatorio = Number(enviarRecordatorio) === 1 ? 1 : 0;
+      }
+
       const response = await fetch(`${BASE_URL}/api.php?action=editar_socio`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          idSocios: id,
-          nombre: nombreInput,
-          apellido: apellidoInput,
-          dni: dni || '',
-          domicilio: domicilio || '',
-          domicilio_2: domicilio2 || '',
-          observacion: observacion || '',
-          numero: numero || '',
-          localidad: localidad || '',
-          telefono: telefono || '',
-          email: email || '',
-          categoria: categoria || null,
-          medioPago: medioPago || null,
-          fechaUnion: fechaUnion || null,
-        }),
+        body: JSON.stringify(payload),
       });
 
       const data = await response.json();
@@ -134,7 +178,7 @@ const EditarSocio = () => {
     }
   };
 
-  // --- SKELETON VIEW (igual que Categorías: se mantiene la caja/alto/estructura) ---
+  // --- SKELETON VIEW ---
   const Header = (
     <div className="edit-socio-header">
       {cargando ? (
@@ -153,9 +197,29 @@ const EditarSocio = () => {
     </div>
   );
 
+  // ✅ Tabs dinámicos: Bot solo si TRANSFERENCIA
+  const tabs = useMemo(() => {
+    const base = ['informacion', 'domicilio', 'pagos', 'otros'];
+    return isTransferencia ? [...base, 'bot'] : base;
+  }, [isTransferencia]);
+
+  const tabLabel = (tab) => (
+    tab === 'informacion' ? 'Información' :
+    tab === 'domicilio' ? 'Domicilio' :
+    tab === 'pagos' ? 'Pagos' :
+    tab === 'otros' ? 'Otros' : 'Bot'
+  );
+
+  const tabIcon = (tab) => (
+    tab === 'informacion' ? faUser :
+    tab === 'domicilio' ? faHome :
+    tab === 'pagos' ? faMoneyBillWave :
+    tab === 'otros' ? faInfoCircle : faRobot
+  );
+
   const Tabs = (
     <div className="edit-socio-tabs" role="tablist" aria-label="Secciones de edición">
-      {['informacion','domicilio','pagos','otros'].map(tab => (
+      {tabs.map(tab => (
         <button
           key={tab}
           className={`edit-socio-tab ${activeTab === tab ? 'active' : ''} ${cargando ? 'is-disabled' : ''}`}
@@ -163,28 +227,16 @@ const EditarSocio = () => {
           role="tab"
           aria-selected={activeTab === tab}
           aria-label={tab}
-          title={tab.charAt(0).toUpperCase() + tab.slice(1)}
+          title={tabLabel(tab)}
           disabled={cargando}
         >
-          <FontAwesomeIcon
-            icon={
-              tab==='informacion' ? faUser :
-              tab==='domicilio' ? faHome :
-              tab==='pagos' ? faMoneyBillWave : faInfoCircle
-            }
-            className="edit-socio-tab-icon"
-          />
-          <span className="tab-text">
-            {tab==='informacion' ? 'Información' :
-             tab==='domicilio' ? 'Domicilio' :
-             tab==='pagos' ? 'Pagos' : 'Otros'}
-          </span>
+          <FontAwesomeIcon icon={tabIcon(tab)} className="edit-socio-tab-icon" />
+          <span className="tab-text">{tabLabel(tab)}</span>
         </button>
       ))}
     </div>
   );
 
-  // Contenido: si cargando -> skeletones con mismas columnas que el formulario
   const ContentLoading = (
     <div className="edit-socio-form">
       <div className="edit-socio-tab-content">
@@ -450,6 +502,26 @@ const EditarSocio = () => {
               </div>
             )}
 
+            {/* ✅ NUEVA PESTAÑA BOT (solo TRANSFERENCIA) */}
+            {activeTab === 'bot' && isTransferencia && (
+              <div className="edit-socio-tab-content">
+                <div className="edit-socio-input-group">
+                  <select
+                    value={enviarRecordatorio}
+                    onChange={(e) => setEnviarRecordatorio(e.target.value)}
+                    className="edit-socio-input"
+                  >
+                    <option value="1">Sí</option>
+                    <option value="0">No</option>
+                  </select>
+                </div>
+
+                <div style={{ marginTop: 10, opacity: 0.8, fontSize: 13 }}>
+                  *Esto controla si el bot enviará recordatorios a este socio (solo transferencia).
+                </div>
+              </div>
+            )}
+
             <div className="edit-socio-buttons-container">
               <button
                 type="button"
@@ -461,6 +533,7 @@ const EditarSocio = () => {
                 <FontAwesomeIcon icon={faSave} className="edit-socio-icon-button" />
                 <span className="btn-text">Guardar</span>
               </button>
+
               <button
                 type="button"
                 onClick={() => navigate(-1)}

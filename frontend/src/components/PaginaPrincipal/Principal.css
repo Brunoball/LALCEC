@@ -32,7 +32,7 @@
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+  font-family: "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
   background: linear-gradient(135deg, #cccccc 30%, #ff6e00 70%);
   box-sizing: border-box;
   transition: opacity 0.3s ease;
@@ -45,22 +45,29 @@
   background-color: #ffffff;
   border-radius: 18px;
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.08);
-  padding: 40px 40px 25px;
+  padding: 0 40px 25px; /* arriba ahora lo controla el header */
   display: flex;
   flex-direction: column;
 }
 
-/* ===== Header Maqueta ===== */
+/* ============================================================
+   HEADER con centramiento vertical del título
+============================================================ */
 .pagina-principal-header {
+  height: 150px;                  /* altura fija del header */
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: center;            /* centra verticalmente título y logo */
   gap: 32px;
-  margin-bottom: 10px;
+  padding-top: 20px;              /* separación del borde superior */
+  padding-bottom: 10px;
 }
 
 .header-text-block {
-  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;        /* centra verticalmente el texto */
+  height: 100%;
 }
 
 .title {
@@ -71,13 +78,7 @@
 }
 
 .title-highlight {
-  color: #ff6e00; /* naranja original */
-}
-
-.subtitle {
-  font-size: 15px;
-  color: #6b7280;
-  margin-top: 6px;
+  color: #ff6e00;
 }
 
 .header-divider {
@@ -85,31 +86,14 @@
   height: 3px;
   background: #ff6e00;
   border-radius: 50px;
-  margin: 8px 0;
-}
-
-.welcome-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.welcome-label {
-  font-size: 15px;
-  color: #4a5568;
-}
-
-.user-pill {
-  background: #ffe5d1;
-  color: #ff6e00;
-  font-weight: 600;
-  padding: 4px 10px;
-  border-radius: 12px;
+  margin-top: 8px;
 }
 
 /* ===== Logo Derecha ===== */
 .header-logo-block {
   flex: 0 0 auto;
+  display: flex;
+  align-items: center;      /* centrado con el título */
 }
 
 .logo-container {
@@ -130,14 +114,13 @@
   object-fit: cover;
 }
 
-/* ===== Menú sin scroll ===== */
-.menu-container {
-  overflow: visible !important;
-  padding: 0;
-  margin-bottom: 25px;
+/* ============================================================
+   GRID
+============================================================ */
+.menu-section {
+  margin-top: 10px;
 }
 
-/* ===== Grilla de Tarjetas (3×2) ===== */
 .menu-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -145,7 +128,7 @@
   justify-items: center;
 }
 
-/* ===== Tarjetas Conservando tu estilo ===== */
+/* ===== Tarjetas ===== */
 .menu-button {
   background-color: #ffffff;
   border-radius: 12px;
@@ -161,7 +144,7 @@
   cursor: pointer;
   color: #4a5568;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  transition: transform .2s ease, box-shadow .2s ease, background-color .2s, border-color .2s;
+  transition: 0.2s ease;
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -178,7 +161,6 @@
   filter: brightness(0.97);
 }
 
-/* icono */
 .button-icon {
   width: 44px;
   height: 44px;
@@ -215,7 +197,7 @@
   font-weight: 500;
   border-radius: 8px;
   cursor: pointer;
-  transition: all .2s ease;
+  transition: 0.2s ease;
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -226,11 +208,17 @@
   }
 }
 
+.logout-button:active {
+  transform: translateY(0);
+  filter: brightness(0.97);
+}
+
 /* ===== Footer ===== */
 .pagina-principal-footer {
   text-align: right;
   font-size: 14px;
   color: #718096;
+  margin-top: 8px;
 }
 
 .pagina-principal-footer a {
@@ -243,89 +231,136 @@
   text-decoration: underline;
 }
 
-/* ===== Modal ===== */
+/* ============================
+   MODAL LOGOUT
+============================ */
+
+/* Animaciones */
 @keyframes logout-modal-fadeIn {
   from { opacity: 0; }
   to   { opacity: 1; }
 }
 
 @keyframes logout-modal-pop {
-  from { transform: translateY(4px); opacity: .98; }
-  to   { transform: translateY(0); opacity: 1; }
+  from { transform: translateY(4px) scale(.98); opacity: .0; }
+  to   { transform: translateY(0) scale(1); opacity: 1; }
 }
 
+/* Overlay oscuro */
 .logout-modal-overlay {
   position: fixed;
   inset: 0;
-  background-color: rgba(0,0,0,0.5);
+  background-color: rgba(15, 23, 42, 0.55);
   backdrop-filter: blur(4px);
   display: flex;
   justify-content: center;
   align-items: center;
   padding: 20px;
   z-index: 1001;
-  animation: logout-modal-fadeIn .2s ease-out;
+  animation: logout-modal-fadeIn 0.2s ease-out;
 }
 
+/* Contenedor base */
 .logout-modal-container {
-  background: white;
-  border-radius: 16px;
+  background: #ffffff;
+  border-radius: 18px;
   width: 90%;
-  max-width: 500px;
-  padding: 28px;
-  animation: logout-modal-pop .18s ease-out;
+  max-width: 480px;
+  padding: 26px 24px 22px;
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.35);
   border-top: 4px solid #e53e3e;
   text-align: center;
+  animation: logout-modal-pop 0.18s ease-out;
 }
 
+/* Variante "danger" (por si en JSX usás logout-modal--danger) */
+.logout-modal--danger {
+  border-top-color: #e53e3e;
+}
+
+/* Icono circular rojo */
 .logout-modal__icon {
-  font-size: 2.5rem;
+  width: 58px;
+  height: 58px;
+  border-radius: 999px;
+  margin: 0 auto 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fef2f2;
   color: #e53e3e;
-  margin-bottom: 10px;
+  font-size: 26px;
 }
 
+/* Título */
 .logout-modal-title {
-  font-size: 1.4rem;
+  font-size: 1.35rem;
   font-weight: 600;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
+  color: #111827;
 }
 
+/* Título variante danger */
+.logout-modal-title--danger {
+  color: #b91c1c;
+}
+
+/* Texto */
 .logout-modal-text {
-  color: #4a5568;
+  color: #4b5563;
   margin-bottom: 18px;
-  font-size: 1rem;
+  font-size: 0.98rem;
 }
 
+/* Botonera */
 .logout-modal-buttons {
   display: flex;
-  gap: 14px;
+  gap: 12px;
   justify-content: center;
   flex-wrap: wrap;
 }
 
 .logout-btn {
-  padding: .75rem 1.2rem;
-  border-radius: 12px;
+  padding: 0.7rem 1.1rem;
+  border-radius: 999px;
   font-weight: 600;
   cursor: pointer;
   flex: 1;
-  max-width: 200px;
+  max-width: 190px;
   min-width: 120px;
   border: 1px solid transparent;
+  font-size: 0.95rem;
+  transition: background-color 0.18s ease, color 0.18s ease,
+    box-shadow 0.18s ease, transform 0.18s ease;
 }
 
+/* Botón "Cancelar" */
 .logout-btn--ghost {
-  background: #fff;
+  background: #ffffff;
   color: #374151;
-  border-color: #CBD5E1;
+  border-color: #d1d5db;
 }
 
+.logout-btn--ghost:hover {
+  background: #f3f4f6;
+  box-shadow: 0 2px 6px rgba(148, 163, 184, 0.4);
+  transform: translateY(-1px);
+}
+
+/* Botón "Confirmar" */
 .logout-btn--solid-danger {
   background: #e53e3e;
-  color: white;
+  color: #ffffff;
+  border-color: #e53e3e;
 }
 
-/* ===== Animación salida ===== */
+.logout-btn--solid-danger:hover {
+  background: #c53030;
+  box-shadow: 0 3px 8px rgba(229, 62, 62, 0.6);
+  transform: translateY(-1px);
+}
+
+/* ===== Animación salida página ===== */
 .slide-fade-out {
   animation: slideFadeOut .4s ease forwards;
 }
@@ -335,12 +370,51 @@
   to   { opacity: 0; transform: translateY(20px); }
 }
 
-/* ===== Responsive ===== */
+/* ===== Botón flotante Panel del Bot ===== */
+.bot-floating-btn {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  width: 58px;
+  height: 58px;
+  border-radius: 999px;
+  background-color: #ffffff;
+  box-shadow: 0 10px 18px rgba(0, 0, 0, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ff6e00;
+  text-decoration: none;
+  z-index: 1100;
+  cursor: pointer;
+  transition: .18s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .bot-floating-btn:hover {
+    transform: translateY(-2px) scale(1.03);
+    background-color: #e65f00;
+    border: 1px solid #fff;
+    color: #ffffff;
+    box-shadow: 0 14px 24px rgba(0, 0, 0, 0.3);
+  }
+}
+
+.bot-floating-btn:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.bot-floating-btn-icon {
+  font-size: 24px;
+}
+
+/* ===== Responsive móvil ===== */
 @media (max-width: 900px) {
   .pagina-principal-header {
     flex-direction: column;
+    height: auto;
+    padding: 20px 0;
     text-align: center;
-    align-items: center;
   }
 
   .header-logo-block {
@@ -357,77 +431,11 @@
     padding: 20px 18px;
   }
 
-  .title {
-    font-size: 22px;
-  }
-
   .menu-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 14px;
   }
 
-  .menu-button {
-    padding: 16px 10px;
-    min-height: 110px;
-  }
-
-  .button-icon {
-    width: 36px;
-    height: 36px;
-    font-size: 16px;
-    margin-bottom: 8px;
-  }
-
-  .button-text {
-    font-size: 12px;
-  }
-
-  .logout-button {
-    font-size: 14px;
-    padding: 10px;
-  }
-}
-/* ===== Botón flotante Panel del Bot (estilo WhatsApp) ===== */
-.bot-floating-btn {
-  position: fixed;
-  right: 24px;
-  bottom: 24px;
-  width: 58px;
-  height: 58px;
-  border-radius: 999px;
-  background-color: #ffffff; /* naranja institucional */
-  box-shadow: 0 10px 18px rgba(0, 0, 0, 0.25);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color:  #ff6e00;
-  text-decoration: none;
-  z-index: 1100;
-  cursor: pointer;
-  transition: transform 0.18s ease, box-shadow 0.18s ease,
-    background-color 0.18s ease;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .bot-floating-btn:hover {
-    transform: translateY(-2px) scale(1.03);
-    background-color: #e65f00; /* un poco más oscuro al hover */
-    border: 1px solid #fff;
-    color: #ffffff;
-    box-shadow: 0 14px 24px rgba(0, 0, 0, 0.3);
-  }
-}
-
-.bot-floating-btn:active {
-  transform: translateY(0) scale(0.98);
-}
-
-.bot-floating-btn-icon {
-  font-size: 24px;
-}
-
-/* Ajuste en móviles */
-@media (max-width: 480px) {
   .bot-floating-btn {
     right: 16px;
     bottom: 16px;

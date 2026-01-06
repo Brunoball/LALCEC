@@ -64,6 +64,7 @@ const AgregarCategoria = () => {
         setToastVisible(true);
         setRedireccionar(true);
         setCategoria({ nombre_categoria: "", precio_categoria: "" });
+
         // Quitar el foco de los inputs
         nombreInputRef.current?.blur();
         precioInputRef.current?.blur();
@@ -151,8 +152,7 @@ const AgregarCategoria = () => {
                   placeholder=" "
                   required
                   min="0"
-                  max="10000"
-                  step="50"
+                  step="0.01"
                 />
                 <label
                   htmlFor="precio_categoria"

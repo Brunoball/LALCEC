@@ -39,6 +39,10 @@ $selectBase = "
         DATE_FORMAT(s.Fechaunion, '%Y-%m-%d') AS Fechaunion,
         s.idCategoria, 
         s.idMedios_Pago,
+
+        -- ✅ NUEVO: campo para controlar recordatorios
+        s.enviar_recordatorio,
+
         c.Nombre_categoria AS categoria,
         c.Precio_Categoria AS precio_categoria,
         m.Medio_Pago AS medio_pago
@@ -59,13 +63,19 @@ if ($id !== null) {
     if ($stmt) $stmt->bind_param('ss', $nombre, $apellido);
 } else {
     http_response_code(400);
-    echo json_encode(["success" => false, "message" => "Faltan parámetros requeridos (id) o (nombre y apellido)."]);
+    echo json_encode([
+        "success" => false,
+        "message" => "Faltan parámetros requeridos (id) o (nombre y apellido)."
+    ], JSON_UNESCAPED_UNICODE);
     exit;
 }
 
 if (!$stmt) {
     http_response_code(500);
-    echo json_encode(["success" => false, "message" => "Error al preparar la consulta."]);
+    echo json_encode([
+        "success" => false,
+        "message" => "Error al preparar la consulta."
+    ], JSON_UNESCAPED_UNICODE);
     exit;
 }
 
@@ -75,6 +85,19 @@ try {
 
     if ($result && $result->num_rows > 0) {
         $socio = $result->fetch_assoc();
+
+        // ✅ Normalizar enviar_recordatorio para evitar null raro:
+        // - si viene NULL lo dejamos NULL (porque vos querés permitir NULL),
+        //   pero el frontend lo puede tratar como 0.
+        if (array_key_exists('enviar_recordatorio', $socio)) {
+            if ($socio['enviar_recordatorio'] === null) {
+                $socio['enviar_recordatorio'] = null;
+            } else {
+                $socio['enviar_recordatorio'] = (int)$socio['enviar_recordatorio']; // 0/1
+            }
+        } else {
+            $socio['enviar_recordatorio'] = null;
+        }
 
         // Catálogos (categorías y medios de pago)
         $categorias = [];
@@ -90,18 +113,25 @@ try {
             $mpRes->free();
         }
 
-        // Adjuntar catálogos en el mismo JSON
+        // Adjuntar catálogos al JSON (tal cual espera tu React)
         $socio['categorias'] = $categorias;
         $socio['mediosPago'] = $mediosPago;
 
         echo json_encode($socio, JSON_UNESCAPED_UNICODE);
     } else {
         http_response_code(404);
-        echo json_encode(["success" => false, "message" => "Socio no encontrado."]);
+        echo json_encode([
+            "success" => false,
+            "message" => "Socio no encontrado."
+        ], JSON_UNESCAPED_UNICODE);
     }
 } catch (Throwable $e) {
     http_response_code(500);
-    echo json_encode(["success" => false, "message" => "Error al ejecutar la consulta.", "error" => $e->getMessage()]);
+    echo json_encode([
+        "success" => false,
+        "message" => "Error al ejecutar la consulta.",
+        "error" => $e->getMessage()
+    ], JSON_UNESCAPED_UNICODE);
 } finally {
     if ($stmt) { $stmt->close(); }
     if (isset($conn) && $conn instanceof mysqli) { $conn->close(); }

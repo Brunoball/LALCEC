@@ -1,5 +1,5 @@
 // src/components/socios/AgregarSocio.jsx
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -44,7 +44,6 @@ const AgregarSocio = () => {
   const [activeField, setActiveField] = useState(null);
 
   const [socio, setSocio] = useState({
-    // ⚠️ Ahora separados
     apellido: '',
     nombre: '',
     dni: '',
@@ -57,6 +56,8 @@ const AgregarSocio = () => {
     observacion: '',
     idCategoria: '',
     idMedios_Pago: '',
+    // ✅ NUEVO: controlar recordatorios (0/1). Por defecto 0.
+    enviar_recordatorio: 0,
   });
 
   const formRef = useRef(null);
@@ -88,18 +89,57 @@ const AgregarSocio = () => {
     fetchDatos();
   }, []);
 
+  // ===== Detectar si el medio seleccionado es TRANSFERENCIA =====
+  const medioSeleccionado = useMemo(() => {
+    const id = String(socio.idMedios_Pago || '');
+    if (!id) return null;
+    return mediosPago.find(m => String(m.IdMedios_pago) === id) || null;
+  }, [socio.idMedios_Pago, mediosPago]);
+
+  const esTransferencia = useMemo(() => {
+    const label = (medioSeleccionado?.Medio_Pago || '').toString().trim().toUpperCase();
+    // ✅ flexible: TRANSFERENCIA / TRANSFER / TRANSF.
+    return label.includes('TRANSFER');
+  }, [medioSeleccionado]);
+
+  // Si deja de ser transferencia, forzamos enviar_recordatorio = 0
+  useEffect(() => {
+    if (!esTransferencia && socio.enviar_recordatorio !== 0) {
+      setSocio(prev => ({ ...prev, enviar_recordatorio: 0 }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [esTransferencia]);
+
   // ===== Handlers =====
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    // Todo en mayúsculas salvo email
     const v = (name === 'email') ? value : value.toUpperCase();
-    setSocio((prev) => ({ ...prev, [name]: v }));
+
+    setSocio((prev) => {
+      const next = { ...prev, [name]: v };
+
+      // ✅ Si cambia medio de pago y NO es transferencia, dejar recordatorio en 0
+      if (name === 'idMedios_Pago') {
+        const medio = mediosPago.find(m => String(m.IdMedios_pago) === String(value)) || null;
+        const label = (medio?.Medio_Pago || '').toString().trim().toUpperCase();
+        const isTransf = label.includes('TRANSFER');
+        if (!isTransf) next.enviar_recordatorio = 0;
+      }
+
+      return next;
+    });
   };
 
   const handleNumberChange = (e) => {
     const { name, value } = e.target;
     const numericValue = value.replace(/[^0-9]/g, '');
     setSocio((prev) => ({ ...prev, [name]: numericValue }));
+  };
+
+  // ✅ handler para selector SI/NO del bot
+  const handleRecordatorioChange = (e) => {
+    const v = e.target.value; // "1" o "0"
+    setSocio(prev => ({ ...prev, enviar_recordatorio: v === '' ? 0 : parseInt(v, 10) }));
   };
 
   // Validación simple: ambos obligatorios
@@ -137,11 +177,20 @@ const AgregarSocio = () => {
 
     try {
       setLoading(true);
+
+      // ✅ Payload: si no es transferencia, enviar_recordatorio = 0 (por seguridad)
+      const payload = {
+        ...socio,
+        enviar_recordatorio: esTransferencia ? socio.enviar_recordatorio : 0,
+        tipoEntidad
+      };
+
       const response = await fetch(`${BASE_URL}/api.php?action=agregar_socio`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...socio, tipoEntidad }),
+        body: JSON.stringify(payload),
       });
+
       const data = await response.json();
 
       if (data.success_message) {
@@ -153,6 +202,7 @@ const AgregarSocio = () => {
           domicilio: '', domicilio_2: '', numero: '',
           email: '', telefono: '', observacion: '',
           idCategoria: '', idMedios_Pago: '',
+          enviar_recordatorio: 0,
         });
         setCurrentStep(1);
 
@@ -451,6 +501,34 @@ const AgregarSocio = () => {
                     <span className="add-socio-input-highlight"></span>
                   </div>
                 </div>
+
+                {/* ✅ NUEVO: Selector BOT (solo transferencia) */}
+                {esTransferencia && (
+                  <div className="add-socio-group-row">
+                    <div className={`add-socio-input-wrapper always-active has-value`}>
+                      <label className="add-socio-label">
+                        <FontAwesomeIcon icon={faMoneyBillWave} className="input-icon" />
+                        Enviar mensajes recordatorios
+                      </label>
+
+                      <select
+                        name="enviar_recordatorio"
+                        value={String(socio.enviar_recordatorio ?? 0)}
+                        onChange={handleRecordatorioChange}
+                        className="add-socio-input"
+                        disabled={loading}
+                      >
+                        <option value="1">Sí</option>
+                        <option value="0">No</option>
+                      </select>
+
+                      <span className="add-socio-input-highlight"></span>
+                      <small style={{ display: 'block', marginTop: 6, opacity: 0.8 }}>
+                        Esto controla si el bot enviará recordatorios a este socio (solo transferencia).
+                      </small>
+                    </div>
+                  </div>
+                )}
 
                 <div className={`add-socio-input-wrapper ${socio.observacion || activeField === 'observacion' ? 'has-value' : ''}`}>
                   <label className="add-socio-label">

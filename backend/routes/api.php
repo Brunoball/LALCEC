@@ -164,6 +164,10 @@ switch ($action) {
         require_once(__DIR__ . '/../modules/socios/estado_socio.php');
         break;
 
+    case "obtener_soc_recordatorios":
+        require_once __DIR__ . "/../modules/socios/obtener_soc_recordatorios.php";
+        break;
+
 
     /* =======================
        EMPRESAS

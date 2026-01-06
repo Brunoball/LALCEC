@@ -7,7 +7,9 @@ header('Content-Type: application/json');
 
 include_once(__DIR__ . '/../../config/db.php');
 
-// ===== Helpers =====
+/* =========================
+   Helpers
+========================= */
 function obtenerNumeroMes($mesNombre) {
     $meses = [
         'ENERO' => '01','FEBRERO'=>'02','MARZO'=>'03','ABRIL'=>'04',
@@ -29,42 +31,67 @@ function obtenerRangoMes($mesNombre, $anio) {
     ];
 }
 
-function obtenerPrecioPorMes($conn, $idCategoria, $mesSeleccionado) {
+/**
+ * ✅ Precio vigente para un mes/año, cruzando años correctamente
+ * - cutoff = primer día del mes siguiente
+ * - toma el último historico con fecha_cambio < cutoff
+ * - devuelve precio_nuevo
+ * - fallback: categorias.Precio_Categoria
+ */
+function obtenerPrecioPorMes($conn, $idCategoria, $mesSeleccionado, $anioSeleccionado) {
+
+    $idCategoria = (int)$idCategoria;
+    $anioSeleccionado = (int)$anioSeleccionado;
+
+    // 1) precio base (fallback)
     $sqlPrecioBase = "SELECT Precio_Categoria FROM categorias WHERE idCategorias = ?";
     $stmtBase = $conn->prepare($sqlPrecioBase);
     $stmtBase->bind_param("i", $idCategoria);
     $stmtBase->execute();
     $resultBase = $stmtBase->get_result();
-    $precioActual = ($resultBase->num_rows > 0) ? $resultBase->fetch_assoc()['Precio_Categoria'] : 0;
+    $precioBase = ($resultBase->num_rows > 0) ? (int)$resultBase->fetch_assoc()['Precio_Categoria'] : 0;
+    $stmtBase->close();
 
-    if ($mesSeleccionado === null || $mesSeleccionado === 'Todos') return $precioActual;
+    if ($mesSeleccionado === null || $mesSeleccionado === '' || strtoupper($mesSeleccionado) === 'TODOS') {
+        return $precioBase;
+    }
 
-    $sqlMesId = "SELECT idMes FROM meses_pagos WHERE mes = ?";
-    $stmtMes = $conn->prepare($sqlMesId);
-    $stmtMes->bind_param("s", $mesSeleccionado);
-    $stmtMes->execute();
-    $resultMes = $stmtMes->get_result();
-    if ($resultMes->num_rows === 0) return $precioActual;
+    // 2) calcular cutoff: primer día del mes siguiente (00:00:00)
+    $mesNum = obtenerNumeroMes($mesSeleccionado); // "01".."12"
+    $inicioMes = DateTime::createFromFormat('Y-m-d', sprintf('%04d-%s-01', $anioSeleccionado, $mesNum));
+    if (!$inicioMes) return $precioBase;
 
-    $idMesSeleccionado = (int)$resultMes->fetch_assoc()['idMes'];
+    $cutoff = clone $inicioMes;
+    $cutoff->modify('first day of next month');
+    $cutoffStr = $cutoff->format('Y-m-d 00:00:00'); // 👈 clave del fix
 
-    $sqlHistorico = "SELECT precio_anterior 
-                     FROM historico_precios_categorias 
-                     WHERE idCategoria = ? AND idMes > ? 
-                     ORDER BY idMes ASC
-                     LIMIT 1";
-    $stmtHist = $conn->prepare($sqlHistorico);
-    $stmtHist->bind_param("ii", $idCategoria, $idMesSeleccionado);
+    // 3) buscar último cambio antes del cutoff
+    $sqlHist = "
+        SELECT precio_nuevo
+        FROM historico_precios_categorias
+        WHERE idCategoria = ?
+          AND fecha_cambio < ?
+        ORDER BY fecha_cambio DESC, id_historico DESC
+        LIMIT 1
+    ";
+    $stmtHist = $conn->prepare($sqlHist);
+    $stmtHist->bind_param("is", $idCategoria, $cutoffStr);
     $stmtHist->execute();
     $resultHist = $stmtHist->get_result();
 
     if ($resultHist->num_rows > 0) {
-        return $resultHist->fetch_assoc()['precio_anterior'];
+        $precio = (int)$resultHist->fetch_assoc()['precio_nuevo'];
+        $stmtHist->close();
+        return $precio > 0 ? $precio : $precioBase;
     }
-    return $precioActual;
+
+    $stmtHist->close();
+    return $precioBase;
 }
 
-// ===== Params =====
+/* =========================
+   Params
+========================= */
 $tipo   = $_GET['tipo']   ?? '';
 $estado = $_GET['estado'] ?? '';
 $mes    = $_GET['mes']    ?? '';
@@ -111,7 +138,7 @@ if ($tipo === "socio" && $estado === "pagado") {
 
     $data = [];
     while ($row = $result->fetch_assoc()) {
-        $row['precio_categoria'] = obtenerPrecioPorMes($conn, (int)$row['idCategoria'], $mes);
+        $row['precio_categoria'] = obtenerPrecioPorMes($conn, (int)$row['idCategoria'], $mes, $anioInt);
         $data[] = $row;
     }
     echo json_encode($data);
@@ -122,7 +149,6 @@ if ($tipo === "socio" && $estado === "pagado") {
    SOCIOS DEUDORES (activo=1)
 =========================== */
 if ($tipo === "socio" && $estado === "deudor") {
-    // IDs de socios que ya pagaron este mes y año
     $sqlPagados = "
         SELECT p.idSocios 
         FROM pagos p 
@@ -139,7 +165,6 @@ if ($tipo === "socio" && $estado === "deudor") {
         $idsPagados[] = (int)$row['idSocios'];
     }
 
-    // Todos los socios activos a la fecha fin de ese MES/AÑO (que NO pagaron ese MES/AÑO)
     $sqlSocios = "
         SELECT 
             s.idSocios, 
@@ -164,7 +189,7 @@ if ($tipo === "socio" && $estado === "deudor") {
     $data = [];
     while ($row = $result->fetch_assoc()) {
         if (!in_array((int)$row['idSocios'], $idsPagados, true)) {
-            $row['precio_categoria'] = obtenerPrecioPorMes($conn, (int)$row['idCategoria'], $mes);
+            $row['precio_categoria'] = obtenerPrecioPorMes($conn, (int)$row['idCategoria'], $mes, $anioInt);
             $data[] = $row;
         }
     }
@@ -203,7 +228,7 @@ if ($tipo === "empresa" && $estado === "pagado") {
 
     $data = [];
     while ($row = $result->fetch_assoc()) {
-        $row['precio_categoria'] = obtenerPrecioPorMes($conn, (int)$row['idCategorias'], $mes);
+        $row['precio_categoria'] = obtenerPrecioPorMes($conn, (int)$row['idCategorias'], $mes, $anioInt);
         $data[] = $row;
     }
     echo json_encode($data);
@@ -214,7 +239,6 @@ if ($tipo === "empresa" && $estado === "pagado") {
    EMPRESAS DEUDORAS
 ======================= */
 if ($tipo === "empresa" && $estado === "deudor") {
-    // IDs de empresas que ya pagaron ese MES/AÑO
     $sqlPagados = "
         SELECT pe.idEmp 
         FROM pagos_empresas pe 
@@ -231,7 +255,6 @@ if ($tipo === "empresa" && $estado === "deudor") {
         $idsPagadas[] = (int)$row['idEmp'];
     }
 
-    // Todas las empresas dadas de alta a fin de MES/AÑO y que NO pagaron ese MES/AÑO
     $sqlEmpresas = "
         SELECT 
             e.idEmp, 
@@ -253,7 +276,7 @@ if ($tipo === "empresa" && $estado === "deudor") {
     $data = [];
     while ($row = $result->fetch_assoc()) {
         if (!in_array((int)$row['idEmp'], $idsPagadas, true)) {
-            $row['precio_categoria'] = obtenerPrecioPorMes($conn, (int)$row['idCategorias'], $mes);
+            $row['precio_categoria'] = obtenerPrecioPorMes($conn, (int)$row['idCategorias'], $mes, $anioInt);
             $data[] = $row;
         }
     }
