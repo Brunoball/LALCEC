@@ -509,3 +509,21 @@
     margin-bottom: 1.5rem; /* separa más los inputs con error */
   }
 }
+/* Botonera inferior */
+.add-socio-buttons-container{
+  display:flex;
+  align-items:center;
+  justify-content:flex-start; /* importante */
+  gap:.75rem;
+}
+
+/* "Atrás" siempre a la izquierda (no hace falta mucho, pero queda claro) */
+.add-socio-buttons-container .back-btn{
+  margin-right:auto;
+}
+
+/* "Siguiente" y "Guardar" siempre a la derecha */
+.add-socio-buttons-container .next-btn,
+.add-socio-buttons-container .save-btn{
+  margin-left:auto;
+}
