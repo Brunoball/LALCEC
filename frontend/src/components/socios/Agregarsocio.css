@@ -41,7 +41,6 @@
   height: 100vh;
   box-sizing: border-box;
   background: linear-gradient(135deg, #dcdcdc 30%, #ff6e00 70%);
-  border-radius: var(--add-border-radius-lg);
   box-shadow: var(--add-shadow-xl);
   overflow: hidden;
 }
