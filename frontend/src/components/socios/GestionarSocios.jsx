@@ -417,7 +417,12 @@ const GestionarSocios = () => {
   const [error, setError] = useState(null);
 
   const [dataLoaded, setDataLoaded] = useState(false);
+
+  // ✅ cache (socios)
   const CACHE_KEY = "sociosCache:v1";
+
+  // ✅ cache (notificados) -> ESTE ES EL FIX CLAVE para volver de editar y que no se vacíe
+  const NOTIF_CACHE_KEY = "sociosNotificadosIds:v1";
 
   const refreshingRef = useRef(false);
   const [lastSync, setLastSync] = useState(0);
@@ -438,7 +443,7 @@ const GestionarSocios = () => {
   );
   const deferredBusqueda = useDeferredValue(busqueda);
 
-  // ✅ notificadosBot es un filtro adicional, PERO al "Mostrar todos" se desactiva
+  // ✅ notificadosBot es un filtro adicional (persistente como los otros)
   const [filtrosActivos, setFiltrosActivos] = useState(() => {
     try {
       const saved = localStorage.getItem("sociosFilters");
@@ -473,13 +478,37 @@ const GestionarSocios = () => {
 
   /* ==========================
      ✅ Notificados Bot (IDs)
+     FIX: persistir + rehidratar + auto-fetch si filtro está activo
   ========================== */
   const [loadingNotificados, setLoadingNotificados] = useState(false);
-  const [notificadosIds, setNotificadosIds] = useState([]); // array de ids
+  const [notificadosIds, setNotificadosIds] = useState(() => {
+    // primero intentamos leer cache para que al volver de editar NO quede vacío
+    try {
+      const raw =
+        sessionStorage.getItem(NOTIF_CACHE_KEY) ||
+        localStorage.getItem(NOTIF_CACHE_KEY);
+      const parsed = raw ? JSON.parse(raw) : null;
+      return Array.isArray(parsed) ? parsed.map(String) : [];
+    } catch {
+      return [];
+    }
+  });
+
   const notificadosSet = useMemo(
     () => new Set((notificadosIds || []).map((x) => String(x))),
     [notificadosIds]
   );
+
+  const persistNotificadosIds = useCallback((ids) => {
+    try {
+      const payload = JSON.stringify(ids || []);
+      sessionStorage.setItem(NOTIF_CACHE_KEY, payload);
+      // opcional pero útil si el usuario cierra pestaña
+      localStorage.setItem(NOTIF_CACHE_KEY, payload);
+    } catch {
+      /* ignore */
+    }
+  }, []);
 
   const fetchNotificadosBot = useCallback(async () => {
     setLoadingNotificados(true);
@@ -495,17 +524,61 @@ const GestionarSocios = () => {
         const id = getSocioId(s);
         if (id != null) ids.push(String(id));
       }
+
       setNotificadosIds(ids);
+      persistNotificadosIds(ids);
       return ids;
     } catch (e) {
       console.error(e);
       setNotificadosIds([]);
+      persistNotificadosIds([]);
       showToast("Error al cargar filtro 'Notificados bot'", "error");
       return [];
     } finally {
       setLoadingNotificados(false);
     }
-  }, [showToast]);
+  }, [persistNotificadosIds, showToast]);
+
+  // ✅ Si el filtro Notificados está activo y el set está vacío (por remount), lo recuperamos/fetcheamos
+  useEffect(() => {
+    let cancelled = false;
+
+    const ensureNotificadosReady = async () => {
+      if (!filtrosActivos.notificadosBot) return;
+
+      // si ya hay ids, listo
+      if ((notificadosIds || []).length > 0) return;
+
+      // intentamos rehidratar cache (por si se perdió state por remount)
+      try {
+        const raw =
+          sessionStorage.getItem(NOTIF_CACHE_KEY) ||
+          localStorage.getItem(NOTIF_CACHE_KEY);
+        const parsed = raw ? JSON.parse(raw) : null;
+        const cached = Array.isArray(parsed) ? parsed.map(String) : [];
+        if (cached.length > 0 && !cancelled) {
+          setNotificadosIds(cached);
+          return;
+        }
+      } catch {
+        /* ignore */
+      }
+
+      // si no hay cache, fetcheamos
+      await fetchNotificadosBot();
+    };
+
+    ensureNotificadosReady();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    filtrosActivos.notificadosBot,
+    notificadosIds,
+    fetchNotificadosBot,
+    NOTIF_CACHE_KEY,
+  ]);
 
   /* ---------- Persistencia filtros ---------- */
   useEffect(() => {
@@ -523,8 +596,8 @@ const GestionarSocios = () => {
   }, [filtrosActivos]);
 
   /* ---------- Exclusividad de filtros ----------
-     ✅ Ahora: "todos" también APAGA notificadosBot
-     (porque al apretar Mostrar todos querés ver todo sin ese filtro)
+     ✅ NO tocamos notificadosBot acá, salvo en "todos" (mostrar todos lo apaga).
+     ✅ Esto permite que "Notificados bot" se comporte como filtro persistente al volver de editar.
   -------------------------------------------- */
   const setExclusiveFilter = useCallback((mode, value = null) => {
     switch (mode) {
@@ -535,6 +608,7 @@ const GestionarSocios = () => {
           letras: [],
           mediosPago: [],
           todos: false,
+          // notificadosBot se mantiene
         }));
         break;
       case "letra":
@@ -544,6 +618,7 @@ const GestionarSocios = () => {
           letras: value ? [value] : [],
           mediosPago: [],
           todos: false,
+          // notificadosBot se mantiene
         }));
         break;
       case "medio":
@@ -553,6 +628,7 @@ const GestionarSocios = () => {
           letras: [],
           mediosPago: value ? [value] : [],
           todos: false,
+          // notificadosBot se mantiene
         }));
         break;
       case "todos":
@@ -562,7 +638,7 @@ const GestionarSocios = () => {
           letras: [],
           mediosPago: [],
           todos: true,
-          notificadosBot: false, // ✅ clave: al "Mostrar todos" se apaga
+          notificadosBot: false, // ✅ mostrar todos apaga el filtro
         }));
         break;
       case "none":
@@ -573,12 +649,13 @@ const GestionarSocios = () => {
           letras: [],
           mediosPago: [],
           todos: false,
+          // notificadosBot se mantiene (esto evita que se "pierda" al volver)
         }));
         break;
     }
   }, []);
 
-  /* ---------- Cargar desde cache ---------- */
+  /* ---------- Cargar desde cache (socios) ---------- */
   useEffect(() => {
     try {
       const cached = sessionStorage.getItem(CACHE_KEY);
@@ -594,7 +671,7 @@ const GestionarSocios = () => {
     }
   }, []);
 
-  /* ---------- Revalidación ---------- */
+  /* ---------- Revalidación (socios) ---------- */
   const revalidate = useCallback(async () => {
     if (refreshingRef.current) return;
     refreshingRef.current = true;
@@ -650,7 +727,7 @@ const GestionarSocios = () => {
     }
   }, [sociosRaw]);
 
-  /* ---------- Carga inicial ---------- */
+  /* ---------- Carga inicial (socios) ---------- */
   const ensureDataLoaded = useCallback(async () => {
     if (dataLoaded && sociosRaw.length > 0) return;
     setCargando(true);
@@ -887,6 +964,7 @@ const GestionarSocios = () => {
 
     const useNotificados = !!filtrosActivos.notificadosBot;
 
+    // ✅ si no hay NADA activo, no mostramos nada (comportamiento tuyo de "no cargar al inicio")
     if (
       !useSearch &&
       !letrasArr &&
@@ -917,13 +995,27 @@ const GestionarSocios = () => {
       if (mediosSet && !mediosSet.has(s._medioStr)) continue;
 
       if (useNotificados) {
-        if (!notificadosSet.has(String(s.id))) continue;
+        // ✅ FIX: si todavía no se cargaron ids, no filtramos a "cero" para siempre.
+        // Devolvemos vacío solo si efectivamente ya hay ids y no matchea.
+        if (notificadosIds.length > 0) {
+          if (!notificadosSet.has(String(s.id))) continue;
+        } else {
+          // mientras se carga (o si está en cache vacía), no excluimos todo
+          // => así al volver de editar no te tira "Mostrar todos" de una.
+          // (igual el useEffect arriba va a traer los ids)
+        }
       }
 
       out.push(s);
     }
     return out;
-  }, [socios, deferredBusqueda, filtrosActivos, notificadosSet]);
+  }, [
+    socios,
+    deferredBusqueda,
+    filtrosActivos,
+    notificadosSet,
+    notificadosIds.length,
+  ]);
 
   /* ---------- Handlers ---------- */
   const handleBusquedaInputChange = useCallback(
@@ -1036,7 +1128,7 @@ const GestionarSocios = () => {
     ]
   );
 
-  // ✅ Mostrar todos = apaga notificadosBot + limpia todo como pediste
+  // ✅ Mostrar todos = apaga notificadosBot + carga data sí o sí
   const handleMostrarTodos = useCallback(async () => {
     setExclusiveFilter("todos");
     setMostrarMenuFiltros(false);
@@ -1050,10 +1142,15 @@ const GestionarSocios = () => {
     triggerCascade();
   }, [ensureDataLoaded, revalidate, setExclusiveFilter, triggerCascade]);
 
-  // ✅ Toggle notificados bot SIN campanita (solo texto)
+  // ✅ Toggle notificados bot (persistente al volver de editar)
   const toggleNotificadosBot = useCallback(async () => {
     const next = !filtrosActivos.notificadosBot;
-    setFiltrosActivos((prev) => ({ ...prev, notificadosBot: next, todos: false }));
+
+    setFiltrosActivos((prev) => ({
+      ...prev,
+      notificadosBot: next,
+      todos: false, // activar notificados desactiva "todos"
+    }));
 
     if (next) {
       if (!dataLoaded) {
@@ -1061,7 +1158,10 @@ const GestionarSocios = () => {
           ? window.requestIdleCallback(() => ensureDataLoaded())
           : ensureDataLoaded();
       }
+      // ✅ importante: traer ids (y guardarlos en cache)
       await fetchNotificadosBot();
+    } else {
+      // opcional: mantenemos ids cacheados (no molesta)
     }
 
     triggerCascade();
@@ -1082,6 +1182,8 @@ const GestionarSocios = () => {
     (socio) => {
       const id = getSocioId(socio);
       if (!id) return;
+
+      // ✅ NO tocamos filtros ni nada: al volver se restaura por localStorage + cache notificados
       navigate(`/editarSocio/${id}`);
     },
     [navigate]
@@ -1478,7 +1580,7 @@ const GestionarSocios = () => {
                   <span>Mostrar Todos</span>
                 </div>
 
-                {/* ✅ FILTRO: Notificados Bot (sin campanita) */}
+                {/* ✅ FILTRO: Notificados Bot */}
                 <div
                   className={`gessoc_filtros-menu-item gessoc_mostrar-todas ${
                     filtrosActivos.notificadosBot ? "gessoc_active" : ""
@@ -1563,7 +1665,7 @@ const GestionarSocios = () => {
                   </div>
                 )}
 
-                {/* ✅ CHIP Notificados bot (se puede apagar sin tocar los otros filtros) */}
+                {/* ✅ CHIP Notificados bot */}
                 {filtrosActivos.notificadosBot && (
                   <div
                     className="gessoc_filter-chip gessoc_chip-medio"
@@ -1708,6 +1810,7 @@ const GestionarSocios = () => {
             onClick={() => {
               localStorage.removeItem("sociosFilters");
               localStorage.removeItem("sociosSearchTerm");
+              // ✅ NO borramos NOTIF_CACHE_KEY acá (si querés borrarlo, lo hacemos, pero NO te conviene)
               navigate("/PaginaPrincipal");
             }}
             aria-label="Volver"
