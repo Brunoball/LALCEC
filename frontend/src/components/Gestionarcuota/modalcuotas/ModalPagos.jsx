@@ -384,12 +384,12 @@ const ModalPagos = ({ nombre, apellido, cerrarModal, onPagoRealizado }) => {
     const cantidadMeses = mesesParaRecibo.length;
     const montoUnitario = precioMensual || 0;
     const totalPagarLocal = cantidadMeses * montoUnitario;
+// ✅ Formato nuevo: "B / $2800   Total $5600" (solo la palabra Total en negrita)
+const montoDetalleHTML =
+  cantidadMeses > 1
+    ? `$${montoUnitario}&nbsp;&nbsp;&nbsp;&nbsp;<strong>Total</strong>&nbsp;$${totalPagarLocal}`
+    : `$${montoUnitario}`;
 
-    // ✅ indicador solicitado
-    const montoDetalle =
-      cantidadMeses > 1
-        ? `${cantidadMeses} × $${montoUnitario} = $${totalPagarLocal}`
-        : `$${montoUnitario}`;
 
     const comprobanteHTML = `
       <html>
@@ -411,7 +411,8 @@ const ModalPagos = ({ nombre, apellido, cerrarModal, onPagoRealizado }) => {
             <div class="talon-socio">
               <p><strong>Afiliado:</strong> ${nombre} ${apellido}</p>
               <p><strong>Domicilio:</strong> ${domicilioMostrar}</p>
-              <p><strong>Categoría / Monto:</strong> ${socioData.categoria} / ${montoDetalle}</p>
+             <p><strong>Categoría / Monto:</strong> ${socioData.categoria} / ${montoDetalleHTML}</p>
+
               <p><strong>Período:</strong> ${mesesPagadosStr}</p>
               <p><strong>Cobrador:</strong> ${socioData.cobrador}</p>
               <p><strong>Estado:</strong> PAGADO</p>
@@ -419,7 +420,8 @@ const ModalPagos = ({ nombre, apellido, cerrarModal, onPagoRealizado }) => {
             </div>
             <div class="talon-cobrador">
               <p><strong>Nombre y Apellido:</strong> ${nombre} ${apellido}</p>
-              <p><strong>Categoría / Monto:</strong> ${socioData.categoria} / ${montoDetalle}</p>
+              <p><strong>Categoría / Monto:</strong> ${socioData.categoria} / ${montoDetalleHTML}</p>
+
               <p><strong>Período:</strong> ${mesesPagadosStr}</p>
               <p><strong>Cobrador:</strong> ${socioData.cobrador}</p>
               <p><strong>Estado:</strong> PAGADO</p>
