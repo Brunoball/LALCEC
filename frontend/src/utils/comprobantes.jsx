@@ -1,53 +1,64 @@
 // src/utils/comprobantes.js
 
-// CSS compartido para comprobantes (misma estética que usabas en el componente)
+// CSS compartido para comprobantes
 const baseStyles = `
   @page {
-      size: A4 portrait;
-      margin: 0;
+    size: A4 portrait;
+    margin: 0;
   }
   body {
-      width: 210mm;
-      height: 297mm;
-      margin: 0;
-      padding: 0;
-      font-family: Arial, sans-serif;
-      font-size: 12px;
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-start;
-      align-items: center;
-      position: relative;
-      transform: rotate(90deg);
-      transform-origin: top left;
-      left: 70%;
-      top: 0;
+    width: 210mm;
+    height: 297mm;
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    position: relative;
+    transform: rotate(90deg);
+    transform-origin: top left;
+    left: 70%;
+    top: 0;
   }
   .gcuotas-contenedor {
-      width: 210mm;
-      margin: 10mm 0;
-      page-break-after: always;
-      box-sizing: border-box;
+    width: 210mm;
+    margin: 10mm 0;
+    page-break-after: always;
+    box-sizing: border-box;
   }
   .gcuotas-comprobante {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    box-sizing: border-box;
   }
   .gcuotas-talon-socio {
-      width: 60%;
-      padding-left: 20mm;
-      padding-top: 13mm;
+    width: 60%;
+    padding-left: 20mm;
+    padding-top: 13mm;
   }
   .gcuotas-talon-cobrador {
-      width: 60mm;
-      padding-left: 10mm;
-      padding-top: 16mm;
+    width: 60mm;
+    padding-left: 10mm;
+    padding-top: 16mm;
   }
   p {
-      margin-top: 5px;
-      font-size: 13px;
+    margin-top: 5px;
+    font-size: 13px;
+  }
+
+  /* ✅ FIX: Solo el NÚMERO del total en negrita */
+  .gcuotas-monto-unit {
+    font-weight: 400 !important; /* normal */
+  }
+  .gcuotas-total-wrap {
+    font-weight: 700 !important; /* "Total" normal */
+  }
+  .gcuotas-monto-total {
+    font-weight: 400 !important; /* SOLO el número */
   }
 `;
 
@@ -59,15 +70,47 @@ const baseStyles = `
  * @param {string[]} mesesSeleccionados
  * @returns {string} HTML
  */
-export function buildComprobanteHTML(item, viewType, activeTab, mesesSeleccionados = []) {
-  const mesesTexto = Array.isArray(mesesSeleccionados) ? mesesSeleccionados.join(', ') : String(mesesSeleccionados || '');
-  const monto = item?.precio_categoria ?? "N/A";
+export function buildComprobanteHTML(
+  item,
+  viewType,
+  activeTab,
+  mesesSeleccionados = []
+) {
+  const mesesTexto = Array.isArray(mesesSeleccionados)
+    ? mesesSeleccionados.join(", ")
+    : String(mesesSeleccionados || "");
+
+  const montoUnit = Number(item?.precio_categoria) || 0;
   const categoria = item?.categoria ?? "";
   const domicilio = item?.domicilio || item?.domicilio_2 || "N/A";
   const medioPago = item?.medio_pago || "No especificado";
-  const afiliadoEmp = viewType === "socio"
-    ? `${item?.apellido ?? ""} ${item?.nombre ?? ""}`.trim()
-    : (item?.razon_social ?? "");
+
+  const afiliadoEmp =
+    viewType === "socio"
+      ? `${item?.apellido ?? ""} ${item?.nombre ?? ""}`.trim()
+      : (item?.razon_social ?? "");
+
+  const cantidadMeses = Array.isArray(mesesSeleccionados)
+    ? mesesSeleccionados.length
+    : 0;
+
+  const total = cantidadMeses > 0 ? cantidadMeses * montoUnit : montoUnit;
+
+  // ✅ Formato pedido:
+  // Categoría / Monto: G / $3500   Total $7000
+  // - precio normal
+  // - palabra "Total" normal
+  // - SOLO el número total en negrita
+  const montoDetalle =
+    cantidadMeses > 1
+      ? `
+        <span class="gcuotas-monto-unit">$${montoUnit}</span>
+        &nbsp;&nbsp;
+        <span class="gcuotas-total-wrap">
+          Total <span class="gcuotas-monto-total">$${total}</span>
+        </span>
+      `
+      : `<span class="gcuotas-monto-unit">$${montoUnit}</span>`;
 
   return `
     <div class="gcuotas-contenedor">
@@ -75,7 +118,9 @@ export function buildComprobanteHTML(item, viewType, activeTab, mesesSeleccionad
         <div class="gcuotas-talon-socio">
           <p><strong>${viewType === "socio" ? "Afiliado:" : "Empresa:"}</strong> ${afiliadoEmp}</p>
           <p><strong>Domicilio:</strong> ${domicilio}</p>
-          <p><strong>Categoría / Monto:</strong> ${categoria} / $${monto}</p>
+
+          <p><strong>Categoría / Monto:</strong> ${categoria} / ${montoDetalle}</p>
+
           <p><strong>Período:</strong> ${mesesTexto}</p>
           <p><strong>Medio de Pago:</strong> ${medioPago}</p>
           ${activeTab === "pagado" ? `<p><strong>Estado:</strong> PAGADO</p>` : ""}
@@ -85,7 +130,9 @@ export function buildComprobanteHTML(item, viewType, activeTab, mesesSeleccionad
 
         <div class="gcuotas-talon-cobrador">
           <p><strong>${viewType === "socio" ? "Nombre y Apellido:" : "Empresa:"}</strong> ${afiliadoEmp}</p>
-          <p><strong>Categoría / Monto:</strong> ${categoria} / $${monto}</p>
+
+          <p><strong>Categoría / Monto:</strong> ${categoria} / ${montoDetalle}</p>
+
           <p><strong>Período:</strong> ${mesesTexto}</p>
           <p><strong>Medio de Pago:</strong> ${medioPago}</p>
           ${activeTab === "pagado" ? `<p><strong>Estado:</strong> PAGADO</p>` : ""}
@@ -97,14 +144,19 @@ export function buildComprobanteHTML(item, viewType, activeTab, mesesSeleccionad
 
 /**
  * Construye el HTML de múltiples comprobantes en lote.
- * @param {object[]} items
- * @param {'socio'|'empresa'} viewType
- * @param {'pagado'|'deudores'} activeTab
- * @param {string[]} mesesSeleccionados
- * @returns {string} HTML completo listo para imprimir
  */
-export function buildComprobantesLoteHTML(items, viewType, activeTab, mesesSeleccionados = []) {
-  const body = items.map(item => buildComprobanteHTML(item, viewType, activeTab, mesesSeleccionados)).join("\n");
+export function buildComprobantesLoteHTML(
+  items,
+  viewType,
+  activeTab,
+  mesesSeleccionados = []
+) {
+  const body = (items || [])
+    .map((item) =>
+      buildComprobanteHTML(item, viewType, activeTab, mesesSeleccionados)
+    )
+    .join("\n");
+
   return `
     <html>
       <head>
@@ -120,14 +172,21 @@ export function buildComprobantesLoteHTML(items, viewType, activeTab, mesesSelec
 
 /** Abre ventana e imprime HTML */
 export function printHTML(html) {
-  const w = window.open('', '', 'width=600,height=400');
+  const w = window.open("", "", "width=600,height=400");
+  if (!w) return;
   w.document.write(html);
   w.document.close();
+  w.focus();
   w.print();
 }
 
 /** Imprime un item */
-export function printComprobanteItem(item, viewType, activeTab, mesesSeleccionados = []) {
+export function printComprobanteItem(
+  item,
+  viewType,
+  activeTab,
+  mesesSeleccionados = []
+) {
   const fullHTML = `
     <html>
       <head>
@@ -143,7 +202,17 @@ export function printComprobanteItem(item, viewType, activeTab, mesesSeleccionad
 }
 
 /** Imprime un lote de items */
-export function printComprobantesLote(items, viewType, activeTab, mesesSeleccionados = []) {
-  const html = buildComprobantesLoteHTML(items, viewType, activeTab, mesesSeleccionados);
+export function printComprobantesLote(
+  items,
+  viewType,
+  activeTab,
+  mesesSeleccionados = []
+) {
+  const html = buildComprobantesLoteHTML(
+    items,
+    viewType,
+    activeTab,
+    mesesSeleccionados
+  );
   printHTML(html);
 }

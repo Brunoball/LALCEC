@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { FaCoins, FaTimes, FaCheck } from 'react-icons/fa';
-import BASE_URL from '../../../config/config';
-import Toast from '../../global/Toast';
-import './ModalPagos.css';
+// src/components/.../ModalPagosEmpresas.jsx
+import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { FaCoins, FaTimes, FaCheck } from "react-icons/fa";
+import BASE_URL from "../../../config/config";
+import Toast from "../../global/Toast";
+import "./ModalPagos.css";
 
 /* =========================
    Dropdown Año estilo "pill"
@@ -17,12 +18,11 @@ function YearDropdown({ value, options = [], onChange }) {
       if (!ref.current) return;
       if (!ref.current.contains(e.target)) setOpen(false);
     };
-    document.addEventListener('mousedown', onDocClick);
-    return () => document.removeEventListener('mousedown', onDocClick);
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
   }, []);
 
   const handleSelect = (y) => {
-    // imita el onChange de <select>
     onChange({ target: { value: y } });
     setOpen(false);
   };
@@ -31,7 +31,7 @@ function YearDropdown({ value, options = [], onChange }) {
     <div className="modpag_year-dd" ref={ref}>
       <button
         type="button"
-        className={`modpag_year-trigger ${open ? 'is-open' : ''}`}
+        className={`modpag_year-trigger ${open ? "is-open" : ""}`}
         onClick={() => setOpen((v) => !v)}
         aria-haspopup="listbox"
         aria-expanded={open}
@@ -51,7 +51,7 @@ function YearDropdown({ value, options = [], onChange }) {
                 type="button"
                 role="option"
                 aria-selected={selected}
-                className={`modpag_year-item ${selected ? 'is-selected' : ''}`}
+                className={`modpag_year-item ${selected ? "is-selected" : ""}`}
                 onClick={() => handleSelect(y)}
               >
                 {y}
@@ -69,14 +69,18 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
   const [todosSeleccionados, setTodosSeleccionados] = useState(false);
   const [pagoExitoso, setPagoExitoso] = useState(false);
   const [precioMensual, setPrecioMensual] = useState(0);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [fechaUnion, setFechaUnion] = useState(null);
   const [empresaData, setEmpresaData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState(null);
 
-  // NUEVO: pagos agrupados por año { 2025:[1,2], 2026:[1,3], ... }
+  // pagos agrupados por año { 2025:[1,2], 2026:[1,3], ... }
   const [pagosPorAnio, setPagosPorAnio] = useState({});
+
+  // ✅ NUEVO: snapshot para el comprobante (evita que se “pierda” la selección)
+  const [mesesPagadosRecibo, setMesesPagadosRecibo] = useState([]);
+  const [anioRecibo, setAnioRecibo] = useState(null);
 
   // Año actual / seleccionado
   const hoy = new Date();
@@ -87,7 +91,7 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
   const unionYear = useMemo(() => {
     if (!fechaUnion) return null;
     try {
-      return new Date(fechaUnion + 'T00:00:00').getFullYear();
+      return new Date(fechaUnion + "T00:00:00").getFullYear();
     } catch {
       return null;
     }
@@ -95,7 +99,7 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
 
   // Persistencia por empresa: años visibles en selector
   const storageKeyYears = useMemo(
-    () => `emp:${(razonSocial || '').trim()}:years`,
+    () => `emp:${(razonSocial || "").trim()}:years`,
     [razonSocial]
   );
 
@@ -109,22 +113,26 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
       return new Set();
     }
   };
+
   const guardarYearsPersistidos = (setYears) => {
     try {
-      localStorage.setItem(storageKeyYears, JSON.stringify(Array.from(setYears)));
+      localStorage.setItem(
+        storageKeyYears,
+        JSON.stringify(Array.from(setYears))
+      );
     } catch {}
   };
 
   // ESC para cerrar
   useEffect(() => {
     const onKeyDown = (e) => {
-      if (e.key === 'Escape' || e.key === 'Esc' || e.keyCode === 27) {
+      if (e.key === "Escape" || e.key === "Esc" || e.keyCode === 27) {
         e.preventDefault();
         cerrarModal?.();
       }
     };
-    document.addEventListener('keydown', onKeyDown);
-    return () => document.removeEventListener('keydown', onKeyDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
   }, [cerrarModal]);
 
   const mostrarToast = (tipo, mensaje, duracion = 3200) => {
@@ -132,9 +140,9 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
   };
 
   const formatDate = (dateString) => {
-    if (!dateString) return '';
-    const date = new Date(dateString + 'T00:00:00');
-    return date.toLocaleDateString('es-AR');
+    if (!dateString) return "";
+    const date = new Date(dateString + "T00:00:00");
+    return date.toLocaleDateString("es-AR");
   };
 
   // Carga de datos de empresa + pagos por año
@@ -142,21 +150,26 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
     const obtenerDatosEmpresa = async () => {
       setLoading(true);
       try {
-        const response = await fetch(`${BASE_URL}/api.php?action=monto_pago_empresas`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ razonSocial, tipoEntidad: 'empresa' }),
-        });
+        const response = await fetch(
+          `${BASE_URL}/api.php?action=monto_pago_empresas`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ razonSocial, tipoEntidad: "empresa" }),
+          }
+        );
         const result = await response.json();
 
         if (result.success) {
           const precio = result.precioMes ?? 0;
           setPrecioMensual(precio);
-          setFechaUnion(result.fechaUnion || new Date().toISOString().split('T')[0]);
+          setFechaUnion(
+            result.fechaUnion || new Date().toISOString().split("T")[0]
+          );
           setEmpresaData({
-            domicilio: result.domicilio_2 || result.domicilio || '',
-            categoria: result.categoria || '',
-            cobrador: result.cobrador || '',
+            domicilio: result.domicilio_2 || result.domicilio || "",
+            categoria: result.categoria || "",
+            cobrador: result.cobrador || "",
           });
 
           // Compat: si aún viene "mesesPagados" plano (año actual), lo adaptamos
@@ -173,13 +186,16 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
           guardarYearsPersistidos(setYears);
 
           if (!precio || precio <= 0 || !result.categoria) {
-            mostrarToast('error', 'La empresa no tiene categoría asignada. No se puede registrar el pago.');
+            mostrarToast(
+              "error",
+              "La empresa no tiene categoría asignada. No se puede registrar el pago."
+            );
           }
         } else {
-          setError(result.message || 'Error al obtener datos de la empresa');
+          setError(result.message || "Error al obtener datos de la empresa");
         }
       } catch (e) {
-        setError('Ocurrió un error al obtener los datos de la empresa.');
+        setError("Ocurrió un error al obtener los datos de la empresa.");
         console.error(e);
       } finally {
         setLoading(false);
@@ -187,7 +203,8 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
     };
 
     if (razonSocial) obtenerDatosEmpresa();
-  }, [razonSocial]); // eslint-disable-line
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [razonSocial]);
 
   // Opciones de año
   const yearOptions = useMemo(() => {
@@ -206,7 +223,9 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
     for (let y = start; y <= end; y++) base.add(y);
 
     const persist = leerYearsPersistidos();
-    persist.forEach((y) => { if (y >= start && y <= end) base.add(Number(y)); });
+    persist.forEach((y) => {
+      if (y >= start && y <= end) base.add(Number(y));
+    });
     Object.keys(pagosPorAnio || {}).forEach((ys) => {
       const y = Number(ys);
       if (y >= start && y <= end) base.add(y);
@@ -232,23 +251,26 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
   const getMesesDisponibles = () => {
     if (!fechaUnion) return [];
     try {
-      const fu = new Date(fechaUnion + 'T00:00:00');
+      const fu = new Date(fechaUnion + "T00:00:00");
       const mesUnion = fu.getMonth() + 1;
       const anioUnion = fu.getFullYear();
 
       const makeMes = (id) => ({
         id,
         nombre:
-          new Date(0, id - 1).toLocaleString('es-AR', { month: 'long' }).toUpperCase() +
-          ` ${selectedYear}`,
+          new Date(0, id - 1)
+            .toLocaleString("es-AR", { month: "long" })
+            .toUpperCase() + ` ${selectedYear}`,
       });
 
       if (selectedYear === anioUnion) {
-        return [...Array(12 - mesUnion + 1)].map((_, i) => makeMes(mesUnion + i));
+        return [...Array(12 - mesUnion + 1)].map((_, i) =>
+          makeMes(mesUnion + i)
+        );
       }
       return [...Array(12)].map((_, i) => makeMes(i + 1));
     } catch (e) {
-      console.error('Error al procesar fecha de unión:', e);
+      console.error("Error al procesar fecha de unión:", e);
       return [];
     }
   };
@@ -275,7 +297,9 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
   const handleSeleccionarMes = (mesId, yaPagado) => {
     if (yaPagado) return;
     setMesesSeleccionados((prev) =>
-      prev.includes(mesId) ? prev.filter((m) => m !== mesId) : [...prev, mesId]
+      prev.includes(mesId)
+        ? prev.filter((m) => m !== mesId)
+        : [...prev, mesId]
     );
   };
 
@@ -308,25 +332,35 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
 
   const handleRealizarPago = async () => {
     if (!precioMensual || precioMensual <= 0 || !empresaData?.categoria) {
-      mostrarToast('error', 'La empresa no tiene categoría asignada. No se puede registrar el pago.');
+      mostrarToast(
+        "error",
+        "La empresa no tiene categoría asignada. No se puede registrar el pago."
+      );
       return;
     }
     if (mesesSeleccionados.length === 0) return;
 
     try {
-      const response = await fetch(`${BASE_URL}/api.php?action=registrar_pago_empresas`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          razonSocial,
-          meses: mesesSeleccionados,
-          tipoEntidad: 'empresa',
-          anio: selectedYear,
-        }),
-      });
+      const response = await fetch(
+        `${BASE_URL}/api.php?action=registrar_pago_empresas`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            razonSocial,
+            meses: mesesSeleccionados,
+            tipoEntidad: "empresa",
+            anio: selectedYear,
+          }),
+        }
+      );
       const result = await response.json();
 
       if (result.success) {
+        // ✅ snapshot antes de que algo limpie/recalcule estados
+        setMesesPagadosRecibo([...mesesSeleccionados]);
+        setAnioRecibo(selectedYear);
+
         setPagoExitoso(true);
 
         const setYears = leerYearsPersistidos();
@@ -341,23 +375,55 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
           return copia;
         });
       } else {
-        setError(result.message || 'Error al registrar el pago');
+        setError(result.message || "Error al registrar el pago");
       }
     } catch (e) {
-      setError('Ocurrió un error al realizar el pago.');
+      setError("Ocurrió un error al realizar el pago.");
       console.error(e);
     }
   };
 
+  /* =========================================================
+     ✅ IMPRIMIR COMPROBANTE
+     - HTML + window.print()
+     - Indicador: "N × $montoMensual = $total"
+     - Usa snapshot para que siempre respete lo pagado
+     ========================================================= */
   const handleImprimirComprobante = () => {
-    if (!empresaData || mesesSeleccionados.length === 0) return;
+    if (!empresaData) return;
 
-    const mesesPagadosStr = meses
-      .filter((m) => mesesSeleccionados.includes(m.id))
-      .map((m) => m.nombre)
-      .join(', ');
+    const mesesParaRecibo =
+      (mesesPagadosRecibo && mesesPagadosRecibo.length > 0
+        ? mesesPagadosRecibo
+        : mesesSeleccionados) || [];
 
-    const totalPagarLocal = totalPagar;
+    if (mesesParaRecibo.length === 0) return;
+
+    const yearRecibo = anioRecibo ?? selectedYear;
+
+    // reconstruir nombres de meses para el año del recibo
+    const nombresMeses = (ids, y) =>
+      ids
+        .slice()
+        .sort((a, b) => a - b)
+        .map((id) => {
+          const nombre =
+            new Date(0, id - 1)
+              .toLocaleString("es-AR", { month: "long" })
+              .toUpperCase() + ` ${y}`;
+          return nombre;
+        });
+
+    const mesesPagadosStr = nombresMeses(mesesParaRecibo, yearRecibo).join(", ");
+
+    const cantidadMeses = mesesParaRecibo.length;
+    const montoUnitario = precioMensual || 0;
+    const totalPagarLocal = cantidadMeses * montoUnitario;
+
+    const montoDetalle =
+      cantidadMeses > 1
+        ? `${cantidadMeses} × $${montoUnitario} = $${totalPagarLocal}`
+        : `$${montoUnitario}`;
 
     const comprobanteHTML = `
       <html>
@@ -378,15 +444,15 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
           <div class="comprobante">
             <div class="talon-empresa">
               <p><strong>Empresa:</strong> ${razonSocial}</p>
-              <p><strong>Domicilio:</strong> ${empresaData.domicilio || 'No registrado'}</p>
-              <p><strong>Categoría / Monto:</strong> ${empresaData.categoria} / $${totalPagarLocal}</p>
+              <p><strong>Domicilio:</strong> ${empresaData.domicilio || "No registrado"}</p>
+              <p><strong>Categoría / Monto:</strong> ${empresaData.categoria} / ${montoDetalle}</p>
               <p><strong>Período:</strong> ${mesesPagadosStr}</p>
               <p><strong>Cobrador:</strong> ${empresaData.cobrador}</p>
               <p>Por consultas comunicarse al 03564-15205778</p>
             </div>
             <div class="talon-cobrador">
               <p><strong>Empresa:</strong> ${razonSocial}</p>
-              <p><strong>Categoría / Monto:</strong> ${empresaData.categoria} / $${totalPagarLocal}</p>
+              <p><strong>Categoría / Monto:</strong> ${empresaData.categoria} / ${montoDetalle}</p>
               <p><strong>Período:</strong> ${mesesPagadosStr}</p>
               <p><strong>Cobrador:</strong> ${empresaData.cobrador}</p>
             </div>
@@ -396,7 +462,8 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
       </html>
     `;
 
-    const ventana = window.open('', '', 'width=600,height=400');
+    const ventana = window.open("", "", "width=600,height=400");
+    if (!ventana) return;
     ventana.document.write(comprobanteHTML);
     ventana.document.close();
     ventana.print();
@@ -409,14 +476,22 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
         <div className="modpag_contenido">
           <div className="modpag_header">
             <div className="modpag_header-left">
-              <div className="modpag_icon-circle"><FaCoins size={20} /></div>
+              <div className="modpag_icon-circle">
+                <FaCoins size={20} />
+              </div>
               <div className="modpag_header-texts">
                 <h2 className="modpag_title">Registro de Pagos</h2>
               </div>
             </div>
             <button className="modpag_close-btn" disabled>
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path d="M12 4L4 12M4 4L12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path
+                  d="M12 4L4 12M4 4L12 12"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
             </button>
           </div>
@@ -437,14 +512,22 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
         <div className="modpag_contenido">
           <div className="modpag_header">
             <div className="modpag_header-left">
-              <div className="modpag_icon-circle"><FaCoins size={20} /></div>
+              <div className="modpag_icon-circle">
+                <FaCoins size={20} />
+              </div>
               <div className="modpag_header-texts">
                 <h2 className="modpag_title">Registro de Pagos</h2>
               </div>
             </div>
             <button className="modpag_close-btn" onClick={cerrarModal}>
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path d="M12 4L4 12M4 4L12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path
+                  d="M12 4L4 12M4 4L12 12"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
             </button>
           </div>
@@ -468,13 +551,17 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
           <div className="modpag_footer modpag_footer-sides">
             <div className="modpag_footer-left" />
             <div className="modpag_footer-right">
-              <button className="modpag_btn modpag_btn-secondary" onClick={cerrarModal}>
+              <button
+                className="modpag_btn modpag_btn-secondary"
+                onClick={cerrarModal}
+              >
                 <span className="only-desktop">Cerrar</span>
                 <FaTimes className="only-mobile-inline" />
               </button>
             </div>
           </div>
         </div>
+
         {toast && (
           <Toast
             tipo={toast.tipo}
@@ -493,17 +580,28 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
         <div className="modpag_contenido">
           <div className="modpag_header">
             <div className="modpag_header-left">
-              <div className="modpag_icon-circle"><FaCoins size={20} /></div>
+              <div className="modpag_icon-circle">
+                <FaCoins size={20} />
+              </div>
               <div className="modpag_header-texts">
                 <h2 className="modpag_title">Registro de Pagos</h2>
               </div>
             </div>
             <button
               className="modpag_close-btn"
-              onClick={() => { if (onPagoRealizado) onPagoRealizado(); cerrarModal(); }}
+              onClick={() => {
+                if (onPagoRealizado) onPagoRealizado();
+                cerrarModal();
+              }}
             >
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path d="M12 4L4 12M4 4L12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path
+                  d="M12 4L4 12M4 4L12 12"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
             </button>
           </div>
@@ -526,21 +624,31 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
 
             <div className="modpag_success">
               <h2 className="modpag_success-title">¡Pago realizado con éxito!</h2>
-              <p className="modpag_success-subtitle">Podés generar el comprobante ahora mismo.</p>
+              <p className="modpag_success-subtitle">
+                Podés generar el comprobante ahora mismo.
+              </p>
             </div>
           </div>
 
           <div className="modpag_footer modpag_footer-sides">
             <div className="modpag_footer-left">
               <div className="modpag_total-pill modpag_total-pill-inline">
-                <span className="only-desktop">Total: ${totalPagar}</span>
-                <span className="only-mobile-inline"><FaCoins />&nbsp;${totalPagar}</span>
+                <span className="only-desktop">
+                  Total: ${mesesPagadosRecibo.length > 0 ? mesesPagadosRecibo.length * (precioMensual || 0) : totalPagar}
+                </span>
+                <span className="only-mobile-inline">
+                  <FaCoins />
+                  &nbsp;{mesesPagadosRecibo.length > 0 ? `$${mesesPagadosRecibo.length * (precioMensual || 0)}` : `$${totalPagar}`}
+                </span>
               </div>
             </div>
             <div className="modpag_footer-right">
               <button
                 className="modpag_btn modpag_btn-secondary"
-                onClick={() => { if (onPagoRealizado) onPagoRealizado(); cerrarModal(); }}
+                onClick={() => {
+                  if (onPagoRealizado) onPagoRealizado();
+                  cerrarModal();
+                }}
               >
                 <span className="only-desktop">Cerrar</span>
                 <FaTimes className="only-mobile-inline" />
@@ -548,7 +656,7 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
               <button
                 className="modpag_btn modpag_btn-success"
                 onClick={handleImprimirComprobante}
-                disabled={mesesSeleccionados.length === 0}
+                disabled={(mesesPagadosRecibo?.length || 0) === 0}
               >
                 <span className="only-desktop">Comprobante</span>
                 <FaCheck className="only-mobile-inline" />
@@ -556,6 +664,7 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
             </div>
           </div>
         </div>
+
         {toast && (
           <Toast
             tipo={toast.tipo}
@@ -573,14 +682,22 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
       <div className="modpag_contenido">
         <div className="modpag_header">
           <div className="modpag_header-left">
-            <div className="modpag_icon-circle"><FaCoins size={20} /></div>
+            <div className="modpag_icon-circle">
+              <FaCoins size={20} />
+            </div>
             <div className="modpag_header-texts">
               <h2 className="modpag_title">Registro de Pagos</h2>
             </div>
           </div>
           <button className="modpag_close-btn" onClick={cerrarModal}>
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M12 4L4 12M4 4L12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path
+                d="M12 4L4 12M4 4L12 12"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
           </button>
         </div>
@@ -592,12 +709,16 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
             <div className="modpag_info-row">
               <div className="modpag_info-item">
                 <span className="modpag_info-label">Empresa</span>
-                <span className="modpag_info-value modpag_info-value-highlight">{razonSocial}</span>
+                <span className="modpag_info-value modpag_info-value-highlight">
+                  {razonSocial}
+                </span>
               </div>
               {fechaUnion && (
                 <div className="modpag_info-item">
                   <span className="modpag_info-label">Fecha de alta</span>
-                  <span className="modpag_info-value modpag_info-value-highlight">{formatDate(fechaUnion)}</span>
+                  <span className="modpag_info-value modpag_info-value-highlight">
+                    {formatDate(fechaUnion)}
+                  </span>
                 </div>
               )}
             </div>
@@ -607,8 +728,10 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
             <div className="modpag_section-header">
               <h4 className="modpag_section-title">Meses disponibles</h4>
 
-              <div className="modpag_section-header-actions" style={{ display: 'flex', gap: 8 }}>
-                {/* Dropdown de Año (reemplaza al <select> nativo) */}
+              <div
+                className="modpag_section-header-actions"
+                style={{ display: "flex", gap: 8 }}
+              >
                 <YearDropdown
                   value={selectedYear}
                   options={yearOptions}
@@ -620,9 +743,14 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
                   onClick={handleSeleccionarTodos}
                   disabled={disponiblesIds.length === 0}
                 >
-                  {todosSeleccionados ? 'Deseleccionar todos' : 'Seleccionar todos'}
+                  {todosSeleccionados
+                    ? "Deseleccionar todos"
+                    : "Seleccionar todos"}
                   {mesesSeleccionados.length > 0 && (
-                    <span className="only-desktop"> ({mesesSeleccionados.length})</span>
+                    <span className="only-desktop">
+                      {" "}
+                      ({mesesSeleccionados.length})
+                    </span>
                   )}
                 </button>
               </div>
@@ -636,7 +764,9 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
                   return (
                     <div
                       key={`${selectedYear}-${mes.id}`}
-                      className={`modpag_periodo-card ${yaPagado ? 'modpag_pagado' : ''} ${checked ? 'modpag_seleccionado' : ''}`}
+                      className={`modpag_periodo-card ${
+                        yaPagado ? "modpag_pagado" : ""
+                      } ${checked ? "modpag_seleccionado" : ""}`}
                       onClick={() => handleSeleccionarMes(mes.id, yaPagado)}
                     >
                       <div className="modpag_periodo-checkbox">
@@ -649,14 +779,30 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
                         />
                         <span className="modpag_checkmark"></span>
                       </div>
-                      <label htmlFor={`periodo-${selectedYear}-${mes.id}`} className="modpag_periodo-label">
+                      <label
+                        htmlFor={`periodo-${selectedYear}-${mes.id}`}
+                        className="modpag_periodo-label"
+                      >
                         {mes.nombre}
                         {yaPagado && (
                           <span className="modpag_periodo-status">
-                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                              <path d="M10 3L4.5 8.5L2 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <svg
+                              width="12"
+                              height="12"
+                              viewBox="0 0 12 12"
+                              fill="none"
+                            >
+                              <path
+                                d="M10 3L4.5 8.5L2 6"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
                             </svg>
-                            <span className="modpag_periodo-status-text">Pagado</span>
+                            <span className="modpag_periodo-status-text">
+                              Pagado
+                            </span>
                           </span>
                         )}
                       </label>
@@ -672,7 +818,10 @@ const ModalPagosEmpresas = ({ razonSocial, cerrarModal, onPagoRealizado }) => {
           <div className="modpag_footer-left">
             <div className="modpag_total-pill modpag_total-pill-inline">
               <span className="only-desktop">Total a pagar: ${totalPagar}</span>
-              <span className="only-mobile-inline"><FaCoins />&nbsp;${totalPagar}</span>
+              <span className="only-mobile-inline">
+                <FaCoins />
+                &nbsp;${totalPagar}
+              </span>
             </div>
           </div>
           <div className="modpag_footer-right">
