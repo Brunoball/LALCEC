@@ -1054,3 +1054,17 @@ html, body {
 .gcuotas-filter-card .gcuotas-select-container .gcuotas-input-full {
   grid-column: 1 / -1;
 }
+.gcuotas-table-overlay-loading{
+  position:absolute;
+  inset: 52px 0 0 0; /* arranca debajo del header */
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  background: rgba(255,255,255,0.55);
+  backdrop-filter: blur(2px);
+  pointer-events:none;
+  z-index: 5;
+  font-weight: 600;
+  color:#2b2d42;
+}
