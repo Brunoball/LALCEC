@@ -1068,3 +1068,61 @@ html, body {
   font-weight: 600;
   color:#2b2d42;
 }
+/* ===========================
+   Floating label (estilo Google)
+   =========================== */
+
+.gcuotas-float {
+  position: relative;
+  width: 100%;
+}
+
+/* El control real (select/input) */
+.gcuotas-float__control {
+  padding-top: 16px; /* deja espacio para el label cuando “se apoya” */
+}
+
+/* Label que “atraviesa” la línea superior */
+.gcuotas-float__label {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  font-size: 13px;
+  font-weight: 600;
+  color: #6c757d;
+
+  background: #fff;          /* clave para que se vea “cortando” el borde */
+  padding: 0 8px;
+  border-radius: 999px;
+
+  pointer-events: none;      /* no molesta al click del select */
+  transition: all 180ms ease;
+  z-index: 2;
+}
+
+/* Cuando hay foco dentro, o cuando ya hay valor => label arriba */
+.gcuotas-float:focus-within .gcuotas-float__label,
+.gcuotas-float.has-value .gcuotas-float__label {
+  top: 0;
+  transform: translateY(-50%) scale(0.92);
+  color: #4361ee;
+}
+
+/* Mejora visual: cuando está focused, el borde ya lo tenés en .gcuotas-dropdown:focus,
+   pero esto suma un "match" más suave con el label */
+.gcuotas-float:focus-within .gcuotas-float__label svg {
+  color: #4361ee;
+}
+
+/* En mobile, que el label no quede muy apretado */
+@media (max-width: 768px) {
+  .gcuotas-float__label {
+    left: 10px;
+    padding: 0 7px;
+  }
+}
