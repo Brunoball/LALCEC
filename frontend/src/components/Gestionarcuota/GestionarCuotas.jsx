@@ -1486,108 +1486,107 @@ const GestionarCuotas = () => {
                 </div>
               </div>
 
-              <div className="gcuotas-select-container">
-                {/* Año */}
-                <div className="gcuotas-input-group">
-                  <label htmlFor="anio" className="gcuotas-input-label">
-                    <FontAwesomeIcon icon={faCalendarAlt} /> Año
-                  </label>
-                  <select
-                    id="anio"
-                    value={selectedYear}
-                    onChange={handleYearChange}
-                    className="gcuotas-dropdown"
-                    disabled={
-                      loading.years ||
-                      loading.meses ||
-                      loading.socios ||
-                      loading.empresas
-                    }
-                  >
-                    {years.map((y, i) => (
-                      <option key={i} value={y}>
-                        {y}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+<div className="gcuotas-select-container">
+  {/* Año */}
+  <div className={`gcuotas-float ${selectedYear ? "has-value" : ""}`}>
+    <select
+      id="anio"
+      value={selectedYear}
+      onChange={handleYearChange}
+      className="gcuotas-dropdown gcuotas-float__control"
+      disabled={loading.years || loading.meses || loading.socios || loading.empresas}
+    >
+      {/* opcional: si querés que arranque vacío */}
+      {/* <option value="" disabled>Elegí año</option> */}
+      {years.map((y, i) => (
+        <option key={i} value={y}>
+          {y}
+        </option>
+      ))}
+    </select>
 
-                {/* Mes */}
-                <div className="gcuotas-input-group">
-                  <label htmlFor="meses" className="gcuotas-input-label">
-                    <FontAwesomeIcon icon={faCalendarAlt} /> Mes
-                  </label>
-                  <select
-                    id="meses"
-                    value={selectedMonth}
-                    onChange={handleMonthChange}
-                    className="gcuotas-dropdown"
-                    disabled={
-                      !selectedYear ||
-                      loading.meses ||
-                      loading.socios ||
-                      loading.empresas
-                    }
-                  >
-                    <option value="" disabled>
-                      Mes
-                    </option>
-                    {meses.map((m, index) => (
-                      <option key={index} value={m.mes}>
-                        {m.mes}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+    <label htmlFor="anio" className="gcuotas-float__label">
+      <FontAwesomeIcon icon={faCalendarAlt} />
+      <span>Año</span>
+    </label>
+  </div>
 
-                {/* Tipo de vista */}
-                <div className="gcuotas-input-group gcuotas-input-full">
-                  <label htmlFor="entidad" className="gcuotas-input-label">
-                    <FontAwesomeIcon icon={faUsers} /> Tipo de vista
-                  </label>
-                  <select
-                    id="entidad"
-                    value={viewType}
-                    onChange={(e) => {
-                      setViewType(e.target.value);
-                      setSelectedId(null);
-                      scrollOffsetRef.current = 0;
-                      listRef.current?.scrollTo(0);
-                    }}
-                    className="gcuotas-dropdown"
-                    disabled={loading.socios || loading.empresas}
-                  >
-                    <option value="socio">Socios</option>
-                    <option value="empresa">Empresas</option>
-                  </select>
-                </div>
+  {/* Mes */}
+  <div className={`gcuotas-float ${selectedMonth ? "has-value" : ""}`}>
+    <select
+      id="meses"
+      value={selectedMonth}
+      onChange={handleMonthChange}
+      className="gcuotas-dropdown gcuotas-float__control"
+      disabled={!selectedYear || loading.meses || loading.socios || loading.empresas}
+    >
+      <option value="" disabled>
+        Mes
+      </option>
+      {meses.map((m, index) => (
+        <option key={index} value={m.mes}>
+          {m.mes}
+        </option>
+      ))}
+    </select>
 
-                {/* Medio de pago */}
-                <div className="gcuotas-input-group gcuotas-input-full">
-                  <label htmlFor="medioPago" className="gcuotas-input-label">
-                    <FontAwesomeIcon icon={faCreditCard} /> Medio de Pago
-                  </label>
-                  <select
-                    id="medioPago"
-                    value={selectedMedioPago}
-                    onChange={handleMedioPagoChange}
-                    className="gcuotas-dropdown"
-                    disabled={
-                      loading.socios ||
-                      loading.empresas ||
-                      !selectedYear ||
-                      !selectedMonth
-                    }
-                  >
-                    <option value="">Todos</option>
-                    {mediosPago.map((medio, index) => (
-                      <option key={index} value={medio.nombre}>
-                        {medio.nombre}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
+    <label htmlFor="meses" className="gcuotas-float__label">
+      <FontAwesomeIcon icon={faCalendarAlt} />
+      <span>Mes</span>
+    </label>
+  </div>
+
+  {/* Tipo de vista */}
+  <div className={`gcuotas-float gcuotas-input-full ${viewType ? "has-value" : ""}`}>
+    <select
+      id="entidad"
+      value={viewType}
+      onChange={(e) => {
+        setViewType(e.target.value);
+        setSelectedId(null);
+        scrollOffsetRef.current = 0;
+        listRef.current?.scrollTo(0);
+      }}
+      className="gcuotas-dropdown gcuotas-float__control"
+      disabled={loading.socios || loading.empresas}
+    >
+      <option value="socio">Socios</option>
+      <option value="empresa">Empresas</option>
+    </select>
+
+    <label htmlFor="entidad" className="gcuotas-float__label">
+      <FontAwesomeIcon icon={faUsers} />
+      <span>Tipo de vista</span>
+    </label>
+  </div>
+
+  {/* Medio de pago */}
+  <div
+    className={`gcuotas-float gcuotas-input-full ${
+      selectedMedioPago ? "has-value" : ""
+    }`}
+  >
+    <select
+      id="medioPago"
+      value={selectedMedioPago}
+      onChange={handleMedioPagoChange}
+      className="gcuotas-dropdown gcuotas-float__control"
+      disabled={loading.socios || loading.empresas || !selectedYear || !selectedMonth}
+    >
+      <option value="">Todos</option>
+      {mediosPago.map((medio, index) => (
+        <option key={index} value={medio.nombre}>
+          {medio.nombre}
+        </option>
+      ))}
+    </select>
+
+    <label htmlFor="medioPago" className="gcuotas-float__label">
+      <FontAwesomeIcon icon={faCreditCard} />
+      <span>Medio de Pago</span>
+    </label>
+  </div>
+</div>
             </div>
 
             <div className="gcuotas-tabs-card">
@@ -1737,12 +1736,6 @@ const GestionarCuotas = () => {
               <span className="gcuotas-summary-item">
                 <FontAwesomeIcon icon={faCalendarAlt} />
                 Mes: {selectedMonth}
-              </span>
-            )}
-            {selectedMedioPago && (
-              <span className="gcuotas-summary-item">
-                <FontAwesomeIcon icon={faCreditCard} />
-                Medio: {selectedMedioPago}
               </span>
             )}
           </div>
