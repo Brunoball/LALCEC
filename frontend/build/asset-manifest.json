@@ -1,16 +1,16 @@
 {
   "files": {
-    "main.css": "/static/css/main.fd0ea686.css",
-    "main.js": "/static/js/main.ada8734c.js",
+    "main.css": "/static/css/main.7581cd01.css",
+    "main.js": "/static/js/main.44791ac5.js",
     "static/js/453.8ab44547.chunk.js": "/static/js/453.8ab44547.chunk.js",
     "static/media/logo_lalcec.jpeg": "/static/media/logo_lalcec.79894b70cad30126547c.jpeg",
     "index.html": "/index.html",
-    "main.fd0ea686.css.map": "/static/css/main.fd0ea686.css.map",
-    "main.ada8734c.js.map": "/static/js/main.ada8734c.js.map",
+    "main.7581cd01.css.map": "/static/css/main.7581cd01.css.map",
+    "main.44791ac5.js.map": "/static/js/main.44791ac5.js.map",
     "453.8ab44547.chunk.js.map": "/static/js/453.8ab44547.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.fd0ea686.css",
-    "static/js/main.ada8734c.js"
+    "static/css/main.7581cd01.css",
+    "static/js/main.44791ac5.js"
   ]
 }

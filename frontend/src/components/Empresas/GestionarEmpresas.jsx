@@ -387,54 +387,39 @@ const Card = memo(function Card({
 const GestionarEmpresas = () => {
   const navigate = useNavigate();
 
-  // Bloqueo de viewport + theme-color
   useStableViewportLock();
   useMobileChromeStyling("#fa7815");
 
-  // Refs para medir header/footer y exponer CSS vars dinámicas
   const headerRef = useRef(null);
   const footerRef = useRef(null);
-  const pinbarRef = useRef(null); // <<---- NUEVO: para medir la pinbar
+  const pinbarRef = useRef(null);
 
   useEffect(() => {
     const applyHeights = () => {
-      // Header
       const hHeader = headerRef.current?.getBoundingClientRect()?.height ?? 0;
-
-      // Footer (fixed). Fallback 64 si aún no montó
       let hFooter = 64;
       if (footerRef.current) {
         const r = footerRef.current.getBoundingClientRect();
         if (r && r.height) hFooter = Math.max(44, Math.round(r.height));
       }
-
-      // Pinbar (contador + leyenda). Fallback 50 en mobile, 54 en desktop
       let hPin = 54;
       if (pinbarRef.current) {
         const r = pinbarRef.current.getBoundingClientRect();
         if (r && r.height) hPin = Math.max(34, Math.round(r.height));
       } else {
-        // Si todavía no está montada, asumimos un valor decente para mobile
         if (window.innerWidth <= 768) hPin = 50;
       }
-
       document.documentElement.style.setProperty("--header-h", `${hHeader}px`);
       document.documentElement.style.setProperty("--footer-h", `${hFooter}px`);
       document.documentElement.style.setProperty("--pinbar-h", `${hPin}px`);
     };
-
     applyHeights();
-
-    // Observamos cambios de tamaño en los 3 elementos
     const ro = new ResizeObserver(applyHeights);
     headerRef.current && ro.observe(headerRef.current);
     footerRef.current && ro.observe(footerRef.current);
     pinbarRef.current && ro.observe(pinbarRef.current);
-
-    // También en cambios de viewport/orientación
     window.addEventListener("orientationchange", applyHeights, { passive: true });
     window.addEventListener("resize", applyHeights, { passive: true });
-
     return () => {
       ro.disconnect();
       window.removeEventListener("orientationchange", applyHeights);
@@ -442,14 +427,17 @@ const GestionarEmpresas = () => {
     };
   }, []);
 
-  // ======= Estado / datos (igual a tu versión) =======
+  // ======= Estado =======
   const [empresas, setEmpresas] = useState([]);
   const [mediosDePago, setMediosDePago] = useState([]);
-
   const [filaSeleccionada, setFilaSeleccionada] = useState(null);
   const [empresaSeleccionada, setEmpresaSeleccionada] = useState(null);
   const [empresaABaja, setEmpresaABaja] = useState(null);
   const [infoEmpresa, setInfoEmpresa] = useState(null);
+
+  // ✅ NUEVO: pagosPorAnio separado, ya no usamos mesesPagados array plano para el modal
+  const [pagosPorAnio, setPagosPorAnio] = useState(null);
+  const [cargandoPagos, setCargandoPagos] = useState(false);
 
   const [error, setError] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
@@ -481,9 +469,7 @@ const GestionarEmpresas = () => {
   const [mostrarModalInfo, setMostrarModalInfo] = useState(false);
   const [mostrarModalBaja, setMostrarModalBaja] = useState(false);
 
-  const [mesesPagados, setMesesPagados] = useState([]);
   const filtrosRef = useRef(null);
-
   const reducedMotion = useReducedMotion();
   const cascadeTimerRef = useRef(null);
   const abortRef = useRef(null);
@@ -535,7 +521,7 @@ const GestionarEmpresas = () => {
     }
   }, [actualizar, primeraCarga]);
 
-  // === Carga inicial con caché + AbortController ===
+  // === Carga inicial ===
   useEffect(() => {
     let cancelled = false;
 
@@ -702,7 +688,6 @@ const GestionarEmpresas = () => {
     return () => cancelAnimationFrame(id);
   }, [empresasFiltradas, datosCargados, reducedMotion, bumpVisibleGradually]);
 
-  // Al volver desde Editar
   useEffect(() => {
     if (!datosCargados) return;
     if (sessionStorage.getItem(CASCADE_FLAG) === "1") {
@@ -936,18 +921,35 @@ const GestionarEmpresas = () => {
     }
   }, []);
 
-  const handleMostrarInfoEmpresa = useCallback((empresa) => {
+  // ✅ CORREGIDO: ahora fetchea el endpoint pagos_empresas_por_anio
+  // y pasa pagosPorAnio al modal en lugar del array plano meses_pagados
+  const handleMostrarInfoEmpresa = useCallback(async (empresa) => {
     try {
-      const mesesP = empresa?.meses_pagados
-        ? empresa.meses_pagados.split(",").map((m) => m.trim().toUpperCase())
-        : [];
+      const idEmp = getEmpresaId(empresa);
       setInfoEmpresa(empresa);
-      setMesesPagados(mesesP);
+      setPagosPorAnio(null); // limpiar datos anteriores
+      setCargandoPagos(true);
       setMostrarModalInfo(true);
+
+      const response = await fetch(
+        `${BASE_URL}/api.php?action=pagos_empresas_por_anio&idEmp=${idEmp}`,
+        { cache: "no-store" }
+      );
+      const data = await response.json();
+
+      if (data?.success && data?.pagosPorAnio) {
+        setPagosPorAnio(data.pagosPorAnio);
+      } else {
+        // Si falla el endpoint, armamos el objeto con el año actual
+        // usando el campo meses_pagados como fallback de último recurso
+        console.warn("pagos_empresas_por_anio falló, usando fallback:", data);
+        setPagosPorAnio({});
+      }
     } catch (error) {
-      console.error("Error al procesar información:", error);
-      setErrorMessage(`Error: ${error.message}`);
-      setTimeout(() => setErrorMessage(""), 5000);
+      console.error("Error al obtener pagos por año:", error);
+      setPagosPorAnio({});
+    } finally {
+      setCargandoPagos(false);
     }
   }, []);
 
@@ -1029,11 +1031,10 @@ const GestionarEmpresas = () => {
   return (
     <div className="emp_empresa-container">
       <div className="emp_empresa-box">
-        {/* HEADER (FIJO EN MOBILE) */}
+        {/* HEADER */}
         <div className="emp_front-row-emp" ref={headerRef}>
           <span className="emp_empresa-title emp_title-wrap">Gestionar Empresas</span>
 
-          {/* Búsqueda */}
           <div className="emp_search-input-container emp_search-wrap">
             <input
               id="search"
@@ -1058,7 +1059,6 @@ const GestionarEmpresas = () => {
             </button>
           </div>
 
-          {/* Filtros */}
           <div className="emp_filtros-container emp_filters-wrap" ref={filtrosRef}>
             <button className="emp_filtros-button" onClick={toggleMenuFiltros}>
               <FontAwesomeIcon icon={faFilter} className="emp_icon-button" />
@@ -1147,9 +1147,8 @@ const GestionarEmpresas = () => {
 
         {errorMessage && <div className="emp_error-message-emp">{errorMessage}</div>}
 
-        {/* CONTENIDO LISTA / TARJETAS */}
+        {/* CONTENIDO */}
         <div className="emp_empresas-list">
-          {/* Sub-barra fija contador + leyenda */}
           <div className="emp_contenedor-list-items" ref={pinbarRef}>
             <div className="emp_left-inline">
               <div className="emp_contador-container">
@@ -1164,7 +1163,6 @@ const GestionarEmpresas = () => {
                     {chipKind}: {chipValue}
                   </span>
                   <span className="emp_chip-mini-text emp_socios-mobile">{chipValue}</span>
-
                   <button
                     className="emp_chip-mini-close"
                     onClick={removeFirstChip}
@@ -1177,20 +1175,17 @@ const GestionarEmpresas = () => {
               )}
             </div>
 
-            {/* Leyenda estados */}
             <div className="emp_estado-pagos-container">
               <div className="emp_estado-indicador emp_al-dia">
                 <div className="emp_indicador-color"></div>
                 <span className="emp_legend-desktop">Al día</span>
                 <span className="emp_legend-mobile">Al dia</span>
               </div>
-
               <div className="emp_estado-indicador emp_debe-1-2">
                 <div className="emp_indicador-color"></div>
                 <span className="emp_legend-desktop">Debe 1-2 meses</span>
                 <span className="emp_legend-mobile">1-2</span>
               </div>
-
               <div className="emp_estado-indicador emp_debe-3-mas">
                 <div className="emp_indicador-color"></div>
                 <span className="emp_legend-desktop">Debe 3+</span>
@@ -1259,15 +1254,11 @@ const GestionarEmpresas = () => {
           <div className={`emp_cards-wrapper ${animacionCascada ? "emp_cascade-animation" : ""}`}>
             {cargando ? (
               <div className="emp_no-data-message emp_no-data-mobile">
-                <div className="emp_message-content">
-                  <p>Cargando datos iniciales...</p>
-                </div>
+                <div className="emp_message-content"><p>Cargando datos iniciales...</p></div>
               </div>
             ) : !datosCargados ? (
               <div className="emp_no-data-message emp_no-data-mobile">
-                <div className="emp_message-content">
-                  <p>Cargando datos iniciales...</p>
-                </div>
+                <div className="emp_message-content"><p>Cargando datos iniciales...</p></div>
               </div>
             ) : (filtrosActivos.todos ||
                 filtrosActivos.letras.length > 0 ||
@@ -1299,7 +1290,7 @@ const GestionarEmpresas = () => {
           </div>
         </div>
 
-        {/* BOTONERA INFERIOR — idéntica a Socios */}
+        {/* BOTONERA */}
         <div className="emp_down-container" ref={footerRef}>
           <button
             className="emp_socio-button emp_hover-effect emp_volver-atras"
@@ -1354,11 +1345,16 @@ const GestionarEmpresas = () => {
         />
       )}
 
+      {/* ✅ CORREGIDO: se pasa pagosPorAnio al modal, NO mesesPagados */}
       {mostrarModalInfo && infoEmpresa && (
         <ModalInfoEmpresa
           infoEmpresa={infoEmpresa}
-          mesesPagados={mesesPagados}
-          onCerrar={() => setMostrarModalInfo(false)}
+          pagosPorAnio={pagosPorAnio}
+          cargandoPagos={cargandoPagos}
+          onCerrar={() => {
+            setMostrarModalInfo(false);
+            setPagosPorAnio(null);
+          }}
         />
       )}
 

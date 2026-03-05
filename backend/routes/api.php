@@ -168,6 +168,9 @@ switch ($action) {
         require_once __DIR__ . "/../modules/socios/obtener_soc_recordatorios.php";
         break;
 
+    case 'info_pagos_socio':
+        require_once(__DIR__ . '/../modules/socios/info_pagos_socio.php');
+        break;
 
     /* =======================
        EMPRESAS
@@ -211,6 +214,10 @@ switch ($action) {
     // >>> NUEVO: BAJA/ALTA/LISTADO EMPRESAS
     case 'estado_empresa':
         require_once(__DIR__ . '/../modules/empresas/estado_empresa.php');
+        break;
+
+    case "pagos_empresas_por_anio":
+        require __DIR__ . "/../modules/empresas/info_pagos_empresas.php";
         break;
 
 
