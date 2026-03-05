@@ -1,8 +1,10 @@
-/* === Overlay (sin scroll visible) === */
-.socio_overlay {
+/* ✅ REEMPLAZAR COMPLETO */
+/* ModalInfoSocio.css */
+
+.socio_overlay{
   position: fixed;
   inset: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0,0,0,0.5);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -12,13 +14,11 @@
   margin: 0;
   padding: 0;
 
-  /* 🔒 Evita el “scroll mini” en el overlay */
   overflow: hidden;
   overscroll-behavior: contain;
 }
 
-/* === Contenedor (misma estética que empresa) === */
-.socio_container {
+.socio_container{
   background: var(--princ-glass);
   border-radius: var(--princ-border-radius-xl);
   width: 90%;
@@ -29,55 +29,57 @@
   flex-direction: column;
   animation: socio_slideUp 0.3s ease-out;
   backdrop-filter: blur(16px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255,255,255,0.05);
   position: relative;
 
-  /* 🧹 Nada de scroll en el contenedor */
-  overflow: clip; /* mejor que hidden para cortar el flujo */
+  overflow: clip;
 }
 
-/* Oculta cualquier scrollbar “heredado” (WebKit/Chromium) */
 .socio_container::-webkit-scrollbar,
-.socio_content::-webkit-scrollbar {
+.socio_content::-webkit-scrollbar{
   width: 0;
   height: 0;
 }
 
-/* === Header (gradiente y colores iguales) === */
-.socio_header {
+/* Header */
+.socio_header{
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 20px 24px;
   background: linear-gradient(90deg, var(--princ-primary), var(--princ-secondary));
-  color: white;
+  color: #fff;
   border-top-left-radius: var(--princ-border-radius-xl);
   border-top-right-radius: var(--princ-border-radius-xl);
   position: relative;
   z-index: 1;
 }
-.socio_header-content { flex: 1; }
-.socio_title {
+
+.socio_header-content{ flex: 1; }
+
+.socio_title{
   margin: 0;
   font-size: 1.5rem;
   font-weight: 700;
   font-family: 'Plus Jakarta Sans', sans-serif;
-  color: white;
+  color: #fff;
   line-height: 1.2;
   letter-spacing: -0.025em;
 }
-.socio_subtitle {
+
+.socio_subtitle{
   margin: 4px 0 0;
   font-size: 0.875rem;
   opacity: 0.9;
   font-weight: 400;
   font-family: 'Plus Jakarta Sans', sans-serif;
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(255,255,255,0.9);
 }
-.socio_close-btn {
+
+.socio_close-btn{
   background: none;
   border: none;
-  color: white;
+  color: #fff;
   cursor: pointer;
   padding: 8px;
   margin-left: 16px;
@@ -87,31 +89,33 @@
   align-items: center;
   justify-content: center;
 }
-.socio_close-btn:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+
+.socio_close-btn:hover{
+  background-color: rgba(255,255,255,0.1);
   transform: rotate(90deg);
 }
 
-/* === Wrapper de contenido (sin scroll visible aquí) === */
-.socio_content {
+/* Content */
+.socio_content{
   padding: 0;
   flex: 1;
   display: flex;
   flex-direction: column;
   overflow: clip;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.98) 100%);
+  background: linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(248,250,252,0.98) 100%);
 }
 
-/* === Tabs (idénticos a los de empresa) === */
-.socio_tabs {
+/* Tabs */
+.socio_tabs{
   display: flex;
   border-bottom: 1px solid var(--princ-glass-border);
   padding: 0 24px;
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(255,255,255,0.7);
   overflow-x: auto;
   overflow-y: hidden;
 }
-.socio_tab {
+
+.socio_tab{
   padding: 12px 16px;
   font-size: 0.875rem;
   font-weight: 500;
@@ -122,12 +126,15 @@
   transition: var(--princ-transition);
   white-space: nowrap;
 }
-.socio_tab:hover { color: var(--princ-primary); }
-.socio_tab.socio_active {
+
+.socio_tab:hover{ color: var(--princ-primary); }
+
+.socio_tab.socio_active{
   color: var(--princ-primary-dark);
   font-weight: 600;
 }
-.socio_tab.socio_active::after {
+
+.socio_tab.socio_active::after{
   content: '';
   position: absolute;
   bottom: -1px;
@@ -136,41 +143,48 @@
   background: linear-gradient(90deg, var(--princ-primary), var(--princ-secondary));
 }
 
-/* === Contenido de pestaña (scroll funcional pero invisible) === */
-.socio_tab-content {
+/* Tab content con scroll invisible */
+.socio_tab-content{
   flex: 1;
   padding: 24px;
   display: none;
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(255,255,255,0.7);
   overflow-y: auto;
 
-  /* ✅ Scroll funcional pero sin mostrar la barra */
-  scrollbar-width: none;      /* Firefox */
+  scrollbar-width: none;
   overscroll-behavior: contain;
 }
-.socio_tab-content::-webkit-scrollbar { /* WebKit/Chromium */
+
+.socio_tab-content::-webkit-scrollbar{
   width: 0;
   height: 0;
 }
-.socio_tab-content.socio_active { display: block; }
 
-/* === Grid y tarjetas de información (mismos colores/sombras) === */
-.socio_info-grid {
+.socio_tab-content.socio_active{ display: block; }
+
+/* Cards */
+.socio_info-grid{
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 20px;
   margin-bottom: 24px;
 }
-.socio_info-card {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.98) 100%);
+
+.socio_info-card{
+  background: linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(248,250,252,0.98) 100%);
   border-radius: var(--princ-border-radius-lg);
   padding: 16px;
   border: 1px solid var(--princ-glass-border);
   box-shadow: var(--princ-shadow-md);
   width: 100%;
 }
-.socio_info-card.socio_info-card-full { grid-column: 1 / -1; }
-.socio_info-card-title {
+
+.socio_info-card.socio_info-card-full{
+  grid-column: 1 / -1;
+  padding: 12px;
+}
+
+.socio_info-card-title{
   margin: 0 0 12px;
   font-size: 1rem;
   font-weight: 700;
@@ -179,19 +193,23 @@
   padding-bottom: 8px;
   border-bottom: 1px solid var(--princ-glass-border);
 }
-.socio_info-item {
+
+.socio_info-item{
   display: flex;
   justify-content: space-between;
   margin-bottom: 12px;
 }
-.socio_info-item:last-child { margin-bottom: 0; }
-.socio_info-label {
+
+.socio_info-item:last-child{ margin-bottom: 0; }
+
+.socio_info-label{
   font-weight: 600;
   color: var(--princ-gray-600);
   font-size: 0.875rem;
   font-family: 'Plus Jakarta Sans', sans-serif;
 }
-.socio_info-value {
+
+.socio_info-value{
   font-weight: 500;
   color: var(--princ-dark);
   text-align: right;
@@ -199,104 +217,348 @@
   word-break: break-word;
   font-family: 'Plus Jakarta Sans', sans-serif;
 }
-.socio_info-item.socio_comentario {
+
+.socio_info-item.socio_comentario{
   flex-direction: column;
   align-items: flex-start;
 }
-.socio_info-item.socio_comentario .socio_info-label { margin-bottom: 4px; }
 
-/* === Sección Pagos (idéntica a empresa) === */
-.socio_meses-container { margin-top: 20px; }
-.socio_meses-title {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--princ-gray-700);
-  margin-bottom: 12px;
-  padding-bottom: 6px;
-  border-bottom: 1px solid var(--princ-glass-border);
-}
-.socio_meses-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
-  margin-bottom: 16px;
-}
-.socio_mes-item {
-  padding: 8px 6px;
-  border-radius: 6px;
-  font-size: 0.8rem;
-  font-weight: 500;
-  text-align: center;
-  position: relative;
-}
-.socio_mes-item.socio_pagado {
-  background-color: rgba(16, 185, 129, 0.1);
-  color: var(--princ-success);
-  border: 1px solid rgba(16, 185, 129, 0.2);
-}
-.socio_mes-item.socio_adeudado {
-  background-color: rgba(239, 68, 68, 0.1);
-  color: var(--princ-danger);
-  border: 1px solid rgba(239, 68, 68, 0.2);
-}
-.socio_mes-icon {
-  position: absolute;
-  top: 2px; right: 4px;
-  font-size: 0.7rem;
-}
+.socio_info-item.socio_comentario .socio_info-label{ margin-bottom: 4px; }
 
-/* Leyenda */
-.socio_leyenda {
+/* Loading / error */
+.socio_loading-wrap{
   display: flex;
   justify-content: center;
-  gap: 20px;
-  margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px solid var(--princ-glass-border);
+  padding: 2rem;
 }
-.socio_leyenda-item {
+
+.socio_loading-spinner{
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 3px solid rgba(10,37,64,0.15);
+  border-top-color: rgba(0,85,187,0.8);
+  animation: socio_spin 0.8s linear infinite;
+}
+
+.socio_error{
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(239,68,68,0.22);
+  background: rgba(239,68,68,0.10);
+  color: var(--princ-danger);
+  font-weight: 600;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+/* =========================
+   ✅ PAGOS “PRO” (igual estética)
+========================= */
+
+.socio_paybar{
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 0.8rem;
-  color: var(--princ-gray-600);
-}
-.socio_leyenda-color { width: 14px; height: 14px; border-radius: 3px; }
-.socio_leyenda-color.socio_pagado {
-  background-color: rgba(16, 185, 129, 0.2);
-  border: 1px solid rgba(16, 185, 129, 0.4);
-}
-.socio_leyenda-color.socio_adeudado {
-  background-color: rgba(239, 68, 68, 0.2);
-  border: 1px solid rgba(239, 68, 68, 0.4);
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 10px;
+  min-height: 34px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.55);
+  border: 1px solid var(--princ-glass-border);
+  box-shadow: 0 8px 18px rgba(10,37,64,0.06);
+  margin: 6px 0;
 }
 
-/* Colores de estado (comparten tokens con empresa) */
-.socio_text-success { color: var(--princ-success); }
-.socio_text-warning { color: var(--princ-warning); }
-.socio_text-danger  { color: var(--princ-danger); }
-
-/* === Responsive (idéntico) === */
-@media (max-width: 768px) {
-  .socio_container { width: 95%; max-height: 85vh; }
-  .socio_meses-grid { grid-template-columns: repeat(3, 1fr); }
-  .socio_info-grid { grid-template-columns: 1fr; }
-}
-@media (max-width: 576px) {
-  .socio_header { padding: 16px; }
-  .socio_title { font-size: 1.2rem; }
-  .socio_tab-content { padding: 16px; }
-  .socio_info-card { padding: 12px; }
-  .socio_meses-grid { grid-template-columns: repeat(2, 1fr); }
-  .socio_tabs { padding: 0 12px; }
-  .socio_tab { padding: 10px 12px; font-size: 0.8rem; }
+.socio_paybar-left{
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-/* === Animaciones (idénticas) === */
-@keyframes socio_fadeIn { from { opacity: 0; } to { opacity: 1; } }
-@keyframes socio_slideUp {
-  from { transform: translateY(20px); opacity: 0; }
-  to   { transform: translateY(0);   opacity: 1; }
+.socio_paybar-right{
+  display: flex;
+  justify-content: flex-end;
+  flex: 1;
 }
 
+.socio_year-chips{
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
 
+.socio_year-chip{
+  border: 1px solid rgba(10,37,64,0.14);
+  background: rgba(255,255,255,0.65);
+  color: var(--princ-gray-700);
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  cursor: pointer;
+  transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease, border-color 180ms ease;
+  box-shadow: 0 6px 14px rgba(10,37,64,0.05);
+}
+
+.socio_year-chip:hover{
+  transform: translateY(-1px);
+  border-color: rgba(0,85,187,0.25);
+  box-shadow: 0 10px 18px rgba(0,85,187,0.10);
+}
+
+.socio_year-chip.is-active{
+  border-color: rgba(0,85,187,0.35);
+  color: var(--princ-primary);
+  font-weight: 600;
+}
+
+/* Estado */
+.socio_status-row{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 10px;
+  min-height: 34px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.55);
+  border: 1px solid var(--princ-glass-border);
+  box-shadow: 0 8px 18px rgba(10,37,64,0.06);
+  margin: 6px 0 8px;
+}
+
+.socio_status-badge{
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  border: 1px solid transparent;
+  box-shadow: 0 8px 18px rgba(10,37,64,0.08);
+  white-space: nowrap;
+}
+
+.socio_status-badge.is-success{
+  background: rgba(16,185,129,0.12);
+  border-color: rgba(16,185,129,0.22);
+  color: var(--princ-success);
+}
+
+.socio_status-badge.is-warning{
+  background: rgba(245,158,11,0.14);
+  border-color: rgba(245,158,11,0.22);
+  color: var(--princ-warning);
+}
+
+.socio_status-badge.is-danger{
+  background: rgba(239,68,68,0.12);
+  border-color: rgba(239,68,68,0.22);
+  color: var(--princ-danger);
+}
+
+/* Leyenda derecha con dots */
+.socio_leyenda.socio_leyenda--right{
+  height: fit-content;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+  padding-top: 8px;
+}
+
+.socio_leyenda-item{
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.55);
+  border: 1px solid rgba(10,37,64,0.10);
+  box-shadow: 0 8px 18px rgba(10,37,64,0.05);
+  font-size: 0.82rem;
+  color: var(--princ-gray-700);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+.socio_leyenda-dot{
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 2px rgba(255,255,255,0.55);
+  background: rgba(10,37,64,0.18);
+}
+
+.socio_leyenda-dot.is-paid{ background: rgba(16,185,129,0.65); }
+.socio_leyenda-dot.is-due{ background: rgba(239,68,68,0.62); }
+
+/* Meses */
+.socio_meses-container{ margin-top: 8px; }
+
+.socio_meses-head{
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 4px;
+  margin-bottom: 8px;
+}
+
+.socio_meses-title{
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--princ-gray-800);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+.socio_meses-meta{
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.socio_meta-pill{
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: rgba(255,255,255,0.65);
+  box-shadow: 0 8px 18px rgba(10,37,64,0.06);
+  white-space: nowrap;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+.socio_meta-pill.is-paid{
+  color: var(--princ-success);
+  border-color: rgba(16,185,129,0.22);
+  background: rgba(16,185,129,0.10);
+}
+
+.socio_meta-pill.is-due{
+  color: var(--princ-danger);
+  border-color: rgba(239,68,68,0.22);
+  background: rgba(239,68,68,0.10);
+}
+
+.socio_meses-grid{
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.socio_mes-card{
+  border-radius: 14px;
+  padding: 10px 10px 9px;
+  border: 1px solid rgba(10,37,64,0.10);
+  background: rgba(255,255,255,0.70);
+  box-shadow: 0 10px 18px rgba(10,37,64,0.06);
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.socio_mes-card:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 16px 26px rgba(10,37,64,0.10);
+  border-color: rgba(0,85,187,0.18);
+}
+
+.socio_mes-top{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.socio_mes-name{
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--princ-gray-800);
+  letter-spacing: 0.01em;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+.socio_mes-dot{
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(10,37,64,0.18);
+  box-shadow: inset 0 0 0 2px rgba(255,255,255,0.55);
+}
+
+.socio_mes-bottom{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 6px;
+}
+
+/* Pagado / Pendiente */
+.socio_mes-card.is-paid{
+  border-color: rgba(16,185,129,0.22);
+  background: linear-gradient(135deg, rgba(16,185,129,0.10), rgba(255,255,255,0.72));
+}
+
+.socio_mes-card.is-paid .socio_mes-dot{ background: rgba(16,185,129,0.65); }
+
+.socio_mes-card.is-due{
+  border-color: rgba(239,68,68,0.22);
+  background: linear-gradient(135deg, rgba(239,68,68,0.10), rgba(255,255,255,0.72));
+}
+
+.socio_mes-card.is-due .socio_mes-dot{ background: rgba(239,68,68,0.62); }
+
+/* Responsive */
+@media (max-width: 768px){
+  .socio_container{ width: 95%; max-height: 85vh; }
+  .socio_meses-grid{ grid-template-columns: repeat(3, 1fr); }
+  .socio_info-grid{ grid-template-columns: 1fr; }
+
+  .socio_paybar{
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .socio_paybar-right{ justify-content: flex-start; }
+  .socio_year-chips{ justify-content: flex-start; }
+
+  .socio_meses-head{
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .socio_leyenda.socio_leyenda--right{
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 576px){
+  .socio_header{ padding: 16px; }
+  .socio_title{ font-size: 1.2rem; }
+  .socio_tab-content{ padding: 16px; }
+  .socio_info-card{ padding: 12px; }
+  .socio_meses-grid{ grid-template-columns: repeat(2, 1fr); }
+  .socio_tabs{ padding: 0 12px; }
+  .socio_tab{ padding: 10px 12px; font-size: 0.8rem; }
+}
+
+/* Animaciones */
+@keyframes socio_fadeIn{ from{ opacity: 0; } to{ opacity: 1; } }
+@keyframes socio_slideUp{
+  from{ transform: translateY(20px); opacity: 0; }
+  to{ transform: translateY(0); opacity: 1; }
+}
+@keyframes socio_spin{
+  from{ transform: rotate(0deg); }
+  to{ transform: rotate(360deg); }
+}

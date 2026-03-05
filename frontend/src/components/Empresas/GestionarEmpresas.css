@@ -520,8 +520,7 @@ input:-webkit-autofill { background-color: transparent !important; }
 /* IMPORTANTES PARA NO ROMPER WEB */
 .emp_cards-wrapper { display: none; }
 
-/* Responsive Desktop ancho fijo */
-@media (max-width: 1200px) { .emp_header, .emp_row { width: 1000px; } }
+
 
 /* ================================
    MOBILE — tarjetas + navbar fija

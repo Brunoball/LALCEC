@@ -1,10 +1,13 @@
+// ✅ REEMPLAZAR COMPLETO
+// ModalInfoEmpresa.jsx
+
 import React, { useState, useEffect, useMemo } from "react";
 import "./ModalInfoEmpresa.css";
 
 const ModalInfoEmpresa = ({
   infoEmpresa,
-  pagosPorAnio,      // { "2026": ["ENERO",...], "2027": [...] } — viene del fetch
-  cargandoPagos,     // booleano: true mientras fetchea
+  pagosPorAnio, // { "2026": ["ENERO",...], "2027": [...] }
+  cargandoPagos, // boolean
   onCerrar,
 }) => {
   const [modinfo_pestañaActiva, setModinfoPestañaActiva] = useState("general");
@@ -25,11 +28,15 @@ const ModalInfoEmpresa = ({
     if (!fechaStr) return new Date("2025-01-01T00:00:00-03:00");
     try {
       if (fechaStr instanceof Date && !isNaN(fechaStr.getTime())) return fechaStr;
+
       if (typeof fechaStr === "string") {
-        const fechaCompleta = fechaStr.includes("T") ? fechaStr : `${fechaStr}T00:00:00-03:00`;
+        const fechaCompleta = fechaStr.includes("T")
+          ? fechaStr
+          : `${fechaStr}T00:00:00-03:00`;
         const fecha = new Date(fechaCompleta);
         if (!isNaN(fecha.getTime())) return fecha;
       }
+
       const [year, month, day] = (fechaStr || "").split("-").map(Number);
       const fecha = new Date(year, (month || 1) - 1, day || 1);
       fecha.setMinutes(fecha.getMinutes() + fecha.getTimezoneOffset() + 180);
@@ -39,22 +46,39 @@ const ModalInfoEmpresa = ({
     }
   };
 
-  const fechaUnion = parseFechaArgentina(infoEmpresa?.Fechaunion || infoEmpresa?.fechaunion);
+  const fechaUnion = parseFechaArgentina(
+    infoEmpresa?.Fechaunion || infoEmpresa?.fechaunion
+  );
 
   const formatFecha = (fecha) =>
     fecha.toLocaleDateString("es-AR", {
       timeZone: "America/Argentina/Buenos_Aires",
-      day: "2-digit", month: "2-digit", year: "numeric",
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
     });
 
   const mesUnion = fechaUnion.getMonth();
   const añoUnion = fechaUnion.getFullYear();
   const añoActual = new Date().getFullYear();
 
-  const MESES_ANIO = useMemo(() => [
-    "ENERO","FEBRERO","MARZO","ABRIL","MAYO","JUNIO",
-    "JULIO","AGOSTO","SEPTIEMBRE","OCTUBRE","NOVIEMBRE","DICIEMBRE",
-  ], []);
+  const MESES_ANIO = useMemo(
+    () => [
+      "ENERO",
+      "FEBRERO",
+      "MARZO",
+      "ABRIL",
+      "MAYO",
+      "JUNIO",
+      "JULIO",
+      "AGOSTO",
+      "SEPTIEMBRE",
+      "OCTUBRE",
+      "NOVIEMBRE",
+      "DICIEMBRE",
+    ],
+    []
+  );
 
   // ─── Años disponibles — SOLO de pagosPorAnio ────────────────────────────────
   const aniosDisponibles = useMemo(() => {
@@ -84,7 +108,8 @@ const ModalInfoEmpresa = ({
   const mesesPagadosDelAnio = useMemo(() => {
     const y = anioSeleccionado;
     if (!y) return [];
-    if (!pagosPorAnio || typeof pagosPorAnio !== "object" || Array.isArray(pagosPorAnio)) return [];
+    if (!pagosPorAnio || typeof pagosPorAnio !== "object" || Array.isArray(pagosPorAnio))
+      return [];
     const arr = pagosPorAnio[y] ?? pagosPorAnio[String(y)] ?? [];
     return Array.isArray(arr)
       ? arr.map((m) => String(m).trim().toUpperCase()).filter(Boolean)
@@ -120,12 +145,15 @@ const ModalInfoEmpresa = ({
 
     const totalPagados = mesesPagadosDelAnio.length;
     const adelantado = totalPagados - mesesHastaAhora.length;
-    if (adelantado > 0) return `Adelantado (${adelantado} mes${adelantado > 1 ? "es" : ""})`;
+    if (adelantado > 0)
+      return `Adelantado (${adelantado} mes${adelantado > 1 ? "es" : ""})`;
     if (totalPagados >= 12) return "Año completo";
     return "Al día";
   };
 
   const estadoActual = calcularEstado();
+
+  const cantPendientes = Math.max(0, mesesAMostrar.length - mesesPagadosDelAnio.length);
 
   return (
     <div className="modinfo_overlay">
@@ -137,9 +165,23 @@ const ModalInfoEmpresa = ({
               CUIT: {infoEmpresa?.cuit} | {infoEmpresa?.razon_social}
             </p>
           </div>
-          <button className="modinfo_close-btn" onClick={onCerrar} aria-label="Cerrar modal">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-              fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+
+          <button
+            className="modinfo_close-btn"
+            onClick={onCerrar}
+            aria-label="Cerrar modal"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <line x1="18" y1="6" x2="6" y2="18"></line>
               <line x1="6" y1="6" x2="18" y2="18"></line>
             </svg>
@@ -148,14 +190,41 @@ const ModalInfoEmpresa = ({
 
         <div className="modinfo_content">
           <div className="modinfo_tabs">
-            <div className={`modinfo_tab ${modinfo_pestañaActiva === "general" ? "modinfo_active" : ""}`}
-              onClick={() => setModinfoPestañaActiva("general")}>General</div>
-            <div className={`modinfo_tab ${modinfo_pestañaActiva === "contacto" ? "modinfo_active" : ""}`}
-              onClick={() => setModinfoPestañaActiva("contacto")}>Contacto</div>
-            <div className={`modinfo_tab ${modinfo_pestañaActiva === "fiscal" ? "modinfo_active" : ""}`}
-              onClick={() => setModinfoPestañaActiva("fiscal")}>Datos Fiscales</div>
-            <div className={`modinfo_tab ${modinfo_pestañaActiva === "pagos" ? "modinfo_active" : ""}`}
-              onClick={() => setModinfoPestañaActiva("pagos")}>Estado de Pagos</div>
+            <div
+              className={`modinfo_tab ${
+                modinfo_pestañaActiva === "general" ? "modinfo_active" : ""
+              }`}
+              onClick={() => setModinfoPestañaActiva("general")}
+            >
+              General
+            </div>
+
+            <div
+              className={`modinfo_tab ${
+                modinfo_pestañaActiva === "contacto" ? "modinfo_active" : ""
+              }`}
+              onClick={() => setModinfoPestañaActiva("contacto")}
+            >
+              Contacto
+            </div>
+
+            <div
+              className={`modinfo_tab ${
+                modinfo_pestañaActiva === "fiscal" ? "modinfo_active" : ""
+              }`}
+              onClick={() => setModinfoPestañaActiva("fiscal")}
+            >
+              Datos Fiscales
+            </div>
+
+            <div
+              className={`modinfo_tab ${
+                modinfo_pestañaActiva === "pagos" ? "modinfo_active" : ""
+              }`}
+              onClick={() => setModinfoPestañaActiva("pagos")}
+            >
+              Estado de Pagos
+            </div>
           </div>
 
           {modinfo_pestañaActiva === "general" && (
@@ -163,30 +232,43 @@ const ModalInfoEmpresa = ({
               <div className="modinfo_info-grid">
                 <div className="modinfo_info-card">
                   <h3 className="modinfo_info-card-title">Información Básica</h3>
+
                   <div className="modinfo_info-item">
                     <span className="modinfo_info-label">Razón Social:</span>
-                    <span className="modinfo_info-value">{infoEmpresa?.razon_social || "-"}</span>
+                    <span className="modinfo_info-value">
+                      {infoEmpresa?.razon_social || "-"}
+                    </span>
                   </div>
+
                   <div className="modinfo_info-item">
                     <span className="modinfo_info-label">Categoría:</span>
                     <span className="modinfo_info-value">
-                      {infoEmpresa?.categoria || "-"} (${infoEmpresa?.precio_categoria || "0"})
+                      {infoEmpresa?.categoria || "-"} ($
+                      {infoEmpresa?.precio_categoria || "0"})
                     </span>
                   </div>
+
                   <div className="modinfo_info-item">
                     <span className="modinfo_info-label">Fecha de Alta:</span>
                     <span className="modinfo_info-value">{formatFecha(fechaUnion)}</span>
                   </div>
                 </div>
+
                 <div className="modinfo_info-card">
                   <h3 className="modinfo_info-card-title">Medio de Pago</h3>
+
                   <div className="modinfo_info-item">
                     <span className="modinfo_info-label">Método:</span>
-                    <span className="modinfo_info-value">{infoEmpresa?.medio_pago || "-"}</span>
+                    <span className="modinfo_info-value">
+                      {infoEmpresa?.medio_pago || "-"}
+                    </span>
                   </div>
+
                   <div className="modinfo_info-item modinfo_comentario">
                     <span className="modinfo_info-label">Observaciones:</span>
-                    <span className="modinfo_info-value">{infoEmpresa?.observacion || "-"}</span>
+                    <span className="modinfo_info-value">
+                      {infoEmpresa?.observacion || "-"}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -198,26 +280,37 @@ const ModalInfoEmpresa = ({
               <div className="modinfo_info-grid">
                 <div className="modinfo_info-card">
                   <h3 className="modinfo_info-card-title">Contacto</h3>
+
                   <div className="modinfo_info-item">
                     <span className="modinfo_info-label">Teléfono:</span>
-                    <span className="modinfo_info-value">{infoEmpresa?.telefono || "-"}</span>
+                    <span className="modinfo_info-value">
+                      {infoEmpresa?.telefono || "-"}
+                    </span>
                   </div>
+
                   <div className="modinfo_info-item">
                     <span className="modinfo_info-label">Email:</span>
-                    <span className="modinfo_info-value">{infoEmpresa?.email || "-"}</span>
+                    <span className="modinfo_info-value">
+                      {infoEmpresa?.email || "-"}
+                    </span>
                   </div>
                 </div>
+
                 <div className="modinfo_info-card">
                   <h3 className="modinfo_info-card-title">Direcciones</h3>
+
                   <div className="modinfo_info-item">
                     <span className="modinfo_info-label">Domicilio Legal:</span>
                     <span className="modinfo_info-value">
                       {infoEmpresa?.domicilio || "-"} {infoEmpresa?.numero || ""}
                     </span>
                   </div>
+
                   <div className="modinfo_info-item">
                     <span className="modinfo_info-label">Domicilio Cobro:</span>
-                    <span className="modinfo_info-value">{infoEmpresa?.domicilio_2 || "-"}</span>
+                    <span className="modinfo_info-value">
+                      {infoEmpresa?.domicilio_2 || "-"}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -229,13 +322,17 @@ const ModalInfoEmpresa = ({
               <div className="modinfo_info-grid">
                 <div className="modinfo_info-card modinfo_info-card-full">
                   <h3 className="modinfo_info-card-title">Datos Fiscales</h3>
+
                   <div className="modinfo_info-item">
                     <span className="modinfo_info-label">CUIT:</span>
                     <span className="modinfo_info-value">{infoEmpresa?.cuit || "-"}</span>
                   </div>
+
                   <div className="modinfo_info-item">
                     <span className="modinfo_info-label">Condición IVA:</span>
-                    <span className="modinfo_info-value">{infoEmpresa?.descripcion_iva || "-"}</span>
+                    <span className="modinfo_info-value">
+                      {infoEmpresa?.descripcion_iva || "-"}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -254,67 +351,102 @@ const ModalInfoEmpresa = ({
                     </div>
                   ) : (
                     <>
-                      {/* Selector de año */}
-                      <div className="modinfo_info-item" style={{ justifyContent: "space-between", gap: 10 }}>
-                        <span className="modinfo_info-label">Año:</span>
-                        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
-                          {aniosDisponibles.map((y) => (
-                            <button
-                              key={y}
-                              type="button"
-                              onClick={() => setAnioSeleccionado(y)}
-                              className={`modinfo_tab ${anioSeleccionado === y ? "modinfo_active" : ""}`}
-                              style={{ cursor: "pointer" }}
-                              title={`Ver pagos ${y}`}
-                            >
-                              {y}
-                            </button>
-                          ))}
+                      {/* ✅ Selector de año (nuevo look) */}
+                      <div className="estados_añoo_mes">
+                         <div className="modinfo_paybar">
+                        <div className="modinfo_paybar-left">
+                          <span className="modinfo_info-label">Año</span>
+                        </div>
+
+                        <div className="modinfo_paybar-right">
+                          <div className="modinfo_year-chips">
+                            {aniosDisponibles.map((y) => (
+                              <button
+                                key={y}
+                                type="button"
+                                onClick={() => setAnioSeleccionado(y)}
+                                className={`modinfo_year-chip ${
+                                  anioSeleccionado === y ? "is-active" : ""
+                                }`}
+                                title={`Ver pagos ${y}`}
+                              >
+                                {y}
+                              </button>
+                            ))}
+                          </div>
                         </div>
                       </div>
 
-                      {/* Estado actual */}
-                      <div className="modinfo_info-item">
-                        <span className="modinfo_info-label">Estado Actual:</span>
-                        <span className={`modinfo_info-value ${
-                          estadoActual.includes("Atrasado") ? "modinfo_text-danger"
-                          : estadoActual.includes("Adelantado") ? "modinfo_text-warning"
-                          : "modinfo_text-success"
-                        }`}>
+                      {/* ✅ Estado (badge pro) */}
+                      <div className="modinfo_status-row">
+                        <span className="modinfo_info-label">Estado</span>
+                        <span
+                          className={[
+                            "modinfo_status-badge",
+                            estadoActual.includes("Atrasado")
+                              ? "is-danger"
+                              : estadoActual.includes("Adelantado")
+                              ? "is-warning"
+                              : "is-success",
+                          ].join(" ")}
+                        >
                           {estadoActual}
                         </span>
                       </div>
+<div className="modinfo_leyenda modinfo_leyenda--right">
+  <div className="modinfo_leyenda-item">
+    <span className="modinfo_leyenda-dot is-paid" />
+    <span>Pagado</span>
+  </div>
 
-                      {/* Grilla de meses */}
+  <div className="modinfo_leyenda-item">
+    <span className="modinfo_leyenda-dot is-due" />
+    <span>Pendiente</span>
+  </div>
+</div>
+                      </div>
+                     
+
+                      {/* ✅ Meses (cards pro + contador) */}
                       <div className="modinfo_meses-container">
-                        <h4 className="modinfo_meses-title">Meses Pagados — {anioSeleccionado}</h4>
-                        <div className="modinfo_meses-grid">
+                        <div className="modinfo_meses-head">
+                          <h4 className="modinfo_meses-title">Meses — {anioSeleccionado}</h4>
+
+                          <div className="modinfo_meses-meta">
+                            <span className="modinfo_meta-pill is-paid">
+                              ✓ {mesesPagadosDelAnio.length} pagados
+                            </span>
+                            <span className="modinfo_meta-pill is-due">
+                              ✗ {cantPendientes} pendientes
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="modinfo_meses-grid modinfo_meses-grid--pretty">
                           {mesesAMostrar.map((mes, index) => {
                             const pagado = mesesPagadosDelAnio.includes(mes);
                             return (
                               <div
                                 key={index}
-                                className={`modinfo_mes-item ${pagado ? "modinfo_pagado" : "modinfo_adeudado"}`}
+                                className={`modinfo_mes-card ${pagado ? "is-paid" : "is-due"}`}
+                                title={pagado ? "Pagado" : "Pendiente"}
                               >
-                                {mes}
-                                <span className="modinfo_mes-icon">{pagado ? "✓" : "✗"}</span>
+                                <div className="modinfo_mes-top">
+                                  <span className="modinfo_mes-name">{mes}</span>
+                                  <span className="modinfo_mes-dot" />
+                                </div>
+
+                                <div className="modinfo_mes-bottom">
+
+                                </div>
                               </div>
                             );
                           })}
                         </div>
                       </div>
 
-                      {/* Leyenda */}
-                      <div className="modinfo_leyenda">
-                        <div className="modinfo_leyenda-item">
-                          <span className="modinfo_leyenda-color modinfo_pagado"></span>
-                          <span>Pagado</span>
-                        </div>
-                        <div className="modinfo_leyenda-item">
-                          <span className="modinfo_leyenda-color modinfo_adeudado"></span>
-                          <span>Pendiente</span>
-                        </div>
-                      </div>
+                      {/* Leyenda (queda mejor con el CSS nuevo) */}
+
                     </>
                   )}
                 </div>

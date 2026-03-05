@@ -246,8 +246,7 @@
   display: flex;
   justify-content: center;
   gap: 20px;
-  margin-top: 16px;
-  padding-top: 16px;
+
   border-top: 1px solid var(--princ-glass-border);
 }
 .modinfo_leyenda-item {
@@ -291,4 +290,448 @@
 @keyframes modinfo_slideUp {
   from { transform: translateY(20px); opacity: 0; }
   to   { transform: translateY(0);   opacity: 1; }
+}
+/* ==========================
+   ✅ MEJORA ESTÉTICA PAGOS
+   (pegá al final del CSS)
+========================== */
+
+/* Card de pagos más “premium” */
+.modinfo_info-card-full .modinfo_info-card-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Barra superior: selector de año */
+.modinfo_paybar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid var(--princ-glass-border);
+  box-shadow: 0 8px 18px rgba(10, 37, 64, 0.06);
+  margin-bottom: 12px;
+}
+
+.modinfo_paybar-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.modinfo_paybar-right {
+  display: flex;
+  justify-content: flex-end;
+  flex: 1;
+}
+
+.modinfo_year-chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.modinfo_year-chip {
+  border: 1px solid rgba(10, 37, 64, 0.14);
+  background: rgba(255, 255, 255, 0.65);
+  color: var(--princ-gray-700);
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  cursor: pointer;
+  transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease, border-color 180ms ease;
+  box-shadow: 0 6px 14px rgba(10, 37, 64, 0.05);
+}
+
+.modinfo_year-chip:hover {
+  transform: translateY(-1px);
+  border-color: rgba(0, 85, 187, 0.25);
+  box-shadow: 0 10px 18px rgba(0, 85, 187, 0.10);
+}
+
+.modinfo_year-chip.is-active {
+  border-color: rgba(0, 85, 187, 0.35);
+  color: var(--princ-primary);
+  font-weight: 600;
+}
+
+/* Estado badge */
+.modinfo_status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 12px 0 16px;
+  padding: 12px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid var(--princ-glass-border);
+  box-shadow: 0 8px 18px rgba(10, 37, 64, 0.06);
+}
+
+.modinfo_status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  border: 1px solid transparent;
+  box-shadow: 0 8px 18px rgba(10, 37, 64, 0.08);
+  white-space: nowrap;
+}
+
+.modinfo_status-badge.is-success {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.22);
+  color: var(--princ-success);
+}
+
+.modinfo_status-badge.is-warning {
+  background: rgba(245, 158, 11, 0.14);
+  border-color: rgba(245, 158, 11, 0.22);
+  color: var(--princ-warning);
+}
+
+.modinfo_status-badge.is-danger {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.22);
+  color: var(--princ-danger);
+}
+
+/* Header meses: título + meta pills */
+.modinfo_meses-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+  margin-bottom: 12px;
+}
+
+.modinfo_meses-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--princ-gray-800);
+}
+
+.modinfo_meses-meta {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.modinfo_meta-pill {
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: rgba(255, 255, 255, 0.65);
+  box-shadow: 0 8px 18px rgba(10, 37, 64, 0.06);
+  white-space: nowrap;
+}
+
+.modinfo_meta-pill.is-paid {
+  color: var(--princ-success);
+  border-color: rgba(16, 185, 129, 0.22);
+  background: rgba(16, 185, 129, 0.10);
+}
+
+.modinfo_meta-pill.is-due {
+  color: var(--princ-danger);
+  border-color: rgba(239, 68, 68, 0.22);
+  background: rgba(239, 68, 68, 0.10);
+}
+
+/* Grilla de meses “pro” */
+.modinfo_meses-grid--pretty {
+  gap: 12px;
+}
+
+.modinfo_mes-card {
+  border-radius: 14px;
+  padding: 10px 10px 9px;
+  border: 1px solid rgba(10, 37, 64, 0.10);
+  background: rgba(255, 255, 255, 0.70);
+  box-shadow: 0 10px 18px rgba(10, 37, 64, 0.06);
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.modinfo_mes-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 26px rgba(10, 37, 64, 0.10);
+  border-color: rgba(0, 85, 187, 0.18);
+}
+
+.modinfo_mes-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.modinfo_mes-name {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--princ-gray-800);
+  letter-spacing: 0.01em;
+}
+
+.modinfo_mes-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(10, 37, 64, 0.18);
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.55);
+}
+
+/* Bottom: chip + icon */
+.modinfo_mes-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.modinfo_mes-chip {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 5px 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(10, 37, 64, 0.12);
+  background: rgba(255, 255, 255, 0.60);
+  color: var(--princ-gray-700);
+}
+
+.modinfo_mes-icon {
+  font-size: 0.95rem;
+  font-weight: 900;
+  opacity: 0.95;
+}
+
+/* Variantes pagado/pendiente */
+.modinfo_mes-card.is-paid {
+  border-color: rgba(16, 185, 129, 0.22);
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.10), rgba(255, 255, 255, 0.72));
+}
+
+.modinfo_mes-card.is-paid .modinfo_mes-dot {
+  background: rgba(16, 185, 129, 0.65);
+}
+
+.modinfo_mes-card.is-paid .modinfo_mes-chip {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.22);
+  color: var(--princ-success);
+}
+
+.modinfo_mes-card.is-paid .modinfo_mes-icon {
+  color: var(--princ-success);
+}
+
+.modinfo_mes-card.is-due {
+  border-color: rgba(239, 68, 68, 0.22);
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.10), rgba(255, 255, 255, 0.72));
+}
+
+.modinfo_mes-card.is-due .modinfo_mes-dot {
+  background: rgba(239, 68, 68, 0.62);
+}
+
+.modinfo_mes-card.is-due .modinfo_mes-chip {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.22);
+  color: var(--princ-danger);
+}
+
+.modinfo_mes-card.is-due .modinfo_mes-icon {
+  color: var(--princ-danger);
+}
+
+/* Leyenda un poco más fina */
+
+
+.modinfo_leyenda-item {
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(10, 37, 64, 0.10);
+  box-shadow: 0 8px 18px rgba(10, 37, 64, 0.05);
+}
+
+/* Responsive: mejor lectura en móviles */
+@media (max-width: 768px) {
+  .modinfo_paybar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .modinfo_paybar-right {
+    justify-content: flex-start;
+  }
+  .modinfo_year-chips {
+    justify-content: flex-start;
+  }
+  .modinfo_meses-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}/* =========================
+   Compactar Año + Estado
+========================= */
+
+.modinfo_paybar,
+.modinfo_status-row{
+  padding: 6px 10px;           /* antes ~12px */
+  min-height: 36px;
+  border-radius: 10px;
+}
+
+/* reducir tamaño del texto */
+.modinfo_paybar .modinfo_info-label,
+.modinfo_status-row .modinfo_info-label{
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+/* reducir chips de año */
+.modinfo_year-chip{
+  padding: 4px 10px;
+  font-size: 0.78rem;
+  border-radius: 999px;
+}
+
+/* reducir badge estado */
+.modinfo_status-badge{
+  padding: 4px 10px;
+  font-size: 0.78rem;
+}
+
+/* reducir separación vertical */
+.modinfo_status-row{
+  margin: 6px 0 10px;
+}
+
+/* contenedor de meses más pegado */
+.modinfo_meses-head{
+  margin-top: 6px;
+  margin-bottom: 8px;
+}
+
+/* pills de pagados/pendientes más chicas */
+.modinfo_meta-pill{
+  padding: 4px 8px;
+  font-size: 0.72rem;
+}/* =========================
+   PAGOS: recortar espacio vertical real
+   (pegar al final)
+========================= */
+
+/* 1) El card grande de pagos: menos padding */
+.modinfo_tab-content.modinfo_active .modinfo_info-card.modinfo_info-card-full{
+  padding: 12px !important;        /* antes 16px */
+}
+
+/* 2) Título "Estado de Pagos": menos margen */
+.modinfo_tab-content.modinfo_active .modinfo_info-card-title{
+ display: none;
+}
+.estados_añoo_mes{
+  display: flex;
+}
+
+/* 3) El grid dentro de pagos: menos gap y menos margen inferior */
+.modinfo_tab-content.modinfo_active .modinfo_info-grid{
+  gap: 12px !important;            /* antes 20px */
+  margin-bottom: 10px !important;  /* antes 24px */
+}
+
+/* 4) Las dos “barras” (Año y Estado): menos padding y sobre todo menos margin */
+.modinfo_paybar,
+.modinfo_status-row{
+  padding: 6px 10px !important;
+  min-height: 34px !important;
+  border-radius: 10px !important;
+  margin: 6px 0 !important;        /* CLAVE: recorta el aire */
+}
+
+/* Si alguna te quedó con margin-bottom grande, esto lo pisa */
+.modinfo_paybar{ margin-bottom: 6px !important; }
+.modinfo_status-row{ margin-bottom: 8px !important; }
+
+/* 5) El contenedor de "Meses—2025": que arranque más arriba */
+.modinfo_meses-container{
+  margin-top: 8px !important;      /* antes 20px */
+}
+
+/* 6) Head de meses: menos margen */
+.modinfo_meses-head{
+  margin-top: 4px !important;
+  margin-bottom: 8px !important;
+}/* =========================
+   LEYENDA: dots + a la derecha
+   (pegar al final)
+========================= */
+
+.modinfo_leyenda.modinfo_leyenda--right{
+     /* ✅ pegado a la derecha */
+     height: fit-content;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+  padding-top: 8px;
+
+}
+
+.modinfo_leyenda-item{
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(10, 37, 64, 0.10);
+  box-shadow: 0 8px 18px rgba(10, 37, 64, 0.05);
+  font-size: 0.82rem;
+  color: var(--princ-gray-700);
+}
+
+/* ✅ Dot tipo “meses” */
+.modinfo_leyenda-dot{
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.55);
+  background: rgba(10, 37, 64, 0.18);
+}
+
+/* Colores iguales a los meses */
+.modinfo_leyenda-dot.is-paid{
+  background: rgba(16, 185, 129, 0.65);
+}
+
+.modinfo_leyenda-dot.is-due{
+  background: rgba(239, 68, 68, 0.62);
+}
+
+/* En mobile que no quede raro: sigue a la derecha pero permite wrap prolijo */
+@media (max-width: 768px){
+  .modinfo_leyenda.modinfo_leyenda--right{
+    flex-wrap: wrap;
+    gap: 8px;
+  }
 }
