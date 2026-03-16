@@ -6,8 +6,8 @@ import "./ModalInfoEmpresa.css";
 
 const ModalInfoEmpresa = ({
   infoEmpresa,
-  pagosPorAnio, // { "2026": ["ENERO",...], "2027": [...] }
-  cargandoPagos, // boolean
+  pagosPorAnio, // { "2025": ["ENERO",...], "2026": [...] }
+  cargandoPagos,
   onCerrar,
 }) => {
   const [modinfo_pestañaActiva, setModinfoPestañaActiva] = useState("general");
@@ -20,19 +20,24 @@ const ModalInfoEmpresa = ({
         onCerrar?.();
       }
     };
+
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [onCerrar]);
 
   const parseFechaArgentina = (fechaStr) => {
     if (!fechaStr) return new Date("2025-01-01T00:00:00-03:00");
+
     try {
-      if (fechaStr instanceof Date && !isNaN(fechaStr.getTime())) return fechaStr;
+      if (fechaStr instanceof Date && !isNaN(fechaStr.getTime())) {
+        return fechaStr;
+      }
 
       if (typeof fechaStr === "string") {
         const fechaCompleta = fechaStr.includes("T")
           ? fechaStr
           : `${fechaStr}T00:00:00-03:00`;
+
         const fecha = new Date(fechaCompleta);
         if (!isNaN(fecha.getTime())) return fecha;
       }
@@ -40,7 +45,10 @@ const ModalInfoEmpresa = ({
       const [year, month, day] = (fechaStr || "").split("-").map(Number);
       const fecha = new Date(year, (month || 1) - 1, day || 1);
       fecha.setMinutes(fecha.getMinutes() + fecha.getTimezoneOffset() + 180);
-      return !isNaN(fecha.getTime()) ? fecha : new Date("2025-01-01T00:00:00-03:00");
+
+      return !isNaN(fecha.getTime())
+        ? fecha
+        : new Date("2025-01-01T00:00:00-03:00");
     } catch {
       return new Date("2025-01-01T00:00:00-03:00");
     }
@@ -58,9 +66,12 @@ const ModalInfoEmpresa = ({
       year: "numeric",
     });
 
-  const mesUnion = fechaUnion.getMonth();
+  const ahora = new Date();
+  const añoActual = ahora.getFullYear();
+  const mesActual = ahora.getMonth(); // 0..11
+
   const añoUnion = fechaUnion.getFullYear();
-  const añoActual = new Date().getFullYear();
+  const mesUnion = fechaUnion.getMonth(); // 0..11
 
   const MESES_ANIO = useMemo(
     () => [
@@ -80,80 +91,139 @@ const ModalInfoEmpresa = ({
     []
   );
 
-  // ─── Años disponibles — SOLO de pagosPorAnio ────────────────────────────────
+  const pagosNormalizados = useMemo(() => {
+    if (!pagosPorAnio || typeof pagosPorAnio !== "object" || Array.isArray(pagosPorAnio)) {
+      return {};
+    }
+
+    const out = {};
+
+    Object.entries(pagosPorAnio).forEach(([anio, meses]) => {
+      const key = String(anio);
+      out[key] = Array.isArray(meses)
+        ? [...new Set(meses.map((m) => String(m).trim().toUpperCase()).filter(Boolean))]
+        : [];
+    });
+
+    return out;
+  }, [pagosPorAnio]);
+
+  // ✅ Años visibles en tabs/chips:
+  // - todos los años que vinieron con pagos
+  // - año de alta
+  // - año actual
   const aniosDisponibles = useMemo(() => {
-    const valido =
-      pagosPorAnio &&
-      typeof pagosPorAnio === "object" &&
-      !Array.isArray(pagosPorAnio) &&
-      Object.keys(pagosPorAnio).length > 0;
+    const setAnios = new Set();
 
-    if (!valido) return [añoActual];
+    Object.keys(pagosNormalizados).forEach((k) => {
+      const n = parseInt(k, 10);
+      if (Number.isFinite(n) && n > 0) setAnios.add(n);
+    });
 
-    return Object.keys(pagosPorAnio)
-      .map((k) => parseInt(k, 10))
-      .filter((n) => Number.isFinite(n) && n > 0)
-      .sort((a, b) => b - a);
-  }, [pagosPorAnio, añoActual]);
+    if (Number.isFinite(añoUnion)) setAnios.add(añoUnion);
+    if (Number.isFinite(añoActual)) setAnios.add(añoActual);
+
+    return Array.from(setAnios).sort((a, b) => b - a);
+  }, [pagosNormalizados, añoUnion, añoActual]);
 
   useEffect(() => {
-    if (aniosDisponibles.length === 0) return;
-    if (!anioSeleccionado || !aniosDisponibles.includes(anioSeleccionado)) {
-      setAnioSeleccionado(aniosDisponibles[0]);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [aniosDisponibles]);
+    if (!aniosDisponibles.length) return;
 
-  // ─── Meses pagados del año seleccionado — NUNCA mezcla años ─────────────────
+    if (!anioSeleccionado || !aniosDisponibles.includes(anioSeleccionado)) {
+      setAnioSeleccionado(añoActual);
+    }
+  }, [aniosDisponibles, anioSeleccionado, añoActual]);
+
+  // ✅ Meses pagados SOLO del año que estás mirando
   const mesesPagadosDelAnio = useMemo(() => {
     const y = anioSeleccionado;
     if (!y) return [];
-    if (!pagosPorAnio || typeof pagosPorAnio !== "object" || Array.isArray(pagosPorAnio))
-      return [];
-    const arr = pagosPorAnio[y] ?? pagosPorAnio[String(y)] ?? [];
-    return Array.isArray(arr)
-      ? arr.map((m) => String(m).trim().toUpperCase()).filter(Boolean)
-      : [];
-  }, [anioSeleccionado, pagosPorAnio]);
 
-  // ─── Meses a mostrar ─────────────────────────────────────────────────────────
+    return pagosNormalizados[String(y)] || [];
+  }, [anioSeleccionado, pagosNormalizados]);
+
+  // ✅ Meses que se muestran en la grilla del año seleccionado
   const mesesAMostrar = useMemo(() => {
     const y = anioSeleccionado ?? añoActual;
-    if (y === añoUnion) return MESES_ANIO.slice(mesUnion);
+
+    // Si mira el año de alta, arrancar desde el mes de alta
+    if (y === añoUnion) {
+      return MESES_ANIO.slice(mesUnion);
+    }
+
+    // Si es un año anterior al alta, no mostrar nada
+    if (y < añoUnion) {
+      return [];
+    }
+
     return MESES_ANIO;
   }, [anioSeleccionado, añoActual, añoUnion, mesUnion, MESES_ANIO]);
 
-  // ─── Estado ──────────────────────────────────────────────────────────────────
-  const calcularEstado = () => {
-    const ahora = new Date();
-    const mesActual = ahora.getMonth();
-    const ySel = anioSeleccionado ?? añoActual;
-    let mesesHastaAhora = [];
+  // ✅ TODOS los meses exigibles desde fecha de alta hasta HOY
+  const mesesExigiblesGlobales = useMemo(() => {
+    const arr = [];
 
-    if (ySel < añoActual) {
-      mesesHastaAhora = ySel === añoUnion ? MESES_ANIO.slice(mesUnion) : MESES_ANIO;
-    } else if (ySel === añoActual) {
-      const desde = añoUnion === añoActual ? mesUnion : 0;
-      mesesHastaAhora = MESES_ANIO.slice(desde, mesActual + 1);
-    } else {
-      return "Sin vencimientos";
+    for (let anio = añoUnion; anio <= añoActual; anio++) {
+      let desdeMes = 0;
+      let hastaMes = 11;
+
+      if (anio === añoUnion) desdeMes = mesUnion;
+      if (anio === añoActual) hastaMes = mesActual;
+
+      for (let i = desdeMes; i <= hastaMes; i++) {
+        arr.push({
+          anio,
+          mes: MESES_ANIO[i],
+        });
+      }
     }
 
-    const setPag = new Set(mesesPagadosDelAnio);
-    const deuda = mesesHastaAhora.filter((mes) => !setPag.has(mes)).length;
-    if (deuda > 0) return `Atrasado ${deuda} mes${deuda > 1 ? "es" : ""}`;
+    return arr;
+  }, [añoUnion, añoActual, mesUnion, mesActual, MESES_ANIO]);
 
-    const totalPagados = mesesPagadosDelAnio.length;
-    const adelantado = totalPagados - mesesHastaAhora.length;
-    if (adelantado > 0)
-      return `Adelantado (${adelantado} mes${adelantado > 1 ? "es" : ""})`;
-    if (totalPagados >= 12) return "Año completo";
+  // ✅ Total de pagos cargados en todos los años
+  const totalPagosGlobales = useMemo(() => {
+    return Object.values(pagosNormalizados).reduce((acc, meses) => {
+      return acc + (Array.isArray(meses) ? meses.length : 0);
+    }, 0);
+  }, [pagosNormalizados]);
+
+  // ✅ Cantidad de meses exigibles impagos hasta HOY
+  const deudaGlobal = useMemo(() => {
+    let deuda = 0;
+
+    mesesExigiblesGlobales.forEach(({ anio, mes }) => {
+      const pagosDelAnio = pagosNormalizados[String(anio)] || [];
+      if (!pagosDelAnio.includes(mes)) {
+        deuda++;
+      }
+    });
+
+    return deuda;
+  }, [mesesExigiblesGlobales, pagosNormalizados]);
+
+  // ✅ Adelantos: pagos cargados por encima de lo exigible hasta HOY
+  const adelantadoGlobal = useMemo(() => {
+    return Math.max(0, totalPagosGlobales - mesesExigiblesGlobales.length);
+  }, [totalPagosGlobales, mesesExigiblesGlobales.length]);
+
+  const estadoActual = useMemo(() => {
+    if (deudaGlobal > 0) {
+      return `Atrasado ${deudaGlobal} mes${deudaGlobal > 1 ? "es" : ""}`;
+    }
+
+    if (adelantadoGlobal > 0) {
+      return `Adelantado (${adelantadoGlobal} mes${adelantadoGlobal > 1 ? "es" : ""})`;
+    }
+
     return "Al día";
-  };
+  }, [deudaGlobal, adelantadoGlobal]);
 
-  const estadoActual = calcularEstado();
-
-  const cantPendientes = Math.max(0, mesesAMostrar.length - mesesPagadosDelAnio.length);
+  // ✅ Pendientes SOLO visuales del año seleccionado
+  const cantPendientes = useMemo(() => {
+    const setPag = new Set(mesesPagadosDelAnio);
+    return mesesAMostrar.filter((mes) => !setPag.has(mes)).length;
+  }, [mesesAMostrar, mesesPagadosDelAnio]);
 
   return (
     <div className="modinfo_overlay">
@@ -243,8 +313,7 @@ const ModalInfoEmpresa = ({
                   <div className="modinfo_info-item">
                     <span className="modinfo_info-label">Categoría:</span>
                     <span className="modinfo_info-value">
-                      {infoEmpresa?.categoria || "-"} ($
-                      {infoEmpresa?.precio_categoria || "0"})
+                      {infoEmpresa?.categoria || "-"} (${infoEmpresa?.precio_categoria || "0"})
                     </span>
                   </div>
 
@@ -351,63 +420,60 @@ const ModalInfoEmpresa = ({
                     </div>
                   ) : (
                     <>
-                      {/* ✅ Selector de año (nuevo look) */}
                       <div className="estados_añoo_mes">
-                         <div className="modinfo_paybar">
-                        <div className="modinfo_paybar-left">
-                          <span className="modinfo_info-label">Año</span>
+                        <div className="modinfo_paybar">
+                          <div className="modinfo_paybar-left">
+                            <span className="modinfo_info-label">Año</span>
+                          </div>
+
+                          <div className="modinfo_paybar-right">
+                            <div className="modinfo_year-chips">
+                              {aniosDisponibles.map((y) => (
+                                <button
+                                  key={y}
+                                  type="button"
+                                  onClick={() => setAnioSeleccionado(y)}
+                                  className={`modinfo_year-chip ${
+                                    anioSeleccionado === y ? "is-active" : ""
+                                  }`}
+                                  title={`Ver pagos ${y}`}
+                                >
+                                  {y}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
                         </div>
 
-                        <div className="modinfo_paybar-right">
-                          <div className="modinfo_year-chips">
-                            {aniosDisponibles.map((y) => (
-                              <button
-                                key={y}
-                                type="button"
-                                onClick={() => setAnioSeleccionado(y)}
-                                className={`modinfo_year-chip ${
-                                  anioSeleccionado === y ? "is-active" : ""
-                                }`}
-                                title={`Ver pagos ${y}`}
-                              >
-                                {y}
-                              </button>
-                            ))}
+                        <div className="modinfo_status-row">
+                          <span className="modinfo_info-label">Estado</span>
+                          <span
+                            className={[
+                              "modinfo_status-badge",
+                              estadoActual.includes("Atrasado")
+                                ? "is-danger"
+                                : estadoActual.includes("Adelantado")
+                                ? "is-warning"
+                                : "is-success",
+                            ].join(" ")}
+                          >
+                            {estadoActual}
+                          </span>
+                        </div>
+
+                        <div className="modinfo_leyenda modinfo_leyenda--right">
+                          <div className="modinfo_leyenda-item">
+                            <span className="modinfo_leyenda-dot is-paid" />
+                            <span>Pagado</span>
+                          </div>
+
+                          <div className="modinfo_leyenda-item">
+                            <span className="modinfo_leyenda-dot is-due" />
+                            <span>Pendiente</span>
                           </div>
                         </div>
                       </div>
 
-                      {/* ✅ Estado (badge pro) */}
-                      <div className="modinfo_status-row">
-                        <span className="modinfo_info-label">Estado</span>
-                        <span
-                          className={[
-                            "modinfo_status-badge",
-                            estadoActual.includes("Atrasado")
-                              ? "is-danger"
-                              : estadoActual.includes("Adelantado")
-                              ? "is-warning"
-                              : "is-success",
-                          ].join(" ")}
-                        >
-                          {estadoActual}
-                        </span>
-                      </div>
-<div className="modinfo_leyenda modinfo_leyenda--right">
-  <div className="modinfo_leyenda-item">
-    <span className="modinfo_leyenda-dot is-paid" />
-    <span>Pagado</span>
-  </div>
-
-  <div className="modinfo_leyenda-item">
-    <span className="modinfo_leyenda-dot is-due" />
-    <span>Pendiente</span>
-  </div>
-</div>
-                      </div>
-                     
-
-                      {/* ✅ Meses (cards pro + contador) */}
                       <div className="modinfo_meses-container">
                         <div className="modinfo_meses-head">
                           <h4 className="modinfo_meses-title">Meses — {anioSeleccionado}</h4>
@@ -425,9 +491,10 @@ const ModalInfoEmpresa = ({
                         <div className="modinfo_meses-grid modinfo_meses-grid--pretty">
                           {mesesAMostrar.map((mes, index) => {
                             const pagado = mesesPagadosDelAnio.includes(mes);
+
                             return (
                               <div
-                                key={index}
+                                key={`${anioSeleccionado}-${mes}-${index}`}
                                 className={`modinfo_mes-card ${pagado ? "is-paid" : "is-due"}`}
                                 title={pagado ? "Pagado" : "Pendiente"}
                               >
@@ -436,17 +503,12 @@ const ModalInfoEmpresa = ({
                                   <span className="modinfo_mes-dot" />
                                 </div>
 
-                                <div className="modinfo_mes-bottom">
-
-                                </div>
+                                <div className="modinfo_mes-bottom"></div>
                               </div>
                             );
                           })}
                         </div>
                       </div>
-
-                      {/* Leyenda (queda mejor con el CSS nuevo) */}
-
                     </>
                   )}
                 </div>
