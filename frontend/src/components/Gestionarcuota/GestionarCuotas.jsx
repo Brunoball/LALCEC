@@ -1,6 +1,3 @@
-// ✅ REEMPLAZAR COMPLETO
-// src/components/Cuotas/GestionarCuotas.jsx
-
 import React, {
   useState,
   useEffect,
@@ -39,6 +36,7 @@ import ModalMesCuotas from "./modalcuotas/ModalMesCuotas";
 import ModalPagos from "./modalcuotas/ModalPagos";
 import ModalPagosEmpresas from "./modalcuotas/ModalPagosEmpresas";
 import ModalEliminarPago from "./modalcuotas/ModalEliminarPago";
+import ModalPagosMasivos from "./modalcuotas/ModalPagosMasivos";
 
 import BASE_URL from "../../config/config";
 import Toast from "../global/Toast";
@@ -66,6 +64,64 @@ api.interceptors.response.use(
     return Promise.reject({ ...error, message: msg, server, status });
   }
 );
+
+const bulkBarStyles = {
+  container: {
+    margin: "10px 16px 0 16px",
+    padding: "12px 14px",
+    borderRadius: "14px",
+    border: "1px solid #dbe4ff",
+    background: "linear-gradient(135deg, #f8fbff 0%, #eef4ff 100%)",
+    display: "flex",
+    gap: "12px",
+    alignItems: "center",
+    justifyContent: "space-between",
+    flexWrap: "wrap",
+  },
+  info: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "4px",
+    minWidth: "220px",
+    flex: "1 1 260px",
+  },
+  title: {
+    fontSize: "14px",
+    fontWeight: 700,
+    color: "#1f2937",
+  },
+  subtitle: {
+    fontSize: "12px",
+    color: "#4b5563",
+  },
+  actions: {
+    display: "flex",
+    gap: "8px",
+    flexWrap: "wrap",
+    justifyContent: "flex-end",
+    flex: "1 1 360px",
+  },
+  button: {
+    border: "none",
+    borderRadius: "10px",
+    padding: "10px 12px",
+    fontSize: "13px",
+    fontWeight: 600,
+    cursor: "pointer",
+    background: "#e5e7eb",
+    color: "#1f2937",
+  },
+  buttonPrimary: {
+    border: "none",
+    borderRadius: "10px",
+    padding: "10px 14px",
+    fontSize: "13px",
+    fontWeight: 700,
+    cursor: "pointer",
+    background: "#2563eb",
+    color: "#fff",
+  },
+};
 
 const LoadingIndicator = memo(() => (
   <div className="gcuotas-loading-container">
@@ -127,10 +183,16 @@ const Outer = React.forwardRef((props, ref) => {
     return () => resizeObs.disconnect();
   }, []);
 
-  return <div ref={setRef} className={`gcuotas-viewport ${className || ""}`} {...rest} />;
+  return (
+    <div
+      ref={setRef}
+      className={`gcuotas-viewport ${className || ""}`}
+      {...rest}
+    />
+  );
 });
 
-// ===== Fila virtualizada (selección por ID) =====
+// ===== Fila virtualizada =====
 const Row = memo(
   ({
     index,
@@ -144,15 +206,34 @@ const Row = memo(
     onPrintClick,
     onDeletePaymentClick,
     getItemId,
+    bulkMode,
+    bulkSelectedIds,
+    onBulkToggle,
   }) => {
     const item = data[index];
     const itemId = item ? getItemId(item) : null;
+
+    const isBulkSelected =
+      bulkMode && itemId != null && bulkSelectedIds?.has(itemId);
+
     const isSelected =
-      selectedId != null && itemId != null && selectedId === itemId;
+      bulkMode
+        ? isBulkSelected
+        : selectedId != null && itemId != null && selectedId === itemId;
+
     const rowClass = isSelected ? "gcuotas-selected-row" : "";
 
+    const handleRowMainClick = () => {
+      if (!item) return;
+      if (bulkMode) {
+        onBulkToggle(item);
+      } else {
+        onRowClick(item);
+      }
+    };
+
     const actionButtons = useMemo(() => {
-      if (!isSelected) return null;
+      if (bulkMode || !isSelected) return null;
       const canDeletePago = activeTab === "pagado";
 
       return (
@@ -197,6 +278,7 @@ const Row = memo(
       );
     }, [
       activeTab,
+      bulkMode,
       isSelected,
       item,
       onPaymentClick,
@@ -212,6 +294,12 @@ const Row = memo(
             viewType === "empresa" ? "gempresas" : "gsocios"
           }`}
         >
+          {bulkMode && (
+            <div
+              className="gcuotas-virtual-cell"
+              style={{ maxWidth: 72, minWidth: 72 }}
+            />
+          )}
           <div className="gcuotas-virtual-cell">Cargando...</div>
           {viewType === "socio" && <div className="gcuotas-virtual-cell"></div>}
           <div className="gcuotas-virtual-cell"></div>
@@ -227,8 +315,28 @@ const Row = memo(
         className={`gcuotas-virtual-row ${rowClass} ${
           viewType === "empresa" ? "gempresas" : "gsocios"
         }`}
-        onClick={() => onRowClick(item)}
+        onClick={handleRowMainClick}
       >
+        {bulkMode && (
+          <div
+            className="gcuotas-virtual-cell"
+            style={{
+              maxWidth: 72,
+              minWidth: 72,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={!!isBulkSelected}
+              onClick={(e) => e.stopPropagation()}
+              onChange={() => onBulkToggle(item)}
+            />
+          </div>
+        )}
+
         {viewType === "socio" ? (
           <>
             <div className="gcuotas-virtual-cell">{item.apellido}</div>
@@ -262,7 +370,9 @@ const Row = memo(
     prev.data === next.data &&
     prev.selectedId === next.selectedId &&
     prev.viewType === next.viewType &&
-    prev.activeTab === next.activeTab
+    prev.activeTab === next.activeTab &&
+    prev.bulkMode === next.bulkMode &&
+    prev.bulkSelectedIds === next.bulkSelectedIds
 );
 
 const GestionarCuotas = () => {
@@ -299,12 +409,18 @@ const GestionarCuotas = () => {
   const [mostrarModalPagoEmpresa, setMostrarModalPagoEmpresa] =
     useState(false);
 
+  const [mostrarModalPagoMasivo, setMostrarModalPagoMasivo] = useState(false);
+  const [itemsPagoMasivo, setItemsPagoMasivo] = useState([]);
+
   const [mostrarModalEliminarPago, setMostrarModalEliminarPago] =
     useState(false);
   const [itemEliminarPago, setItemEliminarPago] = useState(null);
 
   // ===== UI =====
-  const [selectedId, setSelectedId] = useState(null); // ✅ selección por ID
+  const [selectedId, setSelectedId] = useState(null); // selección individual
+  const [bulkMode, setBulkMode] = useState(false);
+  const [selectedIdsBulk, setSelectedIdsBulk] = useState([]);
+
   const [loading, setLoading] = useState({
     socios: false,
     empresas: false,
@@ -372,22 +488,21 @@ const GestionarCuotas = () => {
     [showToast]
   );
 
-  // ID robusto (ajustable a tu backend)
+  // ID robusto
   const getItemId = useCallback(
     (item) => {
       if (!item) return null;
       if (viewType === "socio") {
         return item.idSocios ?? item.id_socio ?? item.id ?? item.idSocio ?? null;
       }
-      return (
-        item.idEmp ??
-        item.id_empresa ??
-        item.idEmpresa ??
-        item.id ??
-        null
-      );
+      return item.idEmp ?? item.id_empresa ?? item.idEmpresa ?? item.id ?? null;
     },
     [viewType]
+  );
+
+  const selectedIdsBulkSet = useMemo(
+    () => new Set(selectedIdsBulk),
+    [selectedIdsBulk]
   );
 
   // Formateo datos
@@ -410,6 +525,7 @@ const GestionarCuotas = () => {
         : Array.isArray(data?.anios)
         ? data.anios
         : [];
+
       const norm = lista
         .map((a) =>
           typeof a === "object" ? a.anio ?? a.year ?? a.y ?? a.value : a
@@ -477,6 +593,7 @@ const GestionarCuotas = () => {
           : Array.isArray(data?.meses)
           ? data.meses
           : [];
+
         cacheRef.current.meses[key] = lista;
 
         if (selectedMonth && !lista.some((m) => m.mes === selectedMonth)) {
@@ -492,6 +609,7 @@ const GestionarCuotas = () => {
         setLoading((prev) => ({ ...prev, meses: false }));
       }
     };
+
     fetchMeses();
   }, [selectedYear, selectedMonth, showErrorToast]);
 
@@ -502,6 +620,7 @@ const GestionarCuotas = () => {
         setMediosPago(cacheRef.current.mediosPago);
         return;
       }
+
       setLoading((prev) => ({ ...prev, mediosPago: true }));
       try {
         const data = await api.get("/api.php?action=obtener_datos");
@@ -527,6 +646,7 @@ const GestionarCuotas = () => {
         setLoading((prev) => ({ ...prev, mediosPago: false }));
       }
     };
+
     fetchMediosPago();
   }, [showErrorToast]);
 
@@ -541,6 +661,7 @@ const GestionarCuotas = () => {
       const key = cacheKey(anio, mes);
       const now = Date.now();
       const cache = cacheRef.current.socios;
+
       const isValid =
         !force &&
         cache.lastUpdated[key] &&
@@ -567,11 +688,14 @@ const GestionarCuotas = () => {
             )}${qpYear}`
           ),
         ]);
+
         const p = formatData(pagados);
         const d = formatData(deudores);
+
         cacheRef.current.socios.pagado[key] = p;
         cacheRef.current.socios.deudor[key] = d;
         cacheRef.current.socios.lastUpdated[key] = Date.now();
+
         setSociosPagados(p);
         setSociosDeudores(d);
       } catch (e) {
@@ -593,6 +717,7 @@ const GestionarCuotas = () => {
       const key = cacheKey(anio, mes);
       const now = Date.now();
       const cache = cacheRef.current.empresas;
+
       const isValid =
         !force &&
         cache.lastUpdated[key] &&
@@ -619,11 +744,14 @@ const GestionarCuotas = () => {
             )}${qpYear}`
           ),
         ]);
+
         const p = formatData(pagadas);
         const d = formatData(deudoras);
+
         cacheRef.current.empresas.pagado[key] = p;
         cacheRef.current.empresas.deudor[key] = d;
         cacheRef.current.empresas.lastUpdated[key] = Date.now();
+
         setEmpresasPagadas(p);
         setEmpresasDeudoras(d);
       } catch (e) {
@@ -690,17 +818,55 @@ const GestionarCuotas = () => {
     return filterDataGeneric(datosCrudosBase);
   }, [filtrosCompletos, datosCrudosBase, filterDataGeneric]);
 
+  // ✅ ahora la selección masiva se mantiene aunque cambies el buscador
+  const selectedItemsBulk = useMemo(() => {
+    if (!bulkMode || selectedIdsBulk.length === 0) return [];
+    const ids = new Set(selectedIdsBulk);
+    return datosCrudosBase.filter((item) => ids.has(getItemId(item)));
+  }, [bulkMode, selectedIdsBulk, datosCrudosBase, getItemId]);
+
+  const selectedVisibleCount = useMemo(() => {
+    if (!bulkMode || selectedIdsBulk.length === 0) return 0;
+    return datosFiltrados.reduce((acc, item) => {
+      const id = getItemId(item);
+      return acc + (selectedIdsBulkSet.has(id) ? 1 : 0);
+    }, 0);
+  }, [
+    bulkMode,
+    selectedIdsBulk.length,
+    datosFiltrados,
+    getItemId,
+    selectedIdsBulkSet,
+  ]);
+
+  const hiddenSelectedCount = useMemo(
+    () => Math.max(selectedIdsBulk.length - selectedVisibleCount, 0),
+    [selectedIdsBulk.length, selectedVisibleCount]
+  );
+
   const countPagados = useMemo(() => {
     if (!filtrosCompletos) return 0;
     const base = viewType === "socio" ? sociosPagados : empresasPagadas;
     return filterDataGeneric(base).length;
-  }, [filtrosCompletos, viewType, sociosPagados, empresasPagadas, filterDataGeneric]);
+  }, [
+    filtrosCompletos,
+    viewType,
+    sociosPagados,
+    empresasPagadas,
+    filterDataGeneric,
+  ]);
 
   const countDeudores = useMemo(() => {
     if (!filtrosCompletos) return 0;
     const base = viewType === "socio" ? sociosDeudores : empresasDeudoras;
     return filterDataGeneric(base).length;
-  }, [filtrosCompletos, viewType, sociosDeudores, empresasDeudoras, filterDataGeneric]);
+  }, [
+    filtrosCompletos,
+    viewType,
+    sociosDeudores,
+    empresasDeudoras,
+    filterDataGeneric,
+  ]);
 
   // ===== Infinite =====
   const datosFiltradosPaginated = useMemo(
@@ -712,7 +878,14 @@ const GestionarCuotas = () => {
     if (!hasMore || loading.socios || loading.empresas) return;
     if (offset + limit < datosFiltrados.length) setOffset((prev) => prev + limit);
     else setHasMore(false);
-  }, [hasMore, loading.socios, loading.empresas, offset, limit, datosFiltrados.length]);
+  }, [
+    hasMore,
+    loading.socios,
+    loading.empresas,
+    offset,
+    limit,
+    datosFiltrados.length,
+  ]);
 
   const observer = useRef();
   const lastItemRef = useCallback(
@@ -727,7 +900,7 @@ const GestionarCuotas = () => {
     [loading.socios, loading.empresas, hasMore, loadMoreItems]
   );
 
-  // ✅ reset paginación:
+  // ✅ reset paginación fuerte
   useEffect(() => {
     setOffset(0);
     setLimit(100);
@@ -737,7 +910,7 @@ const GestionarCuotas = () => {
     setSelectedId(null);
   }, [selectedYear, selectedMonth, viewType, activeTab]);
 
-  // filtros suaves: NO scrollea arriba
+  // filtros suaves
   useEffect(() => {
     setOffset(0);
     setLimit(100);
@@ -747,9 +920,34 @@ const GestionarCuotas = () => {
   // Si el seleccionado no existe en el filtrado actual, lo limpiamos
   useEffect(() => {
     if (selectedId == null) return;
-    const exists = datosFiltradosPaginated.some((it) => getItemId(it) === selectedId);
+    const exists = datosFiltradosPaginated.some(
+      (it) => getItemId(it) === selectedId
+    );
     if (!exists) setSelectedId(null);
   }, [datosFiltradosPaginated, selectedId, getItemId]);
+
+  // ✅ solo limpiamos selección masiva cuando cambia el dataset real
+  useEffect(() => {
+    setSelectedIdsBulk([]);
+    setItemsPagoMasivo([]);
+    if (activeTab !== "deudores") {
+      setBulkMode(false);
+    }
+  }, [selectedYear, selectedMonth, viewType, activeTab]);
+
+  // ✅ si después de recargar cambió el dataset, depuramos ids inválidos
+  useEffect(() => {
+    if (!bulkMode) return;
+
+    const validIds = new Set(
+      datosCrudosBase.map((item) => getItemId(item)).filter((id) => id != null)
+    );
+
+    setSelectedIdsBulk((prev) => {
+      const next = prev.filter((id) => validIds.has(id));
+      return next.length === prev.length ? prev : next;
+    });
+  }, [bulkMode, datosCrudosBase, getItemId]);
 
   // ===== Efectos de carga según filtros =====
   useEffect(() => {
@@ -762,19 +960,16 @@ const GestionarCuotas = () => {
       return;
     }
 
-    const deb = setTimeout(() => {
-      if (viewType === "socio") cargarDatosPorMesSocios(selectedYear, selectedMonth);
-      else cargarDatosEmpresasPorMes(selectedYear, selectedMonth);
-    }, searchTerm ? 300 : 0);
-
-    return () => clearTimeout(deb);
+    if (viewType === "socio") {
+      cargarDatosPorMesSocios(selectedYear, selectedMonth);
+    } else {
+      cargarDatosEmpresasPorMes(selectedYear, selectedMonth);
+    }
   }, [
     viewType,
     filtrosCompletos,
     selectedYear,
     selectedMonth,
-    selectedMedioPago,
-    searchTerm,
     cargarDatosPorMesSocios,
     cargarDatosEmpresasPorMes,
   ]);
@@ -805,22 +1000,77 @@ const GestionarCuotas = () => {
   const handleRowClick = useCallback(
     (item) => {
       const id = getItemId(item);
-      if (!id) return;
+      if (!id || bulkMode) return;
       setSelectedId((prev) => (prev === id ? null : id));
+    },
+    [getItemId, bulkMode]
+  );
+
+  const handleToggleBulkMode = useCallback(() => {
+    setBulkMode((prev) => {
+      const next = !prev;
+      if (!next) {
+        setSelectedIdsBulk([]);
+        setItemsPagoMasivo([]);
+      }
+      return next;
+    });
+    setSelectedId(null);
+    scrollOffsetRef.current = 0;
+    listRef.current?.scrollTo(0);
+  }, []);
+
+  const handleBulkToggle = useCallback(
+    (item) => {
+      const id = getItemId(item);
+      if (!id) return;
+
+      setSelectedIdsBulk((prev) =>
+        prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+      );
     },
     [getItemId]
   );
+
+  const handleAddFilteredToBulk = useCallback(() => {
+    const ids = datosFiltrados
+      .map((item) => getItemId(item))
+      .filter((id) => id != null);
+
+    if (ids.length === 0) return;
+
+    setSelectedIdsBulk((prev) => Array.from(new Set([...prev, ...ids])));
+  }, [datosFiltrados, getItemId]);
+
+  const handleRemoveFilteredFromBulk = useCallback(() => {
+    const visibleIds = new Set(
+      datosFiltrados
+        .map((item) => getItemId(item))
+        .filter((id) => id != null)
+    );
+
+    setSelectedIdsBulk((prev) => prev.filter((id) => !visibleIds.has(id)));
+  }, [datosFiltrados, getItemId]);
+
+  const handleClearBulkSelection = useCallback(() => {
+    setSelectedIdsBulk([]);
+    setItemsPagoMasivo([]);
+  }, []);
 
   const handlePaymentClick = useCallback(
     (item) => {
       setSelectedItemData(item);
 
-      const hasCategoria = !!item?.categoria && String(item.categoria).trim() !== "";
-      const hasPrecioCategoria = !!item?.precio_categoria && Number(item.precio_categoria) > 0;
+      const hasCategoria =
+        !!item?.categoria && String(item.categoria).trim() !== "";
+      const hasPrecioCategoria =
+        !!item?.precio_categoria && Number(item.precio_categoria) > 0;
 
       if (!hasCategoria || !hasPrecioCategoria) {
         const sujeto = viewType === "socio" ? "El socio" : "La empresa";
-        showErrorToast(`${sujeto} no tiene categoría asignada. No se puede registrar el pago.`);
+        showErrorToast(
+          `${sujeto} no tiene categoría asignada. No se puede registrar el pago.`
+        );
         setSelectedItemData(null);
         return;
       }
@@ -831,10 +1081,55 @@ const GestionarCuotas = () => {
     [viewType, showErrorToast]
   );
 
+  const handleAbrirModalPagoMasivo = useCallback(() => {
+    if (!selectedYear || !selectedMonth) {
+      showWarningToast("Seleccioná año y mes antes de registrar pagos masivos.");
+      return;
+    }
+
+    if (selectedItemsBulk.length === 0) {
+      showWarningToast("Seleccioná al menos un registro.");
+      return;
+    }
+
+    const validos = selectedItemsBulk.filter((item) => {
+      const hasCategoria =
+        !!item?.categoria && String(item.categoria).trim() !== "";
+      const hasPrecioCategoria =
+        !!item?.precio_categoria && Number(item.precio_categoria) > 0;
+      return hasCategoria && hasPrecioCategoria;
+    });
+
+    const omitidos = selectedItemsBulk.length - validos.length;
+
+    if (validos.length === 0) {
+      showErrorToast(
+        "Ninguno de los registros seleccionados tiene categoría válida para registrar el pago."
+      );
+      return;
+    }
+
+    if (omitidos > 0) {
+      showWarningToast(
+        `Se omitirán ${omitidos} registro(s) porque no tienen categoría o importe mensual válido.`
+      );
+    }
+
+    setItemsPagoMasivo(validos);
+    setMostrarModalPagoMasivo(true);
+  }, [
+    selectedYear,
+    selectedMonth,
+    selectedItemsBulk,
+    showWarningToast,
+    showErrorToast,
+  ]);
+
   const refreshCacheBucketForCurrent = useCallback(
     (tipo) => {
       const k = cacheKey(selectedYear, selectedMonth);
-      const bucket = tipo === "socio" ? cacheRef.current.socios : cacheRef.current.empresas;
+      const bucket =
+        tipo === "socio" ? cacheRef.current.socios : cacheRef.current.empresas;
       delete bucket.pagado[k];
       delete bucket.deudor[k];
       delete bucket.lastUpdated[k];
@@ -852,20 +1147,31 @@ const GestionarCuotas = () => {
     try {
       showSuccessToast("Pago registrado correctamente");
 
-      if (selectedYear && selectedMonth) refreshCacheBucketForCurrent(viewType);
+      if (selectedYear && selectedMonth) {
+        refreshCacheBucketForCurrent(viewType);
+      }
 
-      if (viewType === "socio") await cargarDatosPorMesSocios(selectedYear, selectedMonth, true);
-      else await cargarDatosEmpresasPorMes(selectedYear, selectedMonth, true);
+      if (viewType === "socio") {
+        await cargarDatosPorMesSocios(selectedYear, selectedMonth, true);
+      } else {
+        await cargarDatosEmpresasPorMes(selectedYear, selectedMonth, true);
+      }
 
       await fetchYears();
       restoreScroll();
     } catch (error) {
       console.error("Post-pago:", error);
-      showErrorToast(error.message || "Pago registrado pero hubo un error al refrescar");
+      showErrorToast(
+        error.message || "Pago registrado pero hubo un error al refrescar"
+      );
     } finally {
       setMostrarModalPagoSocio(false);
       setMostrarModalPagoEmpresa(false);
+      setMostrarModalPagoMasivo(false);
       setSelectedItemData(null);
+      setItemsPagoMasivo([]);
+      setSelectedIdsBulk([]);
+      setBulkMode(false);
     }
   }, [
     selectedYear,
@@ -894,6 +1200,7 @@ const GestionarCuotas = () => {
 
   const handleEliminarPagoConfirmado = useCallback(async () => {
     if (!itemEliminarPago) return;
+
     try {
       setLoading((prev) => ({
         ...prev,
@@ -904,7 +1211,10 @@ const GestionarCuotas = () => {
       const idPago = itemEliminarPago.idPago ?? itemEliminarPago.id_pago ?? null;
 
       const idSocio =
-        itemEliminarPago.idSocios ?? itemEliminarPago.id ?? itemEliminarPago.id_socio ?? null;
+        itemEliminarPago.idSocios ??
+        itemEliminarPago.id ??
+        itemEliminarPago.id_socio ??
+        null;
 
       const idEmp =
         itemEliminarPago.idEmp ??
@@ -937,9 +1247,11 @@ const GestionarCuotas = () => {
 
         refreshCacheBucketForCurrent(itemEliminarPago.tipo);
 
-        if (itemEliminarPago.tipo === "socio")
+        if (itemEliminarPago.tipo === "socio") {
           await cargarDatosPorMesSocios(selectedYear, selectedMonth, true);
-        else await cargarDatosEmpresasPorMes(selectedYear, selectedMonth, true);
+        } else {
+          await cargarDatosEmpresasPorMes(selectedYear, selectedMonth, true);
+        }
 
         await fetchYears();
         restoreScroll();
@@ -1158,7 +1470,6 @@ const GestionarCuotas = () => {
 
     const isLoading = loading.socios || loading.empresas;
 
-    // ✅ SOLO mostramos loading "full" si todavía no hay datos
     if (isLoading && datosFiltrados.length === 0) return <LoadingIndicator />;
     if (!isLoading && datosFiltrados.length === 0) return <NoDataFound />;
 
@@ -1169,7 +1480,14 @@ const GestionarCuotas = () => {
           {datosFiltradosPaginated.map((item, index) => {
             const id = getItemId(item);
             const selected =
-              selectedId != null && id != null && selectedId === id;
+              bulkMode
+                ? selectedIdsBulkSet.has(id)
+                : selectedId != null && id != null && selectedId === id;
+
+            const handleCardClick = () => {
+              if (bulkMode) handleBulkToggle(item);
+              else handleRowClick(item);
+            };
 
             return (
               <div
@@ -1182,8 +1500,22 @@ const GestionarCuotas = () => {
                 className={`gcuotas-mobile-card ${
                   selected ? "gcuotas-selected-card" : ""
                 }`}
-                onClick={() => handleRowClick(item)}
+                onClick={handleCardClick}
               >
+                {bulkMode && (
+                  <div className="gcuotas-mobile-row">
+                    <span className="gcuotas-mobile-label">Seleccionar:</span>
+                    <span>
+                      <input
+                        type="checkbox"
+                        checked={selectedIdsBulkSet.has(id)}
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={() => handleBulkToggle(item)}
+                      />
+                    </span>
+                  </div>
+                )}
+
                 {viewType === "socio" ? (
                   <>
                     <div className="gcuotas-mobile-row">
@@ -1226,7 +1558,7 @@ const GestionarCuotas = () => {
                   </>
                 )}
 
-                {selected && (
+                {!bulkMode && selected && (
                   <div className="gcuotas-mobile-actions">
                     <button
                       className="gcuotas-mobile-print-button"
@@ -1270,7 +1602,6 @@ const GestionarCuotas = () => {
             );
           })}
 
-          {/* ✅ overlay móvil sin desmontar */}
           {isLoading && (
             <div className="gcuotas-table-overlay-loading">
               <div className="gcuotas-loading-spinner" />
@@ -1298,6 +1629,15 @@ const GestionarCuotas = () => {
             viewType === "empresa" ? "gempresas" : "gsocios"
           }`}
         >
+          {bulkMode && (
+            <div
+              className="gcuotas-virtual-cell"
+              style={{ maxWidth: 72, minWidth: 72 }}
+            >
+              Sel.
+            </div>
+          )}
+
           {viewType === "socio" ? (
             <>
               <div className="gcuotas-virtual-cell">Apellido</div>
@@ -1332,8 +1672,9 @@ const GestionarCuotas = () => {
             if (
               visibleStopIndex >= datosFiltradosPaginated.length - 5 &&
               hasMore
-            )
+            ) {
               loadMoreItems();
+            }
           }}
         >
           {(props) => {
@@ -1342,6 +1683,7 @@ const GestionarCuotas = () => {
                 <div style={props.style} className="gcuotas-loading-row"></div>
               );
             }
+
             return (
               <Row
                 {...props}
@@ -1353,12 +1695,14 @@ const GestionarCuotas = () => {
                 onPrintClick={handlePrintClick}
                 onDeletePaymentClick={handleDeletePaymentClick}
                 getItemId={getItemId}
+                bulkMode={bulkMode}
+                bulkSelectedIds={selectedIdsBulkSet}
+                onBulkToggle={handleBulkToggle}
               />
             );
           }}
         </List>
 
-        {/* ✅ overlay desktop sin desmontar */}
         {isLoading && (
           <div className="gcuotas-table-overlay-loading">
             <div className="gcuotas-loading-spinner" />
@@ -1387,9 +1731,11 @@ const GestionarCuotas = () => {
     isClient,
     getItemId,
     itemKey,
+    bulkMode,
+    selectedIdsBulkSet,
+    handleBulkToggle,
   ]);
 
-  // ===== Render =====
   return (
     <div className="gcuotas-container">
       {toast.show && (
@@ -1449,6 +1795,20 @@ const GestionarCuotas = () => {
         />
       )}
 
+      {/* Modal Pago Masivo */}
+      {mostrarModalPagoMasivo && itemsPagoMasivo.length > 0 && (
+        <ModalPagosMasivos
+          tipoEntidad={viewType}
+          items={itemsPagoMasivo}
+          selectedYear={selectedYear}
+          cerrarModal={() => {
+            setMostrarModalPagoMasivo(false);
+            setItemsPagoMasivo([]);
+          }}
+          onPagoRealizado={handlePagoRealizado}
+        />
+      )}
+
       {/* Modal eliminar pago */}
       {mostrarModalEliminarPago && itemEliminarPago && (
         <ModalEliminarPago
@@ -1486,107 +1846,122 @@ const GestionarCuotas = () => {
                 </div>
               </div>
 
-<div className="gcuotas-select-container">
-  {/* Año */}
-  <div className={`gcuotas-float ${selectedYear ? "has-value" : ""}`}>
-    <select
-      id="anio"
-      value={selectedYear}
-      onChange={handleYearChange}
-      className="gcuotas-dropdown gcuotas-float__control"
-      disabled={loading.years || loading.meses || loading.socios || loading.empresas}
-    >
-      {/* opcional: si querés que arranque vacío */}
-      {/* <option value="" disabled>Elegí año</option> */}
-      {years.map((y, i) => (
-        <option key={i} value={y}>
-          {y}
-        </option>
-      ))}
-    </select>
+              <div className="gcuotas-select-container">
+                <div className={`gcuotas-float ${selectedYear ? "has-value" : ""}`}>
+                  <select
+                    id="anio"
+                    value={selectedYear}
+                    onChange={handleYearChange}
+                    className="gcuotas-dropdown gcuotas-float__control"
+                    disabled={
+                      loading.years ||
+                      loading.meses ||
+                      loading.socios ||
+                      loading.empresas
+                    }
+                  >
+                    {years.map((y, i) => (
+                      <option key={i} value={y}>
+                        {y}
+                      </option>
+                    ))}
+                  </select>
 
-    <label htmlFor="anio" className="gcuotas-float__label">
-      <FontAwesomeIcon icon={faCalendarAlt} />
-      <span>Año</span>
-    </label>
-  </div>
+                  <label htmlFor="anio" className="gcuotas-float__label">
+                    <FontAwesomeIcon icon={faCalendarAlt} />
+                    <span>Año</span>
+                  </label>
+                </div>
 
-  {/* Mes */}
-  <div className={`gcuotas-float ${selectedMonth ? "has-value" : ""}`}>
-    <select
-      id="meses"
-      value={selectedMonth}
-      onChange={handleMonthChange}
-      className="gcuotas-dropdown gcuotas-float__control"
-      disabled={!selectedYear || loading.meses || loading.socios || loading.empresas}
-    >
-      <option value="" disabled>
-        Mes
-      </option>
-      {meses.map((m, index) => (
-        <option key={index} value={m.mes}>
-          {m.mes}
-        </option>
-      ))}
-    </select>
+                <div className={`gcuotas-float ${selectedMonth ? "has-value" : ""}`}>
+                  <select
+                    id="meses"
+                    value={selectedMonth}
+                    onChange={handleMonthChange}
+                    className="gcuotas-dropdown gcuotas-float__control"
+                    disabled={
+                      !selectedYear ||
+                      loading.meses ||
+                      loading.socios ||
+                      loading.empresas
+                    }
+                  >
+                    <option value="" disabled>
+                      Mes
+                    </option>
+                    {meses.map((m, index) => (
+                      <option key={index} value={m.mes}>
+                        {m.mes}
+                      </option>
+                    ))}
+                  </select>
 
-    <label htmlFor="meses" className="gcuotas-float__label">
-      <FontAwesomeIcon icon={faCalendarAlt} />
-      <span>Mes</span>
-    </label>
-  </div>
+                  <label htmlFor="meses" className="gcuotas-float__label">
+                    <FontAwesomeIcon icon={faCalendarAlt} />
+                    <span>Mes</span>
+                  </label>
+                </div>
 
-  {/* Tipo de vista */}
-  <div className={`gcuotas-float gcuotas-input-full ${viewType ? "has-value" : ""}`}>
-    <select
-      id="entidad"
-      value={viewType}
-      onChange={(e) => {
-        setViewType(e.target.value);
-        setSelectedId(null);
-        scrollOffsetRef.current = 0;
-        listRef.current?.scrollTo(0);
-      }}
-      className="gcuotas-dropdown gcuotas-float__control"
-      disabled={loading.socios || loading.empresas}
-    >
-      <option value="socio">Socios</option>
-      <option value="empresa">Empresas</option>
-    </select>
+                <div
+                  className={`gcuotas-float gcuotas-input-full ${
+                    viewType ? "has-value" : ""
+                  }`}
+                >
+                  <select
+                    id="entidad"
+                    value={viewType}
+                    onChange={(e) => {
+                      setViewType(e.target.value);
+                      setSelectedId(null);
+                      setSelectedIdsBulk([]);
+                      setBulkMode(false);
+                      scrollOffsetRef.current = 0;
+                      listRef.current?.scrollTo(0);
+                    }}
+                    className="gcuotas-dropdown gcuotas-float__control"
+                    disabled={loading.socios || loading.empresas}
+                  >
+                    <option value="socio">Socios</option>
+                    <option value="empresa">Empresas</option>
+                  </select>
 
-    <label htmlFor="entidad" className="gcuotas-float__label">
-      <FontAwesomeIcon icon={faUsers} />
-      <span>Tipo de vista</span>
-    </label>
-  </div>
+                  <label htmlFor="entidad" className="gcuotas-float__label">
+                    <FontAwesomeIcon icon={faUsers} />
+                    <span>Tipo de vista</span>
+                  </label>
+                </div>
 
-  {/* Medio de pago */}
-  <div
-    className={`gcuotas-float gcuotas-input-full ${
-      selectedMedioPago ? "has-value" : ""
-    }`}
-  >
-    <select
-      id="medioPago"
-      value={selectedMedioPago}
-      onChange={handleMedioPagoChange}
-      className="gcuotas-dropdown gcuotas-float__control"
-      disabled={loading.socios || loading.empresas || !selectedYear || !selectedMonth}
-    >
-      <option value="">Todos</option>
-      {mediosPago.map((medio, index) => (
-        <option key={index} value={medio.nombre}>
-          {medio.nombre}
-        </option>
-      ))}
-    </select>
+                <div
+                  className={`gcuotas-float gcuotas-input-full ${
+                    selectedMedioPago ? "has-value" : ""
+                  }`}
+                >
+                  <select
+                    id="medioPago"
+                    value={selectedMedioPago}
+                    onChange={handleMedioPagoChange}
+                    className="gcuotas-dropdown gcuotas-float__control"
+                    disabled={
+                      loading.socios ||
+                      loading.empresas ||
+                      !selectedYear ||
+                      !selectedMonth
+                    }
+                  >
+                    <option value="">Todos</option>
+                    {mediosPago.map((medio, index) => (
+                      <option key={index} value={medio.nombre}>
+                        {medio.nombre}
+                      </option>
+                    ))}
+                  </select>
 
-    <label htmlFor="medioPago" className="gcuotas-float__label">
-      <FontAwesomeIcon icon={faCreditCard} />
-      <span>Medio de Pago</span>
-    </label>
-  </div>
-</div>
+                  <label htmlFor="medioPago" className="gcuotas-float__label">
+                    <FontAwesomeIcon icon={faCreditCard} />
+                    <span>Medio de Pago</span>
+                  </label>
+                </div>
+              </div>
             </div>
 
             <div className="gcuotas-tabs-card">
@@ -1594,6 +1969,7 @@ const GestionarCuotas = () => {
                 <FontAwesomeIcon icon={faList} className="gcuotas-tabs-icon" />
                 <span>Estado de cuotas</span>
               </div>
+
               <div className="gcuotas-tab-container">
                 <button
                   className={`gcuotas-tab-button ${
@@ -1602,6 +1978,8 @@ const GestionarCuotas = () => {
                   onClick={() => {
                     setActiveTab("pagado");
                     setSelectedId(null);
+                    setSelectedIdsBulk([]);
+                    setBulkMode(false);
                     scrollOffsetRef.current = 0;
                     listRef.current?.scrollTo(0);
                   }}
@@ -1619,6 +1997,7 @@ const GestionarCuotas = () => {
                   onClick={() => {
                     setActiveTab("deudores");
                     setSelectedId(null);
+                    setSelectedIdsBulk([]);
                     scrollOffsetRef.current = 0;
                     listRef.current?.scrollTo(0);
                   }}
@@ -1637,10 +2016,11 @@ const GestionarCuotas = () => {
               <FontAwesomeIcon icon={faCog} className="gcuotas-actions-icon" />
               <span>Acciones</span>
             </div>
+
             <div className="gcuotas-buttons-container">
               <button
                 className="gcuotas-button gcuotas-button-back"
-                onClick={() => navigate(-1)}
+                onClick={handleVolverAtras}
                 disabled={loading.socios || loading.empresas}
               >
                 <FontAwesomeIcon icon={faArrowLeft} />
@@ -1688,6 +2068,27 @@ const GestionarCuotas = () => {
                 <FontAwesomeIcon icon={faPrint} />
                 <span>Imprimir Todos</span>
               </button>
+
+              {activeTab === "deudores" && (
+                <button
+                  className="gcuotas-button gcuotas-button-print-all"
+                  onClick={handleToggleBulkMode}
+                  disabled={
+                    loading.socios ||
+                    loading.empresas ||
+                    !selectedYear ||
+                    !selectedMonth ||
+                    datosFiltrados.length === 0
+                  }
+                >
+                  <FontAwesomeIcon icon={faUsers} />
+                  <span>
+                    {bulkMode
+                      ? `Cerrar selección (${selectedIdsBulk.length})`
+                      : "Selección múltiple"}
+                  </span>
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -1702,7 +2103,9 @@ const GestionarCuotas = () => {
         <div className="gcuotas-table-header">
           <h3>
             <FontAwesomeIcon
-              icon={activeTab === "pagado" ? faCheckCircle : faExclamationTriangle}
+              icon={
+                activeTab === "pagado" ? faCheckCircle : faExclamationTriangle
+              }
             />
             {activeTab === "pagado" ? "Cuotas Pagadas" : "Cuotas Pendientes"}
           </h3>
@@ -1713,10 +2116,16 @@ const GestionarCuotas = () => {
               <input
                 id="search"
                 type="text"
-                placeholder={`Buscar ${viewType === "socio" ? "socio..." : "empresa..."}`}
+                placeholder={`Buscar ${
+                  viewType === "socio" ? "socio..." : "empresa..."
+                }`}
                 value={searchTerm}
                 onChange={handleSearchChange}
-                disabled={loading.socios || loading.empresas || (!selectedMonth || !selectedYear)}
+                disabled={
+                  loading.socios ||
+                  loading.empresas ||
+                  (!selectedMonth || !selectedYear)
+                }
               />
             </div>
           </div>
@@ -1726,12 +2135,21 @@ const GestionarCuotas = () => {
               <FontAwesomeIcon icon={faUsers} />
               Total: {filtrosCompletos ? datosFiltrados.length : 0}
             </span>
+
+            {bulkMode && activeTab === "deudores" && (
+              <span className="gcuotas-summary-item">
+                <FontAwesomeIcon icon={faCheckCircle} />
+                Seleccionados: {selectedIdsBulk.length}
+              </span>
+            )}
+
             {selectedYear && (
               <span className="gcuotas-summary-item">
                 <FontAwesomeIcon icon={faCalendarAlt} />
                 Año: {selectedYear}
               </span>
             )}
+
             {selectedMonth && (
               <span className="gcuotas-summary-item">
                 <FontAwesomeIcon icon={faCalendarAlt} />
@@ -1740,6 +2158,61 @@ const GestionarCuotas = () => {
             )}
           </div>
         </div>
+
+        {bulkMode && activeTab === "deudores" && (
+          <div style={bulkBarStyles.container}>
+            <div style={bulkBarStyles.info}>
+              <span style={bulkBarStyles.title}>Selección múltiple activada</span>
+              <span style={bulkBarStyles.subtitle}>
+                {selectedIdsBulk.length} seleccionados
+                {selectedVisibleCount > 0
+                  ? ` · ${selectedVisibleCount} visibles`
+                  : ""}
+                {hiddenSelectedCount > 0
+                  ? ` · ${hiddenSelectedCount} fuera del filtro actual`
+                  : ""}
+              </span>
+            </div>
+
+            <div style={bulkBarStyles.actions}>
+              <button
+                type="button"
+                style={bulkBarStyles.button}
+                onClick={handleAddFilteredToBulk}
+                disabled={datosFiltrados.length === 0}
+              >
+                Agregar visibles ({datosFiltrados.length})
+              </button>
+
+              <button
+                type="button"
+                style={bulkBarStyles.button}
+                onClick={handleRemoveFilteredFromBulk}
+                disabled={selectedVisibleCount === 0}
+              >
+                Quitar visibles ({selectedVisibleCount})
+              </button>
+
+              <button
+                type="button"
+                style={bulkBarStyles.button}
+                onClick={handleClearBulkSelection}
+                disabled={selectedIdsBulk.length === 0}
+              >
+                Limpiar
+              </button>
+
+              <button
+                type="button"
+                style={bulkBarStyles.buttonPrimary}
+                onClick={handleAbrirModalPagoMasivo}
+                disabled={selectedIdsBulk.length === 0}
+              >
+                Pagar seleccionados ({selectedIdsBulk.length})
+              </button>
+            </div>
+          </div>
+        )}
 
         <div className="gcuotas-table-container">{renderTabla}</div>
       </div>
@@ -1759,7 +2232,12 @@ const GestionarCuotas = () => {
           <button
             className="gcuotas-mbar-btn mbar-excel"
             onClick={handleExportExcel}
-            disabled={loading.socios || loading.empresas || !selectedYear || !selectedMonth}
+            disabled={
+              loading.socios ||
+              loading.empresas ||
+              !selectedYear ||
+              !selectedMonth
+            }
           >
             <FontAwesomeIcon icon={faFileExcel} />
             <span>Excel</span>
@@ -1768,7 +2246,12 @@ const GestionarCuotas = () => {
           <button
             className="gcuotas-mbar-btn mbar-registro"
             onClick={handleImprimirRegistro}
-            disabled={loading.socios || loading.empresas || !selectedYear || !selectedMonth}
+            disabled={
+              loading.socios ||
+              loading.empresas ||
+              !selectedYear ||
+              !selectedMonth
+            }
           >
             <FontAwesomeIcon icon={faPrint} />
             <span>Registro</span>
@@ -1777,7 +2260,12 @@ const GestionarCuotas = () => {
           <button
             className="gcuotas-mbar-btn mbar-imprimir"
             onClick={handleAbrirModalImpresion}
-            disabled={loading.socios || loading.empresas || !selectedYear || !selectedMonth}
+            disabled={
+              loading.socios ||
+              loading.empresas ||
+              !selectedYear ||
+              !selectedMonth
+            }
           >
             <FontAwesomeIcon icon={faPrint} />
             <span>Imprimir</span>
