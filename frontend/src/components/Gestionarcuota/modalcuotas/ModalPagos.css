@@ -532,3 +532,17 @@
 @media (max-width: 400px) {
   .modpag_year-menu { width: 140px; }
 }
+.modpagmas{
+    background-color: var(--modpag_white);
+  width: 100%;
+  max-width: 900px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: var(--modpag_border-radius-lg);
+  box-shadow: var(--modpag_shadow-xl);
+  margin: auto;
+  position: relative;
+
+}

@@ -100,7 +100,6 @@ const ModalPagosMasivos = ({
   const [error, setError] = useState("");
   const [resultado, setResultado] = useState(null);
 
-  // snapshot para resumen / impresión
   const [anioResumen, setAnioResumen] = useState(initialYear);
   const [mesesResumen, setMesesResumen] = useState([]);
 
@@ -253,7 +252,7 @@ const ModalPagosMasivos = ({
 
     return (
       <div className="modpag_overlay">
-        <div className="modpag_contenido">
+        <div className="modpag_contenido modpagmas">
           <div className="modpag_header">
             <div className="modpag_header-left">
               <div className="modpag_icon-circle">
@@ -339,27 +338,78 @@ const ModalPagosMasivos = ({
 
             <div
               style={{
+                display: "grid",
+
+                gap: 16,
                 marginTop: 16,
-                border: "1px solid #e5e7eb",
-                borderRadius: 12,
-                padding: 12,
-                background: "#fafafa",
+
               }}
             >
-              <div style={{ fontWeight: 700, marginBottom: 8 }}>
-                Meses registrados
+              <div
+                style={{
+                  border: "1px solid #e5e7eb",
+                  borderRadius: 12,
+                  padding: 12,
+                  background: "#fafafa",
+                }}
+              >
+                <div style={{ fontWeight: 700, marginBottom: 10 }}>
+                  Meses registrados
+                </div>
+
+                <div
+                  style={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: 8,
+                  }}
+                >
+                  {mesesResumen.map((mes, idx) => (
+                    <div
+                      key={idx}
+                      style={{
+                        padding: "6px 10px",
+                        borderRadius: 999,
+                        background: "#fff",
+                        border: "1px solid #e5e7eb",
+                        fontSize: 13,
+                        fontWeight: 600,
+                        lineHeight: 1.2,
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {mes.replace(` ${anioResumen}`, "")}
+                    </div>
+                  ))}
+                </div>
               </div>
 
               <div
                 style={{
-                  display: "grid",
-                  gap: 6,
-                  fontSize: 14,
+                  border: "1px solid #e5e7eb",
+                  borderRadius: 12,
+                  padding: 12,
+                  maxHeight: 220,
+                  overflowY: "auto",
+                  background: "#fafafa",
                 }}
               >
-                {mesesResumen.map((mes, idx) => (
-                  <div key={idx}>• {mes}</div>
-                ))}
+                <strong style={{ display: "block", marginBottom: 8 }}>
+                  Detalles omitidos
+                </strong>
+
+                {Array.isArray(resumen.detalles_omitidos) &&
+                resumen.detalles_omitidos.length > 0 ? (
+                  resumen.detalles_omitidos.map((txt, idx) => (
+                    <div key={idx} style={{ marginBottom: 6, fontSize: 14 }}>
+                      • {txt}
+                    </div>
+                  ))
+                ) : (
+                  <div style={{ fontSize: 14, opacity: 0.7 }}>
+                    No hubo detalles omitidos.
+                  </div>
+                )}
               </div>
             </div>
 
@@ -404,30 +454,6 @@ const ModalPagosMasivos = ({
                 )}
               </div>
             </div>
-
-            {Array.isArray(resumen.detalles_omitidos) &&
-              resumen.detalles_omitidos.length > 0 && (
-                <div
-                  style={{
-                    marginTop: 16,
-                    border: "1px solid #e5e7eb",
-                    borderRadius: 12,
-                    padding: 12,
-                    maxHeight: 180,
-                    overflowY: "auto",
-                    background: "#fafafa",
-                  }}
-                >
-                  <strong style={{ display: "block", marginBottom: 8 }}>
-                    Detalles omitidos
-                  </strong>
-                  {resumen.detalles_omitidos.map((txt, idx) => (
-                    <div key={idx} style={{ marginBottom: 6, fontSize: 14 }}>
-                      • {txt}
-                    </div>
-                  ))}
-                </div>
-              )}
           </div>
 
           <div className="modpag_footer modpag_footer-sides">
