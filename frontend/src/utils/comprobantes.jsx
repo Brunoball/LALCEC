@@ -42,7 +42,7 @@ const baseStyles = `
   }
   .gcuotas-talon-cobrador {
     width: 60mm;
-    padding-left: 6mm;
+    padding-left: 8mm;
     padding-top: 16mm;
   }
   p {
