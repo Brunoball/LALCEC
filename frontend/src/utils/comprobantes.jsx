@@ -37,12 +37,12 @@ const baseStyles = `
   }
   .gcuotas-talon-socio {
     width: 60%;
-    padding-left: 20mm;
+    padding-left: 18mm;
     padding-top: 13mm;
   }
   .gcuotas-talon-cobrador {
     width: 60mm;
-    padding-left: 10mm;
+    padding-left: 6mm;
     padding-top: 16mm;
   }
   p {
