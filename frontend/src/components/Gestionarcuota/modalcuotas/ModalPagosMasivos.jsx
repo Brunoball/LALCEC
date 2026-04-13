@@ -338,52 +338,54 @@ const ModalPagosMasivos = ({
 
             <div
               style={{
-                display: "grid",
-
-                gap: 16,
                 marginTop: 16,
-
+                border: "1px solid #e5e7eb",
+                borderRadius: 12,
+                padding: 12,
+                background: "#fafafa",
               }}
             >
-              <div
-                style={{
-                  border: "1px solid #e5e7eb",
-                  borderRadius: 12,
-                  padding: 12,
-                  background: "#fafafa",
-                }}
-              >
-                <div style={{ fontWeight: 700, marginBottom: 10 }}>
-                  Meses registrados
-                </div>
-
-                <div
-                  style={{
-                    display: "flex",
-                    flexWrap: "wrap",
-                    gap: 8,
-                  }}
-                >
-                  {mesesResumen.map((mes, idx) => (
-                    <div
-                      key={idx}
-                      style={{
-                        padding: "6px 10px",
-                        borderRadius: 999,
-                        background: "#fff",
-                        border: "1px solid #e5e7eb",
-                        fontSize: 13,
-                        fontWeight: 600,
-                        lineHeight: 1.2,
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      {mes.replace(` ${anioResumen}`, "")}
-                    </div>
-                  ))}
-                </div>
+              <div style={{ fontWeight: 700, marginBottom: 10 }}>
+                Meses registrados
               </div>
 
+              <div
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: 8,
+                }}
+              >
+                {mesesResumen.map((mes, idx) => (
+                  <div
+                    key={idx}
+                    style={{
+                      padding: "6px 10px",
+                      borderRadius: 999,
+                      background: "#fff",
+                      border: "1px solid #e5e7eb",
+                      fontSize: 12,
+                      fontWeight: 500,
+                      lineHeight: 1.2,
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {mes.replace(` ${anioResumen}`, "")}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+                gap: 16,
+                marginTop: 16,
+                marginBottom: 10 ,
+                alignItems: "start",
+              }}
+            >
               <div
                 style={{
                   border: "1px solid #e5e7eb",
@@ -411,47 +413,46 @@ const ModalPagosMasivos = ({
                   </div>
                 )}
               </div>
-            </div>
-
-            <div
-              style={{
-                marginTop: 16,
-                border: "1px solid #e5e7eb",
-                borderRadius: 12,
-                padding: 12,
-                background: "#fafafa",
-              }}
-            >
-              <div style={{ fontWeight: 700, marginBottom: 8 }}>
-                Registros incluidos
-              </div>
 
               <div
                 style={{
-                  maxHeight: 140,
+                  border: "1px solid #e5e7eb",
+                  borderRadius: 12,
+                  padding: 12,
+                  maxHeight: 220,
                   overflowY: "auto",
-                  display: "grid",
-                  gap: 6,
+                  background: "#fafafa",
                 }}
               >
-                {items.slice(0, 30).map((item, idx) => {
-                  const label =
-                    tipoEntidad === "socio"
-                      ? `${item.apellido || ""} ${item.nombre || ""}`.trim()
-                      : item.razon_social || "";
+                <div style={{ fontWeight: 700, marginBottom: 8 }}>
+                  Registros incluidos
+                </div>
 
-                  return (
-                    <div key={idx} style={{ fontSize: 14 }}>
-                      • {label}
+                <div
+                  style={{
+                    display: "grid",
+                    gap: 6,
+                  }}
+                >
+                  {items.slice(0, 30).map((item, idx) => {
+                    const label =
+                      tipoEntidad === "socio"
+                        ? `${item.apellido || ""} ${item.nombre || ""}`.trim()
+                        : item.razon_social || "";
+
+                    return (
+                      <div key={idx} style={{ fontSize: 14 }}>
+                        • {label}
+                      </div>
+                    );
+                  })}
+
+                  {items.length > 30 && (
+                    <div style={{ fontSize: 13, opacity: 0.8 }}>
+                      … y {items.length - 30} más
                     </div>
-                  );
-                })}
-
-                {items.length > 30 && (
-                  <div style={{ fontSize: 13, opacity: 0.8 }}>
-                    … y {items.length - 30} más
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             </div>
           </div>
