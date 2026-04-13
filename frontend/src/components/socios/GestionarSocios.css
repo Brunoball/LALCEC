@@ -197,7 +197,7 @@ input:-webkit-autofill{background-color:transparent!important}
 
 /* Filas */
 .gessoc_row{
-  display:grid;grid-template-columns:2fr .6fr 1fr 1fr 1fr 1fr;align-items:center;padding:0;position:relative;
+  display:grid;grid-template-columns:2fr .5fr 1fr 1fr 1fr 1fr;align-items:center;padding:0;position:relative;
   transition:background-color var(--transition-fast),box-shadow var(--transition-fast);
   border-bottom:1px solid var(--border-color);cursor:pointer
 }

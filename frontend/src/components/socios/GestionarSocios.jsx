@@ -1731,7 +1731,7 @@ const GestionarSocios = () => {
           {!isMobile ? (
             <div className="gessoc_box-table">
               <div className="gessoc_header" style={{ width: "100%" }}>
-                <div className="gessoc_column-header">Apellido y Nombre</div>
+                <div className="gessoc_column-header">Ap y Nom</div>
                 <div className="gessoc_column-header">Cat/Precio</div>
                 <div className="gessoc_column-header">Medio de Pago</div>
                 <div className="gessoc_column-header">Domicilio Cobro</div>

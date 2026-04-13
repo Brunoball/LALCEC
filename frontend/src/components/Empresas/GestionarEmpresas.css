@@ -135,7 +135,7 @@
 
 /* Reset y base */
 * { box-sizing: border-box; }
-html, body { height: var(--app-h); min-height: var(--app-h); }
+html, body { min-height: var(--app-h); }
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   line-height: 1.6;

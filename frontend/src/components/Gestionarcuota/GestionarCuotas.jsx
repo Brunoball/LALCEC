@@ -28,10 +28,10 @@ import {
   faExclamationCircle,
   faCog,
   faCreditCard,
+  faLayerGroup,
 } from "@fortawesome/free-solid-svg-icons";
 import "./GestionarCuotas.css";
 
-// ⬇️ Modales
 import ModalMesCuotas from "./modalcuotas/ModalMesCuotas";
 import ModalPagos from "./modalcuotas/ModalPagos";
 import ModalPagosEmpresas from "./modalcuotas/ModalPagosEmpresas";
@@ -41,18 +41,13 @@ import ModalPagosMasivos from "./modalcuotas/ModalPagosMasivos";
 import BASE_URL from "../../config/config";
 import Toast from "../global/Toast";
 
-// util de impresión
 import {
   printComprobantesLote,
   printComprobanteItem,
 } from "../../utils/comprobantes";
 
-const api = axios.create({
-  baseURL: BASE_URL,
-  timeout: 15000,
-});
+const api = axios.create({ baseURL: BASE_URL, timeout: 15000 });
 
-// Interceptor: retorna response.data y propaga error formateado
 api.interceptors.response.use(
   (response) => response.data,
   (error) => {
@@ -65,64 +60,38 @@ api.interceptors.response.use(
   }
 );
 
-const bulkBarStyles = {
-  container: {
-    margin: "10px 16px 0 16px",
-    padding: "12px 14px",
-    borderRadius: "14px",
-    border: "1px solid #dbe4ff",
-    background: "linear-gradient(135deg, #f8fbff 0%, #eef4ff 100%)",
-    display: "flex",
-    gap: "12px",
-    alignItems: "center",
-    justifyContent: "space-between",
-    flexWrap: "wrap",
-  },
-  info: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "4px",
-    minWidth: "220px",
-    flex: "1 1 260px",
-  },
-  title: {
-    fontSize: "14px",
-    fontWeight: 700,
-    color: "#1f2937",
-  },
-  subtitle: {
-    fontSize: "12px",
-    color: "#4b5563",
-  },
-  actions: {
-    display: "flex",
-    gap: "8px",
-    flexWrap: "wrap",
-    justifyContent: "flex-end",
-    flex: "1 1 360px",
-  },
-  button: {
-    border: "none",
-    borderRadius: "10px",
-    padding: "10px 12px",
-    fontSize: "13px",
-    fontWeight: 600,
-    cursor: "pointer",
-    background: "#e5e7eb",
-    color: "#1f2937",
-  },
-  buttonPrimary: {
-    border: "none",
-    borderRadius: "10px",
-    padding: "10px 14px",
-    fontSize: "13px",
-    fontWeight: 700,
-    cursor: "pointer",
-    background: "#2563eb",
-    color: "#fff",
-  },
-};
+/* ─────────────────────────────────────────────────────
+   Hook: mide el contenedor de la tabla y devuelve la
+   altura disponible para la lista virtualizada.
+   El ResizeObserver reacciona cada vez que el espacio
+   cambia (p.ej. cuando aparece/desaparece la bulk bar).
+───────────────────────────────────────────────────── */
+function useListHeight(containerRef) {
+  const [height, setHeight] = useState(400);
 
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const VIRTUAL_HEADER_H = 50; // altura fija de gcuotas-virtual-header
+
+    const update = () => {
+      const available = el.clientHeight - VIRTUAL_HEADER_H;
+      setHeight(Math.max(available, 200));
+    };
+
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [containerRef]);
+
+  return height;
+}
+
+/* ─────────────────────────────────────────────────────
+   Componentes de estado vacío / carga
+───────────────────────────────────────────────────── */
 const LoadingIndicator = memo(() => (
   <div className="gcuotas-loading-container">
     <div className="gcuotas-loading-spinner"></div>
@@ -155,7 +124,9 @@ const NoFiltersApplied = memo(() => (
   </div>
 ));
 
-// 🔥 Outer modificado: solo agrega el gutter cuando hay scroll real
+/* ─────────────────────────────────────────────────────
+   Outer de react-window: agrega clase cuando hay scroll
+───────────────────────────────────────────────────── */
 const Outer = React.forwardRef((props, ref) => {
   const { className, ...rest } = props;
   const localRef = useRef(null);
@@ -169,196 +140,108 @@ const Outer = React.forwardRef((props, ref) => {
   useEffect(() => {
     const el = localRef.current;
     if (!el) return;
-
     const update = () => {
       const hasScroll = el.scrollHeight > el.clientHeight + 1;
-      if (hasScroll) el.classList.add("gcuotas-viewport-hasscroll");
-      else el.classList.remove("gcuotas-viewport-hasscroll");
+      el.classList.toggle("gcuotas-viewport-hasscroll", hasScroll);
     };
-
     update();
-    const resizeObs = new ResizeObserver(update);
-    resizeObs.observe(el);
-
-    return () => resizeObs.disconnect();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
   }, []);
 
   return (
-    <div
-      ref={setRef}
-      className={`gcuotas-viewport ${className || ""}`}
-      {...rest}
-    />
+    <div ref={setRef} className={`gcuotas-viewport ${className || ""}`} {...rest} />
   );
 });
 
-// ===== Fila virtualizada =====
+/* ─────────────────────────────────────────────────────
+   Fila virtualizada
+───────────────────────────────────────────────────── */
 const Row = memo(
   ({
-    index,
-    style,
-    data,
-    selectedId,
-    viewType,
-    activeTab,
-    onRowClick,
-    onPaymentClick,
-    onPrintClick,
-    onDeletePaymentClick,
-    getItemId,
-    bulkMode,
-    bulkSelectedIds,
-    onBulkToggle,
+    index, style, data, selectedId, viewType, activeTab,
+    onRowClick, onPaymentClick, onPrintClick, onDeletePaymentClick,
+    getItemId, bulkMode, bulkSelectedIds, onBulkToggle,
   }) => {
     const item = data[index];
     const itemId = item ? getItemId(item) : null;
+    const isBulkSelected = bulkMode && itemId != null && bulkSelectedIds?.has(itemId);
+    const isSelected = bulkMode
+      ? isBulkSelected
+      : selectedId != null && itemId != null && selectedId === itemId;
 
-    const isBulkSelected =
-      bulkMode && itemId != null && bulkSelectedIds?.has(itemId);
-
-    const isSelected =
-      bulkMode
-        ? isBulkSelected
-        : selectedId != null && itemId != null && selectedId === itemId;
-
-    const rowClass = isSelected ? "gcuotas-selected-row" : "";
-
-    const handleRowMainClick = () => {
-      if (!item) return;
-      if (bulkMode) {
-        onBulkToggle(item);
-      } else {
-        onRowClick(item);
-      }
-    };
+    const rowClass = [
+      "gcuotas-virtual-row",
+      viewType === "empresa" ? "gempresas" : "gsocios",
+      isSelected ? (bulkMode ? "gcuotas-bulk-selected-row" : "gcuotas-selected-row") : "",
+    ].filter(Boolean).join(" ");
 
     const actionButtons = useMemo(() => {
       if (bulkMode || !isSelected) return null;
-      const canDeletePago = activeTab === "pagado";
-
       return (
         <div className="gcuotas-actions-inline">
-          <button
-            className="gcuotas-action-button gcuotas-print-button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onPrintClick(item);
-            }}
-            title="Imprimir comprobante"
-          >
+          <button className="gcuotas-action-button gcuotas-print-button"
+            onClick={(e) => { e.stopPropagation(); onPrintClick(item); }}
+            title="Imprimir comprobante">
             <FontAwesomeIcon icon={faPrint} />
           </button>
-
           {activeTab === "deudores" && (
-            <button
-              className="gcuotas-action-button gcuotas-payment-button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onPaymentClick(item);
-              }}
-              title="Registrar pago"
-            >
+            <button className="gcuotas-action-button gcuotas-payment-button"
+              onClick={(e) => { e.stopPropagation(); onPaymentClick(item); }}
+              title="Registrar pago">
               <FontAwesomeIcon icon={faDollarSign} />
             </button>
           )}
-
-          {canDeletePago && (
-            <button
-              className="gcuotas-action-button gcuotas-deletepay-button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onDeletePaymentClick(item);
-              }}
-              title="Eliminar pago"
-            >
+          {activeTab === "pagado" && (
+            <button className="gcuotas-action-button gcuotas-deletepay-button"
+              onClick={(e) => { e.stopPropagation(); onDeletePaymentClick(item); }}
+              title="Eliminar pago">
               <FontAwesomeIcon icon={faTimes} />
             </button>
           )}
         </div>
       );
-    }, [
-      activeTab,
-      bulkMode,
-      isSelected,
-      item,
-      onPaymentClick,
-      onPrintClick,
-      onDeletePaymentClick,
-    ]);
+    }, [activeTab, bulkMode, isSelected, item, onPaymentClick, onPrintClick, onDeletePaymentClick]);
 
     if (!item || (!item.apellido && !item.razon_social)) {
       return (
-        <div
-          style={style}
-          className={`gcuotas-virtual-row gcuotas-loading-row ${rowClass} ${
-            viewType === "empresa" ? "gempresas" : "gsocios"
-          }`}
-        >
-          {bulkMode && (
-            <div
-              className="gcuotas-virtual-cell"
-              style={{ maxWidth: 72, minWidth: 72 }}
-            />
-          )}
+        <div style={style} className={`${rowClass} gcuotas-loading-row`}>
+          {bulkMode && <div className="gcuotas-virtual-cell gcuotas-bulk-check-cell" />}
           <div className="gcuotas-virtual-cell">Cargando...</div>
-          {viewType === "socio" && <div className="gcuotas-virtual-cell"></div>}
-          <div className="gcuotas-virtual-cell"></div>
-          <div className="gcuotas-virtual-cell"></div>
-          <div className="gcuotas-virtual-cell"></div>
+          {viewType === "socio" && <div className="gcuotas-virtual-cell" />}
+          <div className="gcuotas-virtual-cell" /><div className="gcuotas-virtual-cell" />
+          <div className="gcuotas-virtual-cell" />
         </div>
       );
     }
 
     return (
-      <div
-        style={style}
-        className={`gcuotas-virtual-row ${rowClass} ${
-          viewType === "empresa" ? "gempresas" : "gsocios"
-        }`}
-        onClick={handleRowMainClick}
-      >
+      <div style={style} className={rowClass}
+        onClick={() => { if (!item) return; bulkMode ? onBulkToggle(item) : onRowClick(item); }}>
         {bulkMode && (
-          <div
-            className="gcuotas-virtual-cell"
-            style={{
-              maxWidth: 72,
-              minWidth: 72,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <input
-              type="checkbox"
-              checked={!!isBulkSelected}
-              onClick={(e) => e.stopPropagation()}
-              onChange={() => onBulkToggle(item)}
-            />
+          <div className="gcuotas-virtual-cell gcuotas-bulk-check-cell">
+            <label className="gcuotas-checkbox-wrap" onClick={(e) => e.stopPropagation()}>
+              <input type="checkbox" className="gcuotas-checkbox"
+                checked={!!isBulkSelected} onChange={() => onBulkToggle(item)} />
+              <span className="gcuotas-checkbox-box" />
+            </label>
           </div>
         )}
-
         {viewType === "socio" ? (
           <>
             <div className="gcuotas-virtual-cell">{item.apellido}</div>
             <div className="gcuotas-virtual-cell">{item.nombre}</div>
-            <div className="gcuotas-virtual-cell">
-              {item.displayCategoriaPrecio}
-            </div>
+            <div className="gcuotas-virtual-cell">{item.displayCategoriaPrecio}</div>
             <div className="gcuotas-virtual-cell">{item.medio_pago || "-"}</div>
-            <div className="gcuotas-virtual-cell gcuotas-virtual-actions">
-              {actionButtons}
-            </div>
+            <div className="gcuotas-virtual-cell gcuotas-virtual-actions">{actionButtons}</div>
           </>
         ) : (
           <>
             <div className="gcuotas-virtual-cell">{item.razon_social}</div>
-            <div className="gcuotas-virtual-cell">
-              {item.displayCategoriaPrecio}
-            </div>
+            <div className="gcuotas-virtual-cell">{item.displayCategoriaPrecio}</div>
             <div className="gcuotas-virtual-cell">{item.medio_pago || "-"}</div>
-            <div className="gcuotas-virtual-cell gcuotas-virtual-actions">
-              {actionButtons}
-            </div>
+            <div className="gcuotas-virtual-cell gcuotas-virtual-actions">{actionButtons}</div>
           </>
         )}
       </div>
@@ -375,14 +258,115 @@ const Row = memo(
     prev.bulkSelectedIds === next.bulkSelectedIds
 );
 
+/* ─────────────────────────────────────────────────────
+   Tabla desktop separada como componente propio.
+   useListHeight vive aquí: mide el wrapper y calcula
+   el height real disponible para el List en todo momento.
+───────────────────────────────────────────────────── */
+const TablaDesktop = memo(({
+  viewType, datosFiltrados, datosFiltradosPaginated,
+  activeTab, selectedId, hasMore, isLoading,
+  handleRowClick, handlePaymentClick, handlePrintClick, handleDeletePaymentClick,
+  getItemId, itemKey, bulkMode, selectedIdsBulkSet,
+  handleBulkToggle, selectedVisibleCount,
+  handleAddFilteredToBulk, handleRemoveFilteredFromBulk,
+  loadMoreItems, listRef, scrollOffsetRef,
+}) => {
+  const containerRef = useRef(null);
+  const listHeight = useListHeight(containerRef);
+
+  return (
+    <div ref={containerRef} className="gcuotas-virtual-tables">
+
+      {/* Cabecera de columnas */}
+      <div className={`gcuotas-virtual-header ${viewType === "empresa" ? "gempresas" : "gsocios"}`}>
+        {bulkMode && (
+          <div className="gcuotas-virtual-cell gcuotas-bulk-check-cell">
+            <label className="gcuotas-checkbox-wrap">
+              <input type="checkbox" className="gcuotas-checkbox"
+                checked={datosFiltrados.length > 0 && selectedVisibleCount === datosFiltrados.length}
+                onChange={() => {
+                  if (selectedVisibleCount === datosFiltrados.length) handleRemoveFilteredFromBulk();
+                  else handleAddFilteredToBulk();
+                }}
+              />
+              <span className="gcuotas-checkbox-box" />
+            </label>
+          </div>
+        )}
+        {viewType === "socio" ? (
+          <>
+            <div className="gcuotas-virtual-cell">Apellido</div>
+            <div className="gcuotas-virtual-cell">Nombre</div>
+            <div className="gcuotas-virtual-cell">Categoría</div>
+            <div className="gcuotas-virtual-cell">Medio Pago</div>
+            <div className="gcuotas-virtual-cell">Acciones</div>
+          </>
+        ) : (
+          <>
+            <div className="gcuotas-virtual-cell">Razón Social</div>
+            <div className="gcuotas-virtual-cell">Categoría</div>
+            <div className="gcuotas-virtual-cell">Medio Pago</div>
+            <div className="gcuotas-virtual-cell">Acciones</div>
+          </>
+        )}
+      </div>
+
+      {/* Lista — altura dinámica, nunca fija */}
+      <List
+        ref={listRef}
+        height={listHeight}
+        itemCount={datosFiltradosPaginated.length + (hasMore ? 1 : 0)}
+        itemSize={50}
+        itemData={datosFiltradosPaginated}
+        width="100%"
+        outerElementType={Outer}
+        itemKey={itemKey}
+        onScroll={({ scrollOffset }) => { scrollOffsetRef.current = scrollOffset; }}
+        onItemsRendered={({ visibleStopIndex }) => {
+          if (visibleStopIndex >= datosFiltradosPaginated.length - 5 && hasMore) loadMoreItems();
+        }}
+      >
+        {(props) => {
+          if (props.index >= datosFiltradosPaginated.length)
+            return <div style={props.style} className="gcuotas-loading-row" />;
+          return (
+            <Row
+              {...props}
+              selectedId={selectedId}
+              viewType={viewType}
+              activeTab={activeTab}
+              onRowClick={handleRowClick}
+              onPaymentClick={handlePaymentClick}
+              onPrintClick={handlePrintClick}
+              onDeletePaymentClick={handleDeletePaymentClick}
+              getItemId={getItemId}
+              bulkMode={bulkMode}
+              bulkSelectedIds={selectedIdsBulkSet}
+              onBulkToggle={handleBulkToggle}
+            />
+          );
+        }}
+      </List>
+
+      {isLoading && (
+        <div className="gcuotas-table-overlay-loading">
+          <div className="gcuotas-loading-spinner" /><span>Cargando…</span>
+        </div>
+      )}
+    </div>
+  );
+});
+
+/* ═══════════════════════════════════════════════════════
+   COMPONENTE PRINCIPAL
+═══════════════════════════════════════════════════════ */
 const GestionarCuotas = () => {
   const navigate = useNavigate();
 
-  // ===== Estado de pestañas / vista =====
-  const [activeTab, setActiveTab] = useState("pagado"); // "pagado" | "deudores"
-  const [viewType, setViewType] = useState("socio"); // "socio" | "empresa"
+  const [activeTab, setActiveTab] = useState("pagado");
+  const [viewType, setViewType] = useState("socio");
 
-  // ===== Filtros =====
   const [years, setYears] = useState([]);
   const [selectedYear, setSelectedYear] = useState("");
   const [meses, setMeses] = useState([]);
@@ -391,68 +375,45 @@ const GestionarCuotas = () => {
   const [selectedMedioPago, setSelectedMedioPago] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
 
-  // ===== Datos =====
   const [sociosPagados, setSociosPagados] = useState([]);
   const [sociosDeudores, setSociosDeudores] = useState([]);
   const [empresasPagadas, setEmpresasPagadas] = useState([]);
   const [empresasDeudoras, setEmpresasDeudoras] = useState([]);
 
-  // ===== Modales =====
   const [mostrarModalMes, setMostrarModalMes] = useState(false);
-  const [mesesSeleccionadosImpresion, setMesesSeleccionadosImpresion] =
-    useState([]);
-  const [modoImpresionIndividual, setModoImpresionIndividual] =
-    useState(false);
+  const [mesesSeleccionadosImpresion, setMesesSeleccionadosImpresion] = useState([]);
+  const [modoImpresionIndividual, setModoImpresionIndividual] = useState(false);
   const [selectedItemData, setSelectedItemData] = useState(null);
 
   const [mostrarModalPagoSocio, setMostrarModalPagoSocio] = useState(false);
-  const [mostrarModalPagoEmpresa, setMostrarModalPagoEmpresa] =
-    useState(false);
-
+  const [mostrarModalPagoEmpresa, setMostrarModalPagoEmpresa] = useState(false);
   const [mostrarModalPagoMasivo, setMostrarModalPagoMasivo] = useState(false);
   const [itemsPagoMasivo, setItemsPagoMasivo] = useState([]);
-
-  const [mostrarModalEliminarPago, setMostrarModalEliminarPago] =
-    useState(false);
+  const [mostrarModalEliminarPago, setMostrarModalEliminarPago] = useState(false);
   const [itemEliminarPago, setItemEliminarPago] = useState(null);
 
-  // ===== UI =====
-  const [selectedId, setSelectedId] = useState(null); // selección individual
+  const [selectedId, setSelectedId] = useState(null);
   const [bulkMode, setBulkMode] = useState(false);
   const [selectedIdsBulk, setSelectedIdsBulk] = useState([]);
 
   const [loading, setLoading] = useState({
-    socios: false,
-    empresas: false,
-    meses: false,
-    years: false,
-    mediosPago: false,
+    socios: false, empresas: false, meses: false, years: false, mediosPago: false,
   });
-  const [toast, setToast] = useState({
-    show: false,
-    tipo: "",
-    mensaje: "",
-    duracion: 3000,
-  });
+  const [toast, setToast] = useState({ show: false, tipo: "", mensaje: "", duracion: 3000 });
 
-  // ===== Virtual / infinite =====
-  const [limit, setLimit] = useState(100);
+  const [limit] = useState(100);
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const listRef = useRef(null);
   const scrollOffsetRef = useRef(0);
 
-  // ===== Cache =====
   const cacheRef = useRef({
     socios: { pagado: {}, deudor: {}, lastUpdated: {} },
     empresas: { pagado: {}, deudor: {}, lastUpdated: {} },
-    meses: {},
-    years: null,
-    mediosPago: [],
+    meses: {}, years: null, mediosPago: [],
     cacheDuration: 30 * 60 * 1000,
   });
 
-  // Detección móvil
   const isClient = typeof window !== "undefined";
   const isMobileRef = useRef(isClient ? window.innerWidth <= 768 : false);
   const [isMobile, setIsMobile] = useState(isMobileRef.current);
@@ -468,357 +429,192 @@ const GestionarCuotas = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, [isClient]);
 
-  // Toast helpers
   const showToast = useCallback(
-    (tipo, mensaje, duracion = 3000) =>
-      setToast({ show: true, tipo, mensaje, duracion }),
-    []
+    (tipo, mensaje, duracion = 3000) => setToast({ show: true, tipo, mensaje, duracion }), []
   );
-  const hideToast = useCallback(
-    () => setToast((prev) => ({ ...prev, show: false })),
-    []
-  );
-  const showErrorToast = useCallback((m) => showToast("error", m), [showToast]);
-  const showSuccessToast = useCallback(
-    (m) => showToast("exito", m),
-    [showToast]
-  );
-  const showWarningToast = useCallback(
-    (m) => showToast("advertencia", m),
-    [showToast]
-  );
+  const hideToast = useCallback(() => setToast((p) => ({ ...p, show: false })), []);
+  const showErrorToast   = useCallback((m) => showToast("error", m), [showToast]);
+  const showSuccessToast = useCallback((m) => showToast("exito", m), [showToast]);
+  const showWarningToast = useCallback((m) => showToast("advertencia", m), [showToast]);
 
-  // ID robusto
-  const getItemId = useCallback(
-    (item) => {
-      if (!item) return null;
-      if (viewType === "socio") {
-        return item.idSocios ?? item.id_socio ?? item.id ?? item.idSocio ?? null;
-      }
-      return item.idEmp ?? item.id_empresa ?? item.idEmpresa ?? item.id ?? null;
-    },
-    [viewType]
-  );
+  const getItemId = useCallback((item) => {
+    if (!item) return null;
+    if (viewType === "socio")
+      return item.idSocios ?? item.id_socio ?? item.id ?? item.idSocio ?? null;
+    return item.idEmp ?? item.id_empresa ?? item.idEmpresa ?? item.id ?? null;
+  }, [viewType]);
 
-  const selectedIdsBulkSet = useMemo(
-    () => new Set(selectedIdsBulk),
-    [selectedIdsBulk]
-  );
+  const selectedIdsBulkSet = useMemo(() => new Set(selectedIdsBulk), [selectedIdsBulk]);
 
-  // Formateo datos
   const formatData = useCallback((data) => {
     const arr = Array.isArray(data) ? data : [];
-    return arr.map((item) => {
-      const categoria = item.categoria ? item.categoria : "-";
-      const precio = item.precio_categoria ? `$${item.precio_categoria}` : "-";
-      return { ...item, displayCategoriaPrecio: `${categoria} ${precio}` };
-    });
+    return arr.map((item) => ({
+      ...item,
+      displayCategoriaPrecio:
+        `${item.categoria || "-"} ${item.precio_categoria ? `$${item.precio_categoria}` : "-"}`,
+    }));
   }, []);
 
-  // ===== Fetch AÑOS =====
+  // ── Fetch años ──
   const fetchYears = useCallback(async () => {
-    setLoading((prev) => ({ ...prev, years: true }));
+    setLoading((p) => ({ ...p, years: true }));
     try {
       const data = await api.get("/api.php?action=anios_pagos");
-      const lista = Array.isArray(data)
-        ? data
-        : Array.isArray(data?.anios)
-        ? data.anios
-        : [];
-
+      const lista = Array.isArray(data) ? data : Array.isArray(data?.anios) ? data.anios : [];
       const norm = lista
-        .map((a) =>
-          typeof a === "object" ? a.anio ?? a.year ?? a.y ?? a.value : a
-        )
-        .filter((v) => v != null)
-        .map((n) => parseInt(n, 10))
-        .sort((a, b) => b - a);
-
+        .map((a) => (typeof a === "object" ? a.anio ?? a.year ?? a.y ?? a.value : a))
+        .filter((v) => v != null).map((n) => parseInt(n, 10)).sort((a, b) => b - a);
       cacheRef.current.years = norm;
       setYears(norm);
-
       const current = new Date().getFullYear();
       setSelectedYear((prev) => {
-        if (!prev) {
-          if (norm.includes(current)) return String(current);
-          return norm.length ? String(norm[0]) : "";
-        }
-        if (!norm.includes(parseInt(prev, 10))) {
-          if (norm.includes(current)) return String(current);
-          return norm.length ? String(norm[0]) : "";
-        }
+        if (!prev) return norm.includes(current) ? String(current) : norm.length ? String(norm[0]) : "";
+        if (!norm.includes(parseInt(prev, 10)))
+          return norm.includes(current) ? String(current) : norm.length ? String(norm[0]) : "";
         return prev;
       });
     } catch (e) {
-      console.error("Error al obtener años:", e);
       showErrorToast(e.message || "No se pudieron cargar los años");
     } finally {
-      setLoading((prev) => ({ ...prev, years: false }));
+      setLoading((p) => ({ ...p, years: false }));
     }
   }, [showErrorToast]);
 
-  useEffect(() => {
-    fetchYears();
-  }, [fetchYears]);
+  useEffect(() => { fetchYears(); }, [fetchYears]);
 
-  // ===== Fetch MESES =====
+  // ── Fetch meses ──
   useEffect(() => {
     const fetchMeses = async () => {
-      if (!selectedYear) {
-        setMeses([]);
-        return;
-      }
-
+      if (!selectedYear) { setMeses([]); return; }
       const key = selectedYear;
-      if (
-        Array.isArray(cacheRef.current.meses[key]) &&
-        cacheRef.current.meses[key].length
-      ) {
-        let listaCache = cacheRef.current.meses[key];
-        if (selectedMonth && !listaCache.some((m) => m.mes === selectedMonth)) {
-          listaCache = [{ mes: selectedMonth, _extra: true }, ...listaCache];
-        }
-        setMeses(listaCache);
-        return;
-      }
-
-      setLoading((prev) => ({ ...prev, meses: true }));
-      try {
-        const url = `/api.php?action=meses_pagos&anio=${encodeURIComponent(
-          selectedYear
-        )}`;
-        const data = await api.get(url);
-        let lista = Array.isArray(data)
-          ? data
-          : Array.isArray(data?.meses)
-          ? data.meses
-          : [];
-
-        cacheRef.current.meses[key] = lista;
-
-        if (selectedMonth && !lista.some((m) => m.mes === selectedMonth)) {
+      if (Array.isArray(cacheRef.current.meses[key]) && cacheRef.current.meses[key].length) {
+        let lista = cacheRef.current.meses[key];
+        if (selectedMonth && !lista.some((m) => m.mes === selectedMonth))
           lista = [{ mes: selectedMonth, _extra: true }, ...lista];
-        }
+        setMeses(lista); return;
+      }
+      setLoading((p) => ({ ...p, meses: true }));
+      try {
+        const data = await api.get(`/api.php?action=meses_pagos&anio=${encodeURIComponent(selectedYear)}`);
+        let lista = Array.isArray(data) ? data : Array.isArray(data?.meses) ? data.meses : [];
+        cacheRef.current.meses[key] = lista;
+        if (selectedMonth && !lista.some((m) => m.mes === selectedMonth))
+          lista = [{ mes: selectedMonth, _extra: true }, ...lista];
         setMeses(lista);
       } catch (error) {
-        console.error("Error al obtener los meses:", error);
-        showErrorToast(
-          error.message || "Error al cargar los meses disponibles"
-        );
+        showErrorToast(error.message || "Error al cargar los meses disponibles");
       } finally {
-        setLoading((prev) => ({ ...prev, meses: false }));
+        setLoading((p) => ({ ...p, meses: false }));
       }
     };
-
     fetchMeses();
   }, [selectedYear, selectedMonth, showErrorToast]);
 
-  // ===== Fetch MEDIOS DE PAGO =====
+  // ── Fetch medios de pago ──
   useEffect(() => {
     const fetchMediosPago = async () => {
-      if (cacheRef.current.mediosPago.length > 0) {
-        setMediosPago(cacheRef.current.mediosPago);
-        return;
-      }
-
-      setLoading((prev) => ({ ...prev, mediosPago: true }));
+      if (cacheRef.current.mediosPago.length > 0) { setMediosPago(cacheRef.current.mediosPago); return; }
+      setLoading((p) => ({ ...p, mediosPago: true }));
       try {
         const data = await api.get("/api.php?action=obtener_datos");
         const raw = Array.isArray(data?.mediosPago) ? data.mediosPago : [];
         const mediosAdaptados = raw
           .map((item) => ({
-            id:
-              item.IdMedios_pago ??
-              item.id ??
-              item.idMedios_pago ??
-              item.id_medios_pago ??
-              null,
+            id: item.IdMedios_pago ?? item.id ?? item.idMedios_pago ?? item.id_medios_pago ?? null,
             nombre: item.Medio_Pago ?? item.medio_pago ?? item.nombre ?? "",
-          }))
-          .filter((m) => m.nombre);
-
+          })).filter((m) => m.nombre);
         cacheRef.current.mediosPago = mediosAdaptados;
         setMediosPago(mediosAdaptados);
       } catch (error) {
-        console.error("Error al obtener los medios de pago:", error);
         showErrorToast(error.message || "Error al cargar los medios de pago");
       } finally {
-        setLoading((prev) => ({ ...prev, mediosPago: false }));
+        setLoading((p) => ({ ...p, mediosPago: false }));
       }
     };
-
     fetchMediosPago();
   }, [showErrorToast]);
 
   const cacheKey = (anio, mes) => `${anio || ""}|${mes || ""}`;
 
-  // ===== Cargas SOCIOS =====
-  const cargarDatosPorMesSocios = useCallback(
-    async (anio, mes, force = false) => {
-      if (!anio || !mes) return;
-      if (loading.socios) return;
-
-      const key = cacheKey(anio, mes);
-      const now = Date.now();
-      const cache = cacheRef.current.socios;
-
-      const isValid =
-        !force &&
-        cache.lastUpdated[key] &&
-        now - cache.lastUpdated[key] < cacheRef.current.cacheDuration;
-
-      if (isValid && cache.pagado[key] && cache.deudor[key]) {
-        setSociosPagados(cache.pagado[key]);
-        setSociosDeudores(cache.deudor[key]);
-        return;
-      }
-
-      setLoading((prev) => ({ ...prev, socios: true }));
-      try {
-        const qpYear = `&anio=${encodeURIComponent(anio)}`;
-        const [pagados, deudores] = await Promise.all([
-          api.get(
-            `/api.php?action=cuotas&tipo=socio&estado=pagado&mes=${encodeURIComponent(
-              mes
-            )}${qpYear}`
-          ),
-          api.get(
-            `/api.php?action=cuotas&tipo=socio&estado=deudor&mes=${encodeURIComponent(
-              mes
-            )}${qpYear}`
-          ),
-        ]);
-
-        const p = formatData(pagados);
-        const d = formatData(deudores);
-
-        cacheRef.current.socios.pagado[key] = p;
-        cacheRef.current.socios.deudor[key] = d;
-        cacheRef.current.socios.lastUpdated[key] = Date.now();
-
-        setSociosPagados(p);
-        setSociosDeudores(d);
-      } catch (e) {
-        console.error(`Error socios ${mes}/${anio}:`, e);
-        showErrorToast(e.message || "Error al cargar datos de socios");
-      } finally {
-        setLoading((prev) => ({ ...prev, socios: false }));
-      }
-    },
-    [formatData, loading.socios, showErrorToast]
-  );
-
-  // ===== Cargas EMPRESAS =====
-  const cargarDatosEmpresasPorMes = useCallback(
-    async (anio, mes, force = false) => {
-      if (!anio || !mes) return;
-      if (loading.empresas) return;
-
-      const key = cacheKey(anio, mes);
-      const now = Date.now();
-      const cache = cacheRef.current.empresas;
-
-      const isValid =
-        !force &&
-        cache.lastUpdated[key] &&
-        now - cache.lastUpdated[key] < cacheRef.current.cacheDuration;
-
-      if (isValid && cache.pagado[key] && cache.deudor[key]) {
-        setEmpresasPagadas(cache.pagado[key]);
-        setEmpresasDeudoras(cache.deudor[key]);
-        return;
-      }
-
-      setLoading((prev) => ({ ...prev, empresas: true }));
-      try {
-        const qpYear = `&anio=${encodeURIComponent(anio)}`;
-        const [pagadas, deudoras] = await Promise.all([
-          api.get(
-            `/api.php?action=cuotas&tipo=empresa&estado=pagado&mes=${encodeURIComponent(
-              mes
-            )}${qpYear}`
-          ),
-          api.get(
-            `/api.php?action=cuotas&tipo=empresa&estado=deudor&mes=${encodeURIComponent(
-              mes
-            )}${qpYear}`
-          ),
-        ]);
-
-        const p = formatData(pagadas);
-        const d = formatData(deudoras);
-
-        cacheRef.current.empresas.pagado[key] = p;
-        cacheRef.current.empresas.deudor[key] = d;
-        cacheRef.current.empresas.lastUpdated[key] = Date.now();
-
-        setEmpresasPagadas(p);
-        setEmpresasDeudoras(d);
-      } catch (e) {
-        console.error(`Error empresas ${mes}/${anio}:`, e);
-        showErrorToast(e.message || "Error al cargar datos de empresas");
-      } finally {
-        setLoading((prev) => ({ ...prev, empresas: false }));
-      }
-    },
-    [formatData, loading.empresas, showErrorToast]
-  );
-
-  // ===== Filtrado =====
-  const filterDataGeneric = useCallback(
-    (arr) => {
-      if (!arr || arr.length === 0) return [];
-      let filtered = [...arr];
-
-      if (selectedMedioPago) {
-        const medioLower = selectedMedioPago.toLowerCase();
-        filtered = filtered.filter(
-          (item) => (item.medio_pago || "").toLowerCase() === medioLower
-        );
-      }
-
-      if (searchTerm) {
-        const t = searchTerm.toLowerCase();
-        filtered = filtered.filter((item) =>
-          viewType === "socio"
-            ? (item.apellido || "").toLowerCase().includes(t) ||
-              (item.nombre || "").toLowerCase().includes(t)
-            : (item.razon_social || "").toLowerCase().includes(t)
-        );
-      }
-
-      return filtered;
-    },
-    [selectedMedioPago, searchTerm, viewType]
-  );
-
-  // ===== Base según pestaña/vista =====
-  const datosCrudosBase = useMemo(() => {
-    if (viewType === "socio") {
-      return activeTab === "pagado" ? sociosPagados : sociosDeudores;
+  // ── Cargar socios ──
+  const cargarDatosPorMesSocios = useCallback(async (anio, mes, force = false) => {
+    if (!anio || !mes || loading.socios) return;
+    const key = cacheKey(anio, mes);
+    const cache = cacheRef.current.socios;
+    const isValid = !force && cache.lastUpdated[key] &&
+      Date.now() - cache.lastUpdated[key] < cacheRef.current.cacheDuration;
+    if (isValid && cache.pagado[key] && cache.deudor[key]) {
+      setSociosPagados(cache.pagado[key]); setSociosDeudores(cache.deudor[key]); return;
     }
-    return activeTab === "pagado" ? empresasPagadas : empresasDeudoras;
-  }, [
-    viewType,
-    activeTab,
-    sociosPagados,
-    sociosDeudores,
-    empresasPagadas,
-    empresasDeudoras,
-  ]);
+    setLoading((p) => ({ ...p, socios: true }));
+    try {
+      const qp = `&anio=${encodeURIComponent(anio)}`;
+      const [pagados, deudores] = await Promise.all([
+        api.get(`/api.php?action=cuotas&tipo=socio&estado=pagado&mes=${encodeURIComponent(mes)}${qp}`),
+        api.get(`/api.php?action=cuotas&tipo=socio&estado=deudor&mes=${encodeURIComponent(mes)}${qp}`),
+      ]);
+      const p = formatData(pagados), d = formatData(deudores);
+      cache.pagado[key] = p; cache.deudor[key] = d; cache.lastUpdated[key] = Date.now();
+      setSociosPagados(p); setSociosDeudores(d);
+    } catch (e) { showErrorToast(e.message || "Error al cargar datos de socios"); }
+    finally { setLoading((p) => ({ ...p, socios: false })); }
+  }, [formatData, loading.socios, showErrorToast]);
 
-  const filtrosCompletos = useMemo(
-    () => Boolean(selectedYear && selectedMonth),
-    [selectedYear, selectedMonth]
-  );
+  // ── Cargar empresas ──
+  const cargarDatosEmpresasPorMes = useCallback(async (anio, mes, force = false) => {
+    if (!anio || !mes || loading.empresas) return;
+    const key = cacheKey(anio, mes);
+    const cache = cacheRef.current.empresas;
+    const isValid = !force && cache.lastUpdated[key] &&
+      Date.now() - cache.lastUpdated[key] < cacheRef.current.cacheDuration;
+    if (isValid && cache.pagado[key] && cache.deudor[key]) {
+      setEmpresasPagadas(cache.pagado[key]); setEmpresasDeudoras(cache.deudor[key]); return;
+    }
+    setLoading((p) => ({ ...p, empresas: true }));
+    try {
+      const qp = `&anio=${encodeURIComponent(anio)}`;
+      const [pagadas, deudoras] = await Promise.all([
+        api.get(`/api.php?action=cuotas&tipo=empresa&estado=pagado&mes=${encodeURIComponent(mes)}${qp}`),
+        api.get(`/api.php?action=cuotas&tipo=empresa&estado=deudor&mes=${encodeURIComponent(mes)}${qp}`),
+      ]);
+      const p = formatData(pagadas), d = formatData(deudoras);
+      cache.pagado[key] = p; cache.deudor[key] = d; cache.lastUpdated[key] = Date.now();
+      setEmpresasPagadas(p); setEmpresasDeudoras(d);
+    } catch (e) { showErrorToast(e.message || "Error al cargar datos de empresas"); }
+    finally { setLoading((p) => ({ ...p, empresas: false })); }
+  }, [formatData, loading.empresas, showErrorToast]);
+
+  // ── Filtrado ──
+  const filterDataGeneric = useCallback((arr) => {
+    if (!arr || arr.length === 0) return [];
+    let filtered = [...arr];
+    if (selectedMedioPago) {
+      const ml = selectedMedioPago.toLowerCase();
+      filtered = filtered.filter((i) => (i.medio_pago || "").toLowerCase() === ml);
+    }
+    if (searchTerm) {
+      const t = searchTerm.toLowerCase();
+      filtered = filtered.filter((i) =>
+        viewType === "socio"
+          ? (i.apellido || "").toLowerCase().includes(t) || (i.nombre || "").toLowerCase().includes(t)
+          : (i.razon_social || "").toLowerCase().includes(t)
+      );
+    }
+    return filtered;
+  }, [selectedMedioPago, searchTerm, viewType]);
+
+  const datosCrudosBase = useMemo(() => {
+    if (viewType === "socio") return activeTab === "pagado" ? sociosPagados : sociosDeudores;
+    return activeTab === "pagado" ? empresasPagadas : empresasDeudoras;
+  }, [viewType, activeTab, sociosPagados, sociosDeudores, empresasPagadas, empresasDeudoras]);
+
+  const filtrosCompletos = useMemo(() => Boolean(selectedYear && selectedMonth), [selectedYear, selectedMonth]);
 
   const datosFiltrados = useMemo(() => {
-    if (!filtrosCompletos) return [];
-    if (datosCrudosBase.length === 0) return [];
+    if (!filtrosCompletos || datosCrudosBase.length === 0) return [];
     return filterDataGeneric(datosCrudosBase);
   }, [filtrosCompletos, datosCrudosBase, filterDataGeneric]);
 
-  // ✅ ahora la selección masiva se mantiene aunque cambies el buscador
   const selectedItemsBulk = useMemo(() => {
     if (!bulkMode || selectedIdsBulk.length === 0) return [];
     const ids = new Set(selectedIdsBulk);
@@ -827,17 +623,10 @@ const GestionarCuotas = () => {
 
   const selectedVisibleCount = useMemo(() => {
     if (!bulkMode || selectedIdsBulk.length === 0) return 0;
-    return datosFiltrados.reduce((acc, item) => {
-      const id = getItemId(item);
-      return acc + (selectedIdsBulkSet.has(id) ? 1 : 0);
-    }, 0);
-  }, [
-    bulkMode,
-    selectedIdsBulk.length,
-    datosFiltrados,
-    getItemId,
-    selectedIdsBulkSet,
-  ]);
+    return datosFiltrados.reduce(
+      (acc, item) => acc + (selectedIdsBulkSet.has(getItemId(item)) ? 1 : 0), 0
+    );
+  }, [bulkMode, selectedIdsBulk.length, datosFiltrados, getItemId, selectedIdsBulkSet]);
 
   const hiddenSelectedCount = useMemo(
     () => Math.max(selectedIdsBulk.length - selectedVisibleCount, 0),
@@ -846,29 +635,14 @@ const GestionarCuotas = () => {
 
   const countPagados = useMemo(() => {
     if (!filtrosCompletos) return 0;
-    const base = viewType === "socio" ? sociosPagados : empresasPagadas;
-    return filterDataGeneric(base).length;
-  }, [
-    filtrosCompletos,
-    viewType,
-    sociosPagados,
-    empresasPagadas,
-    filterDataGeneric,
-  ]);
+    return filterDataGeneric(viewType === "socio" ? sociosPagados : empresasPagadas).length;
+  }, [filtrosCompletos, viewType, sociosPagados, empresasPagadas, filterDataGeneric]);
 
   const countDeudores = useMemo(() => {
     if (!filtrosCompletos) return 0;
-    const base = viewType === "socio" ? sociosDeudores : empresasDeudoras;
-    return filterDataGeneric(base).length;
-  }, [
-    filtrosCompletos,
-    viewType,
-    sociosDeudores,
-    empresasDeudoras,
-    filterDataGeneric,
-  ]);
+    return filterDataGeneric(viewType === "socio" ? sociosDeudores : empresasDeudoras).length;
+  }, [filtrosCompletos, viewType, sociosDeudores, empresasDeudoras, filterDataGeneric]);
 
-  // ===== Infinite =====
   const datosFiltradosPaginated = useMemo(
     () => datosFiltrados.slice(0, offset + limit),
     [datosFiltrados, offset, limit]
@@ -876,143 +650,78 @@ const GestionarCuotas = () => {
 
   const loadMoreItems = useCallback(() => {
     if (!hasMore || loading.socios || loading.empresas) return;
-    if (offset + limit < datosFiltrados.length) setOffset((prev) => prev + limit);
+    if (offset + limit < datosFiltrados.length) setOffset((p) => p + limit);
     else setHasMore(false);
-  }, [
-    hasMore,
-    loading.socios,
-    loading.empresas,
-    offset,
-    limit,
-    datosFiltrados.length,
-  ]);
+  }, [hasMore, loading.socios, loading.empresas, offset, limit, datosFiltrados.length]);
 
   const observer = useRef();
-  const lastItemRef = useCallback(
-    (node) => {
-      if (loading.socios || loading.empresas) return;
-      if (observer.current) observer.current.disconnect();
-      observer.current = new IntersectionObserver((entries) => {
-        if (entries[0].isIntersecting && hasMore) loadMoreItems();
-      });
-      if (node) observer.current.observe(node);
-    },
-    [loading.socios, loading.empresas, hasMore, loadMoreItems]
-  );
+  const lastItemRef = useCallback((node) => {
+    if (loading.socios || loading.empresas) return;
+    if (observer.current) observer.current.disconnect();
+    observer.current = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting && hasMore) loadMoreItems();
+    });
+    if (node) observer.current.observe(node);
+  }, [loading.socios, loading.empresas, hasMore, loadMoreItems]);
 
-  // ✅ reset paginación fuerte
   useEffect(() => {
-    setOffset(0);
-    setLimit(100);
-    setHasMore(true);
+    setOffset(0); setHasMore(true);
     scrollOffsetRef.current = 0;
     listRef.current?.scrollTo(0);
     setSelectedId(null);
   }, [selectedYear, selectedMonth, viewType, activeTab]);
 
-  // filtros suaves
-  useEffect(() => {
-    setOffset(0);
-    setLimit(100);
-    setHasMore(true);
-  }, [selectedMedioPago, searchTerm]);
+  useEffect(() => { setOffset(0); setHasMore(true); }, [selectedMedioPago, searchTerm]);
 
-  // Si el seleccionado no existe en el filtrado actual, lo limpiamos
   useEffect(() => {
     if (selectedId == null) return;
-    const exists = datosFiltradosPaginated.some(
-      (it) => getItemId(it) === selectedId
-    );
-    if (!exists) setSelectedId(null);
+    if (!datosFiltradosPaginated.some((it) => getItemId(it) === selectedId)) setSelectedId(null);
   }, [datosFiltradosPaginated, selectedId, getItemId]);
 
-  // ✅ solo limpiamos selección masiva cuando cambia el dataset real
   useEffect(() => {
-    setSelectedIdsBulk([]);
-    setItemsPagoMasivo([]);
-    if (activeTab !== "deudores") {
-      setBulkMode(false);
-    }
+    setSelectedIdsBulk([]); setItemsPagoMasivo([]);
+    if (activeTab !== "deudores") setBulkMode(false);
   }, [selectedYear, selectedMonth, viewType, activeTab]);
 
-  // ✅ si después de recargar cambió el dataset, depuramos ids inválidos
   useEffect(() => {
     if (!bulkMode) return;
-
-    const validIds = new Set(
-      datosCrudosBase.map((item) => getItemId(item)).filter((id) => id != null)
-    );
-
+    const validIds = new Set(datosCrudosBase.map((item) => getItemId(item)).filter((id) => id != null));
     setSelectedIdsBulk((prev) => {
       const next = prev.filter((id) => validIds.has(id));
       return next.length === prev.length ? prev : next;
     });
   }, [bulkMode, datosCrudosBase, getItemId]);
 
-  // ===== Efectos de carga según filtros =====
   useEffect(() => {
     if (!filtrosCompletos) {
-      setSociosPagados([]);
-      setSociosDeudores([]);
-      setEmpresasPagadas([]);
-      setEmpresasDeudoras([]);
-      setSelectedId(null);
-      return;
+      setSociosPagados([]); setSociosDeudores([]);
+      setEmpresasPagadas([]); setEmpresasDeudoras([]);
+      setSelectedId(null); return;
     }
+    if (viewType === "socio") cargarDatosPorMesSocios(selectedYear, selectedMonth);
+    else cargarDatosEmpresasPorMes(selectedYear, selectedMonth);
+  }, [viewType, filtrosCompletos, selectedYear, selectedMonth, cargarDatosPorMesSocios, cargarDatosEmpresasPorMes]);
 
-    if (viewType === "socio") {
-      cargarDatosPorMesSocios(selectedYear, selectedMonth);
-    } else {
-      cargarDatosEmpresasPorMes(selectedYear, selectedMonth);
-    }
-  }, [
-    viewType,
-    filtrosCompletos,
-    selectedYear,
-    selectedMonth,
-    cargarDatosPorMesSocios,
-    cargarDatosEmpresasPorMes,
-  ]);
-
-  // ===== Handlers UI =====
+  // ── Handlers ──
   const handleVolverAtras = useCallback(() => navigate(-1), [navigate]);
+  const handleYearChange = useCallback((e) => setSelectedYear(e.target.value), []);
+  const handleMonthChange = useCallback((e) => setSelectedMonth(e.target.value), []);
+  const handleMedioPagoChange = useCallback((e) => setSelectedMedioPago(e.target.value), []);
+  const handleSearchChange = useCallback((e) => {
+    if (!selectedMonth || !selectedYear) return;
+    setSearchTerm(e.target.value);
+  }, [selectedMonth, selectedYear]);
 
-  const handleYearChange = useCallback((e) => {
-    setSelectedYear(e.target.value);
-  }, []);
-
-  const handleMonthChange = useCallback((e) => {
-    setSelectedMonth(e.target.value);
-  }, []);
-
-  const handleMedioPagoChange = useCallback((e) => {
-    setSelectedMedioPago(e.target.value);
-  }, []);
-
-  const handleSearchChange = useCallback(
-    (e) => {
-      if (!selectedMonth || !selectedYear) return;
-      setSearchTerm(e.target.value);
-    },
-    [selectedMonth, selectedYear]
-  );
-
-  const handleRowClick = useCallback(
-    (item) => {
-      const id = getItemId(item);
-      if (!id || bulkMode) return;
-      setSelectedId((prev) => (prev === id ? null : id));
-    },
-    [getItemId, bulkMode]
-  );
+  const handleRowClick = useCallback((item) => {
+    const id = getItemId(item);
+    if (!id || bulkMode) return;
+    setSelectedId((prev) => (prev === id ? null : id));
+  }, [getItemId, bulkMode]);
 
   const handleToggleBulkMode = useCallback(() => {
     setBulkMode((prev) => {
       const next = !prev;
-      if (!next) {
-        setSelectedIdsBulk([]);
-        setItemsPagoMasivo([]);
-      }
+      if (!next) { setSelectedIdsBulk([]); setItemsPagoMasivo([]); }
       return next;
     });
     setSelectedId(null);
@@ -1020,580 +729,261 @@ const GestionarCuotas = () => {
     listRef.current?.scrollTo(0);
   }, []);
 
-  const handleBulkToggle = useCallback(
-    (item) => {
-      const id = getItemId(item);
-      if (!id) return;
-
-      setSelectedIdsBulk((prev) =>
-        prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
-      );
-    },
-    [getItemId]
-  );
+  const handleBulkToggle = useCallback((item) => {
+    const id = getItemId(item);
+    if (!id) return;
+    setSelectedIdsBulk((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
+  }, [getItemId]);
 
   const handleAddFilteredToBulk = useCallback(() => {
-    const ids = datosFiltrados
-      .map((item) => getItemId(item))
-      .filter((id) => id != null);
-
-    if (ids.length === 0) return;
-
+    const ids = datosFiltrados.map((item) => getItemId(item)).filter((id) => id != null);
+    if (!ids.length) return;
     setSelectedIdsBulk((prev) => Array.from(new Set([...prev, ...ids])));
   }, [datosFiltrados, getItemId]);
 
   const handleRemoveFilteredFromBulk = useCallback(() => {
-    const visibleIds = new Set(
-      datosFiltrados
-        .map((item) => getItemId(item))
-        .filter((id) => id != null)
-    );
-
+    const visibleIds = new Set(datosFiltrados.map((item) => getItemId(item)).filter((id) => id != null));
     setSelectedIdsBulk((prev) => prev.filter((id) => !visibleIds.has(id)));
   }, [datosFiltrados, getItemId]);
 
   const handleClearBulkSelection = useCallback(() => {
-    setSelectedIdsBulk([]);
-    setItemsPagoMasivo([]);
+    setSelectedIdsBulk([]); setItemsPagoMasivo([]);
   }, []);
 
-  const handlePaymentClick = useCallback(
-    (item) => {
-      setSelectedItemData(item);
-
-      const hasCategoria =
-        !!item?.categoria && String(item.categoria).trim() !== "";
-      const hasPrecioCategoria =
-        !!item?.precio_categoria && Number(item.precio_categoria) > 0;
-
-      if (!hasCategoria || !hasPrecioCategoria) {
-        const sujeto = viewType === "socio" ? "El socio" : "La empresa";
-        showErrorToast(
-          `${sujeto} no tiene categoría asignada. No se puede registrar el pago.`
-        );
-        setSelectedItemData(null);
-        return;
-      }
-
-      if (viewType === "socio") setMostrarModalPagoSocio(true);
-      else setMostrarModalPagoEmpresa(true);
-    },
-    [viewType, showErrorToast]
-  );
+  const handlePaymentClick = useCallback((item) => {
+    setSelectedItemData(item);
+    const hasCategoria = !!item?.categoria && String(item.categoria).trim() !== "";
+    const hasPrecio    = !!item?.precio_categoria && Number(item.precio_categoria) > 0;
+    if (!hasCategoria || !hasPrecio) {
+      showErrorToast(`${viewType === "socio" ? "El socio" : "La empresa"} no tiene categoría asignada.`);
+      setSelectedItemData(null); return;
+    }
+    if (viewType === "socio") setMostrarModalPagoSocio(true);
+    else setMostrarModalPagoEmpresa(true);
+  }, [viewType, showErrorToast]);
 
   const handleAbrirModalPagoMasivo = useCallback(() => {
-    if (!selectedYear || !selectedMonth) {
-      showWarningToast("Seleccioná año y mes antes de registrar pagos masivos.");
-      return;
-    }
-
-    if (selectedItemsBulk.length === 0) {
-      showWarningToast("Seleccioná al menos un registro.");
-      return;
-    }
-
-    const validos = selectedItemsBulk.filter((item) => {
-      const hasCategoria =
-        !!item?.categoria && String(item.categoria).trim() !== "";
-      const hasPrecioCategoria =
-        !!item?.precio_categoria && Number(item.precio_categoria) > 0;
-      return hasCategoria && hasPrecioCategoria;
-    });
-
+    if (!selectedYear || !selectedMonth) { showWarningToast("Seleccioná año y mes antes de registrar pagos masivos."); return; }
+    if (!selectedItemsBulk.length) { showWarningToast("Seleccioná al menos un registro."); return; }
+    const validos = selectedItemsBulk.filter((item) =>
+      !!item?.categoria && String(item.categoria).trim() !== "" &&
+      !!item?.precio_categoria && Number(item.precio_categoria) > 0
+    );
     const omitidos = selectedItemsBulk.length - validos.length;
-
-    if (validos.length === 0) {
-      showErrorToast(
-        "Ninguno de los registros seleccionados tiene categoría válida para registrar el pago."
-      );
-      return;
-    }
-
-    if (omitidos > 0) {
-      showWarningToast(
-        `Se omitirán ${omitidos} registro(s) porque no tienen categoría o importe mensual válido.`
-      );
-    }
-
+    if (!validos.length) { showErrorToast("Ninguno tiene categoría válida."); return; }
+    if (omitidos > 0) showWarningToast(`Se omitirán ${omitidos} registro(s) sin categoría válida.`);
     setItemsPagoMasivo(validos);
     setMostrarModalPagoMasivo(true);
-  }, [
-    selectedYear,
-    selectedMonth,
-    selectedItemsBulk,
-    showWarningToast,
-    showErrorToast,
-  ]);
+  }, [selectedYear, selectedMonth, selectedItemsBulk, showWarningToast, showErrorToast]);
 
-  const refreshCacheBucketForCurrent = useCallback(
-    (tipo) => {
-      const k = cacheKey(selectedYear, selectedMonth);
-      const bucket =
-        tipo === "socio" ? cacheRef.current.socios : cacheRef.current.empresas;
-      delete bucket.pagado[k];
-      delete bucket.deudor[k];
-      delete bucket.lastUpdated[k];
-    },
-    [selectedYear, selectedMonth]
-  );
+  const refreshCacheBucketForCurrent = useCallback((tipo) => {
+    const k = cacheKey(selectedYear, selectedMonth);
+    const bucket = tipo === "socio" ? cacheRef.current.socios : cacheRef.current.empresas;
+    delete bucket.pagado[k]; delete bucket.deudor[k]; delete bucket.lastUpdated[k];
+  }, [selectedYear, selectedMonth]);
 
   const restoreScroll = useCallback(() => {
-    requestAnimationFrame(() => {
-      listRef.current?.scrollTo(scrollOffsetRef.current || 0);
-    });
+    requestAnimationFrame(() => { listRef.current?.scrollTo(scrollOffsetRef.current || 0); });
   }, []);
 
   const handlePagoRealizado = useCallback(async () => {
     try {
       showSuccessToast("Pago registrado correctamente");
-
-      if (selectedYear && selectedMonth) {
-        refreshCacheBucketForCurrent(viewType);
-      }
-
-      if (viewType === "socio") {
-        await cargarDatosPorMesSocios(selectedYear, selectedMonth, true);
-      } else {
-        await cargarDatosEmpresasPorMes(selectedYear, selectedMonth, true);
-      }
-
-      await fetchYears();
-      restoreScroll();
+      if (selectedYear && selectedMonth) refreshCacheBucketForCurrent(viewType);
+      if (viewType === "socio") await cargarDatosPorMesSocios(selectedYear, selectedMonth, true);
+      else await cargarDatosEmpresasPorMes(selectedYear, selectedMonth, true);
+      await fetchYears(); restoreScroll();
     } catch (error) {
-      console.error("Post-pago:", error);
-      showErrorToast(
-        error.message || "Pago registrado pero hubo un error al refrescar"
-      );
+      showErrorToast(error.message || "Pago registrado pero hubo un error al refrescar");
     } finally {
-      setMostrarModalPagoSocio(false);
-      setMostrarModalPagoEmpresa(false);
-      setMostrarModalPagoMasivo(false);
-      setSelectedItemData(null);
-      setItemsPagoMasivo([]);
-      setSelectedIdsBulk([]);
-      setBulkMode(false);
+      setMostrarModalPagoSocio(false); setMostrarModalPagoEmpresa(false);
+      setMostrarModalPagoMasivo(false); setSelectedItemData(null);
+      setItemsPagoMasivo([]); setSelectedIdsBulk([]); setBulkMode(false);
     }
-  }, [
-    selectedYear,
-    selectedMonth,
-    viewType,
-    cargarDatosPorMesSocios,
-    cargarDatosEmpresasPorMes,
-    showSuccessToast,
-    showErrorToast,
-    refreshCacheBucketForCurrent,
-    fetchYears,
-    restoreScroll,
-  ]);
+  }, [selectedYear, selectedMonth, viewType, cargarDatosPorMesSocios, cargarDatosEmpresasPorMes,
+      showSuccessToast, showErrorToast, refreshCacheBucketForCurrent, fetchYears, restoreScroll]);
 
-  const handleDeletePaymentClick = useCallback(
-    (item) => {
-      if (!selectedMonth || !selectedYear) {
-        showWarningToast("Seleccioná año y mes para poder eliminar el pago.");
-        return;
-      }
-      setItemEliminarPago({ ...item, tipo: viewType, mes: selectedMonth });
-      setMostrarModalEliminarPago(true);
-    },
-    [selectedMonth, selectedYear, viewType, showWarningToast]
-  );
+  const handleDeletePaymentClick = useCallback((item) => {
+    if (!selectedMonth || !selectedYear) { showWarningToast("Seleccioná año y mes para poder eliminar el pago."); return; }
+    setItemEliminarPago({ ...item, tipo: viewType, mes: selectedMonth });
+    setMostrarModalEliminarPago(true);
+  }, [selectedMonth, selectedYear, viewType, showWarningToast]);
 
   const handleEliminarPagoConfirmado = useCallback(async () => {
     if (!itemEliminarPago) return;
-
     try {
-      setLoading((prev) => ({
-        ...prev,
-        socios: itemEliminarPago.tipo === "socio" ? true : prev.socios,
-        empresas: itemEliminarPago.tipo === "empresa" ? true : prev.empresas,
+      setLoading((p) => ({
+        ...p,
+        socios:   itemEliminarPago.tipo === "socio"   ? true : p.socios,
+        empresas: itemEliminarPago.tipo === "empresa" ? true : p.empresas,
       }));
-
-      const idPago = itemEliminarPago.idPago ?? itemEliminarPago.id_pago ?? null;
-
-      const idSocio =
-        itemEliminarPago.idSocios ??
-        itemEliminarPago.id ??
-        itemEliminarPago.id_socio ??
-        null;
-
-      const idEmp =
-        itemEliminarPago.idEmp ??
-        itemEliminarPago.idEmpresa ??
-        itemEliminarPago.id ??
-        itemEliminarPago.id_empresa ??
-        null;
-
-      const id = itemEliminarPago.tipo === "socio" ? idSocio : idEmp;
-
-      const keyAnio = selectedYear;
-      const periodo = (cacheRef.current.meses[keyAnio] || []).find(
+      const idPago  = itemEliminarPago.idPago ?? itemEliminarPago.id_pago ?? null;
+      const idSocio = itemEliminarPago.idSocios ?? itemEliminarPago.id ?? itemEliminarPago.id_socio ?? null;
+      const idEmp   = itemEliminarPago.idEmp ?? itemEliminarPago.idEmpresa ?? itemEliminarPago.id ?? itemEliminarPago.id_empresa ?? null;
+      const id      = itemEliminarPago.tipo === "socio" ? idSocio : idEmp;
+      const periodo = (cacheRef.current.meses[selectedYear] || []).find(
         (m) => m.mes === (itemEliminarPago.mes || selectedMonth)
       );
       const idMes = periodo?.idMes ?? periodo?.id_mes ?? null;
-
-      const payload = {
-        tipo: itemEliminarPago.tipo,
-        mes: itemEliminarPago.mes,
-        id_pago: idPago,
-        id,
-        idMes,
-        anio: selectedYear || undefined,
-      };
-
-      const res = await api.post(`/api.php?action=eliminar_pago`, payload);
-
+      const res = await api.post("/api.php?action=eliminar_pago", {
+        tipo: itemEliminarPago.tipo, mes: itemEliminarPago.mes,
+        id_pago: idPago, id, idMes, anio: selectedYear || undefined,
+      });
       if (res?.ok) {
         showSuccessToast(res?.mensaje || "Pago eliminado correctamente");
-
         refreshCacheBucketForCurrent(itemEliminarPago.tipo);
-
-        if (itemEliminarPago.tipo === "socio") {
-          await cargarDatosPorMesSocios(selectedYear, selectedMonth, true);
-        } else {
-          await cargarDatosEmpresasPorMes(selectedYear, selectedMonth, true);
-        }
-
-        await fetchYears();
-        restoreScroll();
-      } else {
-        showErrorToast(res?.mensaje || "No se pudo eliminar el pago");
-      }
-    } catch (err) {
-      console.error(err);
-      showErrorToast(err?.message || "Error al eliminar el pago");
-    } finally {
-      setLoading((prev) => ({ ...prev, socios: false, empresas: false }));
-      setMostrarModalEliminarPago(false);
-      setItemEliminarPago(null);
+        if (itemEliminarPago.tipo === "socio") await cargarDatosPorMesSocios(selectedYear, selectedMonth, true);
+        else await cargarDatosEmpresasPorMes(selectedYear, selectedMonth, true);
+        await fetchYears(); restoreScroll();
+      } else { showErrorToast(res?.mensaje || "No se pudo eliminar el pago"); }
+    } catch (err) { showErrorToast(err?.message || "Error al eliminar el pago"); }
+    finally {
+      setLoading((p) => ({ ...p, socios: false, empresas: false }));
+      setMostrarModalEliminarPago(false); setItemEliminarPago(null);
     }
-  }, [
-    itemEliminarPago,
-    selectedYear,
-    selectedMonth,
-    cargarDatosPorMesSocios,
-    cargarDatosEmpresasPorMes,
-    showSuccessToast,
-    showErrorToast,
-    refreshCacheBucketForCurrent,
-    fetchYears,
-    restoreScroll,
-  ]);
+  }, [itemEliminarPago, selectedYear, selectedMonth, cargarDatosPorMesSocios, cargarDatosEmpresasPorMes,
+      showSuccessToast, showErrorToast, refreshCacheBucketForCurrent, fetchYears, restoreScroll]);
 
-  // ===== Export / Print =====
   const requireYearMonthOrWarn = useCallback(() => {
-    if (!selectedYear || !selectedMonth) {
-      showWarningToast("Seleccioná año y mes antes de continuar");
-      return false;
-    }
-    if (loading.socios || loading.empresas) {
-      showWarningToast("Esperá a que terminen de cargarse los datos");
-      return false;
-    }
-    if (datosFiltrados.length === 0) {
-      showWarningToast("No hay datos");
-      return false;
-    }
+    if (!selectedYear || !selectedMonth) { showWarningToast("Seleccioná año y mes antes de continuar"); return false; }
+    if (loading.socios || loading.empresas) { showWarningToast("Esperá a que terminen de cargarse los datos"); return false; }
+    if (!datosFiltrados.length) { showWarningToast("No hay datos"); return false; }
     return true;
-  }, [
-    selectedYear,
-    selectedMonth,
-    loading.socios,
-    loading.empresas,
-    datosFiltrados.length,
-    showWarningToast,
-  ]);
+  }, [selectedYear, selectedMonth, loading.socios, loading.empresas, datosFiltrados.length, showWarningToast]);
 
   const handleExportExcel = useCallback(() => {
     if (!requireYearMonthOrWarn()) return;
-
-    const dataExport = datosFiltrados.map((item) => ({
-      ...item,
-      Año: selectedYear,
-      Mes: selectedMonth,
+    const ws = XLSX.utils.json_to_sheet(datosFiltrados.map((item) => ({
+      ...item, Año: selectedYear, Mes: selectedMonth,
       Tipo: activeTab === "pagado" ? "Pagados" : "Deudores",
       MedioPago: selectedMedioPago || "Todos",
-    }));
-
-    const ws = XLSX.utils.json_to_sheet(dataExport);
+    })));
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(
-      wb,
-      ws,
-      viewType === "socio" ? "Socios" : "Empresas"
-    );
-
-    const fname = `${viewType}_${selectedYear}_${selectedMonth}_${activeTab}_${
-      selectedMedioPago || "todos"
-    }.xlsx`;
-    XLSX.writeFile(wb, fname);
-  }, [
-    requireYearMonthOrWarn,
-    datosFiltrados,
-    selectedYear,
-    selectedMonth,
-    activeTab,
-    selectedMedioPago,
-    viewType,
-  ]);
+    XLSX.utils.book_append_sheet(wb, ws, viewType === "socio" ? "Socios" : "Empresas");
+    XLSX.writeFile(wb, `${viewType}_${selectedYear}_${selectedMonth}_${activeTab}_${selectedMedioPago || "todos"}.xlsx`);
+  }, [requireYearMonthOrWarn, datosFiltrados, selectedYear, selectedMonth, activeTab, selectedMedioPago, viewType]);
 
   const handleImprimirRegistro = useCallback(() => {
     if (!requireYearMonthOrWarn()) return;
-
-    const content = `
-      <html>
-        <head>
-          <meta charset="utf-8" />
-          <title>Registro</title>
-          <style>
-            body { font-family: Arial, sans-serif; }
-            h2 { color: #333; }
-            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-            th { background-color: #0288d1; color: white; }
-            tr:nth-child(even) { background-color: #f9f9f9; }
-          </style>
-        </head>
-        <body>
-          <h2>Registro - ${
-            activeTab === "pagado" ? "Pagados" : "Deudores"
-          } - Año: ${selectedYear} | Mes: ${selectedMonth}</h2>
-          ${
-            selectedMedioPago
-              ? `<h3>Medio de Pago: ${selectedMedioPago}</h3>`
-              : ""
-          }
-          <table>
-            <thead>
-              <tr>
-                ${
-                  viewType === "socio"
-                    ? "<th>APELLIDO</th><th>NOMBRE</th><th>MEDIO PAGO</th>"
-                    : "<th>EMPRESA</th><th>MEDIO PAGO</th>"
-                }
-              </tr>
-            </thead>
-            <tbody>
-              ${datosFiltrados
-                .map((item) =>
-                  viewType === "socio"
-                    ? `<tr><td>${item.apellido || ""}</td><td>${
-                        item.nombre || ""
-                      }</td><td>${item.medio_pago || "-"}</td></tr>`
-                    : `<tr><td>${item.razon_social || ""}</td><td>${
-                        item.medio_pago || "-"
-                      }</td></tr>`
-                )
-                .join("")}
-            </tbody>
-          </table>
-        </body>
-      </html>
-    `;
-
+    const content = `<html><head><meta charset="utf-8"/><title>Registro</title>
+      <style>body{font-family:Arial,sans-serif;}table{width:100%;border-collapse:collapse;margin-top:20px;}
+      th,td{border:1px solid #ddd;padding:8px;}th{background:#0288d1;color:#fff;}
+      tr:nth-child(even){background:#f9f9f9;}</style></head><body>
+      <h2>${activeTab === "pagado" ? "Pagados" : "Deudores"} — Año: ${selectedYear} | Mes: ${selectedMonth}</h2>
+      ${selectedMedioPago ? `<h3>Medio de Pago: ${selectedMedioPago}</h3>` : ""}
+      <table><thead><tr>${viewType === "socio"
+        ? "<th>APELLIDO</th><th>NOMBRE</th><th>MEDIO PAGO</th>"
+        : "<th>EMPRESA</th><th>MEDIO PAGO</th>"}</tr></thead>
+      <tbody>${datosFiltrados.map((item) => viewType === "socio"
+        ? `<tr><td>${item.apellido||""}</td><td>${item.nombre||""}</td><td>${item.medio_pago||"-"}</td></tr>`
+        : `<tr><td>${item.razon_social||""}</td><td>${item.medio_pago||"-"}</td></tr>`
+      ).join("")}</tbody></table></body></html>`;
     const w = window.open("", "Imprimir", "width=800,height=600");
     if (!w) return;
-    w.document.write(content);
-    w.document.close();
-    w.focus();
-    w.print();
-  }, [
-    requireYearMonthOrWarn,
-    activeTab,
-    selectedYear,
-    selectedMonth,
-    selectedMedioPago,
-    viewType,
-    datosFiltrados,
-  ]);
+    w.document.write(content); w.document.close(); w.focus(); w.print();
+  }, [requireYearMonthOrWarn, activeTab, selectedYear, selectedMonth, selectedMedioPago, viewType, datosFiltrados]);
 
   const handleAbrirModalImpresion = useCallback(() => {
     if (!requireYearMonthOrWarn()) return;
     setMesesSeleccionadosImpresion([selectedMonth]);
-    setModoImpresionIndividual(false);
-    setSelectedItemData(null);
-    setMostrarModalMes(true);
+    setModoImpresionIndividual(false); setSelectedItemData(null); setMostrarModalMes(true);
   }, [requireYearMonthOrWarn, selectedMonth]);
 
-  const handlePrintClick = useCallback(
-    (item) => {
-      if (!selectedYear || !selectedMonth) {
-        showWarningToast("Seleccioná año y mes antes de imprimir");
-        return;
-      }
-      setSelectedItemData(item);
-      setModoImpresionIndividual(true);
-      setMesesSeleccionadosImpresion([selectedMonth]);
-      setMostrarModalMes(true);
-    },
-    [selectedYear, selectedMonth, showWarningToast]
-  );
+  const handlePrintClick = useCallback((item) => {
+    if (!selectedYear || !selectedMonth) { showWarningToast("Seleccioná año y mes antes de imprimir"); return; }
+    setSelectedItemData(item); setModoImpresionIndividual(true);
+    setMesesSeleccionadosImpresion([selectedMonth]); setMostrarModalMes(true);
+  }, [selectedYear, selectedMonth, showWarningToast]);
 
-  const handleImprimirTodosComprobantes = useCallback(
-    (mesesSel) => {
-      if (!Array.isArray(mesesSel) || mesesSel.length === 0) {
-        showWarningToast("Debe seleccionar al menos un mes");
-        return;
-      }
-      printComprobantesLote(datosFiltrados, viewType, activeTab, mesesSel);
-      setMostrarModalMes(false);
-    },
-    [datosFiltrados, viewType, activeTab, showWarningToast]
-  );
+  const handleImprimirTodosComprobantes = useCallback((mesesSel) => {
+    if (!Array.isArray(mesesSel) || !mesesSel.length) { showWarningToast("Debe seleccionar al menos un mes"); return; }
+    printComprobantesLote(datosFiltrados, viewType, activeTab, mesesSel);
+    setMostrarModalMes(false);
+  }, [datosFiltrados, viewType, activeTab, showWarningToast]);
 
-  const handleImprimirUnoConMeses = useCallback(
-    (item, mesesSel) => {
-      if (!Array.isArray(mesesSel) || mesesSel.length === 0) {
-        showWarningToast("Debe seleccionar al menos un mes");
-        return;
-      }
-      printComprobanteItem(item, viewType, activeTab, mesesSel);
-      setMostrarModalMes(false);
-      setModoImpresionIndividual(false);
-      setSelectedItemData(null);
-    },
-    [viewType, activeTab, showWarningToast]
-  );
+  const handleImprimirUnoConMeses = useCallback((item, mesesSel) => {
+    if (!Array.isArray(mesesSel) || !mesesSel.length) { showWarningToast("Debe seleccionar al menos un mes"); return; }
+    printComprobanteItem(item, viewType, activeTab, mesesSel);
+    setMostrarModalMes(false); setModoImpresionIndividual(false); setSelectedItemData(null);
+  }, [viewType, activeTab, showWarningToast]);
 
-  const itemKey = useCallback(
-    (index, data) => {
-      const it = data?.[index];
-      const id = it ? getItemId(it) : null;
-      return id ?? `row-${index}`;
-    },
-    [getItemId]
-  );
+  const itemKey = useCallback((index, data) => {
+    const it = data?.[index];
+    const id = it ? getItemId(it) : null;
+    return id ?? `row-${index}`;
+  }, [getItemId]);
 
-  // Render tabla
-  const renderTabla = useMemo(() => {
+  const isLoading = loading.socios || loading.empresas;
+
+  /* ── Contenido del área de tabla ── */
+  const renderTablaContent = () => {
     if (!selectedYear) return <NoFiltersApplied />;
     if (!selectedMonth) return <NoMonthSelected />;
-
-    const isLoading = loading.socios || loading.empresas;
-
     if (isLoading && datosFiltrados.length === 0) return <LoadingIndicator />;
     if (!isLoading && datosFiltrados.length === 0) return <NoDataFound />;
 
-    // ===== Mobile =====
+    // Mobile: scroll nativo
     if (isMobileRef.current) {
       return (
         <div className="gcuotas-mobile-list" style={{ position: "relative" }}>
           {datosFiltradosPaginated.map((item, index) => {
             const id = getItemId(item);
-            const selected =
-              bulkMode
-                ? selectedIdsBulkSet.has(id)
-                : selectedId != null && id != null && selectedId === id;
-
-            const handleCardClick = () => {
-              if (bulkMode) handleBulkToggle(item);
-              else handleRowClick(item);
-            };
-
+            const isBulkSel = bulkMode && selectedIdsBulkSet.has(id);
+            const selected = bulkMode
+              ? isBulkSel
+              : selectedId != null && id != null && selectedId === id;
             return (
               <div
                 key={id ?? index}
-                ref={
-                  index === datosFiltradosPaginated.length - 1
-                    ? lastItemRef
-                    : null
-                }
-                className={`gcuotas-mobile-card ${
-                  selected ? "gcuotas-selected-card" : ""
-                }`}
-                onClick={handleCardClick}
+                ref={index === datosFiltradosPaginated.length - 1 ? lastItemRef : null}
+                className={["gcuotas-mobile-card",
+                  selected ? (bulkMode ? "gcuotas-bulk-selected-card" : "gcuotas-selected-card") : ""
+                ].filter(Boolean).join(" ")}
+                onClick={() => { if (bulkMode) handleBulkToggle(item); else handleRowClick(item); }}
               >
                 {bulkMode && (
-                  <div className="gcuotas-mobile-row">
-                    <span className="gcuotas-mobile-label">Seleccionar:</span>
-                    <span>
-                      <input
-                        type="checkbox"
-                        checked={selectedIdsBulkSet.has(id)}
-                        onClick={(e) => e.stopPropagation()}
-                        onChange={() => handleBulkToggle(item)}
-                      />
-                    </span>
+                  <div className="gcuotas-mobile-row gcuotas-mobile-bulk-row">
+                    <label className="gcuotas-mobile-bulk-label" onClick={(e) => e.stopPropagation()}>
+                      <input type="checkbox" className="gcuotas-checkbox"
+                        checked={selectedIdsBulkSet.has(id)} onChange={() => handleBulkToggle(item)} />
+                      <span className="gcuotas-checkbox-box" />
+                      <span className="gcuotas-mobile-bulk-text">
+                        {isBulkSel ? "Seleccionado" : "Seleccionar"}
+                      </span>
+                    </label>
                   </div>
                 )}
-
                 {viewType === "socio" ? (
                   <>
-                    <div className="gcuotas-mobile-row">
-                      <span className="gcuotas-mobile-label">Nombre:</span>
-                      <span>
-                        {item.apellido} {item.nombre}
-                      </span>
-                    </div>
-                    <div className="gcuotas-mobile-row">
-                      <span className="gcuotas-mobile-label">Dirección:</span>
-                      <span>{item.domicilio}</span>
-                    </div>
-                    <div className="gcuotas-mobile-row">
-                      <span className="gcuotas-mobile-label">Categoría:</span>
-                      <span>{item.displayCategoriaPrecio}</span>
-                    </div>
-                    <div className="gcuotas-mobile-row">
-                      <span className="gcuotas-mobile-label">Medio Pago:</span>
-                      <span>{item.medio_pago || "-"}</span>
-                    </div>
+                    <div className="gcuotas-mobile-row"><span className="gcuotas-mobile-label">Nombre:</span><span>{item.apellido} {item.nombre}</span></div>
+                    <div className="gcuotas-mobile-row"><span className="gcuotas-mobile-label">Dirección:</span><span>{item.domicilio}</span></div>
+                    <div className="gcuotas-mobile-row"><span className="gcuotas-mobile-label">Categoría:</span><span>{item.displayCategoriaPrecio}</span></div>
+                    <div className="gcuotas-mobile-row"><span className="gcuotas-mobile-label">Medio Pago:</span><span>{item.medio_pago || "-"}</span></div>
                   </>
                 ) : (
                   <>
-                    <div className="gcuotas-mobile-row">
-                      <span className="gcuotas-mobile-label">Empresa:</span>
-                      <span>{item.razon_social}</span>
-                    </div>
-                    <div className="gcuotas-mobile-row">
-                      <span className="gcuotas-mobile-label">Dirección:</span>
-                      <span>{item.domicilio}</span>
-                    </div>
-                    <div className="gcuotas-mobile-row">
-                      <span className="gcuotas-mobile-label">Categoría:</span>
-                      <span>{item.displayCategoriaPrecio}</span>
-                    </div>
-                    <div className="gcuotas-mobile-row">
-                      <span className="gcuotas-mobile-label">Medio Pago:</span>
-                      <span>{item.medio_pago || "-"}</span>
-                    </div>
+                    <div className="gcuotas-mobile-row"><span className="gcuotas-mobile-label">Empresa:</span><span>{item.razon_social}</span></div>
+                    <div className="gcuotas-mobile-row"><span className="gcuotas-mobile-label">Dirección:</span><span>{item.domicilio}</span></div>
+                    <div className="gcuotas-mobile-row"><span className="gcuotas-mobile-label">Categoría:</span><span>{item.displayCategoriaPrecio}</span></div>
+                    <div className="gcuotas-mobile-row"><span className="gcuotas-mobile-label">Medio Pago:</span><span>{item.medio_pago || "-"}</span></div>
                   </>
                 )}
-
                 {!bulkMode && selected && (
                   <div className="gcuotas-mobile-actions">
-                    <button
-                      className="gcuotas-mobile-print-button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handlePrintClick(item);
-                      }}
-                    >
-                      <FontAwesomeIcon icon={faPrint} />
-                      <span>Imprimir</span>
+                    <button className="gcuotas-mobile-print-button"
+                      onClick={(e) => { e.stopPropagation(); handlePrintClick(item); }}>
+                      <FontAwesomeIcon icon={faPrint} /><span>Imprimir</span>
                     </button>
-
                     {activeTab === "deudores" && (
-                      <button
-                        className="gcuotas-mobile-payment-button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handlePaymentClick(item);
-                        }}
-                      >
-                        <FontAwesomeIcon icon={faDollarSign} />
-                        <span>Registrar Pago</span>
+                      <button className="gcuotas-mobile-payment-button"
+                        onClick={(e) => { e.stopPropagation(); handlePaymentClick(item); }}>
+                        <FontAwesomeIcon icon={faDollarSign} /><span>Registrar Pago</span>
                       </button>
                     )}
-
                     {activeTab === "pagado" && (
-                      <button
-                        className="gcuotas-mobile-deletepay-button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeletePaymentClick(item);
-                        }}
-                      >
-                        <FontAwesomeIcon icon={faTimes} />
-                        <span>Eliminar</span>
+                      <button className="gcuotas-mobile-deletepay-button"
+                        onClick={(e) => { e.stopPropagation(); handleDeletePaymentClick(item); }}>
+                        <FontAwesomeIcon icon={faTimes} /><span>Eliminar</span>
                       </button>
                     )}
                   </div>
@@ -1601,236 +991,88 @@ const GestionarCuotas = () => {
               </div>
             );
           })}
-
           {isLoading && (
             <div className="gcuotas-table-overlay-loading">
-              <div className="gcuotas-loading-spinner" />
-              <span>Cargando…</span>
+              <div className="gcuotas-loading-spinner" /><span>Cargando…</span>
             </div>
           )}
         </div>
       );
     }
 
-    // ===== Desktop =====
-    const headerHeight = 50;
-    const tableHeight = Math.max(
-      (isClient ? window.innerHeight : 800) * 0.85 - headerHeight,
-      300
-    );
-
+    // Desktop: componente con ResizeObserver
     return (
-      <div
-        className="gcuotas-virtual-tables"
-        style={{ height: "85vh", position: "relative" }}
-      >
-        <div
-          className={`gcuotas-virtual-header ${
-            viewType === "empresa" ? "gempresas" : "gsocios"
-          }`}
-        >
-          {bulkMode && (
-            <div
-              className="gcuotas-virtual-cell"
-              style={{ maxWidth: 72, minWidth: 72 }}
-            >
-              Sel.
-            </div>
-          )}
-
-          {viewType === "socio" ? (
-            <>
-              <div className="gcuotas-virtual-cell">Apellido</div>
-              <div className="gcuotas-virtual-cell">Nombre</div>
-              <div className="gcuotas-virtual-cell">Categoría</div>
-              <div className="gcuotas-virtual-cell">Medio Pago</div>
-              <div className="gcuotas-virtual-cell">Acciones</div>
-            </>
-          ) : (
-            <>
-              <div className="gcuotas-virtual-cell">Razón Social</div>
-              <div className="gcuotas-virtual-cell">Categoría</div>
-              <div className="gcuotas-virtual-cell">Medio Pago</div>
-              <div className="gcuotas-virtual-cell">Acciones</div>
-            </>
-          )}
-        </div>
-
-        <List
-          ref={listRef}
-          height={tableHeight}
-          itemCount={datosFiltradosPaginated.length + (hasMore ? 1 : 0)}
-          itemSize={50}
-          itemData={datosFiltradosPaginated}
-          width={"100%"}
-          outerElementType={Outer}
-          itemKey={itemKey}
-          onScroll={({ scrollOffset }) => {
-            scrollOffsetRef.current = scrollOffset;
-          }}
-          onItemsRendered={({ visibleStopIndex }) => {
-            if (
-              visibleStopIndex >= datosFiltradosPaginated.length - 5 &&
-              hasMore
-            ) {
-              loadMoreItems();
-            }
-          }}
-        >
-          {(props) => {
-            if (props.index >= datosFiltradosPaginated.length) {
-              return (
-                <div style={props.style} className="gcuotas-loading-row"></div>
-              );
-            }
-
-            return (
-              <Row
-                {...props}
-                selectedId={selectedId}
-                viewType={viewType}
-                activeTab={activeTab}
-                onRowClick={handleRowClick}
-                onPaymentClick={handlePaymentClick}
-                onPrintClick={handlePrintClick}
-                onDeletePaymentClick={handleDeletePaymentClick}
-                getItemId={getItemId}
-                bulkMode={bulkMode}
-                bulkSelectedIds={selectedIdsBulkSet}
-                onBulkToggle={handleBulkToggle}
-              />
-            );
-          }}
-        </List>
-
-        {isLoading && (
-          <div className="gcuotas-table-overlay-loading">
-            <div className="gcuotas-loading-spinner" />
-            <span>Cargando…</span>
-          </div>
-        )}
-      </div>
+      <TablaDesktop
+        viewType={viewType}
+        datosFiltrados={datosFiltrados}
+        datosFiltradosPaginated={datosFiltradosPaginated}
+        activeTab={activeTab}
+        selectedId={selectedId}
+        hasMore={hasMore}
+        isLoading={isLoading}
+        handleRowClick={handleRowClick}
+        handlePaymentClick={handlePaymentClick}
+        handlePrintClick={handlePrintClick}
+        handleDeletePaymentClick={handleDeletePaymentClick}
+        getItemId={getItemId}
+        itemKey={itemKey}
+        bulkMode={bulkMode}
+        selectedIdsBulkSet={selectedIdsBulkSet}
+        handleBulkToggle={handleBulkToggle}
+        selectedVisibleCount={selectedVisibleCount}
+        handleAddFilteredToBulk={handleAddFilteredToBulk}
+        handleRemoveFilteredFromBulk={handleRemoveFilteredFromBulk}
+        loadMoreItems={loadMoreItems}
+        listRef={listRef}
+        scrollOffsetRef={scrollOffsetRef}
+      />
     );
-  }, [
-    selectedYear,
-    selectedMonth,
-    viewType,
-    loading.socios,
-    loading.empresas,
-    datosFiltrados,
-    datosFiltradosPaginated,
-    activeTab,
-    selectedId,
-    handleRowClick,
-    handlePaymentClick,
-    handlePrintClick,
-    handleDeletePaymentClick,
-    hasMore,
-    loadMoreItems,
-    lastItemRef,
-    isClient,
-    getItemId,
-    itemKey,
-    bulkMode,
-    selectedIdsBulkSet,
-    handleBulkToggle,
-  ]);
+  };
 
   return (
     <div className="gcuotas-container">
       {toast.show && (
-        <Toast
-          tipo={toast.tipo}
-          mensaje={toast.mensaje}
-          onClose={hideToast}
-          duracion={toast.duracion}
-        />
+        <Toast tipo={toast.tipo} mensaje={toast.mensaje} onClose={hideToast} duracion={toast.duracion} />
       )}
 
-      {/* Modal de Meses (impresión) */}
       {mostrarModalMes && (
         <ModalMesCuotas
           mesesSeleccionados={mesesSeleccionadosImpresion}
           onMesSeleccionadosChange={setMesesSeleccionadosImpresion}
-          onCancelar={() => {
-            setMostrarModalMes(false);
-            setModoImpresionIndividual(false);
-            setSelectedItemData(null);
-          }}
+          onCancelar={() => { setMostrarModalMes(false); setModoImpresionIndividual(false); setSelectedItemData(null); }}
           onImprimir={() => {
-            if (modoImpresionIndividual && selectedItemData) {
-              handleImprimirUnoConMeses(
-                selectedItemData,
-                mesesSeleccionadosImpresion
-              );
-            } else {
-              handleImprimirTodosComprobantes(mesesSeleccionadosImpresion);
-            }
+            if (modoImpresionIndividual && selectedItemData)
+              handleImprimirUnoConMeses(selectedItemData, mesesSeleccionadosImpresion);
+            else handleImprimirTodosComprobantes(mesesSeleccionadosImpresion);
           }}
         />
       )}
-
-      {/* Modal Pago Socio */}
       {mostrarModalPagoSocio && selectedItemData && (
-        <ModalPagos
-          nombre={selectedItemData.nombre}
-          apellido={selectedItemData.apellido}
-          cerrarModal={() => {
-            setMostrarModalPagoSocio(false);
-            setSelectedItemData(null);
-          }}
-          onPagoRealizado={handlePagoRealizado}
-        />
+        <ModalPagos nombre={selectedItemData.nombre} apellido={selectedItemData.apellido}
+          cerrarModal={() => { setMostrarModalPagoSocio(false); setSelectedItemData(null); }}
+          onPagoRealizado={handlePagoRealizado} />
       )}
-
-      {/* Modal Pago Empresa */}
       {mostrarModalPagoEmpresa && selectedItemData && (
-        <ModalPagosEmpresas
-          razonSocial={selectedItemData.razon_social}
-          cerrarModal={() => {
-            setMostrarModalPagoEmpresa(false);
-            setSelectedItemData(null);
-          }}
-          onPagoRealizado={handlePagoRealizado}
-        />
+        <ModalPagosEmpresas razonSocial={selectedItemData.razon_social}
+          cerrarModal={() => { setMostrarModalPagoEmpresa(false); setSelectedItemData(null); }}
+          onPagoRealizado={handlePagoRealizado} />
       )}
-
-      {/* Modal Pago Masivo */}
       {mostrarModalPagoMasivo && itemsPagoMasivo.length > 0 && (
-        <ModalPagosMasivos
-          tipoEntidad={viewType}
-          items={itemsPagoMasivo}
-          selectedYear={selectedYear}
-          cerrarModal={() => {
-            setMostrarModalPagoMasivo(false);
-            setItemsPagoMasivo([]);
-          }}
-          onPagoRealizado={handlePagoRealizado}
-        />
+        <ModalPagosMasivos tipoEntidad={viewType} items={itemsPagoMasivo} selectedYear={selectedYear}
+          cerrarModal={() => { setMostrarModalPagoMasivo(false); setItemsPagoMasivo([]); }}
+          onPagoRealizado={handlePagoRealizado} />
       )}
-
-      {/* Modal eliminar pago */}
       {mostrarModalEliminarPago && itemEliminarPago && (
-        <ModalEliminarPago
-          tipo={itemEliminarPago.tipo}
-          mes={itemEliminarPago.mes}
-          item={itemEliminarPago}
-          onCancelar={() => {
-            setMostrarModalEliminarPago(false);
-            setItemEliminarPago(null);
-          }}
-          onConfirmar={handleEliminarPagoConfirmado}
-        />
+        <ModalEliminarPago tipo={itemEliminarPago.tipo} mes={itemEliminarPago.mes} item={itemEliminarPago}
+          onCancelar={() => { setMostrarModalEliminarPago(false); setItemEliminarPago(null); }}
+          onConfirmar={handleEliminarPagoConfirmado} />
       )}
 
-      {/* Panel izquierdo */}
+      {/* ── Panel izquierdo ── */}
       <div className="gcuotas-left-section gcuotas-box">
         <div className="gcuotas-header-section">
           <h2 className="gcuotas-title">
-            <FontAwesomeIcon
-              icon={faMoneyCheckAlt}
-              className="gcuotas-title-icon"
-            />
+            <FontAwesomeIcon icon={faMoneyCheckAlt} className="gcuotas-title-icon" />
             Gestionar Cuotas
           </h2>
           <div className="gcuotas-divider"></div>
@@ -1845,120 +1087,53 @@ const GestionarCuotas = () => {
                   <span>Filtros</span>
                 </div>
               </div>
-
               <div className="gcuotas-select-container">
                 <div className={`gcuotas-float ${selectedYear ? "has-value" : ""}`}>
-                  <select
-                    id="anio"
-                    value={selectedYear}
-                    onChange={handleYearChange}
+                  <select id="anio" value={selectedYear} onChange={handleYearChange}
                     className="gcuotas-dropdown gcuotas-float__control"
-                    disabled={
-                      loading.years ||
-                      loading.meses ||
-                      loading.socios ||
-                      loading.empresas
-                    }
-                  >
-                    {years.map((y, i) => (
-                      <option key={i} value={y}>
-                        {y}
-                      </option>
-                    ))}
+                    disabled={loading.years || loading.meses || loading.socios || loading.empresas}>
+                    {years.map((y, i) => <option key={i} value={y}>{y}</option>)}
                   </select>
-
                   <label htmlFor="anio" className="gcuotas-float__label">
-                    <FontAwesomeIcon icon={faCalendarAlt} />
-                    <span>Año</span>
+                    <FontAwesomeIcon icon={faCalendarAlt} /><span>Año</span>
                   </label>
                 </div>
-
                 <div className={`gcuotas-float ${selectedMonth ? "has-value" : ""}`}>
-                  <select
-                    id="meses"
-                    value={selectedMonth}
-                    onChange={handleMonthChange}
+                  <select id="meses" value={selectedMonth} onChange={handleMonthChange}
                     className="gcuotas-dropdown gcuotas-float__control"
-                    disabled={
-                      !selectedYear ||
-                      loading.meses ||
-                      loading.socios ||
-                      loading.empresas
-                    }
-                  >
-                    <option value="" disabled>
-                      Mes
-                    </option>
-                    {meses.map((m, index) => (
-                      <option key={index} value={m.mes}>
-                        {m.mes}
-                      </option>
-                    ))}
+                    disabled={!selectedYear || loading.meses || loading.socios || loading.empresas}>
+                    <option value="" disabled>Mes</option>
+                    {meses.map((m, i) => <option key={i} value={m.mes}>{m.mes}</option>)}
                   </select>
-
                   <label htmlFor="meses" className="gcuotas-float__label">
-                    <FontAwesomeIcon icon={faCalendarAlt} />
-                    <span>Mes</span>
+                    <FontAwesomeIcon icon={faCalendarAlt} /><span>Mes</span>
                   </label>
                 </div>
-
-                <div
-                  className={`gcuotas-float gcuotas-input-full ${
-                    viewType ? "has-value" : ""
-                  }`}
-                >
-                  <select
-                    id="entidad"
-                    value={viewType}
+                <div className={`gcuotas-float gcuotas-input-full ${viewType ? "has-value" : ""}`}>
+                  <select id="entidad" value={viewType}
                     onChange={(e) => {
-                      setViewType(e.target.value);
-                      setSelectedId(null);
-                      setSelectedIdsBulk([]);
-                      setBulkMode(false);
-                      scrollOffsetRef.current = 0;
-                      listRef.current?.scrollTo(0);
+                      setViewType(e.target.value); setSelectedId(null);
+                      setSelectedIdsBulk([]); setBulkMode(false);
+                      scrollOffsetRef.current = 0; listRef.current?.scrollTo(0);
                     }}
                     className="gcuotas-dropdown gcuotas-float__control"
-                    disabled={loading.socios || loading.empresas}
-                  >
+                    disabled={loading.socios || loading.empresas}>
                     <option value="socio">Socios</option>
                     <option value="empresa">Empresas</option>
                   </select>
-
                   <label htmlFor="entidad" className="gcuotas-float__label">
-                    <FontAwesomeIcon icon={faUsers} />
-                    <span>Tipo de vista</span>
+                    <FontAwesomeIcon icon={faUsers} /><span>Tipo de vista</span>
                   </label>
                 </div>
-
-                <div
-                  className={`gcuotas-float gcuotas-input-full ${
-                    selectedMedioPago ? "has-value" : ""
-                  }`}
-                >
-                  <select
-                    id="medioPago"
-                    value={selectedMedioPago}
-                    onChange={handleMedioPagoChange}
+                <div className={`gcuotas-float gcuotas-input-full ${selectedMedioPago ? "has-value" : ""}`}>
+                  <select id="medioPago" value={selectedMedioPago} onChange={handleMedioPagoChange}
                     className="gcuotas-dropdown gcuotas-float__control"
-                    disabled={
-                      loading.socios ||
-                      loading.empresas ||
-                      !selectedYear ||
-                      !selectedMonth
-                    }
-                  >
+                    disabled={loading.socios || loading.empresas || !selectedYear || !selectedMonth}>
                     <option value="">Todos</option>
-                    {mediosPago.map((medio, index) => (
-                      <option key={index} value={medio.nombre}>
-                        {medio.nombre}
-                      </option>
-                    ))}
+                    {mediosPago.map((m, i) => <option key={i} value={m.nombre}>{m.nombre}</option>)}
                   </select>
-
                   <label htmlFor="medioPago" className="gcuotas-float__label">
-                    <FontAwesomeIcon icon={faCreditCard} />
-                    <span>Medio de Pago</span>
+                    <FontAwesomeIcon icon={faCreditCard} /><span>Medio de Pago</span>
                   </label>
                 </div>
               </div>
@@ -1966,45 +1141,21 @@ const GestionarCuotas = () => {
 
             <div className="gcuotas-tabs-card">
               <div className="gcuotas-tabs-header">
-                <FontAwesomeIcon icon={faList} className="gcuotas-tabs-icon" />
-                <span>Estado de cuotas</span>
+                <FontAwesomeIcon icon={faList} className="gcuotas-tabs-icon" /><span>Estado de cuotas</span>
               </div>
-
               <div className="gcuotas-tab-container">
                 <button
-                  className={`gcuotas-tab-button ${
-                    activeTab === "pagado" ? "gcuotas-active-tab" : ""
-                  }`}
-                  onClick={() => {
-                    setActiveTab("pagado");
-                    setSelectedId(null);
-                    setSelectedIdsBulk([]);
-                    setBulkMode(false);
-                    scrollOffsetRef.current = 0;
-                    listRef.current?.scrollTo(0);
-                  }}
-                  disabled={loading.socios || loading.empresas}
-                >
-                  <FontAwesomeIcon icon={faCheckCircle} />
-                  Pagado
+                  className={`gcuotas-tab-button ${activeTab === "pagado" ? "gcuotas-active-tab" : ""}`}
+                  onClick={() => { setActiveTab("pagado"); setSelectedId(null); setSelectedIdsBulk([]); setBulkMode(false); scrollOffsetRef.current = 0; listRef.current?.scrollTo(0); }}
+                  disabled={loading.socios || loading.empresas}>
+                  <FontAwesomeIcon icon={faCheckCircle} />Pagado
                   <span className="gcuotas-tab-badge">{countPagados}</span>
                 </button>
-
                 <button
-                  className={`gcuotas-tab-button ${
-                    activeTab === "deudores" ? "gcuotas-active-tab" : ""
-                  }`}
-                  onClick={() => {
-                    setActiveTab("deudores");
-                    setSelectedId(null);
-                    setSelectedIdsBulk([]);
-                    scrollOffsetRef.current = 0;
-                    listRef.current?.scrollTo(0);
-                  }}
-                  disabled={loading.socios || loading.empresas}
-                >
-                  <FontAwesomeIcon icon={faExclamationTriangle} />
-                  Deudores
+                  className={`gcuotas-tab-button ${activeTab === "deudores" ? "gcuotas-active-tab" : ""}`}
+                  onClick={() => { setActiveTab("deudores"); setSelectedId(null); setSelectedIdsBulk([]); scrollOffsetRef.current = 0; listRef.current?.scrollTo(0); }}
+                  disabled={loading.socios || loading.empresas}>
+                  <FontAwesomeIcon icon={faExclamationTriangle} />Deudores
                   <span className="gcuotas-tab-badge">{countDeudores}</span>
                 </button>
               </div>
@@ -2013,263 +1164,148 @@ const GestionarCuotas = () => {
 
           <div className="gcuotas-actions-card">
             <div className="gcuotas-actions-header">
-              <FontAwesomeIcon icon={faCog} className="gcuotas-actions-icon" />
-              <span>Acciones</span>
+              <FontAwesomeIcon icon={faCog} className="gcuotas-actions-icon" /><span>Acciones</span>
             </div>
-
             <div className="gcuotas-buttons-container">
-              <button
-                className="gcuotas-button gcuotas-button-back"
-                onClick={handleVolverAtras}
-                disabled={loading.socios || loading.empresas}
-              >
-                <FontAwesomeIcon icon={faArrowLeft} />
-                <span>Volver Atrás</span>
+              <button className="gcuotas-button gcuotas-button-back" onClick={handleVolverAtras} disabled={loading.socios || loading.empresas}>
+                <FontAwesomeIcon icon={faArrowLeft} /><span>Volver Atrás</span>
               </button>
-
-              <button
-                className="gcuotas-button gcuotas-button-export"
-                onClick={handleExportExcel}
-                disabled={
-                  loading.socios ||
-                  loading.empresas ||
-                  !selectedYear ||
-                  !selectedMonth
-                }
-              >
-                <FontAwesomeIcon icon={faFileExcel} />
-                <span>Generar Excel</span>
+              <button className="gcuotas-button gcuotas-button-export" onClick={handleExportExcel} disabled={loading.socios || loading.empresas || !selectedYear || !selectedMonth}>
+                <FontAwesomeIcon icon={faFileExcel} /><span>Generar Excel</span>
               </button>
-
-              <button
-                className="gcuotas-button gcuotas-button-print"
-                onClick={handleImprimirRegistro}
-                disabled={
-                  loading.socios ||
-                  loading.empresas ||
-                  !selectedYear ||
-                  !selectedMonth
-                }
-              >
-                <FontAwesomeIcon icon={faPrint} />
-                <span>Registro</span>
+              <button className="gcuotas-button gcuotas-button-print" onClick={handleImprimirRegistro} disabled={loading.socios || loading.empresas || !selectedYear || !selectedMonth}>
+                <FontAwesomeIcon icon={faPrint} /><span>Registro</span>
               </button>
-
-              <button
-                className="gcuotas-button gcuotas-button-print-all"
-                onClick={handleAbrirModalImpresion}
-                disabled={
-                  loading.socios ||
-                  loading.empresas ||
-                  !selectedYear ||
-                  !selectedMonth
-                }
-              >
-                <FontAwesomeIcon icon={faPrint} />
-                <span>Imprimir Todos</span>
+              <button className="gcuotas-button gcuotas-button-print-all" onClick={handleAbrirModalImpresion} disabled={loading.socios || loading.empresas || !selectedYear || !selectedMonth}>
+                <FontAwesomeIcon icon={faPrint} /><span>Imprimir Todos</span>
               </button>
-
-              {activeTab === "deudores" && (
-                <button
-                  className="gcuotas-button gcuotas-button-print-all"
-                  onClick={handleToggleBulkMode}
-                  disabled={
-                    loading.socios ||
-                    loading.empresas ||
-                    !selectedYear ||
-                    !selectedMonth ||
-                    datosFiltrados.length === 0
-                  }
-                >
-                  <FontAwesomeIcon icon={faUsers} />
-                  <span>
-                    {bulkMode
-                      ? `Cerrar selección (${selectedIdsBulk.length})`
-                      : "Selección múltiple"}
-                  </span>
-                </button>
-              )}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Panel derecho */}
-      <div
-        className={`gcuotas-right-section gcuotas-box ${
-          isMobile ? "gcuotas-has-bottombar" : ""
-        }`}
-      >
+      {/* ── Panel derecho ── */}
+      <div className={`gcuotas-right-section gcuotas-box ${isMobile ? "gcuotas-has-bottombar" : ""}`}>
+
+        {/* Header fijo del panel */}
         <div className="gcuotas-table-header">
           <h3>
-            <FontAwesomeIcon
-              icon={
-                activeTab === "pagado" ? faCheckCircle : faExclamationTriangle
-              }
-            />
-            {activeTab === "pagado" ? "Cuotas Pagadas" : "Cuotas Pendientes"}
+            <FontAwesomeIcon icon={activeTab === "pagado" ? faCheckCircle : faExclamationTriangle} />
+            {activeTab === "pagado" ? "Pagadas" : "Pendientes"}
           </h3>
-
           <div className="gcuotas-input-group gcuotas-search-group">
             <div className="gcuotas-search-integrated">
               <FontAwesomeIcon icon={faSearch} className="gcuotas-search-icon" />
-              <input
-                id="search"
-                type="text"
-                placeholder={`Buscar ${
-                  viewType === "socio" ? "socio..." : "empresa..."
-                }`}
-                value={searchTerm}
-                onChange={handleSearchChange}
-                disabled={
-                  loading.socios ||
-                  loading.empresas ||
-                  (!selectedMonth || !selectedYear)
-                }
-              />
+              <input id="search" type="text"
+                placeholder={`Buscar ${viewType === "socio" ? "socio..." : "empresa..."}`}
+                value={searchTerm} onChange={handleSearchChange}
+                disabled={loading.socios || loading.empresas || !selectedMonth || !selectedYear} />
             </div>
           </div>
-
-          <div className="gcuotas-summary-info">
-            <span className="gcuotas-summary-item">
-              <FontAwesomeIcon icon={faUsers} />
-              Total: {filtrosCompletos ? datosFiltrados.length : 0}
-            </span>
-
-            {bulkMode && activeTab === "deudores" && (
+          <div className="gcuotas-header-right-actions">
+            <div className="gcuotas-summary-info">
               <span className="gcuotas-summary-item">
-                <FontAwesomeIcon icon={faCheckCircle} />
-                Seleccionados: {selectedIdsBulk.length}
+                <FontAwesomeIcon icon={faUsers} />Total: {filtrosCompletos ? datosFiltrados.length : 0}
               </span>
-            )}
 
-            {selectedYear && (
-              <span className="gcuotas-summary-item">
-                <FontAwesomeIcon icon={faCalendarAlt} />
-                Año: {selectedYear}
-              </span>
-            )}
-
-            {selectedMonth && (
-              <span className="gcuotas-summary-item">
-                <FontAwesomeIcon icon={faCalendarAlt} />
-                Mes: {selectedMonth}
-              </span>
+              {selectedYear && (
+                <span className="gcuotas-summary-item">
+                  <FontAwesomeIcon icon={faCalendarAlt} />Año: {selectedYear}
+                </span>
+              )}
+              {selectedMonth && (
+                <span className="gcuotas-summary-item">
+                  <FontAwesomeIcon icon={faCalendarAlt} />Mes: {selectedMonth}
+                </span>
+              )}
+            </div>
+            {activeTab === "deudores" && filtrosCompletos && (
+              <button
+                className={`gcuotas-bulk-toggle-btn ${bulkMode ? "gcuotas-bulk-toggle-btn--active" : ""}`}
+                onClick={handleToggleBulkMode}
+                disabled={loading.socios || loading.empresas}
+                title={bulkMode ? "Desactivar selección múltiple" : "Activar selección múltiple"}>
+                <FontAwesomeIcon icon={faLayerGroup} />
+                <span>{bulkMode ? "Cancelar selección" : "Selección múltiple"}</span>
+              </button>
             )}
           </div>
         </div>
 
+        {/* Barra bulk — alto variable; la lista se adapta automáticamente por ResizeObserver */}
         {bulkMode && activeTab === "deudores" && (
-          <div style={bulkBarStyles.container}>
-            <div style={bulkBarStyles.info}>
-              <span style={bulkBarStyles.title}>Selección múltiple activada</span>
-              <span style={bulkBarStyles.subtitle}>
-                {selectedIdsBulk.length} seleccionados
-                {selectedVisibleCount > 0
-                  ? ` · ${selectedVisibleCount} visibles`
-                  : ""}
-                {hiddenSelectedCount > 0
-                  ? ` · ${hiddenSelectedCount} fuera del filtro actual`
-                  : ""}
+          <div className="gcuotas-bulk-bar">
+            <div className="gcuotas-bulk-bar__info">
+              <span className="gcuotas-bulk-bar__title">
+                <FontAwesomeIcon icon={faLayerGroup} />Selección múltiple activa
               </span>
+              <div className="gcuotas-bulk-bar__badges">
+                <span className="gcuotas-bulk-badge gcuotas-bulk-badge--total">
+                  {selectedIdsBulk.length} seleccionados
+                </span>
+                {selectedVisibleCount > 0 && (
+                  <span className="gcuotas-bulk-badge gcuotas-bulk-badge--visible">
+                    {selectedVisibleCount} visibles
+                  </span>
+                )}
+                {hiddenSelectedCount > 0 && (
+                  <span className="gcuotas-bulk-badge gcuotas-bulk-badge--hidden">
+                    {hiddenSelectedCount} fuera del filtro
+                  </span>
+                )}
+              </div>
             </div>
-
-            <div style={bulkBarStyles.actions}>
-              <button
-                type="button"
-                style={bulkBarStyles.button}
-                onClick={handleAddFilteredToBulk}
-                disabled={datosFiltrados.length === 0}
-              >
-                Agregar visibles ({datosFiltrados.length})
+            <div className="gcuotas-bulk-bar__actions">
+              <button className="gcuotas-bulk-btn gcuotas-bulk-btn--secondary"
+                onClick={handleAddFilteredToBulk} disabled={datosFiltrados.length === 0}>
+                + Agregar visibles ({datosFiltrados.length})
               </button>
-
-              <button
-                type="button"
-                style={bulkBarStyles.button}
-                onClick={handleRemoveFilteredFromBulk}
-                disabled={selectedVisibleCount === 0}
-              >
-                Quitar visibles ({selectedVisibleCount})
+              <button className="gcuotas-bulk-btn gcuotas-bulk-btn--secondary"
+                onClick={handleRemoveFilteredFromBulk} disabled={selectedVisibleCount === 0}>
+                − Quitar visibles ({selectedVisibleCount})
               </button>
-
-              <button
-                type="button"
-                style={bulkBarStyles.button}
-                onClick={handleClearBulkSelection}
-                disabled={selectedIdsBulk.length === 0}
-              >
-                Limpiar
+              <button className="gcuotas-bulk-btn gcuotas-bulk-btn--danger"
+                onClick={handleClearBulkSelection} disabled={selectedIdsBulk.length === 0}>
+                <FontAwesomeIcon icon={faTimes} /> Limpiar
               </button>
-
-              <button
-                type="button"
-                style={bulkBarStyles.buttonPrimary}
-                onClick={handleAbrirModalPagoMasivo}
-                disabled={selectedIdsBulk.length === 0}
-              >
-                Pagar seleccionados ({selectedIdsBulk.length})
+              <button className="gcuotas-bulk-btn gcuotas-bulk-btn--primary"
+                onClick={handleAbrirModalPagoMasivo} disabled={selectedIdsBulk.length === 0}>
+                <FontAwesomeIcon icon={faDollarSign} />Pagar {selectedIdsBulk.length} seleccionados
               </button>
             </div>
           </div>
         )}
 
-        <div className="gcuotas-table-container">{renderTabla}</div>
+        {/* Contenedor de tabla: flex:1 → ocupa TODO el espacio restante */}
+        <div className="gcuotas-table-container">
+          {renderTablaContent()}
+        </div>
       </div>
 
-      {/* Bottom bar móvil */}
+      {/* ── Bottom bar móvil ── */}
       {isMobile && (
         <div className="gcuotas-mobile-bottombar">
-          <button
-            className="gcuotas-mbar-btn mbar-back"
-            onClick={handleVolverAtras}
-            disabled={loading.socios || loading.empresas}
-          >
-            <FontAwesomeIcon icon={faArrowLeft} />
-            <span>Volver</span>
+          <button className="gcuotas-mbar-btn mbar-back" onClick={handleVolverAtras} disabled={loading.socios || loading.empresas}>
+            <FontAwesomeIcon icon={faArrowLeft} /><span>Volver</span>
           </button>
-
-          <button
-            className="gcuotas-mbar-btn mbar-excel"
-            onClick={handleExportExcel}
-            disabled={
-              loading.socios ||
-              loading.empresas ||
-              !selectedYear ||
-              !selectedMonth
-            }
-          >
-            <FontAwesomeIcon icon={faFileExcel} />
-            <span>Excel</span>
+          <button className="gcuotas-mbar-btn mbar-excel" onClick={handleExportExcel} disabled={loading.socios || loading.empresas || !selectedYear || !selectedMonth}>
+            <FontAwesomeIcon icon={faFileExcel} /><span>Excel</span>
           </button>
-
-          <button
-            className="gcuotas-mbar-btn mbar-registro"
-            onClick={handleImprimirRegistro}
-            disabled={
-              loading.socios ||
-              loading.empresas ||
-              !selectedYear ||
-              !selectedMonth
-            }
-          >
-            <FontAwesomeIcon icon={faPrint} />
-            <span>Registro</span>
+          <button className="gcuotas-mbar-btn mbar-registro" onClick={handleImprimirRegistro} disabled={loading.socios || loading.empresas || !selectedYear || !selectedMonth}>
+            <FontAwesomeIcon icon={faPrint} /><span>Registro</span>
           </button>
-
-          <button
-            className="gcuotas-mbar-btn mbar-imprimir"
-            onClick={handleAbrirModalImpresion}
-            disabled={
-              loading.socios ||
-              loading.empresas ||
-              !selectedYear ||
-              !selectedMonth
-            }
-          >
-            <FontAwesomeIcon icon={faPrint} />
-            <span>Imprimir</span>
+          <button className="gcuotas-mbar-btn mbar-imprimir" onClick={handleAbrirModalImpresion} disabled={loading.socios || loading.empresas || !selectedYear || !selectedMonth}>
+            <FontAwesomeIcon icon={faPrint} /><span>Imprimir</span>
           </button>
+          {activeTab === "deudores" && filtrosCompletos && (
+            <button
+              className={`gcuotas-mbar-btn mbar-bulk ${bulkMode ? "mbar-bulk--active" : ""}`}
+              onClick={handleToggleBulkMode}
+              disabled={loading.socios || loading.empresas}>
+              <FontAwesomeIcon icon={faLayerGroup} />
+              <span>{bulkMode ? `Sel. (${selectedIdsBulk.length})` : "Multi"}</span>
+            </button>
+          )}
         </div>
       )}
     </div>
