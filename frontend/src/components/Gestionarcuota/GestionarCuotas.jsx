@@ -63,21 +63,30 @@ api.interceptors.response.use(
 /* ─────────────────────────────────────────────────────
    Hook: mide el contenedor de la tabla y devuelve la
    altura disponible para la lista virtualizada.
-   El ResizeObserver reacciona cada vez que el espacio
-   cambia (p.ej. cuando aparece/desaparece la bulk bar).
+
+   FIX: se guarda el height anterior en un ref y solo
+   se llama setHeight cuando el valor cambia realmente,
+   cortando el ciclo setState → re-render → ResizeObserver.
 ───────────────────────────────────────────────────── */
 function useListHeight(containerRef) {
   const [height, setHeight] = useState(400);
+  // ✅ FIX: referencia al último valor calculado para evitar setState innecesario
+  const prevHeightRef = useRef(400);
 
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
 
-    const VIRTUAL_HEADER_H = 50; // altura fija de gcuotas-virtual-header
+    const VIRTUAL_HEADER_H = 50;
 
     const update = () => {
       const available = el.clientHeight - VIRTUAL_HEADER_H;
-      setHeight(Math.max(available, 200));
+      const next = Math.max(available, 200);
+      // ✅ Solo actualiza el estado si el valor realmente cambió
+      if (next !== prevHeightRef.current) {
+        prevHeightRef.current = next;
+        setHeight(next);
+      }
     };
 
     update();
@@ -125,11 +134,17 @@ const NoFiltersApplied = memo(() => (
 ));
 
 /* ─────────────────────────────────────────────────────
-   Outer de react-window: agrega clase cuando hay scroll
+   Outer de react-window: agrega clase cuando hay scroll.
+
+   FIX: se guarda el estado anterior de hasScroll en un
+   ref para no modificar el DOM ni disparar callbacks
+   del observer si el valor no cambió.
 ───────────────────────────────────────────────────── */
 const Outer = React.forwardRef((props, ref) => {
   const { className, ...rest } = props;
   const localRef = useRef(null);
+  // ✅ FIX: evita classList.toggle innecesario si el estado no cambió
+  const prevHasScrollRef = useRef(null);
 
   const setRef = (node) => {
     localRef.current = node;
@@ -140,10 +155,16 @@ const Outer = React.forwardRef((props, ref) => {
   useEffect(() => {
     const el = localRef.current;
     if (!el) return;
+
     const update = () => {
       const hasScroll = el.scrollHeight > el.clientHeight + 1;
-      el.classList.toggle("gcuotas-viewport-hasscroll", hasScroll);
+      // ✅ Solo toca el DOM si el valor realmente cambió
+      if (hasScroll !== prevHasScrollRef.current) {
+        prevHasScrollRef.current = hasScroll;
+        el.classList.toggle("gcuotas-viewport-hasscroll", hasScroll);
+      }
     };
+
     update();
     const ro = new ResizeObserver(update);
     ro.observe(el);
