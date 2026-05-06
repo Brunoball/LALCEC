@@ -2148,4 +2148,58 @@ html, body {
   .gcuotas-float__label { left: 10px; padding: 0 7px; }
 
   .App, main, .page, .layout { height: auto !important; min-height: 100% !important; overflow: visible !important; }
+}/* ===========================
+   Tabla en selección múltiple
+   Oculta acciones y reacomoda columnas
+   =========================== */
+
+/* SOCIOS con checkbox + 4 columnas reales */
+.gcuotas-virtual-header.gsocios.gcuotas-bulk-mode > .gcuotas-virtual-cell:nth-child(2),
+.gcuotas-virtual-row.gsocios.gcuotas-bulk-mode > .gcuotas-virtual-cell:nth-child(2) {
+  width: 25%;
+}
+
+.gcuotas-virtual-header.gsocios.gcuotas-bulk-mode > .gcuotas-virtual-cell:nth-child(3),
+.gcuotas-virtual-row.gsocios.gcuotas-bulk-mode > .gcuotas-virtual-cell:nth-child(3) {
+  width: 25%;
+}
+
+.gcuotas-virtual-header.gsocios.gcuotas-bulk-mode > .gcuotas-virtual-cell:nth-child(4),
+.gcuotas-virtual-row.gsocios.gcuotas-bulk-mode > .gcuotas-virtual-cell:nth-child(4) {
+  width: 22%;
+  white-space: normal;
+  word-break: break-word;
+  line-height: 1.25;
+}
+
+.gcuotas-virtual-header.gsocios.gcuotas-bulk-mode > .gcuotas-virtual-cell:nth-child(5),
+.gcuotas-virtual-row.gsocios.gcuotas-bulk-mode > .gcuotas-virtual-cell:nth-child(5) {
+  width: calc(28% - 52px);
+  white-space: normal;
+  word-break: break-word;
+  line-height: 1.25;
+  min-width: 0;
+}
+
+/* EMPRESAS con checkbox + 3 columnas reales */
+.gcuotas-virtual-header.gempresas.gcuotas-bulk-mode > .gcuotas-virtual-cell:nth-child(2),
+.gcuotas-virtual-row.gempresas.gcuotas-bulk-mode > .gcuotas-virtual-cell:nth-child(2) {
+  width: 40%;
+}
+
+.gcuotas-virtual-header.gempresas.gcuotas-bulk-mode > .gcuotas-virtual-cell:nth-child(3),
+.gcuotas-virtual-row.gempresas.gcuotas-bulk-mode > .gcuotas-virtual-cell:nth-child(3) {
+  width: 28%;
+  white-space: normal;
+  word-break: break-word;
+  line-height: 1.25;
+}
+
+.gcuotas-virtual-header.gempresas.gcuotas-bulk-mode > .gcuotas-virtual-cell:nth-child(4),
+.gcuotas-virtual-row.gempresas.gcuotas-bulk-mode > .gcuotas-virtual-cell:nth-child(4) {
+  width: calc(32% - 52px);
+  white-space: normal;
+  word-break: break-word;
+  line-height: 1.25;
+  min-width: 0;
 }

@@ -195,6 +195,7 @@ const Row = memo(
     const rowClass = [
       "gcuotas-virtual-row",
       viewType === "empresa" ? "gempresas" : "gsocios",
+      bulkMode ? "gcuotas-bulk-mode" : "",
       isSelected ? (bulkMode ? "gcuotas-bulk-selected-row" : "gcuotas-selected-row") : "",
     ].filter(Boolean).join(" ");
 
@@ -232,7 +233,7 @@ const Row = memo(
           <div className="gcuotas-virtual-cell">Cargando...</div>
           {viewType === "socio" && <div className="gcuotas-virtual-cell" />}
           <div className="gcuotas-virtual-cell" /><div className="gcuotas-virtual-cell" />
-          <div className="gcuotas-virtual-cell" />
+          {!bulkMode && <div className="gcuotas-virtual-cell" />}
         </div>
       );
     }
@@ -255,14 +256,18 @@ const Row = memo(
             <div className="gcuotas-virtual-cell">{item.nombre}</div>
             <div className="gcuotas-virtual-cell">{item.displayCategoriaPrecio}</div>
             <div className="gcuotas-virtual-cell">{item.medio_pago || "-"}</div>
-            <div className="gcuotas-virtual-cell gcuotas-virtual-actions">{actionButtons}</div>
+            {!bulkMode && (
+              <div className="gcuotas-virtual-cell gcuotas-virtual-actions">{actionButtons}</div>
+            )}
           </>
         ) : (
           <>
             <div className="gcuotas-virtual-cell">{item.razon_social}</div>
             <div className="gcuotas-virtual-cell">{item.displayCategoriaPrecio}</div>
             <div className="gcuotas-virtual-cell">{item.medio_pago || "-"}</div>
-            <div className="gcuotas-virtual-cell gcuotas-virtual-actions">{actionButtons}</div>
+            {!bulkMode && (
+              <div className="gcuotas-virtual-cell gcuotas-virtual-actions">{actionButtons}</div>
+            )}
           </>
         )}
       </div>
@@ -300,7 +305,7 @@ const TablaDesktop = memo(({
     <div ref={containerRef} className="gcuotas-virtual-tables">
 
       {/* Cabecera de columnas */}
-      <div className={`gcuotas-virtual-header ${viewType === "empresa" ? "gempresas" : "gsocios"}`}>
+      <div className={`gcuotas-virtual-header ${viewType === "empresa" ? "gempresas" : "gsocios"} ${bulkMode ? "gcuotas-bulk-mode" : ""}`}>
         {bulkMode && (
           <div className="gcuotas-virtual-cell gcuotas-bulk-check-cell">
             <label className="gcuotas-checkbox-wrap">
@@ -321,14 +326,14 @@ const TablaDesktop = memo(({
             <div className="gcuotas-virtual-cell">Nombre</div>
             <div className="gcuotas-virtual-cell">Categoría</div>
             <div className="gcuotas-virtual-cell">Medio Pago</div>
-            <div className="gcuotas-virtual-cell">Acciones</div>
+            {!bulkMode && <div className="gcuotas-virtual-cell">Acciones</div>}
           </>
         ) : (
           <>
             <div className="gcuotas-virtual-cell">Razón Social</div>
             <div className="gcuotas-virtual-cell">Categoría</div>
             <div className="gcuotas-virtual-cell">Medio Pago</div>
-            <div className="gcuotas-virtual-cell">Acciones</div>
+            {!bulkMode && <div className="gcuotas-virtual-cell">Acciones</div>}
           </>
         )}
       </div>
