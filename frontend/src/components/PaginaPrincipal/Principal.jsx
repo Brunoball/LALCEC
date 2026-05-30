@@ -10,11 +10,12 @@ import {
   faUserPlus,
   faFileInvoiceDollar,
   faRobot,
+  // faComments, // oculto temporalmente
 } from "@fortawesome/free-solid-svg-icons";
 import logoLalcec from "../../assets/logo_lalcec.jpeg";
 import "./Principal.css";
 
-const BOT_PANEL_URL =
+const BOT_PANEL_VIEJO_URL =
   "https://lalcec.3devsnet.com/api/bot_wp/mensajeria_interna/panel_control.php";
 
 const PaginaPrincipal = () => {
@@ -50,7 +51,6 @@ const PaginaPrincipal = () => {
     }, 400);
   };
 
-  // 🔹 Solo las tarjetas internas (sin Panel del Bot)
   const menuItems = [
     { icon: faUsers, text: "Gestionar Socios", ruta: "/GestionarSocios" },
     { icon: faBuilding, text: "Gestionar Empresas", ruta: "/GestionarEmpresas" },
@@ -67,6 +67,11 @@ const PaginaPrincipal = () => {
     }
   };
 
+  // Botón nuevo del panel React oculto temporalmente.
+  // const irPanelBotNuevo = () => {
+  //   navigate("/bot/panel");
+  // };
+
   return (
     <div
       className={`pagina-principal-container ${
@@ -74,7 +79,6 @@ const PaginaPrincipal = () => {
       }`}
     >
       <div className="pagina-principal-card">
-        {/* ===== HEADER TIPO MAQUETA ===== */}
         <header className="pagina-principal-header">
           <div className="header-text-block">
             <h1 className="title">
@@ -82,18 +86,7 @@ const PaginaPrincipal = () => {
               <span className="title-highlight">Gestión LALCEC</span>
             </h1>
 
-            {/* si querés, acá podés volver a poner el subtítulo */}
-            {/* <p className="subtitle">Panel de administración integral</p> */}
-
             <div className="header-divider" />
-
-            {/* Si después querés el “Bienvenido, b”, va acá */}
-            {/* 
-            <div className="welcome-row">
-              <span className="welcome-label">Bienvenido,</span>
-              <span className="user-pill">b</span>
-            </div>
-            */}
           </div>
 
           <div className="header-logo-block">
@@ -103,7 +96,6 @@ const PaginaPrincipal = () => {
           </div>
         </header>
 
-        {/* ===== TARJETAS (2 filas x 3) ===== */}
         <section className="menu-section">
           <div className="menu-grid">
             {menuItems.map((item, index) => (
@@ -123,7 +115,6 @@ const PaginaPrincipal = () => {
           </div>
         </section>
 
-        {/* ===== BOTÓN CERRAR SESIÓN ===== */}
         <div className="logout-row">
           <button
             type="button"
@@ -147,18 +138,47 @@ const PaginaPrincipal = () => {
         </footer>
       </div>
 
-      {/* ===== BOTÓN FLOTANTE TIPO WHATSAPP (NARANJA) ===== */}
+      {/* BOTÓN VIEJO: panel PHP anterior */}
       <a
-        href={BOT_PANEL_URL}
+        href={BOT_PANEL_VIEJO_URL}
         target="_blank"
         rel="noopener noreferrer"
         className="bot-floating-btn"
-        aria-label="Panel del Bot LALCEC"
+        aria-label="Panel viejo del Bot LALCEC"
+        title="Panel viejo del Bot"
       >
         <FontAwesomeIcon icon={faRobot} className="bot-floating-btn-icon" />
       </a>
 
-      {/* ===== MODAL LOGOUT ===== */}
+      {/* BOTÓN NUEVO: panel React nuevo - OCULTO TEMPORALMENTE
+      <button
+        type="button"
+        onClick={irPanelBotNuevo}
+        aria-label="Panel nuevo del Bot LALCEC"
+        title="Panel nuevo del Bot"
+        style={{
+          position: "fixed",
+          right: "24px",
+          bottom: "96px",
+          width: "58px",
+          height: "58px",
+          borderRadius: "50%",
+          border: "none",
+          background: "linear-gradient(135deg, #f97316, #ea580c)",
+          color: "#fff",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: "24px",
+          cursor: "pointer",
+          boxShadow: "0 14px 30px rgba(234, 88, 12, .35)",
+          zIndex: 999,
+        }}
+      >
+        <FontAwesomeIcon icon={faComments} />
+      </button>
+      */}
+
       {showModal && (
         <div
           className="logout-modal-overlay"

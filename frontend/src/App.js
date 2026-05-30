@@ -1,10 +1,17 @@
 // src/App.js
 import React from "react";
-import { BrowserRouter, Routes, Route, useLocation, useNavigate } from "react-router-dom";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
 
 import Inicio from "./components/login/inicio";
 import Registro from "./components/login/Registro";
 import PaginaPrincipal from "./components/PaginaPrincipal/Principal";
+
 import GestionarCategorias from "./components/Gestionarcategoria/GestionarCategorias";
 import GestionarCuotas from "./components/Gestionarcuota/GestionarCuotas";
 import DashboardContable from "./components/Contable/DashboardContable";
@@ -13,7 +20,6 @@ import AgregarEmpresa from "./components/Empresas/AgregarEmpresa";
 import EditarSocio from "./components/socios/EditarSocio";
 import EditarEmpresa from "./components/Empresas/EditarEmpresa";
 
-// ⬇️ IMPORTS CORREGIDOS (carpeta modalcuotas)
 import ModalPagos from "./components/Gestionarcuota/modalcuotas/ModalPagos";
 import ModalPagosEmpresas from "./components/Gestionarcuota/modalcuotas/ModalPagosEmpresas";
 
@@ -22,18 +28,44 @@ import EditarCategoria from "./components/Gestionarcategoria/editar_categoria";
 import GestionarSocios from "./components/socios/GestionarSocios";
 import GestionarEmpresas from "./components/Empresas/GestionarEmpresas";
 import SociosBaja from "./components/socios/SociosBaja";
-// >>> NUEVO: pantalla de empresas dadas de baja
 import EmpresasBaja from "./components/Empresas/EmpresasBaja";
 
-/* =========================================================
-   🔒 Cierre de sesión por inactividad (global)
-   - Cambiá INACTIVITY_MINUTES para ajustar el tiempo.
-   - Escucha mouse, teclado, scroll, toques y visibilidad.
-   - Solo corre cuando hay token y NO estás en "/".
-========================================================= */
-const INACTIVITY_MINUTES = 60;   
+import BotPanel from "./components/BotPanel/BotPanel";
+import notificationSound from "./components/BotPanel/notificacion/notificacion.mp3";
+
+const BOT_BASE_URL = (
+  process.env.REACT_APP_BOT_BASE_URL ||
+  "https://lalcec.3devsnet.com/api/bot_whatshapp"
+).replace(/\/+$/, "");
+
+const PANEL_API = (
+  process.env.REACT_APP_BOT_PANEL_URL ||
+  `${BOT_BASE_URL}/funciones/Panel/endpoints`
+).replace(/\/+$/, "");
+
+const INACTIVITY_MINUTES = 60;
 const INACTIVITY_MS = INACTIVITY_MINUTES * 60 * 1000;
 
+const toNum = (v) => {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : 0;
+};
+
+const calcularUrgentesDesdeChats = (rows) => {
+  const chats = Array.isArray(rows) ? rows : [];
+  let urgent = 0;
+
+  for (const c of chats) {
+    const consultasPendientes = Math.max(
+      0,
+      toNum(c?.consultas_pendientes || c?.pending_consultas || 0)
+    );
+
+    urgent += consultasPendientes;
+  }
+
+  return urgent;
+};
 
 function InactivityLogout() {
   const navigate = useNavigate();
@@ -50,7 +82,7 @@ function InactivityLogout() {
       }
     };
 
-    const doLogout = (reason = "inactivity") => {
+    const doLogout = () => {
       try {
         sessionStorage.clear();
       } catch {}
@@ -59,17 +91,15 @@ function InactivityLogout() {
         localStorage.removeItem("usuario");
       } catch {}
 
-      // Opcional: podés mostrar un aviso con sessionStorage si querés
-      // sessionStorage.setItem("logout_reason", reason);
-
       navigate("/", { replace: true });
     };
 
     const resetTimer = () => {
-      if (!hasToken()) return; // si no hay sesión, no corras
-      if (location.pathname === "/") return; // en login no tiene sentido
+      if (!hasToken()) return;
+      if (location.pathname === "/") return;
+
       if (timerId) clearTimeout(timerId);
-      timerId = setTimeout(() => doLogout("inactivity"), INACTIVITY_MS);
+      timerId = setTimeout(doLogout, INACTIVITY_MS);
     };
 
     const activityEvents = [
@@ -78,49 +108,148 @@ function InactivityLogout() {
       "keydown",
       "scroll",
       "touchstart",
-      "click"
+      "click",
     ];
 
     const onActivity = () => resetTimer();
 
-    // También manejar pestaña oculta/visible
     const onVisibility = () => {
       if (document.visibilityState === "visible") {
         resetTimer();
       }
     };
 
-    // Instalar listeners
-    activityEvents.forEach((ev) => window.addEventListener(ev, onActivity, { passive: true }));
-    document.addEventListener("visibilitychange", onVisibility);
+    const onStorage = (e) => {
+      if (e.key === "token" || e.key === "usuario") {
+        const hasAny =
+          !!localStorage.getItem("token") || !!localStorage.getItem("usuario");
 
-    // Disparar al montar si aplica
+        if (!hasAny) doLogout();
+      }
+    };
+
+    activityEvents.forEach((ev) =>
+      window.addEventListener(ev, onActivity, { passive: true })
+    );
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("storage", onStorage);
+
     resetTimer();
 
-    // Limpiar
     return () => {
       if (timerId) clearTimeout(timerId);
       activityEvents.forEach((ev) => window.removeEventListener(ev, onActivity));
       document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("storage", onStorage);
     };
-  }, [location, navigate]);
+  }, [location.pathname, navigate]);
 
-  return null; // No renderiza UI
+  return null;
+}
+
+function GlobalUrgentBotNotifier() {
+  const location = useLocation();
+
+  const audioRef = React.useRef(null);
+  const prevUrgentRef = React.useRef(0);
+  const firstLoadRef = React.useRef(true);
+  const interactedRef = React.useRef(false);
+
+  React.useEffect(() => {
+    const unlock = () => {
+      interactedRef.current = true;
+    };
+
+    window.addEventListener("click", unlock, { passive: true });
+    window.addEventListener("keydown", unlock, { passive: true });
+    window.addEventListener("touchstart", unlock, { passive: true });
+
+    return () => {
+      window.removeEventListener("click", unlock);
+      window.removeEventListener("keydown", unlock);
+      window.removeEventListener("touchstart", unlock);
+    };
+  }, []);
+
+  React.useEffect(() => {
+    const hasSession = () => {
+      try {
+        return (
+          !!localStorage.getItem("token") || !!localStorage.getItem("usuario")
+        );
+      } catch {
+        return false;
+      }
+    };
+
+    const playSound = () => {
+      if (!interactedRef.current) return;
+
+      const audio = audioRef.current;
+      if (!audio) return;
+
+      try {
+        audio.pause();
+        audio.currentTime = 0;
+        const p = audio.play();
+        if (p && typeof p.catch === "function") p.catch(() => {});
+      } catch {}
+    };
+
+    const tick = async () => {
+      if (!hasSession()) return;
+      if (location.pathname === "/") return;
+
+      try {
+        const res = await fetch(`${PANEL_API}/panel_chats.php?_=${Date.now()}`, {
+          method: "GET",
+          cache: "no-store",
+        });
+
+        const data = await res.json().catch(() => null);
+        if (!res.ok || !data?.success) return;
+
+        const urgent = calcularUrgentesDesdeChats(data.chats);
+
+        if (firstLoadRef.current) {
+          firstLoadRef.current = false;
+          prevUrgentRef.current = urgent;
+          return;
+        }
+
+        if (urgent > prevUrgentRef.current) {
+          playSound();
+        }
+
+        prevUrgentRef.current = urgent;
+      } catch {
+        // silencio
+      }
+    };
+
+    tick();
+    const interval = setInterval(tick, 2000);
+
+    return () => clearInterval(interval);
+  }, [location.pathname]);
+
+  return <audio ref={audioRef} preload="auto" src={notificationSound} />;
 }
 
 const App = () => {
   return (
     <BrowserRouter>
-      {/* ⬇️ Activá el cierre por inactividad en toda la app */}
       <InactivityLogout />
+      <GlobalUrgentBotNotifier />
 
       <Routes>
         <Route path="/" element={<Inicio />} />
         <Route path="/registro" element={<Registro />} />
 
         <Route path="/PaginaPrincipal" element={<PaginaPrincipal />} />
-        {/* alias para el redirect que hace Inicio */}
         <Route path="/panel" element={<PaginaPrincipal />} />
+
+        <Route path="/bot/panel" element={<BotPanel />} />
 
         <Route path="/GestionarCuotas" element={<GestionarCuotas />} />
         <Route path="/GestionarCategorias" element={<GestionarCategorias />} />
@@ -132,9 +261,11 @@ const App = () => {
         <Route path="/editarSocio/:id" element={<EditarSocio />} />
         <Route path="/editarEmpresa/:razon_social" element={<EditarEmpresa />} />
 
-        {/* Rutas de modales (si también querés poder abrirlos como página) */}
         <Route path="/modalPagos/:nombre/:apellido" element={<ModalPagos />} />
-        <Route path="/ModalPagosEmpresas/:razon_social" element={<ModalPagosEmpresas />} />
+        <Route
+          path="/ModalPagosEmpresas/:razon_social"
+          element={<ModalPagosEmpresas />}
+        />
 
         <Route path="/agregar_categoria" element={<AgregarCategoria />} />
         <Route path="/editar_categoria/:nombre_categoria" element={<EditarCategoria />} />
@@ -143,7 +274,6 @@ const App = () => {
         <Route path="/GestionarEmpresas" element={<GestionarEmpresas />} />
 
         <Route path="/socios_baja" element={<SociosBaja />} />
-        {/* >>> NUEVO: ruta para empresas dadas de baja */}
         <Route path="/empresas_baja" element={<EmpresasBaja />} />
       </Routes>
     </BrowserRouter>

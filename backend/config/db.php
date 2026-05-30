@@ -6,7 +6,7 @@
 
 $host = 'localhost';
 $user = 'root';
-$pass = 'Gastex2233';
+$pass = 'brunoball516';
 $db = 'agenda';
 
 // Crear la conexión

@@ -44,9 +44,18 @@ body, input, button {
   position: relative;
   overflow: hidden;
   transition: var(--transition);
-  opacity: 0;
-  transform: translateY(20px);
-  animation: fadeInClean 0.4s ease forwards;
+
+  /*
+    Fallback para navegadores viejos:
+    antes el contenedor arrancaba con opacity: 0 y dependía 100% de la animación
+    para hacerse visible. En algunas PCs/navegadores viejos la animación no se ejecuta
+    y por eso quedaba la pantalla limpia mostrando solo el fondo naranja.
+    Ahora el formulario queda visible por defecto, y si el navegador soporta animación
+    aplica el efecto de entrada sin romper la vista.
+  */
+  opacity: 1;
+  transform: translateY(0);
+  animation: fadeInClean 0.4s ease both;
 
   /* Para que los botones de mobile se peguen al fondo del contenedor */
   display: flex;
@@ -60,6 +69,10 @@ body, input, button {
 }
 
 @keyframes fadeInClean {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
   to {
     opacity: 1;
     transform: translateY(0);
