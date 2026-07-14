@@ -324,3 +324,25 @@ body, input, button {
     flex: 1;
   }
 }
+
+/* =========================================================
+   MODO ESTABLE / SIN ANIMACIONES DE CARGA
+   ---------------------------------------------------------
+   Evita que en equipos viejos el formulario dependa de una
+   animación para verse. La caja queda visible inmediatamente.
+   ========================================================= */
+.agregar-cat-box {
+  animation: none !important;
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+.agregar-cat-save-button:disabled .agregar-cat-icon-spacing,
+.agregar-cat-save-button:active:not(:disabled) {
+  animation: none !important;
+}
+
+.agregar-cat-save-button:hover,
+.agregar-cat-back-button:hover {
+  transform: none !important;
+}

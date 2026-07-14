@@ -105,8 +105,10 @@ $nombre   = isset($data["nombre"])   ? limpiarDato($data["nombre"])   : NULL;
 $apellido = isset($data["apellido"]) ? limpiarDato($data["apellido"]) : NULL;
 $dni      = isset($data["dni"])      ? limpiarDato($data["dni"])      : NULL;
 
-// email: minúsculas
-$email = isset($data["email"]) ? trim(strtolower($data["email"])) : "";
+// email: minúsculas, sin espacios/copypaste invisible
+$email = isset($data["email"]) ? trim((string)$data["email"]) : "";
+$email = preg_replace('/[\x{200B}-\x{200D}\x{FEFF}]/u', '', $email);
+$email = mb_strtolower($email, 'UTF-8');
 
 // resto
 $telefono    = isset($data["telefono"])    ? limpiarDato($data["telefono"])    : NULL;
@@ -157,8 +159,8 @@ validarCampoDomicilio2($domicilio_2);
 validarCampoObservacion($observacion);
 validarCampoFecha($fechaUnion);
 
-if ($email !== "" && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-  sendResponse(false, "El email ingresado no es válido.");
+if ($email !== "" && (mb_strlen($email, 'UTF-8') > 100 || !filter_var($email, FILTER_VALIDATE_EMAIL))) {
+  sendResponse(false, "El email ingresado no es válido o supera los 100 caracteres.");
 }
 
 // -------- UPDATE ----------

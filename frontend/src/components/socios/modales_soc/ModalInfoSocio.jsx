@@ -55,7 +55,7 @@ const ModalInfoSocio = ({ infoSocio, mesesPagados, onCerrar }) => {
     }
   };
 
-  const fechaUnion = parseFechaArgentina(infoSocio?.Fechaunion || infoSocio?.fechaunion);
+  const fechaUnion = parseFechaArgentina(infoSocio?.Fechaunion || infoSocio?.fecha_union || infoSocio?.fechaunion);
 
   const formatFecha = (fecha) =>
     fecha.toLocaleDateString("es-AR", {
@@ -83,20 +83,68 @@ const ModalInfoSocio = ({ infoSocio, mesesPagados, onCerrar }) => {
     []
   );
 
-  // Compat viejo: mesesPagados (sin año) → lo meto como año actual si todavía no hay pagosPorAnio
+  const normalizarPagosPorAnio = (raw) => {
+    if (!raw) return {};
+
+    let data = raw;
+    if (typeof raw === "string") {
+      try {
+        data = JSON.parse(raw);
+      } catch {
+        return {};
+      }
+    }
+
+    if (!data || typeof data !== "object" || Array.isArray(data)) return {};
+
+    const out = {};
+    Object.entries(data).forEach(([anioKey, meses]) => {
+      const anio = Number(anioKey);
+      if (!Number.isFinite(anio) || anio <= 0 || !Array.isArray(meses)) return;
+
+      const normalizados = meses
+        .map((m) => {
+          if (typeof m === "number" || /^\d+$/.test(String(m))) return Number(m);
+          return MESES_ANIO.indexOf(String(m).trim().toUpperCase()) + 1;
+        })
+        .filter((n) => Number.isFinite(n) && n >= 1 && n <= 12);
+
+      out[String(anio)] = Array.from(new Set(normalizados)).sort((a, b) => a - b);
+    });
+
+    return out;
+  };
+
+  const mesUnion = fechaUnion.getMonth();
+  const anioUnion = fechaUnion.getFullYear();
+  const hoy = new Date();
+  const mesActual = hoy.getMonth();
+  const anioActual = hoy.getFullYear();
+
+  // Precarga segura desde la fila. No inventa pagos del año actual con datos viejos sin año.
   useEffect(() => {
+    const desdeFila = normalizarPagosPorAnio(infoSocio?.pagos_por_anio ?? infoSocio?.pagosPorAnio);
+    if (Object.keys(desdeFila).length > 0) {
+      const conAnioActual = { ...desdeFila };
+      if (!conAnioActual[String(yearNow)]) conAnioActual[String(yearNow)] = [];
+      setPagosPorAnio(conAnioActual);
+      setSelectedYear(yearNow);
+      return;
+    }
+
     const norm = Array.isArray(mesesPagados)
       ? mesesPagados
           .map((m) => String(m).trim().toUpperCase())
           .filter((m) => MESES_ANIO.includes(m))
+          .map((m) => MESES_ANIO.indexOf(m) + 1)
       : [];
 
     if (norm.length > 0 && (!pagosPorAnio || Object.keys(pagosPorAnio).length === 0)) {
-      setPagosPorAnio({ [String(yearNow)]: norm });
+      setPagosPorAnio({ [String(yearNow)]: Array.from(new Set(norm)) });
       setSelectedYear(yearNow);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mesesPagados]);
+  }, [infoSocio?.id, infoSocio?.idSocios, mesesPagados]);
 
   // Fetch pagos por año al abrir pestaña pagos
   useEffect(() => {
@@ -118,19 +166,28 @@ const ModalInfoSocio = ({ infoSocio, mesesPagados, onCerrar }) => {
           return;
         }
 
-        const p = j?.pagosPorAnio && typeof j.pagosPorAnio === "object" ? j.pagosPorAnio : {};
-        setPagosPorAnio(p);
+        const p = normalizarPagosPorAnio(j?.pagosPorAnio);
+        const yearsFromApi = Array.isArray(j?.aniosDisponibles)
+          ? j.aniosDisponibles
+              .map((y) => Number(y))
+              .filter((y) => Number.isFinite(y) && y > 0)
+          : [];
 
-        const years = Object.keys(p)
-          .map((k) => parseInt(k, 10))
-          .filter((n) => Number.isFinite(n) && n > 0)
-          .sort((a, b) => b - a);
+        const years = Array.from(
+          new Set([
+            ...yearsFromApi,
+            ...Object.keys(p).map((k) => Number(k)).filter((y) => Number.isFinite(y) && y > 0),
+            yearNow,
+          ])
+        ).sort((a, b) => b - a);
 
-        if (years.length > 0) {
-          setSelectedYear(years.includes(yearNow) ? yearNow : years[0]);
-        } else {
-          setSelectedYear(yearNow);
-        }
+        const normalizadoCompleto = { ...p };
+        years.forEach((y) => {
+          if (!normalizadoCompleto[String(y)]) normalizadoCompleto[String(y)] = [];
+        });
+
+        setPagosPorAnio(normalizadoCompleto);
+        setSelectedYear(years.includes(yearNow) ? yearNow : years[0] || yearNow);
       } catch (e) {
         console.error(e);
         setErrorPagos("Error de red al cargar pagos");
@@ -142,21 +199,25 @@ const ModalInfoSocio = ({ infoSocio, mesesPagados, onCerrar }) => {
     fetchPagos();
   }, [socio_pestañaActiva, socioId, yearNow]);
 
-  // Años disponibles SOLO desde pagosPorAnio
+  // Años disponibles: desde el año de alta hasta el año actual, aunque no haya pagos cargados.
   const aniosDisponibles = useMemo(() => {
-    const valido =
-      pagosPorAnio &&
-      typeof pagosPorAnio === "object" &&
-      !Array.isArray(pagosPorAnio) &&
-      Object.keys(pagosPorAnio).length > 0;
+    const years = new Set([yearNow]);
 
-    if (!valido) return [yearNow];
+    if (Number.isFinite(anioUnion) && anioUnion > 0) {
+      const desde = Math.min(anioUnion, yearNow);
+      const hasta = Math.max(anioUnion, yearNow);
+      for (let y = desde; y <= hasta; y++) years.add(y);
+    }
 
-    return Object.keys(pagosPorAnio)
-      .map((k) => parseInt(k, 10))
-      .filter((n) => Number.isFinite(n) && n > 0)
-      .sort((a, b) => b - a);
-  }, [pagosPorAnio, yearNow]);
+    if (pagosPorAnio && typeof pagosPorAnio === "object" && !Array.isArray(pagosPorAnio)) {
+      Object.keys(pagosPorAnio).forEach((k) => {
+        const y = Number(k);
+        if (Number.isFinite(y) && y > 0) years.add(y);
+      });
+    }
+
+    return Array.from(years).sort((a, b) => b - a);
+  }, [pagosPorAnio, yearNow, anioUnion]);
 
   useEffect(() => {
     if (aniosDisponibles.length === 0) return;
@@ -187,42 +248,38 @@ const ModalInfoSocio = ({ infoSocio, mesesPagados, onCerrar }) => {
 
   const setPagados = useMemo(() => new Set(mesesPagadosDelAnio), [mesesPagadosDelAnio]);
 
-  const mesUnion = fechaUnion.getMonth();
-  const anioUnion = fechaUnion.getFullYear();
-  const hoy = new Date();
-  const mesActual = hoy.getMonth();
-  const anioActual = hoy.getFullYear();
-
   // Meses a mostrar (misma lógica “pro” del ModalInfoEmpresa)
   const mesesAMostrar = useMemo(() => {
     if (selectedYear === anioUnion) return MESES_ANIO.slice(mesUnion);
     return MESES_ANIO;
   }, [selectedYear, anioUnion, mesUnion, MESES_ANIO]);
 
-  const cantPendientes = Math.max(0, mesesAMostrar.length - mesesPagadosDelAnio.length);
+  const mesesExigiblesDelAnio = useMemo(() => {
+    const ySel = selectedYear ?? anioActual;
+
+    if (ySel < anioUnion || ySel > anioActual) return [];
+
+    const desde = ySel === anioUnion ? mesUnion : 0;
+    const hasta = ySel === anioActual ? mesActual : 11;
+
+    if (hasta < desde) return [];
+    return MESES_ANIO.slice(desde, hasta + 1);
+  }, [selectedYear, anioActual, anioUnion, mesActual, mesUnion, MESES_ANIO]);
+
+  const cantPendientes = mesesExigiblesDelAnio.filter((mes) => !setPagados.has(mes)).length;
 
   const calcularEstado = () => {
     const ySel = selectedYear ?? anioActual;
 
-    let mesesHastaAhora = [];
+    if (ySel > anioActual || ySel < anioUnion) return "Sin vencimientos";
 
-    if (ySel < anioActual) {
-      // año pasado: si es el año de alta, desde el mes de alta, si no, todo el año
-      mesesHastaAhora = ySel === anioUnion ? MESES_ANIO.slice(mesUnion) : MESES_ANIO;
-    } else if (ySel === anioActual) {
-      const desde = anioUnion === anioActual ? mesUnion : 0;
-      mesesHastaAhora = MESES_ANIO.slice(desde, mesActual + 1);
-    } else {
-      return "Sin vencimientos";
-    }
-
-    const deuda = mesesHastaAhora.filter((mes) => !setPagados.has(mes)).length;
+    const deuda = mesesExigiblesDelAnio.filter((mes) => !setPagados.has(mes)).length;
     if (deuda > 0) return `Atrasado ${deuda} mes${deuda > 1 ? "es" : ""}`;
 
-    const adelantado = mesesPagadosDelAnio.length - mesesHastaAhora.length;
+    const adelantado = mesesPagadosDelAnio.length - mesesExigiblesDelAnio.length;
     if (adelantado > 0) return `Adelantado (${adelantado} mes${adelantado > 1 ? "es" : ""})`;
 
-    if (mesesPagadosDelAnio.length >= 12) return "Año completo";
+    if (ySel < anioActual && mesesPagadosDelAnio.length >= mesesAMostrar.length) return "Año completo";
     return "Al día";
   };
 

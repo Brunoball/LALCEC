@@ -24,12 +24,18 @@ function orNull($v) {
   $v = isset($v) ? trim($v) : '';
   return $v === '' ? null : $v;
 }
+function normalizarEmail($v) {
+  $v = isset($v) ? trim((string)$v) : '';
+  if ($v === '') return '';
+  $v = preg_replace('/[\x{200B}-\x{200D}\x{FEFF}]/u', '', $v);
+  return mb_strtolower($v, 'UTF-8');
+}
 
 // Tomar datos
 $apellido      = toUpperOrNull($data['apellido'] ?? '');
 $nombre        = toUpperOrNull($data['nombre'] ?? '');
 $dni           = orNull($data['dni'] ?? '');
-$email         = isset($data['email']) ? trim(strtolower($data['email'])) : '';
+$email         = normalizarEmail($data['email'] ?? '');
 $telefono      = orNull($data['telefono'] ?? '');
 $domicilio     = toUpperOrNull($data['domicilio'] ?? '');
 $domicilio_2   = toUpperOrNull($data['domicilio_2'] ?? '');
@@ -113,9 +119,9 @@ if ($observacion !== null && mb_strlen($observacion, 'UTF-8') > 255) {
   exit;
 }
 
-// Email (mantengo tu regla .com)
-if ($email !== '' && (strlen($email) > 100 || !preg_match("/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.com$/i", $email))) {
-  echo json_encode(["error_message" => "El email debe ser válido, terminar en .com y no superar 100 caracteres."]);
+// Email: opcional, normalizado, acepta dominios reales como .com.ar, .org, .net, etc.
+if ($email !== '' && (mb_strlen($email, 'UTF-8') > 100 || !filter_var($email, FILTER_VALIDATE_EMAIL))) {
+  echo json_encode(["error_message" => "El email debe ser válido y no superar 100 caracteres."]);
   exit;
 }
 

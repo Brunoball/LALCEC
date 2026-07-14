@@ -7,6 +7,22 @@ import BASE_URL from "../../config/config";
 import './EditarEmpresa.css';
 import Toast from "../global/Toast";
 
+const EMAIL_MAX_LENGTH = 100;
+
+const normalizarEmail = (value) =>
+  String(value || '')
+    .normalize('NFKC')
+    .replace(/[​-‍﻿]/g, '')
+    .trim()
+    .toLowerCase();
+
+const isValidEmail = (value) => {
+  const email = normalizarEmail(value);
+  if (!email) return true;
+  if (email.length > EMAIL_MAX_LENGTH) return false;
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+};
+
 const EditarEmpresa = () => {
   const { razon_social } = useParams();
   const navigate = useNavigate();
@@ -101,8 +117,13 @@ const EditarEmpresa = () => {
       showToast("El campo Razón Social es obligatorio", "error");
       return;
     }
+    if (!isValidEmail(email)) {
+      showToast(`Email inválido o demasiado largo (máx. ${EMAIL_MAX_LENGTH})`, "error");
+      return;
+    }
 
     try {
+      const emailNormalizado = normalizarEmail(email);
       const response = await fetch(`${BASE_URL}/api.php?action=editar_empresa`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -112,7 +133,7 @@ const EditarEmpresa = () => {
           domicilio,
           domicilio_2,
           telefono,
-          email,
+          email: emailNormalizado,
           observacion, // se mantiene pero solo se edita desde la pestaña "Otros"
           idCategoria: idCategorias,
           medioPago,
@@ -263,9 +284,12 @@ const EditarEmpresa = () => {
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
+                      onBlur={() => setEmail(normalizarEmail(email))}
                       placeholder=" "
                       className="edit-empresa-input"
                       id="email"
+                      autoComplete="email"
+                      maxLength={EMAIL_MAX_LENGTH}
                     />
                     <label htmlFor="email" className={`edit-empresa-floating-label ${email ? 'edit-empresa-floating-label-filled' : ''}`}>
                       Email

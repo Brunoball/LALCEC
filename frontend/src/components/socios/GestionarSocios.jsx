@@ -96,6 +96,71 @@ const medioLabel = (m) => {
   return String(m.Medio_Pago ?? m.label ?? m.name ?? "").trim();
 };
 
+const MESES_ANIO_SOCIOS = [
+  "ENERO",
+  "FEBRERO",
+  "MARZO",
+  "ABRIL",
+  "MAYO",
+  "JUNIO",
+  "JULIO",
+  "AGOSTO",
+  "SEPTIEMBRE",
+  "OCTUBRE",
+  "NOVIEMBRE",
+  "DICIEMBRE",
+];
+
+const parseFechaLocalSocio = (value) => {
+  if (!value) return null;
+  if (value instanceof Date && !Number.isNaN(value.getTime())) return value;
+
+  const str = String(value).trim();
+  const m = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (m) {
+    const y = Number(m[1]);
+    const mo = Number(m[2]);
+    const d = Number(m[3]);
+    const dt = new Date(y, mo - 1, d);
+    return Number.isNaN(dt.getTime()) ? null : dt;
+  }
+
+  const dt = new Date(str);
+  return Number.isNaN(dt.getTime()) ? null : dt;
+};
+
+const normalizarPagosPorAnioSocio = (raw) => {
+  if (!raw) return {};
+
+  let data = raw;
+  if (typeof raw === "string") {
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      return {};
+    }
+  }
+
+  if (!data || typeof data !== "object" || Array.isArray(data)) return {};
+
+  const out = {};
+  Object.entries(data).forEach(([anioKey, meses]) => {
+    const anio = Number(anioKey);
+    if (!Number.isFinite(anio) || anio <= 0 || !Array.isArray(meses)) return;
+
+    const normalizados = meses
+      .map((m) => {
+        if (typeof m === "number" || /^\d+$/.test(String(m))) return Number(m);
+        return MESES_ANIO_SOCIOS.indexOf(String(m).trim().toUpperCase()) + 1;
+      })
+      .filter((m) => Number.isFinite(m) && m >= 1 && m <= 12);
+
+    out[String(anio)] = Array.from(new Set(normalizados)).sort((a, b) => a - b);
+  });
+
+  return out;
+};
+
 /* ======= Hooks mobile ======= */
 const useFixMobileVh = () => {
   useEffect(() => {
@@ -418,7 +483,7 @@ const GestionarSocios = () => {
   const [dataLoaded, setDataLoaded] = useState(false);
 
   // ✅ cache (socios)
-  const CACHE_KEY = "sociosCache:v1";
+  const CACHE_KEY = "sociosCache:v2-pagos-anio";
 
   // ✅ cache (notificados) -> para volver de editar y que no se vacíe
   const NOTIF_CACHE_KEY = "sociosNotificadosIds:v1";
@@ -762,7 +827,10 @@ const GestionarSocios = () => {
             a.domicilio_2 !== b?.domicilio_2 ||
             a.observacion !== b?.observacion ||
             a.meses_pagados !== b?.meses_pagados ||
-            a.fecha_union !== b?.fecha_union
+            JSON.stringify(a.pagos_por_anio ?? {}) !== JSON.stringify(b?.pagos_por_anio ?? {}) ||
+            a.estado_pago !== b?.estado_pago ||
+            a.deuda_meses !== b?.deuda_meses ||
+            (a.fecha_union ?? a.Fechaunion) !== (b?.fecha_union ?? b?.Fechaunion)
           ) {
             shouldUpdate = true;
             break;
@@ -842,50 +910,50 @@ const GestionarSocios = () => {
   }, [revalidate]);
 
   /* ---------- Estado pago ---------- */
-  const getEstadoPago = useCallback((mesesPagadosStr, fechaUnion) => {
-    let pagosSet = null;
-    if (mesesPagadosStr && mesesPagadosStr !== "-" && mesesPagadosStr !== "NULL") {
-      pagosSet = new Set(
-        mesesPagadosStr.split(",").map((m) => m.trim().toUpperCase())
-      );
-    } else {
-      pagosSet = new Set();
+  const getEstadoPago = useCallback((socio) => {
+    const hoy = new Date();
+    const anioActual = hoy.getFullYear();
+    const mesActual = hoy.getMonth() + 1;
+
+    let pagosPorAnio = normalizarPagosPorAnioSocio(
+      socio?.pagos_por_anio ?? socio?.pagosPorAnio
+    );
+
+    // Compatibilidad con respuestas viejas: meses_pagados debe tomarse como año actual.
+    // El backend nuevo ya manda pagos_por_anio para no mezclar ENERO 2025 con ENERO 2026.
+    if (Object.keys(pagosPorAnio).length === 0) {
+      const legacy = socio?.meses_pagados;
+      const mesesLegacy =
+        legacy && legacy !== "-" && legacy !== "NULL"
+          ? String(legacy)
+              .split(",")
+              .map((m) => MESES_ANIO_SOCIOS.indexOf(m.trim().toUpperCase()) + 1)
+              .filter((m) => m >= 1 && m <= 12)
+          : [];
+
+      if (mesesLegacy.length > 0) {
+        pagosPorAnio = { [String(anioActual)]: Array.from(new Set(mesesLegacy)) };
+      }
     }
 
-    const mesesAnio = [
-      "ENERO",
-      "FEBRERO",
-      "MARZO",
-      "ABRIL",
-      "MAYO",
-      "JUNIO",
-      "JULIO",
-      "AGOSTO",
-      "SEPTIEMBRE",
-      "OCTUBRE",
-      "NOVIEMBRE",
-      "DICIEMBRE",
-    ];
+    const alta = parseFechaLocalSocio(socio?.fecha_union ?? socio?.Fechaunion);
+    const anioUnion = alta ? alta.getFullYear() : anioActual;
+    const mesUnion = alta ? alta.getMonth() + 1 : 1;
 
-    const hoy = new Date();
-    const alta = new Date(fechaUnion || "");
-
-    if (isNaN(alta.getTime())) {
-      const mesActual = hoy.getMonth();
-      let pagadosEsteAño = 0;
-      for (let i = 0; i <= mesActual; i++)
-        if (pagosSet.has(mesesAnio[i])) pagadosEsteAño++;
-      const faltan = mesActual + 1 - pagadosEsteAño;
-      if (faltan <= 0) return "al-dia";
-      if (faltan <= 2) return "debe-1-2";
-      return "debe-3-mas";
+    // Alta futura: todavía no tiene vencimientos.
+    if (anioUnion > anioActual || (anioUnion === anioActual && mesUnion > mesActual)) {
+      return "al-dia";
     }
 
     let faltan = 0;
-    for (let y = alta.getFullYear(); y <= hoy.getFullYear(); y++) {
-      const desde = y === alta.getFullYear() ? alta.getMonth() : 0;
-      const hasta = y === hoy.getFullYear() ? hoy.getMonth() : 11;
-      for (let m = desde; m <= hasta; m++) if (!pagosSet.has(mesesAnio[m])) faltan++;
+    for (let y = anioUnion; y <= anioActual; y++) {
+      const desde = y === anioUnion ? mesUnion : 1;
+      const hasta = y === anioActual ? mesActual : 12;
+      const pagados = new Set(pagosPorAnio[String(y)] || []);
+
+      for (let m = desde; m <= hasta; m++) {
+        if (!pagados.has(m)) faltan++;
+      }
     }
 
     if (faltan === 0) return "al-dia";
@@ -904,7 +972,7 @@ const GestionarSocios = () => {
         const categoria = s?.categoria ?? "";
         const precioCat = s?.precio_categoria ?? s?.precio ?? s?.precioCat ?? null;
 
-        const estado = getEstadoPago(s?.meses_pagados, s?.fecha_union);
+        const estado = getEstadoPago(s);
         const estadoClase =
           estado === "al-dia"
             ? "gessoc_verde"
@@ -921,6 +989,8 @@ const GestionarSocios = () => {
           domicilio_2: dom2,
           categoria,
           precio_categoria: precioCat,
+          fecha_union: s?.fecha_union ?? s?.Fechaunion ?? "",
+          pagos_por_anio: normalizarPagosPorAnioSocio(s?.pagos_por_anio ?? s?.pagosPorAnio),
           estadoPago: estado,
           _estadoClase: estadoClase,
           _nombreLower: String(nombre).toLowerCase(),
@@ -1250,10 +1320,19 @@ const GestionarSocios = () => {
   }, []);
 
   const handleMostrarInfoSocio = useCallback((socio) => {
-    const meses = socio.meses_pagados
-      ? socio.meses_pagados.split(",").map((m) => m.trim().toUpperCase())
-      : [];
-    setInfoSocio(socio);
+    const pagosPorAnio = normalizarPagosPorAnioSocio(
+      socio?.pagos_por_anio ?? socio?.pagosPorAnio
+    );
+    const mesesActuales = pagosPorAnio[String(new Date().getFullYear())] || [];
+    const meses = mesesActuales
+      .map((idMes) => MESES_ANIO_SOCIOS[idMes - 1])
+      .filter(Boolean);
+
+    setInfoSocio({
+      ...socio,
+      fecha_union: socio?.fecha_union ?? socio?.Fechaunion ?? "",
+      pagos_por_anio: pagosPorAnio,
+    });
     setMesesPagados(meses);
     setMostrarModalInfo(true);
   }, []);

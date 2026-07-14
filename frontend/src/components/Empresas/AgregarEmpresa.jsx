@@ -20,6 +20,15 @@ import BASE_URL from "../../config/config";
 import Toast from "../global/Toast";
 import "./AgregarEmpresa.css";
 
+const EMAIL_MAX_LENGTH = 100;
+
+const normalizarEmail = (value) =>
+  String(value || "")
+    .normalize("NFKC")
+    .replace(/[​-‍﻿]/g, "")
+    .trim()
+    .toLowerCase();
+
 const AgregarEmpresa = () => {
   const navigate = useNavigate();
 
@@ -76,7 +85,12 @@ const AgregarEmpresa = () => {
 
   // ===== Handlers UI =====
   const handleFocus = (fieldName) => setActiveField(fieldName);
-  const handleBlur = () => setActiveField(null);
+  const handleBlur = (fieldName = null) => {
+    if (fieldName === "email") {
+      setEmpresa((prev) => ({ ...prev, email: normalizarEmail(prev.email) }));
+    }
+    setActiveField(null);
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -99,9 +113,10 @@ const AgregarEmpresa = () => {
   };
 
   const isValidEmail = (val) => {
-    if (!val) return true; // opcional
-    if (val.length > 60) return false;
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
+    const email = normalizarEmail(val);
+    if (!email) return true; // opcional
+    if (email.length > EMAIL_MAX_LENGTH) return false;
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   };
 
   const isValidText = (val, max = 60) => {
@@ -132,7 +147,7 @@ const AgregarEmpresa = () => {
         return false;
       }
       if (!isValidEmail(empresa.email)) {
-        showToast("Email inválido o demasiado largo (máx. 60)", "error");
+        showToast("Email inválido o demasiado largo (máx. 100)", "error");
         return false;
       }
       if (!isValidText(empresa.domicilio, 40)) {
@@ -186,7 +201,7 @@ const AgregarEmpresa = () => {
       return false;
     }
     if (!isValidEmail(empresa.email)) {
-      showToast("El email no es válido o supera 60 caracteres.", "error");
+      showToast("El email no es válido o supera 100 caracteres.", "error");
       return false;
     }
     if (!isValidText(empresa.domicilio, 40)) {
@@ -234,12 +249,17 @@ const AgregarEmpresa = () => {
     if (!validarTodo()) return;
 
     try {
+      const payload = {
+        ...empresa,
+        email: normalizarEmail(empresa.email),
+      };
+
       const response = await fetch(
         `${BASE_URL}/api.php?action=agregar_empresa`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(empresa),
+          body: JSON.stringify(payload),
         }
       );
 
@@ -465,9 +485,12 @@ const AgregarEmpresa = () => {
                       value={empresa.email}
                       onChange={handleInputChange}
                       onFocus={() => handleFocus("email")}
-                      onBlur={handleBlur}
+                      onBlur={() => handleBlur("email")}
                       className="add-emp-input"
                       inputMode="email"
+                      type="email"
+                      autoComplete="email"
+                      maxLength={EMAIL_MAX_LENGTH}
                     />
                     <span className="add-emp-input-highlight"></span>
                   </div>

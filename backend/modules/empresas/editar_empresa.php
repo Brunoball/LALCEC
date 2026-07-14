@@ -86,8 +86,8 @@ if ($data) {
     if ($telefono && !preg_match('/^[0-9+\-\s()]{6,20}$/', $telefono)) {
         send(false, "El teléfono tiene un formato inválido", 400);
     }
-    if ($email && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        send(false, "El email tiene un formato inválido", 400);
+    if ($email && (mb_strlen($email, 'UTF-8') > 100 || !filter_var($email, FILTER_VALIDATE_EMAIL))) {
+        send(false, "El email tiene un formato inválido o supera los 100 caracteres", 400);
     }
     if ($cuit && !preg_match('/^[0-9]{2}-[0-9]{8}-[0-9]{1}$/', $cuit)) {
         send(false, "El CUIT debe tener el formato XX-XXXXXXXX-X", 400);

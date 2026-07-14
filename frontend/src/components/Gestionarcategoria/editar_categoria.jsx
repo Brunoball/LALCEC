@@ -231,10 +231,7 @@ const EditarCategoria = () => {
     return (
       <div className="edit-cat-container">
         <div className="edit-cat-box edit-cat-loading-box">
-          <div className="skeleton skeleton-title" />
-          <div className="skeleton skeleton-input" />
-          <div className="skeleton skeleton-input" />
-          <div className="skeleton skeleton-button" />
+          <p className="edit-cat-loading-text">Cargando categoría...</p>
         </div>
       </div>
     );

@@ -23,6 +23,22 @@ import BASE_URL from '../../config/config';
 import Toast from "../global/Toast";
 import './Agregarsocio.css';
 
+const EMAIL_MAX_LENGTH = 100;
+
+const normalizarEmail = (value) =>
+  String(value || '')
+    .normalize('NFKC')
+    .replace(/[​-‍﻿]/g, '')
+    .trim()
+    .toLowerCase();
+
+const isValidEmail = (value) => {
+  const email = normalizarEmail(value);
+  if (!email) return true;
+  if (email.length > EMAIL_MAX_LENGTH) return false;
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+};
+
 const AgregarSocio = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [categorias, setCategorias] = useState([]);
@@ -65,7 +81,12 @@ const AgregarSocio = () => {
 
   // ===== Helpers UI =====
   const handleFocus = (fieldName) => setActiveField(fieldName);
-  const handleBlur = () => setActiveField(null);
+  const handleBlur = (fieldName = null) => {
+    if (fieldName === 'email') {
+      setSocio(prev => ({ ...prev, email: normalizarEmail(prev.email) }));
+    }
+    setActiveField(null);
+  };
 
   // ===== Fetch listas =====
   useEffect(() => {
@@ -148,11 +169,20 @@ const AgregarSocio = () => {
     return !!ok;
   };
 
+  const validarPaso2 = () => {
+    if (!isValidEmail(socio.email)) {
+      showToast('error', `Email inválido o demasiado largo (máx. ${EMAIL_MAX_LENGTH})`, 3500);
+      return false;
+    }
+    return true;
+  };
+
   const handleNextStep = () => {
     if (currentStep === 1 && !validarPaso1()) {
       showToast('advertencia', 'Completá NOMBRE y APELLIDO para continuar', 3000);
       return;
     }
+    if (currentStep === 2 && !validarPaso2()) return;
     setCurrentStep((s) => Math.min(s + 1, 3));
   };
 
@@ -174,6 +204,7 @@ const AgregarSocio = () => {
       showToast('advertencia', 'Revisá los campos obligatorios (Nombre y Apellido)', 3200);
       return;
     }
+    if (!validarPaso2()) return;
 
     try {
       setLoading(true);
@@ -181,6 +212,7 @@ const AgregarSocio = () => {
       // ✅ Payload: si no es transferencia, enviar_recordatorio = 0 (por seguridad)
       const payload = {
         ...socio,
+        email: normalizarEmail(socio.email),
         enviar_recordatorio: esTransferencia ? socio.enviar_recordatorio : 0,
         tipoEntidad
       };
@@ -368,9 +400,12 @@ const AgregarSocio = () => {
                       value={socio.email}
                       onChange={handleInputChange}
                       onFocus={() => handleFocus('email')}
-                      onBlur={handleBlur}
+                      onBlur={() => handleBlur('email')}
                       className="add-socio-input"
                       inputMode="email"
+                      type="email"
+                      autoComplete="email"
+                      maxLength={EMAIL_MAX_LENGTH}
                     />
                     <span className="add-socio-input-highlight"></span>
                   </div>

@@ -461,3 +461,40 @@
   width: 100%; height: 6px;
   background: linear-gradient(90deg, var(--edit-cat-primary), var(--edit-cat-primary-light));
 }
+
+/* =========================================================
+   MODO ESTABLE / SIN ANIMACIONES DE CARGA
+   ---------------------------------------------------------
+   La caja ya no arranca con opacity: 0 ni depende de keyframes.
+   Esto corrige el caso donde se veía solo el fondo naranja/gris.
+   ========================================================= */
+.edit-cat-box {
+  animation: none !important;
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+.edit-cat-loading-text {
+  margin: 0;
+  text-align: center;
+  color: var(--edit-cat-dark);
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.skeleton {
+  animation: none !important;
+  background: #f0f0f0 !important;
+}
+
+.edit-cat-save-button:hover,
+.edit-cat-back-button:hover,
+.edit-cat-view-history-button:hover {
+  transform: none !important;
+}
+
+.edit-cat-fadeInUp,
+.edit-cat-fadeOutDown,
+.edit-cat-animate {
+  animation: none !important;
+}

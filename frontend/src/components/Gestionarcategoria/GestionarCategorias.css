@@ -431,3 +431,30 @@
     padding: 0.6rem 0.7rem;
   }
 }
+
+/* =========================================================
+   MODO ESTABLE / SIN CASCADA
+   ---------------------------------------------------------
+   Se quitaron las animaciones de entrada y los skeletons para evitar
+   que en PCs o navegadores viejos quede visible solo el fondo.
+   Las cajas quedan visibles desde el primer render.
+   ========================================================= */
+.cat_box,
+.cat_categoriaItem,
+.cat_modal,
+.cat_modalContent {
+  animation: none !important;
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+.cat_categoriaItem {
+  transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease !important;
+}
+
+.cat_skeleton,
+.cat_skeleton-text,
+.cat_skeleton-icon {
+  animation: none !important;
+  background: #f0f0f0 !important;
+}

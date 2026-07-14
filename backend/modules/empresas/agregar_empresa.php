@@ -61,6 +61,13 @@ try {
     return (int)$dato;
   }
 
+  function normalizarEmail($dato) {
+    $v = trim((string)($dato ?? ''));
+    if ($v === '') return NULL;
+    $v = preg_replace('/[\x{200B}-\x{200D}\x{FEFF}]/u', '', $v);
+    return mb_strtolower($v, 'UTF-8');
+  }
+
   function validarRegexOpcional($valor, $regex, $maxLen = null) {
     if ($valor === NULL) return true;
     if ($maxLen !== null && mb_strlen($valor, 'UTF-8') > $maxLen) return false;
@@ -111,10 +118,9 @@ try {
     errorYSalir("El teléfono contiene caracteres inválidos o supera los 20 caracteres.");
   }
 
-  $emailRaw = trim((string)($data['email'] ?? ''));
-  $email = ($emailRaw === '') ? NULL : mb_strtolower($conn->real_escape_string($emailRaw), 'UTF-8');
-  if ($email !== NULL && (!filter_var($emailRaw, FILTER_VALIDATE_EMAIL) || strlen($emailRaw) > 60)) {
-    errorYSalir("El email no tiene un formato válido o supera los 60 caracteres.");
+  $email = normalizarEmail($data['email'] ?? NULL);
+  if ($email !== NULL && (!filter_var($email, FILTER_VALIDATE_EMAIL) || mb_strlen($email, 'UTF-8') > 100)) {
+    errorYSalir("El email no tiene un formato válido o supera los 100 caracteres.");
   }
 
   $observacion = limpiarTexto($data['observacion'] ?? NULL, 60);

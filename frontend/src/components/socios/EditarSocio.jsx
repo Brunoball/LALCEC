@@ -14,6 +14,22 @@ import BASE_URL from '../../config/config';
 import Toast from '../global/Toast';
 import './EditarSocio.css';
 
+const EMAIL_MAX_LENGTH = 100;
+
+const normalizarEmail = (value) =>
+  String(value || '')
+    .normalize('NFKC')
+    .replace(/[​-‍﻿]/g, '')
+    .trim()
+    .toLowerCase();
+
+const isValidEmail = (value) => {
+  const email = normalizarEmail(value);
+  if (!email) return true;
+  if (email.length > EMAIL_MAX_LENGTH) return false;
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+};
+
 const EditarSocio = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -135,6 +151,10 @@ const EditarSocio = () => {
       showToast('Nombre y Apellido son obligatorios', 'error');
       return;
     }
+    if (!isValidEmail(email)) {
+      showToast(`Email inválido o demasiado largo (máx. ${EMAIL_MAX_LENGTH})`, 'error');
+      return;
+    }
 
     try {
       const payload = {
@@ -148,7 +168,7 @@ const EditarSocio = () => {
         numero: numero || '',
         localidad: localidad || '',
         telefono: telefono || '',
-        email: email || '',
+        email: normalizarEmail(email),
         categoria: categoria || null,
         medioPago: medioPago || null,
         fechaUnion: fechaUnion || null,
@@ -358,9 +378,12 @@ const EditarSocio = () => {
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
+                      onBlur={() => setEmail(normalizarEmail(email))}
                       placeholder=" "
                       className="edit-socio-input"
                       id="email"
+                      autoComplete="email"
+                      maxLength={EMAIL_MAX_LENGTH}
                     />
                     <label htmlFor="email" className={`edit-socio-floating-label ${email ? 'edit-socio-floating-label-filled' : ''}`}>
                       Email

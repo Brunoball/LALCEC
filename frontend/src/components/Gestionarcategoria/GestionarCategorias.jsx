@@ -106,29 +106,14 @@ const GestionarCategorias = () => {
             Agregar Categoría
           </button>
 
-          <div key={categorias.length} className={`cat_categoriasList ${isLoading ? "" : "cat_loaded"}`}>
+          <div className="cat_categoriasList">
             {isLoading ? (
-              <>
-                {[...Array(3)].map((_, index) => (
-                  <div key={index} className="cat_categoriaItem cat_skeleton">
-                    <span className="cat_categoriaText cat_skeleton-text"></span>
-                    <span className="cat_categoriaPrice cat_skeleton-text"></span>
-                    <div className="cat_categoriaActions">
-                      <div className="cat_skeleton-icon" />
-                      <div className="cat_skeleton-icon" />
-                    </div>
-                  </div>
-                ))}
-              </>
+              <p className="cat_emptyMessage">Cargando categorías...</p>
             ) : categorias.length > 0 ? (
-              categorias.map((categoria, index) => (
+              categorias.map((categoria) => (
                 <div
                   key={categoria.Nombre_Categoria}
                   className="cat_categoriaItem cat_hover-effect"
-                  style={{
-                    animation: `cat_subtleCascade 0.3s ease forwards`,
-                    animationDelay: `${index * 0.1}s`,
-                  }}
                 >
                   <span className="cat_categoriaText">{categoria.Nombre_Categoria}</span>
                   <span className="cat_categoriaPrice">
