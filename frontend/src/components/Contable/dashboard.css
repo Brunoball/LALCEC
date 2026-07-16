@@ -101,8 +101,8 @@ body {
 /* ========== LAYOUT 2 COLUMNAS ========== */
 .contable-main-layout {
   display: flex;
-  padding: 25px;
-  gap: 24px;
+  padding: 20px;
+  gap: 18px;
   flex: 1;
   min-height: 0;
 }
@@ -113,9 +113,9 @@ body {
   width: 290px;
   max-width: 310px;
   background: #f9f9f9;
-  border-radius: 18px;
+  border-radius: 14px;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
-  padding: 18px 18px 16px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
 }
@@ -231,7 +231,7 @@ body {
   background: #f9fafb;
   border-radius: 20px;
   box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
-  padding: 18px 18px 16px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
 }
@@ -321,7 +321,7 @@ body {
   background-color: #fefefe;
   border: 1px solid #e0e0e0;
   border-left: 5px solid #ff7b00;
-  padding: 10px 18px;
+  padding: 9px 14px;
   border-radius: 14px;
   display: flex;
   align-items: center;
@@ -336,10 +336,10 @@ body {
 }
 
 .contable-card-icon {
-  font-size: 24px;
+  font-size: 20px;
   color: #ff7b00;
-  width: 46px;
-  height: 46px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -348,14 +348,14 @@ body {
 }
 
 .contable-card-content h3 {
-  font-size: 0.95rem;
+  font-size: 0.82rem;
   color: #777;
   margin: 0 0 6px 0;
   font-weight: 500;
 }
 
 .contable-card-content p {
-  font-size: 1.45rem;
+  font-size: 1.22rem;
   font-weight: bold;
   margin: 0;
   color: #333;
@@ -365,7 +365,7 @@ body {
   display: block;
   color: #888;
   margin-top: 4px;
-  font-size: 0.8rem;
+  font-size: 0.74rem;
 }
 
 /* ========== SECCIÓN DERECHA (tabla / tarjetas) ========== */
@@ -571,31 +571,81 @@ body {
 /* ========== TABLA DETALLE (desktop) ========== */
 .contable-detail-table-container {
   overflow-x: auto;
-  margin-top: 6px;
+  margin-top: 4px;
+  border: 1px solid #e8eaed;
+  border-radius: 10px;
+  background: #fff;
 }
 
 .contable-detail-table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 0.82rem;
 }
 
 .contable-detail-table th {
-  background-color: #f8f9fa;
-  color: #666;
+  background-color: #f6f7f9;
+  color: #4b5563;
   font-weight: 600;
-  padding: 12px 15px;
+  font-size: 0.74rem;
+  letter-spacing: 0.015em;
+  line-height: 1.2;
+  padding: 8px 10px;
   text-align: left;
-  border-bottom: 2px solid #eee;
+  border-bottom: 1px solid #dfe3e8;
+  white-space: nowrap;
 }
 
 .contable-detail-table td {
-  padding: 12px 15px;
-  border-bottom: 1px solid #eee;
-  color: #333;
+  padding: 7px 10px;
+  border-bottom: 1px solid #edf0f2;
+  color: #374151;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.contable-detail-table tr:hover {
-  background-color: #f5f5f5;
+.contable-detail-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.contable-detail-table tbody tr:nth-child(even) {
+  background-color: #fbfcfd;
+}
+
+.contable-detail-table tbody tr:hover {
+  background-color: #fff7ed;
+}
+
+.contable-detail-table th:first-child,
+.contable-detail-table td:first-child {
+  width: 22%;
+  padding-left: 12px;
+}
+
+.contable-detail-table th:nth-child(2),
+.contable-detail-table td:nth-child(2) {
+  width: 18%;
+}
+
+.contable-detail-table th:nth-child(3),
+.contable-detail-table td:nth-child(3) {
+  width: 13%;
+  font-variant-numeric: tabular-nums;
+}
+
+.contable-detail-table th:nth-child(4),
+.contable-detail-table td:nth-child(4) {
+  width: 17%;
+}
+
+.contable-detail-table th:nth-child(5),
+.contable-detail-table td:nth-child(5),
+.contable-detail-table th:nth-child(6),
+.contable-detail-table td:nth-child(6) {
+  width: 15%;
 }
 
 /* Centrar columnas 2 a 6 de la tabla de detalle en desktop */
@@ -841,16 +891,17 @@ body {
     display: block;
     background: #fff;
     border: 1px solid #eee;
-    border-radius: 10px;
+    border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-    padding: 10px;
+    padding: 8px 10px;
   }
 
   .contable-detail-table td {
     display: grid;
     grid-template-columns: 44% 56%;
     gap: 6px;
-    padding: 5px 0;
+    padding: 4px 0;
+    font-size: 0.78rem;
     border: none;
     white-space: normal;
     justify-items: end;
@@ -863,6 +914,7 @@ body {
     color: #666;
     justify-self: start;
     text-align: left;
+    font-size: 0.72rem;
   }
 
   .contable-detail-table td[colspan]::before {
@@ -888,6 +940,9 @@ body {
   .contable-detail-table-container {
     margin-top: 6px;
     overflow: visible;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
   }
 
   /* footer filtros en columna y botones full width */

@@ -172,7 +172,7 @@ input:-webkit-autofill{background-color:transparent!important}
 }
 .gessoc_header{
   display:grid;
-  grid-template-columns:2fr .5fr 1fr 1fr 1fr 1fr;
+  grid-template-columns:1.5fr .5fr 1fr 1fr 1.8fr .7fr;
   background:linear-gradient(90deg,#fa7815,#ef6a14);
   border-bottom:2px solid var(--border-color);
   position:sticky; top:0; z-index:10;
@@ -197,7 +197,7 @@ input:-webkit-autofill{background-color:transparent!important}
 
 /* Filas */
 .gessoc_row{
-  display:grid;grid-template-columns:2fr .5fr 1fr 1fr 1fr 1fr;align-items:center;padding:0;position:relative;
+  display:grid;grid-template-columns:1.5fr .5fr 1fr 1fr 1.8fr .7fr;align-items:center;padding:0;position:relative;
   transition:background-color var(--transition-fast),box-shadow var(--transition-fast);
   border-bottom:1px solid var(--border-color);cursor:pointer
 }
@@ -214,10 +214,10 @@ input:-webkit-autofill{background-color:transparent!important}
 .gessoc_column-cuit{font-family:'JetBrains Mono',monospace;color:var(--text-secondary)}
 
 .gessoc_icons-column{justify-content:center}
-.gessoc_icons-container{display:flex;gap:.6rem;align-items:center;justify-content:center}
+.gessoc_icons-container{display:flex;gap:.45rem;align-items:center;justify-content:center}
 
 /* Íconos */
-.gessoc_icon{font-size:18px;color:var(--primary-500);cursor:pointer;transition:transform .18s ease,color .18s ease;background:none;border:none;padding:0}
+.gessoc_icon{font-size:16px;color:var(--primary-500);cursor:pointer;transition:transform .18s ease,color .18s ease;background:none;border:none;padding:0}
 .gessoc_icon:hover{transform:scale(1.1);color:var(--primary-600)}
 
 /* Loading */
@@ -496,6 +496,7 @@ input:-webkit-autofill{background-color:transparent!important}
   background:#fff;color:#000;font-weight:400;margin:.5rem 0;padding:.5rem;cursor:pointer;transition:all .3s;border-radius:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis
 }
 .gessoc_filtros-submenu-item:hover{background:var(--primary-500);color:#fff}
+.gessoc_filtros-submenu-item.gessoc_active{background:var(--primary-500);color:#fff}
 
 .gessoc_filter-chip{
   display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border:1.5px solid var(--primary-400);

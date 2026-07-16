@@ -536,17 +536,19 @@ const GestionarSocios = () => {
       return {
         letras: Array.isArray(base?.letras) ? base.letras : [],
         mediosPago: Array.isArray(base?.mediosPago) ? base.mediosPago : [],
+        tiempoAdeudado: typeof base?.tiempoAdeudado === "string" ? base.tiempoAdeudado : "",
         todos: !!base?.todos,
         notificadosBot: !!base?.notificadosBot,
       };
     } catch {
-      return { letras: [], mediosPago: [], todos: false, notificadosBot: false };
+      return { letras: [], mediosPago: [], tiempoAdeudado: "", todos: false, notificadosBot: false };
     }
   });
 
   const [mostrarMenuFiltros, setMostrarMenuFiltros] = useState(false);
   const [mostrarSubmenuAlfabetico, setMostrarSubmenuAlfabetico] = useState(false);
   const [mostrarSubmenuTransferencia, setMostrarSubmenuTransferencia] = useState(false);
+  const [mostrarSubmenuTiempoAdeudado, setMostrarSubmenuTiempoAdeudado] = useState(false);
 
   /* ---------- Toast ---------- */
   const [toast, setToast] = useState({ show: false, tipo: "exito", msg: "" });
@@ -735,6 +737,7 @@ const GestionarSocios = () => {
           ...prev,
           letras: [],
           mediosPago: [],
+          tiempoAdeudado: "",
           todos: false,
         }));
         break;
@@ -744,6 +747,7 @@ const GestionarSocios = () => {
           ...prev,
           letras: value ? [value] : [],
           mediosPago: [],
+          tiempoAdeudado: "",
           todos: false,
         }));
         break;
@@ -753,6 +757,17 @@ const GestionarSocios = () => {
           ...prev,
           letras: [],
           mediosPago: value ? [value] : [],
+          tiempoAdeudado: "",
+          todos: false,
+        }));
+        break;
+      case "tiempoAdeudado":
+        setBusqueda("");
+        setFiltrosActivos((prev) => ({
+          ...prev,
+          letras: [],
+          mediosPago: [],
+          tiempoAdeudado: value || "",
           todos: false,
         }));
         break;
@@ -762,6 +777,7 @@ const GestionarSocios = () => {
           ...prev,
           letras: [],
           mediosPago: [],
+          tiempoAdeudado: "",
           todos: true,
           notificadosBot: false,
         }));
@@ -773,6 +789,7 @@ const GestionarSocios = () => {
           ...prev,
           letras: [],
           mediosPago: [],
+          tiempoAdeudado: "",
           todos: false,
         }));
         break;
@@ -1075,10 +1092,11 @@ const GestionarSocios = () => {
 
     const letrasArr = filtrosActivos.letras?.length ? filtrosActivos.letras : null;
     const mediosArr = filtrosActivos.mediosPago?.length ? filtrosActivos.mediosPago : null;
+    const tiempoAdeudado = filtrosActivos.tiempoAdeudado || "";
 
     const useNotificados = !!filtrosActivos.notificadosBot;
 
-    if (!useSearch && !letrasArr && !mediosArr && !filtrosActivos.todos && !useNotificados) {
+    if (!useSearch && !letrasArr && !mediosArr && !tiempoAdeudado && !filtrosActivos.todos && !useNotificados) {
       return [];
     }
 
@@ -1095,6 +1113,7 @@ const GestionarSocios = () => {
       }
       if (letrasSet && !letrasSet.has(s._letraApe)) continue;
       if (mediosSet && !mediosSet.has(s._medioStr)) continue;
+      if (tiempoAdeudado && s.estadoPago !== tiempoAdeudado) continue;
 
       if (useNotificados) {
         if (notificadosIds.length > 0) {
@@ -1250,11 +1269,25 @@ const GestionarSocios = () => {
     [dataLoaded, ensureDataLoaded, revalidate, filtrosActivos.mediosPago, setExclusiveFilter, triggerCascade]
   );
 
+  const handleFiltrarPorTiempoAdeudado = useCallback(
+    async (tiempo) => {
+      const actual = filtrosActivos.tiempoAdeudado || "";
+      const isSame = actual === tiempo;
+      setExclusiveFilter(isSame ? "none" : "tiempoAdeudado", isSame ? null : tiempo);
+
+      if (!dataLoaded) await ensureDataLoaded();
+      else revalidate();
+      triggerCascade();
+    },
+    [dataLoaded, ensureDataLoaded, revalidate, filtrosActivos.tiempoAdeudado, setExclusiveFilter, triggerCascade]
+  );
+
   const handleMostrarTodos = useCallback(async () => {
     setExclusiveFilter("todos");
     setMostrarMenuFiltros(false);
     setMostrarSubmenuAlfabetico(false);
     setMostrarSubmenuTransferencia(false);
+    setMostrarSubmenuTiempoAdeudado(false);
     setFilaSeleccionada(null);
     setSocioSeleccionado(null);
 
@@ -1682,6 +1715,40 @@ const GestionarSocios = () => {
                 )}
 
                 <div
+                  className="gessoc_filtros-menu-item"
+                  onClick={() => setMostrarSubmenuTiempoAdeudado((v) => !v)}
+                >
+                  <span>Tiempo adeudado</span>
+                  <FontAwesomeIcon
+                    icon={faChevronDown}
+                    className={`gessoc_chevron-icon ${
+                      mostrarSubmenuTiempoAdeudado ? "gessoc_rotate" : ""
+                    }`}
+                  />
+                </div>
+
+                {mostrarSubmenuTiempoAdeudado && (
+                  <div className="gessoc_filtros-submenu">
+                    {[
+                      { value: "al-dia", label: "Al día" },
+                      { value: "debe-1-2", label: "Debe 1-2 meses" },
+                      { value: "debe-3-mas", label: "Debe 3 meses o más" },
+                    ].map((opcion) => (
+                      <div
+                        key={opcion.value}
+                        className={`gessoc_filtros-submenu-item ${
+                          filtrosActivos.tiempoAdeudado === opcion.value ? "gessoc_active" : ""
+                        }`}
+                        onClick={() => handleFiltrarPorTiempoAdeudado(opcion.value)}
+                        title={`Filtrar por: ${opcion.label}`}
+                      >
+                        {opcion.label}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div
                   className="gessoc_filtros-menu-item gessoc_mostrar-todas"
                   onClick={handleMostrarTodos}
                 >
@@ -1755,6 +1822,27 @@ const GestionarSocios = () => {
                       onClick={() => limpiarFiltros()}
                       title="Quitar filtro de medio de pago"
                       aria-label="Quitar filtro de medio de pago"
+                    >
+                      ×
+                    </button>
+                  </div>
+                )}
+
+                {filtrosActivos.tiempoAdeudado && (
+                  <div className="gessoc_filter-chip gessoc_chip-medio">
+                    <span className="gessoc_filter-chip-text">Tiempo adeudado: </span>
+                    <span className="texto">
+                      {filtrosActivos.tiempoAdeudado === "al-dia"
+                        ? "Al día"
+                        : filtrosActivos.tiempoAdeudado === "debe-1-2"
+                        ? "1-2 meses"
+                        : "3 meses o más"}
+                    </span>
+                    <button
+                      className="gessoc_filter-chip-close"
+                      onClick={() => limpiarFiltros()}
+                      title="Quitar filtro de tiempo adeudado"
+                      aria-label="Quitar filtro de tiempo adeudado"
                     >
                       ×
                     </button>
