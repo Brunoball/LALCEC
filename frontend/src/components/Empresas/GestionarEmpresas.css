@@ -499,6 +499,7 @@ input:-webkit-autofill { background-color: transparent !important; }
   cursor: pointer; transition: all .3s; border-radius: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .emp_filtros-submenu-item:hover{ background-color: var(--primary-500); color: white; }
+.emp_filtros-submenu-item.emp_active{ background-color: var(--primary-500); color: white; }
 
 /* Leyenda de estados */
 .emp_socios-desktop { display: inline; }

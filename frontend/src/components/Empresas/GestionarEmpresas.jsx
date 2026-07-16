@@ -156,6 +156,36 @@ const fmtMedio = (v) => {
   return s ? s.toUpperCase() : "-";
 };
 
+const getEstadoPagoEmpresa = (empresa) => {
+  const mesesPagadosStr = empresa?.meses_pagados;
+  const fechaUnionStr = empresa?.Fechaunion;
+  if (!fechaUnionStr) return "emp_rojo";
+
+  const pagos = mesesPagadosStr
+    ? mesesPagadosStr.split(",").map((mes) => mes.trim().toUpperCase())
+    : [];
+  const setPagos = new Set(pagos);
+  const fechaUnion = new Date(
+    fechaUnionStr?.includes?.("T")
+      ? fechaUnionStr
+      : `${fechaUnionStr}T00:00:00-03:00`
+  );
+  const hoy = new Date();
+
+  let deuda = 0;
+  for (let anio = fechaUnion.getFullYear(); anio <= hoy.getFullYear(); anio++) {
+    const desde = anio === fechaUnion.getFullYear() ? fechaUnion.getMonth() : 0;
+    const hasta = anio === hoy.getFullYear() ? hoy.getMonth() : 11;
+    for (let mes = desde; mes <= hasta; mes++) {
+      if (!setPagos.has(MESES_ANIO[mes])) deuda++;
+    }
+  }
+
+  if (deuda === 0) return "emp_verde";
+  if (deuda <= 2) return "emp_amarillo";
+  return "emp_rojo";
+};
+
 /* ================================
    Subcomponentes
 ================================ */
@@ -163,39 +193,7 @@ const Row = memo(function Row({
   empresa, index, selected, onSelect, onInfo, onEdit, onDelete, onBaja,
 }) {
   const estadoPago = useMemo(() => {
-    const mesesPagadosStr = empresa?.meses_pagados;
-    const fechaUnionStr = empresa?.Fechaunion;
-    if (!fechaUnionStr) return "emp_rojo";
-
-    const arr = mesesPagadosStr
-      ? mesesPagadosStr.split(",").map((m) => m.trim().toUpperCase())
-      : [];
-    const setPagos = new Set(arr);
-
-    const fechaUnion = new Date(
-      fechaUnionStr?.includes?.("T")
-        ? fechaUnionStr
-        : `${fechaUnionStr}T00:00:00-03:00`
-    );
-    const hoy = new Date();
-
-    const a0 = fechaUnion.getFullYear();
-    const m0 = fechaUnion.getMonth();
-    const a1 = hoy.getFullYear();
-    const m1 = hoy.getMonth();
-
-    let deuda = 0;
-    for (let a = a0; a <= a1; a++) {
-      const desde = a === a0 ? m0 : 0;
-      const hasta = a === a1 ? m1 : 11;
-      for (let m = desde; m <= hasta; m++) {
-        const mesTxt = MESES_ANIO[m];
-        if (!setPagos.has(mesTxt)) deuda++;
-      }
-    }
-    if (deuda === 0) return "emp_verde";
-    if (deuda <= 2) return "emp_amarillo";
-    return "emp_rojo";
+    return getEstadoPagoEmpresa(empresa);
   }, [empresa?.meses_pagados, empresa?.Fechaunion]);
 
   const rowClass =
@@ -262,39 +260,7 @@ const Card = memo(function Card({
   empresa, index, onSelect, onInfo, onEdit, onDelete, onBaja,
 }) {
   const estadoPago = useMemo(() => {
-    const mesesPagadosStr = empresa?.meses_pagados;
-    const fechaUnionStr = empresa?.Fechaunion;
-    if (!fechaUnionStr) return "emp_rojo";
-
-    const arr = mesesPagadosStr
-      ? mesesPagadosStr.split(",").map((m) => m.trim().toUpperCase())
-      : [];
-    const setPagos = new Set(arr);
-
-    const fechaUnion = new Date(
-      fechaUnionStr?.includes?.("T")
-        ? fechaUnionStr
-        : `${fechaUnionStr}T00:00:00-03:00`
-    );
-    const hoy = new Date();
-
-    const a0 = fechaUnion.getFullYear();
-    const m0 = fechaUnion.getMonth();
-    const a1 = hoy.getFullYear();
-    const m1 = hoy.getMonth();
-
-    let deuda = 0;
-    for (let a = a0; a <= a1; a++) {
-      const desde = a === a0 ? m0 : 0;
-      const hasta = a === a1 ? m1 : 11;
-      for (let m = desde; m <= hasta; m++) {
-        const mesTxt = MESES_ANIO[m];
-        if (!setPagos.has(mesTxt)) deuda++;
-      }
-    }
-    if (deuda === 0) return "emp_verde";
-    if (deuda <= 2) return "emp_amarillo";
-    return "emp_rojo";
+    return getEstadoPagoEmpresa(empresa);
   }, [empresa?.meses_pagados, empresa?.Fechaunion]);
 
   const key = getEmpresaId(empresa) || empresa?.cuit || `card-${index}`;
@@ -452,6 +418,7 @@ const GestionarEmpresas = () => {
   const [mostrarMenuFiltros, setMostrarMenuFiltros] = useState(false);
   const [mostrarSubmenuAlfabetico, setMostrarSubmenuAlfabetico] = useState(false);
   const [mostrarSubmenuTransferencia, setMostrarSubmenuTransferencia] = useState(false);
+  const [mostrarSubmenuTiempoAdeudado, setMostrarSubmenuTiempoAdeudado] = useState(false);
 
   const [animacionCascada, setAnimacionCascada] = useState(false);
   const [datosCargados, setDatosCargados] = useState(false);
@@ -461,6 +428,7 @@ const GestionarEmpresas = () => {
   const [filtrosActivos, setFiltrosActivos] = useState({
     letras: [],
     mediosPago: [],
+    tiempoAdeudado: "",
     todos: false,
     hasFilters: false,
   });
@@ -502,13 +470,17 @@ const GestionarEmpresas = () => {
       setMostrarMenuFiltros(false);
       setMostrarSubmenuAlfabetico(false);
       setMostrarSubmenuTransferencia(false);
+      setMostrarSubmenuTiempoAdeudado(false);
     }
   });
 
   useEffect(() => {
     const savedFilters = localStorage.getItem("empresasFilters");
     const savedSearch = localStorage.getItem("empresasSearchTerm");
-    if (savedFilters) setFiltrosActivos(safeJSON.parse(savedFilters, filtrosActivos));
+    if (savedFilters) {
+      const saved = safeJSON.parse(savedFilters, filtrosActivos);
+      setFiltrosActivos({ ...filtrosActivos, ...saved, tiempoAdeudado: saved?.tiempoAdeudado || "" });
+    }
     if (savedSearch) setBusqueda(savedSearch);
     // eslint-disable-next-line
   }, []);
@@ -634,6 +606,7 @@ const GestionarEmpresas = () => {
       !filtros.todos &&
       filtros.letras.length === 0 &&
       filtros.mediosPago.length === 0 &&
+      !filtros.tiempoAdeudado &&
       texto === ""
     ) {
       return [];
@@ -651,6 +624,12 @@ const GestionarEmpresas = () => {
     if (filtros.mediosPago.length > 0) {
       const setM = new Set(filtros.mediosPago);
       resultado = resultado.filter((empresa) => setM.has(empresa?.medio_pago));
+    }
+
+    if (filtros.tiempoAdeudado) {
+      resultado = resultado.filter(
+        (empresa) => getEstadoPagoEmpresa(empresa) === filtros.tiempoAdeudado
+      );
     }
 
     if (texto !== "") {
@@ -709,6 +688,7 @@ const GestionarEmpresas = () => {
         const next = {
           letras: newLetras,
           mediosPago: [],
+          tiempoAdeudado: "",
           todos: false,
           hasFilters: newLetras.length > 0,
         };
@@ -725,6 +705,7 @@ const GestionarEmpresas = () => {
         const next = {
           letras: [],
           mediosPago: newMedios,
+          tiempoAdeudado: "",
           todos: false,
           hasFilters: newMedios.length > 0,
         };
@@ -734,9 +715,25 @@ const GestionarEmpresas = () => {
     });
   }, [persistFilters]);
 
+  const handleFiltrarPorTiempoAdeudado = useCallback((tiempo) => {
+    startTransition(() => {
+      setFiltrosActivos(() => {
+        const next = {
+          letras: [],
+          mediosPago: [],
+          tiempoAdeudado: tiempo,
+          todos: false,
+          hasFilters: !!tiempo,
+        };
+        persistFilters(next);
+        return next;
+      });
+    });
+  }, [persistFilters]);
+
   const eliminarFiltroLetra = useCallback(() => {
     startTransition(() => {
-      const next = { letras: [], mediosPago: [], todos: false, hasFilters: false };
+      const next = { letras: [], mediosPago: [], tiempoAdeudado: "", todos: false, hasFilters: false };
       persistFilters(next);
       setFiltrosActivos(next);
     });
@@ -744,20 +741,28 @@ const GestionarEmpresas = () => {
 
   const eliminarFiltroMedioPago = useCallback(() => {
     startTransition(() => {
-      const next = { letras: [], mediosPago: [], todos: false, hasFilters: false };
+      const next = { letras: [], mediosPago: [], tiempoAdeudado: "", todos: false, hasFilters: false };
+      persistFilters(next);
+      setFiltrosActivos(next);
+    });
+  }, [persistFilters]);
+
+  const eliminarFiltroTiempoAdeudado = useCallback(() => {
+    startTransition(() => {
+      const next = { letras: [], mediosPago: [], tiempoAdeudado: "", todos: false, hasFilters: false };
       persistFilters(next);
       setFiltrosActivos(next);
     });
   }, [persistFilters]);
 
   const limpiarFiltros = useCallback(() => {
-    const reset = { letras: [], mediosPago: [], todos: false, hasFilters: false };
+    const reset = { letras: [], mediosPago: [], tiempoAdeudado: "", todos: false, hasFilters: false };
     startTransition(() => setFiltrosActivos(reset));
     persistFilters(reset);
   }, [persistFilters]);
 
   const handleMostrarTodos = useCallback(() => {
-    const allFilters = { letras: [], mediosPago: [], todos: true, hasFilters: false };
+    const allFilters = { letras: [], mediosPago: [], tiempoAdeudado: "", todos: true, hasFilters: false };
     startTransition(() => {
       setFiltrosActivos(allFilters);
       setBusqueda("");
@@ -777,6 +782,7 @@ const GestionarEmpresas = () => {
       if (next) {
         setMostrarSubmenuAlfabetico(false);
         setMostrarSubmenuTransferencia(false);
+        setMostrarSubmenuTiempoAdeudado(false);
       }
       return next;
     });
@@ -786,9 +792,15 @@ const GestionarEmpresas = () => {
     if (submenu === "alfabetico") {
       setMostrarSubmenuAlfabetico((v) => !v);
       setMostrarSubmenuTransferencia(false);
+      setMostrarSubmenuTiempoAdeudado(false);
     } else if (submenu === "transferencia") {
       setMostrarSubmenuTransferencia((v) => !v);
       setMostrarSubmenuAlfabetico(false);
+      setMostrarSubmenuTiempoAdeudado(false);
+    } else if (submenu === "tiempoAdeudado") {
+      setMostrarSubmenuTiempoAdeudado((v) => !v);
+      setMostrarSubmenuAlfabetico(false);
+      setMostrarSubmenuTransferencia(false);
     }
   }, []);
 
@@ -1004,10 +1016,19 @@ const GestionarEmpresas = () => {
     [handleFiltrarPorMedioPago]
   );
 
+  const aplicarFiltroTiempoAdeudado = useCallback(
+    (tiempo) => {
+      handleFiltrarPorTiempoAdeudado(tiempo);
+      setMostrarSubmenuTiempoAdeudado(false);
+    },
+    [handleFiltrarPorTiempoAdeudado]
+  );
+
   const cantidadVisibles =
     (filtrosActivos.todos ||
       filtrosActivos.letras.length > 0 ||
       filtrosActivos.mediosPago.length > 0 ||
+      !!filtrosActivos.tiempoAdeudado ||
       (deferredBusqueda || "").trim() !== "")
       ? empresasFiltradas.length
       : 0;
@@ -1019,13 +1040,23 @@ const GestionarEmpresas = () => {
 
   const firstLetter = filtrosActivos.letras[0];
   const firstMedio = filtrosActivos.mediosPago[0];
+  const firstTiempoAdeudado = filtrosActivos.tiempoAdeudado || "";
 
-  const chipValue = firstLetter || firstMedio || null;
-  const chipKind = firstLetter ? "Letra" : firstMedio ? "Medio" : "";
+  const tiempoAdeudadoLabel =
+    firstTiempoAdeudado === "emp_verde"
+      ? "Al día"
+      : firstTiempoAdeudado === "emp_amarillo"
+      ? "1-2 meses"
+      : firstTiempoAdeudado === "emp_rojo"
+      ? "3 meses o más"
+      : "";
+  const chipValue = firstLetter || firstMedio || tiempoAdeudadoLabel || null;
+  const chipKind = firstLetter ? "Letra" : firstMedio ? "Medio" : "Tiempo adeudado";
 
   const removeFirstChip = () => {
     if (firstLetter) eliminarFiltroLetra(firstLetter);
     if (firstMedio) eliminarFiltroMedioPago(firstMedio);
+    if (firstTiempoAdeudado) eliminarFiltroTiempoAdeudado();
   };
 
   return (
@@ -1130,6 +1161,40 @@ const GestionarEmpresas = () => {
                 )}
 
                 <div
+                  className="emp_filtros-menu-item"
+                  onClick={() => toggleSubmenu("tiempoAdeudado")}
+                >
+                  <span>Tiempo adeudado</span>
+                  <FontAwesomeIcon
+                    icon={faChevronDown}
+                    className={`emp_chevron-icon ${
+                      mostrarSubmenuTiempoAdeudado ? "emp_rotate" : ""
+                    }`}
+                  />
+                </div>
+
+                {mostrarSubmenuTiempoAdeudado && (
+                  <div className="emp_filtros-submenu">
+                    {[
+                      { value: "emp_verde", label: "Al día" },
+                      { value: "emp_amarillo", label: "Debe 1-2 meses" },
+                      { value: "emp_rojo", label: "Debe 3 meses o más" },
+                    ].map((opcion) => (
+                      <div
+                        key={opcion.value}
+                        className={`emp_filtros-submenu-item ${
+                          filtrosActivos.tiempoAdeudado === opcion.value ? "emp_active" : ""
+                        }`}
+                        onClick={() => aplicarFiltroTiempoAdeudado(opcion.value)}
+                        title={`Filtrar por: ${opcion.label}`}
+                      >
+                        {opcion.label}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div
                   className="emp_filtros-menu-item emp_mostrar-todas"
                   onClick={() => {
                     handleMostrarTodos();
@@ -1220,6 +1285,7 @@ const GestionarEmpresas = () => {
               ) : (filtrosActivos.todos ||
                   filtrosActivos.letras.length > 0 ||
                   filtrosActivos.mediosPago.length > 0 ||
+                  !!filtrosActivos.tiempoAdeudado ||
                   (deferredBusqueda || "").trim() !== "") &&
                 empresasFiltradas.length > 0 ? (
                 <div className={`emp_scrollableE ${animacionCascada ? "emp_cascade-animation" : ""}`}>
@@ -1263,6 +1329,7 @@ const GestionarEmpresas = () => {
             ) : (filtrosActivos.todos ||
                 filtrosActivos.letras.length > 0 ||
                 filtrosActivos.mediosPago.length > 0 ||
+                !!filtrosActivos.tiempoAdeudado ||
                 (deferredBusqueda || "").trim() !== "") &&
               empresasFiltradas.length > 0 ? (
               subEmpresas.map((empresa, index) => (
